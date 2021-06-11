@@ -37,7 +37,7 @@
 /*
     xlateTypes.h
 
-    $Revision: 1.1.1.1 $
+    $Revision: 1.8 $
 
     This is internal to the xlate functions.
 

@@ -36,10 +36,10 @@
  * ====================================================================
  *
  * Module: erbe.desc
- * $Revision: 1.1.1.1 $
- * $Date: 2001/09/10 17:47:32 $
- * $Author: morrone $
- * $Source: /cvsroot/open64/open64/osprey1.0/be/com/erbe.desc,v $
+ * $Revision: 3.40 $
+ * $Date: 2001/03/10 02:10:29 $
+ * $Author: mtibuild $
+ * $Source: /isms/cmplrs.src/osprey1.0/be/com/RCS/erbe.desc,v $
  *
  * Revision history:
  *  02-Nov-89 - Original Version
@@ -57,7 +57,7 @@
  * ====================================================================
  */
 
-static char *erbe_desc_rcs_id = "$Source: /cvsroot/open64/open64/osprey1.0/be/com/erbe.desc,v $ $Revision: 1.1.1.1 $";
+static char *erbe_desc_rcs_id = "$Source: /isms/cmplrs.src/osprey1.0/be/com/RCS/erbe.desc,v $ $Revision: 3.40 $";
 
 #include "erbe.h"
 

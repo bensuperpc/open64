@@ -37,10 +37,10 @@
  * ====================================================================
  *
  * Module: tracing.c
- * $Revision: 1.3 $
- * $Date: 2002/10/13 21:35:20 $
- * $Author: douillet $
- * $Source: /cvsroot/open64/open64/osprey1.0/common/util/tracing.c,v $
+ * $Revision: 1.5 $
+ * $Date: 2002/04/30 06:54:51 $
+ * $Author: llx $
+ * $Source: /u/merge/src/osprey1.0/common/util/tracing.c,v $
  *
  * Revision history:
  *  08-Sep-89 - Original Version
@@ -56,7 +56,7 @@
  */
 
 static char *source_file = __FILE__;
-static char *rcs_id = "$Source: /cvsroot/open64/open64/osprey1.0/common/util/tracing.c,v $ $Revision: 1.3 $";
+static char *rcs_id = "$Source: /u/merge/src/osprey1.0/common/util/tracing.c,v $ $Revision: 1.5 $";
 
 #include "defs.h"
 #include "tracing.h"

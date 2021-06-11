@@ -34,7 +34,7 @@
 */
 
 
-/* $Header: /cvsroot/open64/open64/osprey1.0/libF77/d_int.c,v 1.1.1.1 2001/09/10 17:50:03 morrone Exp $ */
+/* $Header: /isms/cmplrs.src/osprey1.0/libF77/RCS/d_int.c,v 8.6 2001/03/10 04:32:56 mtibuild Exp $ */
 
 /*** fcom should call trunc directly ***/
 

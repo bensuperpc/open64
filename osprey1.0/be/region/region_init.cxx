@@ -37,10 +37,10 @@
 //============================================================================
 //
 // Module: region_init.cxx
-// $Revision: 1.1.1.1 $
-// $Date: 2001/09/10 17:48:06 $
-// $Author: morrone $
-// $Source: /cvsroot/open64/open64/osprey1.0/be/region/region_init.cxx,v $
+// $Revision: 1.66 $
+// $Date: 2001/03/10 02:53:37 $
+// $Author: mtibuild $
+// $Source: /isms/cmplrs.src/osprey1.0/be/region/RCS/region_init.cxx,v $
 //
 // Revision history:
 //  27-FEB-95 dahl - Original Version
@@ -76,7 +76,7 @@
 
 #define region_init_CXX	"region_init.cxx"
 #ifdef _KEEP_RCS_ID
-static char *rcs_id = region_init_CXX"$Revision: 1.1.1.1 $";
+static char *rcs_id = region_init_CXX"$Revision: 1.66 $";
 #endif /* _KEEP_RCS_ID */
 
 #include "wn.h"			// WN type

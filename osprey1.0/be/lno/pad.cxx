@@ -38,10 +38,10 @@
  * ====================================================================
  *
  * Module: pad.cxx
- * $Revision: 1.1.1.1 $
- * $Date: 2001/09/10 17:47:47 $
- * $Author: morrone $
- * $Source: /cvsroot/open64/open64/osprey1.0/be/lno/pad.cxx,v $
+ * $Revision: 1.30 $
+ * $Date: 2001/03/10 02:31:23 $
+ * $Author: mtibuild $
+ * $Source: /isms/cmplrs.src/osprey1.0/be/lno/RCS/pad.cxx,v $
  *
  *
  * Description:

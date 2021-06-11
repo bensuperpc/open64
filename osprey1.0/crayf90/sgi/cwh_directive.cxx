@@ -37,9 +37,9 @@
  * ====================================================================
  *
  * Module: cwh_directive
- * $Revision: 1.1.1.1 $
- * $Date: 2001/09/10 17:48:50 $
- * $Author: morrone $
+ * $Revision: 1.90 $
+ * $Date: 2001/03/10 03:42:54 $
+ * $Author: mtibuild $
  *
  * Description: contains routines to support directives, converting
  *              from Cray IR to WHIRL. Entry points from

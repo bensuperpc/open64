@@ -38,10 +38,10 @@
  * ====================================================================
  *
  * Module: lgamma.c
- * $Revision: 1.1.1.1 $
- * $Date: 2001/09/10 17:50:21 $
- * $Author: morrone $
- * $Source: /cvsroot/open64/open64/osprey1.0/libm/mips/lgamma.c,v $
+ * $Revision: 1.23 $
+ * $Date: 2001/03/10 08:56:07 $
+ * $Author: mtibuild $
+ * $Source: /isms/cmplrs.src/osprey1.0/libm/mips/RCS/lgamma.c,v $
  *
  * Revision history:
  *  28-May-93 - Original Version
@@ -52,7 +52,7 @@
  * ====================================================================
  */
 
-/* $Header: /cvsroot/open64/open64/osprey1.0/libm/mips/lgamma.c,v 1.1.1.1 2001/09/10 17:50:21 morrone Exp $ */
+/* $Header: /isms/cmplrs.src/osprey1.0/libm/mips/RCS/lgamma.c,v 1.23 2001/03/10 08:56:07 mtibuild Exp $ */
 
 /*
 	C program for floating point log Gamma function

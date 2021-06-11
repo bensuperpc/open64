@@ -40,10 +40,10 @@
  * ====================================================================
  *
  * Module: config.h
- * $Revision: 1.3 $
- * $Date: 2002/10/13 21:35:18 $
- * $Author: douillet $
- * $Source: /cvsroot/open64/open64/osprey1.0/common/com/config.h,v $
+ * $Revision: 1.6 $
+ * $Date: 2002/12/15 10:30:28 $
+ * $Author: wjj $
+ * $Source: /u/merge/src/osprey1.0/common/com/config.h,v $
  *
  * Revision history:
  *  09-Apr-90 - Original Version
@@ -252,7 +252,7 @@
 
 
 #ifdef _KEEP_RCS_ID
-static char *config_rcs_id = "$Source: /cvsroot/open64/open64/osprey1.0/common/com/config.h,v $ $Revision: 1.3 $";
+static char *config_rcs_id = "$Source: /u/merge/src/osprey1.0/common/com/config.h,v $ $Revision: 1.6 $";
 #endif /* _KEEP_RCS_ID */
 
 #include "config_host.h"	/* in TARGET/com */
@@ -544,6 +544,8 @@ extern INT32 OPT_unroll_size;
 extern BOOL OPT_unroll_size_overridden;
 extern BOOL OPT_Lower_Speculate;
 extern BOOL OPT_Lower_Treeheight;
+extern BOOL OPT_Lower_To_Memlib;
+extern INT32 OPT_Threshold_To_Memlib; 
 extern BOOL OPT_Inline_Divide;
 extern BOOL OPT_Space;
 extern INT32 Olimit;	/* stop optimization or use regions at this limit */

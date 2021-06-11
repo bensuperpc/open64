@@ -37,10 +37,10 @@
  * ====================================================================
  *
  * Module: oputil.c
- * $Revision: 1.3 $
- * $Date: 2002/10/13 21:35:15 $
- * $Author: douillet $
- * $Source: /cvsroot/open64/open64/osprey1.0/be/cg/oputil.cxx,v $
+ * $Revision: 1.12 $
+ * $Date: 2003/01/03 03:54:55 $
+ * $Author: lyz $
+ * $Source: /u/merge/src/osprey1.0/be/cg/oputil.cxx,v $
  *
  * Revision history:
  *  12-Oct-89 - Original Version
@@ -85,6 +85,7 @@
 #include "cgprep.h"
 #include "cg_loop.h"
 #include "cgtarget.h"
+#include "targ_sim.h"
 
 #include "wn.h"
 #include "whirl2ops.h"
@@ -876,7 +877,7 @@ void Print_OP_No_SrcLine(const OP *op)
   //#ifdef Ipfec
   if (OP_start_bundle(op)) fprintf( TFile, " }\n{\n");
   //#endif Ipfec
-  fprintf (TFile, "  [%4d] ", Srcpos_To_Line(OP_srcpos(op)));
+  fprintf (TFile, "[%3d] ", OP_map_idx(op));
   if (OP_has_tag(op)) {
 	LABEL_IDX tag = Get_OP_Tag(op);
 	fprintf (TFile, "<tag %s>: ", LABEL_name(tag));
@@ -1048,7 +1049,6 @@ OP_Defs_TN(const OP *op, const struct tn *res)
   return( FALSE );
 }
 
-
 /* ====================================================================
  *
  * OP_Refs_TN
@@ -1072,7 +1072,6 @@ OP_Refs_TN( const OP *op, const struct tn *opnd )
   /* if we made it here, we must not have found it */
   return( FALSE );
 }
-
 
 /* ====================================================================
  *
@@ -1265,7 +1264,8 @@ void OP_Base_Offset_TNs(OP *memop, TN **base_tn, TN **offset_tn)
 BOOL OP_ld_st_unat(OP *op)
 {
     mTOP opcode = OP_code(op);
-    if(opcode == TOP_mov_f_ar || opcode == TOP_mov_t_ar_r)
+    if(opcode == TOP_mov_f_ar || opcode == TOP_mov_t_ar_r  ||
+       opcode == TOP_mov_f_ar_m || opcode == TOP_mov_t_ar_r_m)
     {
         for(INT i=0; i<OP_results(op); i++)
         {
@@ -1282,3 +1282,17 @@ BOOL OP_ld_st_unat(OP *op)
     }
     return FALSE;
 }
+
+BOOL OP_def_return_value(OP* op)
+{
+    for (INT i = OP_results(op) - 1 ; i >= 0 ; i--) {
+        mTN_NUM n = TN_number(OP_result(op,i));
+        if ((n >= First_Int_Preg_Return_Offset && 
+             n <= Last_Int_Preg_Return_Offset)       ||
+            (n >= First_Float_Preg_Return_Offset &&
+             n <= Last_Float_Preg_Return_Offset)) {
+            return TRUE;    
+        }
+    }         
+    return FALSE;
+}        

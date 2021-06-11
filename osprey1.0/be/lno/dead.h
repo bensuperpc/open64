@@ -73,13 +73,13 @@
 
 
 /**
-*** $Source: /cvsroot/open64/open64/osprey1.0/be/lno/dead.h,v $
+*** $Source: /isms/cmplrs.src/osprey1.0/be/lno/RCS/dead.h,v $
 **/
 
 #ifndef DEAD_RCS_ID
 #define DEAD_RCS_ID
 #ifdef _KEEP_RCS_ID
-static char *dead = "$Source: /cvsroot/open64/open64/osprey1.0/be/lno/dead.h,v $ $Revision: 1.1.1.1 $";
+static char *dead = "$Source: /isms/cmplrs.src/osprey1.0/be/lno/RCS/dead.h,v $ $Revision: 1.7 $";
 #endif /* _KEEP_RCS_ID */
 #endif
 

@@ -38,10 +38,10 @@
  * =======================================================================
  *
  *  Module: cg_loop.cxx
- *  $Revision: 1.3 $
- *  $Date: 2002/10/13 21:35:14 $
- *  $Author: douillet $
- *  $Source: /cvsroot/open64/open64/osprey1.0/be/cg/cg_loop.cxx,v $
+ *  $Revision: 1.6 $
+ *  $Date: 2003/01/14 03:08:35 $
+ *  $Author: flv $
+ *  $Source: /u/merge/src/osprey1.0/be/cg/cg_loop.cxx,v $
  *
  *
  * =======================================================================
@@ -4807,8 +4807,10 @@ void CG_LOOP::Determine_SWP_Unroll_Factor()
 	  if (unroll_times < min_unr){
 		  unroll_times = min_unr;
 	  }
-	  if (swp_trace) {
-		fprintf(TFile, "<swp unroll factor> : old heuristic computed(%d) => changeto(%d)\n", computed, unroll_times);
+	  if (swp_trace ){
+                  if (computed != unroll_times) {
+	             fprintf(TFile, "<swp unroll factor> : old heuristic computed(%d) => changeto(%d)\n", computed, unroll_times);
+                }
 	  }
   }
 

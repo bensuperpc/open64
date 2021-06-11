@@ -37,10 +37,10 @@
  * =======================================================================
  *
  *  Module: reg_live.cxx
- *  $Revision: 1.3 $
- *  $Date: 2002/10/13 21:35:15 $
- *  $Author: douillet $
- *  $Source: /cvsroot/open64/open64/osprey1.0/be/cg/reg_live.cxx,v $
+ *  $Revision: 1.5 $
+ *  $Date: 2001/11/14 07:26:26 $
+ *  $Author: lrq $
+ *  $Source: /u/merge/src/osprey1.0/be/cg/reg_live.cxx,v $
  *
  *  Description:
  *  ============

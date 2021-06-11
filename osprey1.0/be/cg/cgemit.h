@@ -1,6 +1,6 @@
 /*
 
-  Copyright (C) 2000, 2001 Silicon Graphics, Inc.  All Rights Reserved.
+  Copyright (C) 2000 Silicon Graphics, Inc.  All Rights Reserved.
 
   This program is free software; you can redistribute it and/or modify it
   under the terms of version 2 of the GNU General Public License as
@@ -38,7 +38,7 @@
 #define cgemit_INCLUDED
 
 #ifdef _KEEP_RCS_ID
-static char *cgemit_rcs_id = "$Source: /cvsroot/open64/open64/osprey1.0/be/cg/cgemit.h,v $ $Revision: 1.1.1.1 $";
+static char *cgemit_rcs_id = "$Source: /u/merge/src/osprey1.0/be/cg/cgemit.h,v $ $Revision: 1.1.1.1 $";
 #endif /* _KEEP_RCS_ID */
 
 #include "dwarf_DST_mem.h"

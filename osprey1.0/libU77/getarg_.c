@@ -27,7 +27,7 @@
 
 */
 
-/* $Header: /cvsroot/open64/open64/osprey1.0/libU77/getarg_.c,v 1.1.1.1 2001/09/10 17:50:04 morrone Exp $ */
+/* $Header: /isms/cmplrs.src/osprey1.0/libU77/RCS/getarg_.c,v 8.7 2001/02/20 23:39:44 mtibuild Exp $ */
  /*
  * subroutine getarg(k, c)
  * returns the kth unix command argument in fortran character

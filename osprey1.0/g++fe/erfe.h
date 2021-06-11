@@ -37,10 +37,10 @@
  * ====================================================================
  *
  * Module: erfe.h
- * $Revision: 1.1.1.1 $
- * $Date: 2001/09/10 17:48:54 $
- * $Author: morrone $
- * $Source: /cvsroot/open64/open64/osprey1.0/g++fe/erfe.h,v $
+ * $Revision: 1.3 $
+ * $Date: 2001/03/10 03:53:05 $
+ * $Author: mtibuild $
+ * $Source: /isms/cmplrs.src/osprey1.0/g++fe/RCS/erfe.h,v $
  *
  * Revision history:
  *  12-Sep-89 - Original Version
@@ -60,7 +60,7 @@
 #define erfe_INCLUDED
 
 #ifdef _KEEP_RCS_ID
-static char *erfe_rcs_id = "$Source: /cvsroot/open64/open64/osprey1.0/g++fe/erfe.h,v $ $Revision: 1.1.1.1 $";
+static char *erfe_rcs_id = "$Source: /isms/cmplrs.src/osprey1.0/g++fe/RCS/erfe.h,v $ $Revision: 1.3 $";
 #endif /* _KEEP_RCS_ID */
 
 #include "errors.h"	/* Always needed */

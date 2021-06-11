@@ -27,7 +27,7 @@
 
 */
 
-/* $Header: /cvsroot/open64/open64/osprey1.0/libU77/getlog_.c,v 1.1.1.1 2001/09/10 17:50:04 morrone Exp $ */
+/* $Header: /isms/cmplrs.src/osprey1.0/libU77/RCS/getlog_.c,v 8.4 2001/02/20 23:39:49 mtibuild Exp $ */
 /*
  *
  * get login name of user

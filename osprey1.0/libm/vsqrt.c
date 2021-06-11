@@ -38,10 +38,10 @@
  * ====================================================================
  *
  * Module: vsqrt.c
- * $Revision: 1.1.1.1 $
- * $Date: 2001/09/10 17:50:21 $
- * $Author: morrone $
- * $Source: /cvsroot/open64/open64/osprey1.0/libm/vsqrt.c,v $
+ * $Revision: 1.12 $
+ * $Date: 2001/03/10 09:02:11 $
+ * $Author: mtibuild $
+ * $Source: /isms/cmplrs.src/osprey1.0/libm/RCS/vsqrt.c,v $
  *
  * Revision history:
  *  10-Feb-95 - Original Version
@@ -52,7 +52,7 @@
  * ====================================================================
  */
 
-static char *rcs_id = "$Source: /cvsroot/open64/open64/osprey1.0/libm/vsqrt.c,v $ $Revision: 1.1.1.1 $";
+static char *rcs_id = "$Source: /isms/cmplrs.src/osprey1.0/libm/RCS/vsqrt.c,v $ $Revision: 1.12 $";
 
 #include "libm.h"
 

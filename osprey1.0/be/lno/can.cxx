@@ -48,10 +48,10 @@
  * ====================================================================
  *
  * Module: can.c  
- * $Revision: 1.1.1.1 $
- * $Date: 2001/09/10 17:47:39 $
- * $Author: morrone $
- * $Source: /cvsroot/open64/open64/osprey1.0/be/lno/can.cxx,v $
+ * $Revision: 1.130 $
+ * $Date: 2001/03/10 02:21:44 $
+ * $Author: mtibuild $
+ * $Source: /isms/cmplrs.src/osprey1.0/be/lno/RCS/can.cxx,v $
  *
  * Revision history:
  *  11-28-94 - Original Version
@@ -68,7 +68,7 @@
 #pragma hdrstop
 
 static char *source_file = __FILE__;
-static char *rcs_id = "$Source: /cvsroot/open64/open64/osprey1.0/be/lno/can.cxx,v $ $Revision: 1.1.1.1 $";
+static char *rcs_id = "$Source: /isms/cmplrs.src/osprey1.0/be/lno/RCS/can.cxx,v $ $Revision: 1.130 $";
 
 #include "call_info.h"
 #include "lnopt_main.h"

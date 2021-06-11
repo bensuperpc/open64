@@ -48,9 +48,9 @@ extern "C" {
  *
  * Module: errors.h
  * $Revision: 1.2 $
- * $Date: 2002/10/13 21:35:20 $
- * $Author: douillet $
- * $Source: /cvsroot/open64/open64/osprey1.0/common/util/errors.h,v $
+ * $Date: 2002/03/20 09:58:49 $
+ * $Author: llx $
+ * $Source: /u/merge/src/osprey1.0/common/util/errors.h,v $
  *
  * Revision history:
  *  21-Aug-89 - Original Version

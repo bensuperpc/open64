@@ -165,4 +165,4 @@ ar_isqrt64 (AR_IEEE_64 *a,
 
 
 static char USMID [] = "\n%Z%%M%	%I%	%G% %U%\n";
-static char rcsid [] = "$Id: ieee_sqrt.c,v 1.1.1.1 2001/09/10 17:47:14 morrone Exp $";
+static char rcsid [] = "$Id: ieee_sqrt.c,v 2.3 1997/07/22 23:31:31 gbt Exp $";

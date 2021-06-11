@@ -378,4 +378,4 @@ AR_HOST_SINT64 *arg;
 
 
 static char USMID [] = "\n%Z%%M%	%I%	%G% %U%\n";
-static char rcsid [] = "$Id: test_tsieee_sim.c,v 1.1.1.1 2001/09/10 17:47:14 morrone Exp $";
+static char rcsid [] = "$Id: test_tsieee_sim.c,v 2.1 1995/08/16 22:10:05 jk Exp $";

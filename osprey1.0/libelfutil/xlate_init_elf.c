@@ -40,8 +40,8 @@ Given an Elf *, open up an xlate consumer handle
 
 xlate_init_elf.c
 
-$Revision: 1.1.1.1 $
-$Date: 2001/09/10 17:50:12 $
+$Revision: 1.6 $
+$Date: 2001/03/10 05:13:25 $
 
 */
 #include "xlateincl.h"

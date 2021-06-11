@@ -37,10 +37,10 @@
  * ====================================================================
  *
  * Module: config_vho.h
- * $Revision: 1.1.1.1 $
- * $Date: 2001/09/10 17:48:12 $
- * $Author: morrone $
- * $Source: /cvsroot/open64/open64/osprey1.0/common/com/config_vho.h,v $
+ * $Revision: 1.2 $
+ * $Date: 2002/12/29 09:44:49 $
+ * $Author: qzhao2 $
+ * $Source: /u/merge/src/osprey1.0/common/com/config_vho.h,v $
  *
  * Revision history:
  *  05-May-96 - Extracted from be/opt/opt_config.h.
@@ -70,6 +70,7 @@ extern BOOL  VHO_Cselect_Opt;
 extern BOOL  VHO_Iload_Opt;
 extern BOOL  VHO_Istore_Opt;
 extern BOOL  VHO_Call_Opt;
+extern BOOL  VHO_Icall_Devir;
 extern BOOL  VHO_Check_Tree;
 extern BOOL  VHO_Single_Loop_Test;
 extern BOOL  VHO_Use_Do_While;

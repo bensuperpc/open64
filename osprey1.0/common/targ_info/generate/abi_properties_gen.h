@@ -78,10 +78,10 @@
 //
 /////////////////////////////////////
 //
-//  $Revision: 1.1.1.1 $
-//  $Date: 2001/09/10 17:48:23 $
-//  $Author: morrone $
-//  $Source: /cvsroot/open64/open64/osprey1.0/common/targ_info/generate/abi_properties_gen.h,v $
+//  $Revision: 1.7 $
+//  $Date: 2001/03/10 03:22:34 $
+//  $Author: mtibuild $
+//  $Source: /isms/cmplrs.src/osprey1.0/common/targ_info/generate/RCS/abi_properties_gen.h,v $
 
 #include "targ_isa_registers.h"
 

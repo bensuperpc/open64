@@ -34,7 +34,7 @@
 */
 
 
-/* $Header: /cvsroot/open64/open64/osprey1.0/libI77/rewind.c,v 1.1.1.1 2001/09/10 17:50:06 morrone Exp $ */
+/* $Header: /isms/cmplrs.src/osprey1.0/libI77/RCS/rewind.c,v 9.15 2001/03/10 04:53:39 mtibuild Exp $ */
 /*	3.0 SID #	1.2	*/
 #include <cmplrs/fio.h>
 #include <mutex.h>

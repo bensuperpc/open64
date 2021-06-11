@@ -1,7 +1,7 @@
 #!/bin/csh -f
 #
 #
-#  Copyright (C) 2000, 2001 Silicon Graphics, Inc.  All Rights Reserved.
+#  Copyright (C) 2000 Silicon Graphics, Inc.  All Rights Reserved.
 #
 #  This program is free software; you can redistribute it and/or modify it
 #  under the terms of version 2 of the GNU General Public License as
@@ -38,9 +38,9 @@
 ###
 ### Module: gen_tn_list.csh
 ### $Revision: 1.1.1.1 $
-### $Date: 2001/09/10 17:47:23 $
-### $Author: morrone $
-### $Source: /cvsroot/open64/open64/osprey1.0/be/cg/gen_tn_list.csh,v $
+### $Date: 2001/06/25 06:32:37 $
+### $Author: llx $
+### $Source: /u/merge/src/osprey1.0/be/cg/gen_tn_list.csh,v $
 ### Revision history:
 ###   27-Feb-92 - Original version
 ###

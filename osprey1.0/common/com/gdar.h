@@ -43,10 +43,10 @@ extern "C" {
  * ====================================================================
  *
  * Module: gdar.h
- * $Revision: 1.1.1.1 $
- * $Date: 2001/09/10 17:48:14 $
- * $Author: morrone $
- * $Source: /cvsroot/open64/open64/osprey1.0/common/com/gdar.h,v $
+ * $Revision: 1.7 $
+ * $Date: 2001/03/10 03:09:55 $
+ * $Author: mtibuild $
+ * $Source: /isms/cmplrs.src/osprey1.0/common/com/RCS/gdar.h,v $
  *
  * Revision history:
  *  09-Jun-97 - Original Version

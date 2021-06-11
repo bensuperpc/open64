@@ -38,10 +38,10 @@
  * ====================================================================
  *
  * Module: ipo_tlog_utils.cxx
- * $Revision: 1.1.1.1 $
- * $Date: 2001/09/10 17:50:03 $
- * $Author: morrone $
- * $Source: /cvsroot/open64/open64/osprey1.0/ipa/main/optimize/ipo_tlog_utils.cxx,v $
+ * $Revision: 1.10 $
+ * $Date: 2001/03/10 04:17:25 $
+ * $Author: mtibuild $
+ * $Source: /isms/cmplrs.src/osprey1.0/ipa/main/optimize/RCS/ipo_tlog_utils.cxx,v $
  *
  * Description: Defines tlog utilities for IPA, originated from OPT
  *
@@ -56,7 +56,7 @@
 // ====================================================================
 #ifdef _KEEP_RCS_ID
 #define ipo_tlog_utils_CXX	"ipo_tlog_utils.cxx"
-static char *rcs_id = 	ipo_tlog_utils_CXX"$Revision: 1.1.1.1 $";
+static char *rcs_id = 	ipo_tlog_utils_CXX"$Revision: 1.10 $";
 #endif /* _KEEP_RCS_ID *///-*-c++-
 #include <stdarg.h>
 #include <stdio.h>

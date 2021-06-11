@@ -1,4 +1,4 @@
-/* Constructed by gen_x_prop $Revision: 1.1 $
+/* Constructed by gen_x_prop $Revision: 1.7 $
  */
 #ifndef tn_prop_included
 #define tn_prop_included

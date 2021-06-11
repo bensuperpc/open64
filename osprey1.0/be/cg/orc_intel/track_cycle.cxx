@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2000-2002, Intel Corporation
+  Copyright (C) 2000-2003, Intel Corporation
   All rights reserved.
   
   Redistribution and use in source and binary forms, with or without modification,
@@ -29,10 +29,10 @@
 /* ====================================================================
  *
  * Module: track_cycle.cxx
- * $Revision: 1.2 $
- * $Date: 2002/10/13 21:35:17 $
- * $Author: douillet $
- * $Source: /cvsroot/open64/open64/osprey1.0/be/cg/orc_intel/track_cycle.cxx,v $
+ * $Revision: 1.7 $
+ * $Date: 2003/01/15 08:05:47 $
+ * $Author: sxyang $
+ * $Source: /u/merge/src/osprey1.0/be/cg/orc_intel/track_cycle.cxx,v $
  *
  * Description:
  *
@@ -54,6 +54,7 @@
 #include "op_map.h"
 #include "cg_dep_graph.h"
 #include "cgtarget.h"
+#include "vector.h"
 
 #include "ipfec_options.h"
 #include "cggrp_ptn.h"
@@ -81,7 +82,7 @@
 class TRACK_CYCLE {
     INT             _cur_bundle;
     PATTERN_TYPE    _ptn;
-    mBOOL           _occupied[ip_invalid];
+    vector <mBOOL>  _occupied;
     INT             _split;
     const DISPERSAL_TARG  *_ports;
 
@@ -92,8 +93,10 @@ class TRACK_CYCLE {
 	_ptn.end_in_bundle = FALSE;
 	for (int i=0; i<ISA_MAX_ISSUE_BUNDLES; i++)
 	    _ptn.bundle[i] = ISA_MAX_BUNDLES;
+
+        _occupied.clear();
 	for (int j=0; j<ip_invalid; j++)
-	    _occupied[j] = FALSE;
+	    _occupied.push_back(FALSE);
 	_ports = NULL;
     }
 public:
@@ -132,7 +135,7 @@ INT TRACK_CYCLE::Split(INT template_index, UINT stop_mask, BOOL &extra_split)
     Next_Bundle(template_index);
 
     for (INT slot=0; slot<ISA_MAX_SLOTS; slot++){
-        enum ISSUE_PORT issue_port = _ports->Port(_cur_bundle, slot);
+        ISSUE_PORT issue_port = _ports->Port(_cur_bundle, slot);
 	if ((_occupied[issue_port])||(issue_port == ip_invalid)){
 	    Next_Cycle();
 	    Next_Bundle(template_index); // This bundle not finished

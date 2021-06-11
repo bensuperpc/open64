@@ -35,7 +35,7 @@
 
 
 static char *source_file = __FILE__;
-static char *rcs_id = "$Source: /cvsroot/open64/open64/osprey1.0/common/com/dwarf_DST.cxx,v $ $Revision: 1.1.1.1 $";
+static char *rcs_id = "$Source: /isms/cmplrs.src/osprey1.0/common/com/RCS/dwarf_DST.cxx,v $ $Revision: 1.12 $";
 
 #include "dwarf_DST.h"
 #include "errors.h"         /* in ../common/util */

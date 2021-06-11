@@ -37,10 +37,10 @@
 /* ====================================================================
  *
  * Module: DaVinci.h
- * $Revision: 1.3 $
- * $Date: 2002/10/13 21:35:17 $
- * $Author: douillet $
- * $Source: /cvsroot/open64/open64/osprey1.0/be/com/DaVinci.h,v $
+ * $Revision: 1.1.1.1 $
+ * $Date: 2001/06/25 06:32:37 $
+ * $Author: llx $
+ * $Source: /u/merge/src/osprey1.0/be/com/DaVinci.h,v $
  *
  * Description:
  *	Interface to daVinci.  The DaVinci class, along with its

@@ -37,10 +37,10 @@
  * ====================================================================
  *
  * Module: language.h
- * $Revision: 1.1.1.1 $
- * $Date: 2001/09/10 17:48:17 $
- * $Author: morrone $
- * $Source: /cvsroot/open64/open64/osprey1.0/common/com/language.h,v $
+ * $Revision: 1.4 $
+ * $Date: 2001/03/10 03:13:52 $
+ * $Author: mtibuild $
+ * $Source: /isms/cmplrs.src/osprey1.0/common/com/RCS/language.h,v $
  *
  * Revision history:
  *  26-Feb-96 - Original Version (extracted from config.h)
@@ -59,7 +59,7 @@
 #define language_INCLUDED
 
 #ifdef _KEEP_RCS_ID
-static char *language_rcs_id = "$Source: /cvsroot/open64/open64/osprey1.0/common/com/language.h,v $ $Revision: 1.1.1.1 $";
+static char *language_rcs_id = "$Source: /isms/cmplrs.src/osprey1.0/common/com/RCS/language.h,v $ $Revision: 1.4 $";
 #endif /* _KEEP_RCS_ID */
 
 #ifdef __cplusplus

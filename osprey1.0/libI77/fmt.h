@@ -34,7 +34,7 @@
 */
 
 
-/* $Header: /cvsroot/open64/open64/osprey1.0/libI77/fmt.h,v 1.1.1.1 2001/09/10 17:50:05 morrone Exp $ */
+/* $Header: /isms/cmplrs.src/osprey1.0/libI77/RCS/fmt.h,v 9.19 2001/03/10 04:50:30 mtibuild Exp $ */
 /*	3.0 SID #	1.2	*/
 #ifndef FMT_INCLUDED
 #define FMT_INCLUDED

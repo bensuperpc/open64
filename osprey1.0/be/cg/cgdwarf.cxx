@@ -37,9 +37,9 @@
  * ====================================================================
  * Module: cgdwarf.c
  * $Revision: 1.3 $
- * $Date: 2002/10/13 21:35:15 $
- * $Author: douillet $
- * $Source: /cvsroot/open64/open64/osprey1.0/be/cg/cgdwarf.cxx,v $
+ * $Date: 2002/03/22 07:03:44 $
+ * $Author: llx $
+ * $Source: /u/merge/src/osprey1.0/be/cg/cgdwarf.cxx,v $
  *
  * Description:
  *

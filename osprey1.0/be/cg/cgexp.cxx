@@ -37,10 +37,10 @@
  * ====================================================================
  *
  * Module: cgexp.cxx
- * $Revision: 1.3 $
- * $Date: 2002/10/13 21:35:15 $
- * $Author: douillet $
- * $Source: /cvsroot/open64/open64/osprey1.0/be/cg/cgexp.cxx,v $
+ * $Revision: 1.4 $
+ * $Date: 2002/07/09 12:43:23 $
+ * $Author: qzhao2 $
+ * $Source: /u/merge/src/osprey1.0/be/cg/cgexp.cxx,v $
  *
  * History:  extracted target-independent parts from expand.cxx
  *
@@ -161,23 +161,25 @@ Expand_OP (OPCODE opcode, TN *result, TN *op1, TN *op2, TN *op3, VARIANT variant
 	Expand_Abs (result, op1, rtype, ops);
 	break;
   case OPR_MPY:
+  case OPR_MPYU2:
+  case OPR_MPYI2:
 	if (MTYPE_is_float(rtype))
 		Expand_Flop (opcode, result, op1, op2, op3, ops);
 	else
-		Expand_Multiply (result, op1, op2, rtype, ops);
+		Expand_Multiply (result, op1, op2, rtype, ops, opcode);
 	break;
   case OPR_HIGHMPY:
 	Expand_High_Multiply (result, op1, op2, rtype, ops);
 	break;
   case OPR_REM:
-	Expand_Rem (result, op1, op2, rtype, ops);
+	Expand_Rem (result, op1, op2, rtype, ops, opcode);
 	break;
   case OPR_MOD:
 	if (MTYPE_is_signed(rtype))
-		Expand_Mod (result, op1, op2, rtype, ops);
+		Expand_Mod (result, op1, op2, rtype, ops, opcode);
 	else
 		// unsigned MOD acts like REM
-		Expand_Rem (result, op1, op2, rtype, ops);
+		Expand_Rem (result, op1, op2, rtype, ops, opcode);
 	break;
   case OPR_DIV:
 	if (MTYPE_is_float(rtype))
@@ -186,7 +188,7 @@ Expand_OP (OPCODE opcode, TN *result, TN *op1, TN *op2, TN *op3, VARIANT variant
 		Expand_Divide (result, op1, op2, rtype, ops);
 	break;
   case OPR_DIVREM:
-	Expand_DivRem(result, op1, op2, op3, rtype, ops);
+	Expand_DivRem(result, op1, op2, op3, rtype, ops, opcode);
 	break;
   case OPR_SQRT:
 	Expand_Sqrt (result, op1, rtype, ops);

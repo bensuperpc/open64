@@ -295,7 +295,7 @@
 #define soe_INCLUDED "soe.h"
 
 #ifdef _KEEP_RCS_ID
-static char *soe_rcs_id = soe_INCLUDED "$Revision: 1.1.1.1 $";
+static char *soe_rcs_id = soe_INCLUDED "$Revision: 1.30 $";
 #endif /* _KEEP_RCS_ID */
 
 #ifndef _defs_INCLUDED

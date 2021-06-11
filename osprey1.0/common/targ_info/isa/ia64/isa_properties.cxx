@@ -46,10 +46,10 @@
 // Within each ISA_PROPERTY instructions are listed in alphabetical order and
 // as shown in the ISA manual
 /////////////////////////////////////
-//  $Revision: 1.1.1.1 $
-//  $Date: 2001/09/10 17:48:24 $
-//  $Author: morrone $
-//  $Source: /cvsroot/open64/open64/osprey1.0/common/targ_info/isa/ia64/isa_properties.cxx,v $
+//  $Revision: 1.46 $
+//  $Date: 2001/03/10 01:16:51 $
+//  $Author: mtibuild $
+//  $Source: /osprey.src/osprey1.0/common/targ_info/isa/ia64/RCS/isa_properties.cxx,v $
 
 
 #include <stddef.h>

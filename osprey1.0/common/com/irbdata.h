@@ -40,10 +40,10 @@
 
 /* ====================================================================
  * Module: irbdata.h
- * $Revision: 1.1.1.1 $
- * $Date: 2001/09/10 17:48:17 $
- * $Author: morrone $
- * $Source: /cvsroot/open64/open64/osprey1.0/common/com/irbdata.h,v $
+ * $Revision: 1.59 $
+ * $Date: 2001/03/10 03:13:41 $
+ * $Author: mtibuild $
+ * $Source: /isms/cmplrs.src/osprey1.0/common/com/RCS/irbdata.h,v $
  *
  * Revision history:
  *  21-Mar-93 - Original Version

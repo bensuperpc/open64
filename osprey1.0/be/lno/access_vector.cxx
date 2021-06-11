@@ -39,9 +39,9 @@
 // ====================================================================
 //
 // Module: access_vector.cxx
-// $Revision: 1.1.1.1 $
-// $Date: 2001/09/10 17:47:37 $
-// $Author: morrone $
+// $Revision: 1.4 $
+// $Date: 2002/12/27 03:25:50 $
+// $Author: lhb $
 //
 // Revision history:
 //  dd-mmm-94 - Original Version
@@ -2063,6 +2063,10 @@ void ACCESS_VECTOR::Add_Sum(WN *wn, INT64 coeff, DOLOOP_STACK *stack,
   } else if (WN_operator(wn) == OPR_PAREN) {
     Add_Sum(WN_kid(wn,0),coeff,stack,allow_nonlin);
   } else if (WN_opcode(wn) == OPC_I8I4CVT) {
+    Add_Sum(WN_kid(wn,0),coeff,stack,allow_nonlin);
+  } else if (Allow_wrap_around_opt &&
+              (WN_operator(wn) == OPR_CVT || 
+               WN_operator(wn) == OPR_CVTL) ) {
     Add_Sum(WN_kid(wn,0),coeff,stack,allow_nonlin);
   } else {
     Too_Messy = TRUE;

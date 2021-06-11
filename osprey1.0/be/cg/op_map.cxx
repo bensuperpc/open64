@@ -37,10 +37,10 @@
  * =======================================================================
  *
  *  Module: op_map.c
- *  $Revision: 1.2 $
- *  $Date: 2002/10/13 21:35:15 $
- *  $Author: douillet $
- *  $Source: /cvsroot/open64/open64/osprey1.0/be/cg/op_map.cxx,v $
+ *  $Revision: 1.3 $
+ *  $Date: 2002/09/23 01:28:59 $
+ *  $Author: wjj $
+ *  $Source: /u/merge/src/osprey1.0/be/cg/op_map.cxx,v $
  *
  *  Revision comments:
  *
@@ -62,7 +62,7 @@
 
 #ifdef _KEEP_RCS_ID
 static const char *source_file = __FILE__;
-static const char *rcs_id = "$Source: /cvsroot/open64/open64/osprey1.0/be/cg/op_map.cxx,v $ $Revision: 1.2 $";
+static const char *rcs_id = "$Source: /u/merge/src/osprey1.0/be/cg/op_map.cxx,v $ $Revision: 1.3 $";
 #endif /* _KEEP_RCS_ID */
 
 #include "defs.h"
@@ -441,6 +441,10 @@ void OP_MAP_Delete(OP_MAP map)
   free_maps = map;
 }
 
+BOOL OP_MAP_Is_Delete(OP_MAP map)
+{
+   return map->kind == _DELETED;
+}
 
 void OP_MAP_Set(OP_MAP map, OP *op, void *value)
 {

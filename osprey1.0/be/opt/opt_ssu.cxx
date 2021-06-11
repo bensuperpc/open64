@@ -3,9 +3,9 @@
 //
 // Module: opt_ssu.cxx
 // $Revision: 1.2 $
-// $Date: 2002/10/13 21:35:18 $
-// $Author: douillet $
-// $Source: /cvsroot/open64/open64/osprey1.0/be/opt/opt_ssu.cxx,v $
+// $Date: 2002/05/21 07:22:57 $
+// $Author: lfei $
+// $Source: /u/merge/src/osprey1.0/be/opt/opt_ssu.cxx,v $
 //
 // Revision history:
 //  10-DEC-96 ptu - Initial Version

@@ -46,10 +46,10 @@ extern "C" {
  * ====================================================================
  *
  * Module: srcpos.h
- * $Revision: 1.1.1.1 $
- * $Date: 2001/09/10 17:48:18 $
- * $Author: morrone $
- * $Source: /cvsroot/open64/open64/osprey1.0/common/com/srcpos.h,v $
+ * $Revision: 1.9 $
+ * $Date: 2001/03/10 03:15:35 $
+ * $Author: mtibuild $
+ * $Source: /isms/cmplrs.src/osprey1.0/common/com/RCS/srcpos.h,v $
  *
  * Description:
  *

@@ -3,10 +3,10 @@
 // ====================================================================
 //
 // Module: profile_interface.h
-// $Revision: 1.1.1.1 $
-// $Date: 2001/09/10 17:50:05 $
-// $Author: morrone $
-// $Source: /cvsroot/open64/open64/osprey1.0/instrumentation/libinstr/profile_interface.h,v $
+// $Revision: 1.2 $
+// $Date: 2002/12/29 09:44:52 $
+// $Author: qzhao2 $
+// $Source: /u/merge/src/osprey1.0/instrumentation/libinstr/profile_interface.h,v $
 //
 // ====================================================================
 //
@@ -77,7 +77,7 @@ extern void __profile_init(char *output_filename, int phase_num,
 // PU level initializations
 
 extern void * __profile_pu_init(char *file_name, char* pu_name,
-				long current_pc, INT32 checksum);
+				long current_pc, INT32 pusize, INT32 checksum);
 
 
 // Profile routines for invokations
@@ -130,6 +130,10 @@ extern void __profile_call_init(void *pu_handle, int num_calls);
 extern void __profile_call_entry(void *pu_handle, int call_id);
 extern void __profile_call_exit(void *pu_handle, int call_id);
 
+//Profile routines for icalls
+
+extern void __profile_icall_init(void *pu_handle, int num_icalls);
+extern void __profile_icall(void * pu_handle, int icall_id, void * called_fun_address);
 
 // PU level cleanup 
 

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2000-2002, Intel Corporation
+  Copyright (C) 2000-2003, Intel Corporation
   All rights reserved.
   
   Redistribution and use in source and binary forms, with or without modification,
@@ -30,8 +30,8 @@
 //
 //  Module : ekapi_properties.cxx
 //  $Date  : $
-//  $Author: douillet $
-//  $Source: /cvsroot/open64/open64/osprey1.0/common/ipfec_targ_info/access/ekapi_properties.cxx,v $
+//  $Author: sxyang $
+//  $Source: /u/merge/src/osprey1.0/common/ipfec_targ_info/access/ekapi_properties.cxx,v $
 //
 //  Description:
 //  ============

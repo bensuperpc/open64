@@ -34,7 +34,7 @@
 */
 
 
-/* $Header: /cvsroot/open64/open64/osprey1.0/libF77/d_dim.c,v 1.1.1.1 2001/09/10 17:50:03 morrone Exp $ */
+/* $Header: /isms/cmplrs.src/osprey1.0/libF77/RCS/d_dim.c,v 8.5 2001/03/10 04:32:33 mtibuild Exp $ */
 
 double
 d_dim (double *a, double *b)

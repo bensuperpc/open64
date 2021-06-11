@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2000-2002, Intel Corporation
+  Copyright (C) 2000-2003, Intel Corporation
   All rights reserved.
   
   Redistribution and use in source and binary forms, with or without modification,
@@ -30,9 +30,9 @@
 //*********************************************************************
 //
 // Module: gen_base.cxx
-// $Date: 2002/10/13 21:35:19 $
-// $Author: douillet $
-// $Source: /cvsroot/open64/open64/osprey1.0/common/ipfec_targ_info/gen/gen_base.cxx,v $
+// $Date: 2003/01/15 08:06:29 $
+// $Author: sxyang $
+// $Source: /u/merge/src/osprey1.0/common/ipfec_targ_info/gen/gen_base.cxx,v $
 //
 // Description:
 //   Public utilities on generation of machine description files.
@@ -74,13 +74,15 @@ typedef unsigned char mBOOL;\n\
 
 void Emit_Header (FILE *hfile,
 		  const char *name,
-		  const char * interface_desc,
-                  bool cplusplus = false)
+		  const char * const *interface_desc,
+                  bool cplusplus)
 {
   int i;
 
-  fprintf(hfile, "%s\n", interface_desc);
-
+  for (i=0; interface_desc[i]!=NULL; i++)
+  {      
+      fprintf(hfile, "%s\n", interface_desc[i]);
+  }
   fprintf(hfile, "\n#ifndef %s_INCLUDED\n", name);
   fprintf(hfile, "#define %s_INCLUDED\n", name);
 
@@ -91,7 +93,7 @@ void Emit_Header (FILE *hfile,
   fprintf(hfile, type_defs);
 }//end of emit header;
 
-void Emit_Tailer(FILE *hfile, bool cplusplus = false)
+void Emit_Tailer(FILE *hfile, bool cplusplus)
 {
   if (cplusplus == false) {
   fprintf(hfile, "\n\
@@ -103,7 +105,7 @@ fprintf(hfile, "#endif\n");
 }
 
 void Init_Module_Files(GEN_MODE mode, const char * module_name,
-         FILE **c_file, bool cplusplus = false)
+         FILE **c_file, bool cplusplus)
 {
     if (mode == GEN_MODE_FILE)
     {
@@ -130,7 +132,7 @@ void Init_Module_Files(GEN_MODE mode, const char * module_name,
 
 void Init_Module_Files(GEN_MODE mode, const char * module_name,
          FILE **c_file, FILE **h_file, FILE **export_file,
-         bool cplusplus = false)
+         bool cplusplus)
 {
   if (mode == GEN_MODE_FILE)
   {

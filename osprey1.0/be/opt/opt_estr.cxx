@@ -3,10 +3,10 @@
 // ====================================================================
 //
 // Module: opt_estr.cxx
-// $Revision: 1.1.1.1 $
-// $Date: 2001/09/10 17:47:59 $
-// $Author: morrone $
-// $Source: /cvsroot/open64/open64/osprey1.0/be/opt/opt_estr.cxx,v $
+// $Revision: 1.2 $
+// $Date: 2003/01/13 03:46:12 $
+// $Author: cwu $
+// $Source: /u/merge/src/osprey1.0/be/opt/opt_estr.cxx,v $
 //
 // ====================================================================
 //
@@ -52,7 +52,7 @@
 
 #define opt_estr_CXX	"opt_estr.cxx"
 #ifdef _KEEP_RCS_ID
-static char *rcs_id = opt_estr_CXX"$Revision: 1.1.1.1 $";
+static char *rcs_id = opt_estr_CXX"$Revision: 1.2 $";
 #endif /* _KEEP_RCS_ID */
 
 #include "defs.h"
@@ -274,7 +274,7 @@ STR_RED::Matches_lhs( const CODEREP *lhs, const CODEREP *rhs ) const
 // case, and less tolerant in the latter.
 //======================================================================
 
-#define INJURY_USE_FREQ_CUTOFF_RATIO 2.0
+#define INJURY_USE_FREQ_CUTOFF_RATIO 2.5
 
 BOOL
 STR_RED::Update_happens_rarely_enough(      BB_NODE *update_bb,

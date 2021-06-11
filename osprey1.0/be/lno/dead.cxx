@@ -83,7 +83,7 @@
 #pragma hdrstop
 
 static char *source_file = __FILE__;
-static char *rcs_id = "$Source: /cvsroot/open64/open64/osprey1.0/be/lno/dead.cxx,v $ $Revision: 1.1.1.1 $";
+static char *rcs_id = "$Source: /isms/cmplrs.src/osprey1.0/be/lno/RCS/dead.cxx,v $ $Revision: 1.16 $";
 
 #include <sys/types.h>
 #include "lnopt_main.h"

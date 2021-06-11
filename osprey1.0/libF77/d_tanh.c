@@ -34,7 +34,7 @@
 */
 
 
-/* $Header: /cvsroot/open64/open64/osprey1.0/libF77/d_tanh.c,v 1.1.1.1 2001/09/10 17:50:03 morrone Exp $ */
+/* $Header: /isms/cmplrs.src/osprey1.0/libF77/RCS/d_tanh.c,v 8.6 2001/03/10 04:34:17 mtibuild Exp $ */
 
 #include <math.h>
 #include "moremath.h"

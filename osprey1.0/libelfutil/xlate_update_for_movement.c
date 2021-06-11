@@ -37,7 +37,7 @@
 /*
    fixxlate.c
 
-   $Revision: 1.1.1.1 $
+   $Revision: 1.7 $
 
    xlate section fixer.
    

@@ -36,10 +36,10 @@
  * ====================================================================
  *
  * Module: process.c
- * $Revision: 1.1.1.1 $
- * $Date: 2001/09/10 17:48:53 $
- * $Author: morrone $
- * $Source: /cvsroot/open64/open64/osprey1.0/fake_ld/process.c,v $
+ * $Revision: 1.4 $
+ * $Date: 2003/01/21 05:25:04 $
+ * $Author: jczhang $
+ * $Source: /u/merge/src/osprey1.0/fake_ld/process.c,v $
  *
  * Revision history:
  *  23-Jan-96 - Use fixed name for IPA kept temporary directory.
@@ -468,6 +468,33 @@ create_unique_file (string path, char suffix)
 
 } /* create_unique_file */
 
+
+string
+create_tmp_file (string filename)
+{
+    static string tmppath = "/tmp/";
+    static string tmpsuffix = "XXXXXX";
+    string tmp_file_name;
+    string ret_file_name;
+    FILE *file;
+
+    tmp_file_name = (string)MALLOC(strlen(tmppath) + strlen(filename) + strlen(tmpsuffix) + 1);
+    strcpy(tmp_file_name, tmppath);
+    strcat(tmp_file_name, filename);
+    strcat(tmp_file_name, tmpsuffix);
+
+    tmp_file_name = mktemp(tmp_file_name);
+    if ((file = fopen(tmp_file_name, "w+")) == NULL) {
+      perror(tmp_file_name);
+      exit(1);
+    }
+    fclose(file);
+
+    ret_file_name = ipa_copy_of(tmp_file_name);
+    FREE (tmp_file_name);
+
+    return ret_file_name;
+}
 
 	/*******************************************************
 		Function: get_command_line

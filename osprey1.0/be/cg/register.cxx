@@ -37,10 +37,10 @@
  * ====================================================================
  *
  * Module: register.c
- * $Revision: 1.3 $
- * $Date: 2002/10/13 21:35:15 $
- * $Author: douillet $
- * $Source: /cvsroot/open64/open64/osprey1.0/be/cg/register.cxx,v $
+ * $Revision: 1.2 $
+ * $Date: 2001/11/07 09:16:51 $
+ * $Author: lrq $
+ * $Source: /u/merge/src/osprey1.0/be/cg/register.cxx,v $
  *
  * Revision history:
  *  17-May-93 - Original Version

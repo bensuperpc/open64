@@ -37,10 +37,10 @@
  * ====================================================================
  *
  * Module: erauxdesc.h 
- * $Revision: 1.1.1.1 $
- * $Date: 2001/09/10 17:48:54 $
- * $Author: morrone $
- * $Source: /cvsroot/open64/open64/osprey1.0/g++fe/erauxdesc.h,v $
+ * $Revision: 1.3 $
+ * $Date: 2001/03/10 03:52:55 $
+ * $Author: mtibuild $
+ * $Source: /isms/cmplrs.src/osprey1.0/g++fe/RCS/erauxdesc.h,v $
  *
  * Revision history:
  *  19-Mar-92 - Original Version
@@ -59,7 +59,7 @@
 #ifndef erauxdesc_INCLUDED
 #define erauxdesc_INCLUDED
 
-static char *eraux_desc_rcs_id = "$Source: /cvsroot/open64/open64/osprey1.0/g++fe/erauxdesc.h,v $ $Revision: 1.1.1.1 $";
+static char *eraux_desc_rcs_id = "$Source: /isms/cmplrs.src/osprey1.0/g++fe/RCS/erauxdesc.h,v $ $Revision: 1.3 $";
 
 #include "erfe.desc"		/* Front end error codes */
 

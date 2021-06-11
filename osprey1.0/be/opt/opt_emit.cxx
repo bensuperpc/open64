@@ -4,9 +4,9 @@
 //
 // Module: opt_emit.cxx
 // $Revision: 1.2 $
-// $Date: 2002/10/13 21:35:18 $
-// $Author: douillet $
-// $Source: /cvsroot/open64/open64/osprey1.0/be/opt/opt_emit.cxx,v $
+// $Date: 2002/03/19 08:32:46 $
+// $Author: ltuo $
+// $Source: /u/merge/src/osprey1.0/be/opt/opt_emit.cxx,v $
 //
 // Revision history:
 //  21-DEC-94 shin - Original Version

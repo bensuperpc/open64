@@ -3,10 +3,10 @@
 // ====================================================================
 //
 // Module: opt_efinalize.cxx
-// $Revision: 1.1.1.1 $
-// $Date: 2001/09/10 17:47:58 $
-// $Author: morrone $
-// $Source: /cvsroot/open64/open64/osprey1.0/be/opt/opt_efinalize.cxx,v $
+// $Revision: 1.43 $
+// $Date: 2001/03/10 02:41:19 $
+// $Author: mtibuild $
+// $Source: /isms/cmplrs.src/osprey1.0/be/opt/RCS/opt_efinalize.cxx,v $
 //
 // ====================================================================
 //

@@ -1275,4 +1275,4 @@ AR_poppar (AR_DATA *res, const AR_TYPE *resulttype,
 }
 
 static char USMID [] = "\n%Z%%M%	%I%	%G% %U%\n";
-static char rcsid [] = "$Id: bits.c,v 1.1.1.1 2001/09/10 17:47:13 morrone Exp $";
+static char rcsid [] = "$Id: bits.c,v 2.5 1997/06/02 19:14:13 gbt Exp $";

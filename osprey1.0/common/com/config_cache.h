@@ -39,10 +39,10 @@
  * ====================================================================
  *
  * Module: config_cache.h
- * $Revision: 1.1.1.1 $
- * $Date: 2001/09/10 17:48:11 $
- * $Author: morrone $
- * $Source: /cvsroot/open64/open64/osprey1.0/common/com/config_cache.h,v $
+ * $Revision: 1.5 $
+ * $Date: 2001/03/10 03:05:31 $
+ * $Author: mtibuild $
+ * $Source: /isms/cmplrs.src/osprey1.0/common/com/RCS/config_cache.h,v $
  *
  * Revision history:
  *  14-Nov-96 - Original Version, duplicated from cache_parameters.h.
@@ -67,7 +67,7 @@
 
 #ifdef _KEEP_RCS_ID
 /*REFERENCED*/
-static char *config_cache_rcs_id = "$Source: /cvsroot/open64/open64/osprey1.0/common/com/config_cache.h,v $ $Revision: 1.1.1.1 $";
+static char *config_cache_rcs_id = "$Source: /isms/cmplrs.src/osprey1.0/common/com/RCS/config_cache.h,v $ $Revision: 1.5 $";
 #endif /* _KEEP_RCS_ID */
 
 /*

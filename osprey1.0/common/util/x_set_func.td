@@ -37,10 +37,10 @@
  * ====================================================================
  *
  * Module: x_set_function.td
- * $Revision: 1.1.1.1 $
- * $Date: 2001/09/10 17:48:27 $
- * $Author: morrone $
- * $Source: /cvsroot/open64/open64/osprey1.0/common/util/x_set_func.td,v $
+ * $Revision: 1.3 $
+ * $Date: 2001/03/10 03:31:32 $
+ * $Author: mtibuild $
+ * $Source: /isms/cmplrs.src/osprey1.0/common/util/RCS/x_set_func.td,v $
  *
  * Revision history:
  *  05-05-93 - Original Version

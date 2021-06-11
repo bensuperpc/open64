@@ -35,7 +35,7 @@
 
 
 
-/* $Header: /cvsroot/open64/open64/osprey1.0/libI77/ltostr.c,v 1.1.1.1 2001/09/10 17:50:05 morrone Exp $ */
+/* $Header: /isms/cmplrs.src/osprey1.0/libI77/RCS/ltostr.c,v 1.5 2001/03/10 04:52:22 mtibuild Exp $ */
 /*
  *	ltostr -- convert int to decimal string
  *

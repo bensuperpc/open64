@@ -4,9 +4,9 @@
 //
 // Module: opt_wn.cxx
 // $Revision: 1.2 $
-// $Date: 2002/10/13 21:35:18 $
-// $Author: douillet $
-// $Source: /cvsroot/open64/open64/osprey1.0/be/opt/opt_wn.cxx,v $
+// $Date: 2002/05/21 07:26:00 $
+// $Author: lfei $
+// $Source: /u/merge/src/osprey1.0/be/opt/opt_wn.cxx,v $
 //
 // Revision history:
 //  12-SEP-94 shin - Original Version

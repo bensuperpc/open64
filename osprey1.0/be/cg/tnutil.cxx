@@ -37,10 +37,10 @@
  * ====================================================================
  *
  * Module: tnutil.c
- * $Revision: 1.3 $
- * $Date: 2002/10/13 21:35:15 $
- * $Author: douillet $
- * $Source: /cvsroot/open64/open64/osprey1.0/be/cg/tnutil.cxx,v $
+ * $Revision: 1.4 $
+ * $Date: 2001/11/19 08:30:42 $
+ * $Author: cwu $
+ * $Source: /u/merge/src/osprey1.0/be/cg/tnutil.cxx,v $
  *
  * Description:
  *

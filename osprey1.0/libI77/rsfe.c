@@ -35,7 +35,7 @@
 
 
 
-/* $Header: /cvsroot/open64/open64/osprey1.0/libI77/rsfe.c,v 1.1.1.1 2001/09/10 17:50:06 morrone Exp $ */
+/* $Header: /isms/cmplrs.src/osprey1.0/libI77/RCS/rsfe.c,v 9.23 2001/03/10 04:53:49 mtibuild Exp $ */
 
 #include <stdio.h>
 #include <cmplrs/fio.h>

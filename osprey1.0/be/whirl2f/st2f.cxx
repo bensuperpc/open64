@@ -37,10 +37,10 @@
  * ====================================================================
  *
  * Module: st2f.c
- * $Revision: 1.1.1.1 $
- * $Date: 2001/09/10 17:48:09 $
- * $Author: morrone $
- * $Source: /cvsroot/open64/open64/osprey1.0/be/whirl2f/st2f.cxx,v $
+ * $Revision: 1.16 $
+ * $Date: 2001/03/10 02:58:25 $
+ * $Author: mtibuild $
+ * $Source: /isms/cmplrs.src/osprey1.0/be/whirl2f/RCS/st2f.cxx,v $
  *
  * Revision history:
  *  07-May-95 - Original Version
@@ -86,7 +86,7 @@
 
 #ifdef _KEEP_RCS_ID
 /*REFERENCED*/
-static char *rcs_id = "$Source: /cvsroot/open64/open64/osprey1.0/be/whirl2f/st2f.cxx,v $ $Revision: 1.1.1.1 $";
+static char *rcs_id = "$Source: /isms/cmplrs.src/osprey1.0/be/whirl2f/RCS/st2f.cxx,v $ $Revision: 1.16 $";
 #endif
 
 #include "whirl2f_common.h"

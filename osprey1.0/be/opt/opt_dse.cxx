@@ -3,10 +3,10 @@
 // ====================================================================
 //
 // Module: opt_dse.cxx
-// $Revision: 1.1.1.1 $
-// $Date: 2001/09/10 17:47:57 $
-// $Author: morrone $
-// $Source: /cvsroot/open64/open64/osprey1.0/be/opt/opt_dse.cxx,v $
+// $Revision: 1.112 $
+// $Date: 2001/03/10 02:40:52 $
+// $Author: mtibuild $
+// $Source: /isms/cmplrs.src/osprey1.0/be/opt/RCS/opt_dse.cxx,v $
 //
 // Revision history:
 //  21-DEC-94 streich - Original Version
@@ -62,7 +62,7 @@
 
 #ifdef _KEEP_RCS_ID
 #define opt_dse_CXX	"opt_dse.cxx"
-static char *rcs_id = 	opt_dse_CXX"$Revision: 1.1.1.1 $";
+static char *rcs_id = 	opt_dse_CXX"$Revision: 1.112 $";
 #endif /* _KEEP_RCS_ID */
 
 #include "defs.h"

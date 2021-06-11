@@ -3,10 +3,10 @@
 // ====================================================================
 //
 // Module: opt_ssa.h
-// $Revision: 1.1.1.1 $
-// $Date: 2001/09/10 17:48:03 $
-// $Author: morrone $
-// $Source: /cvsroot/open64/open64/osprey1.0/be/opt/opt_ssa.h,v $
+// $Revision: 1.100 $
+// $Date: 2001/03/10 02:47:09 $
+// $Author: mtibuild $
+// $Source: /isms/cmplrs.src/osprey1.0/be/opt/RCS/opt_ssa.h,v $
 //
 // Revision history:
 //  4-OCT-94 shin - Original Version

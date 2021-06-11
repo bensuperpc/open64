@@ -37,10 +37,10 @@
  * ====================================================================
  *
  * Module: gdar.c
- * $Revision: 1.1.1.1 $
- * $Date: 2001/09/10 17:48:16 $
- * $Author: morrone $
- * $Source: /cvsroot/open64/open64/osprey1.0/common/com/gdar.cxx,v $
+ * $Revision: 1.13 $
+ * $Date: 2001/03/10 03:12:10 $
+ * $Author: mtibuild $
+ * $Source: /isms/cmplrs.src/osprey1.0/common/com/RCS/gdar.cxx,v $
  *
  * Revision history:
  *  09-Jun-97 - Original Version

@@ -37,10 +37,10 @@
  * ====================================================================
  *
  * Module: cflow.h
- * $Revision: 1.1.1.1 $
- * $Date: 2001/09/10 17:47:17 $
- * $Author: morrone $
- * $Source: /cvsroot/open64/open64/osprey1.0/be/cg/cflow.h,v $
+ * $Revision: 1.2 $
+ * $Date: 2002/09/13 03:31:59 $
+ * $Author: flv $
+ * $Source: /u/merge/src/osprey1.0/be/cg/cflow.h,v $
  *
  * Revision history:
  *  23-Jan-92 - Original Version
@@ -83,6 +83,9 @@
  *   BOOL CFLOW_Trace_Dom
  *	Enable tracing of BB dominator set calculation.
  *
+ *   BOOL CFLOW_Trace_Empty_BB_Elim
+ *     Enable tracing of Eliminating empty BB  
+ *      
  * Constants:
  *
  *   INT CFLOW_UNREACHABLE
@@ -131,6 +134,7 @@ extern BOOL CFLOW_Trace_Clone;
 extern BOOL CFLOW_Trace_Freq_Order;
 extern BOOL CFLOW_Trace_Freq;
 extern BOOL CFLOW_Trace_Dom;
+extern BOOL CFLOW_Trace_Empty_BB_Elim;
 
 /* "flags" for CFLOW_Optimize:
  */
@@ -148,6 +152,7 @@ extern BOOL CFLOW_Trace_Dom;
 	|CFLOW_FREQ_ORDER|CFLOW_CLONE)
 
 extern void CFLOW_Optimize(INT32 flags, const char *phase_name);
+extern void CFLOW_Delete_Empty_BB(void);
 extern void CFLOW_Initialize(void);
 
 #endif /* cflow_INCLUDED */

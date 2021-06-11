@@ -37,10 +37,10 @@
  * ====================================================================
  *
  * Module: config_targ.c
- * $Revision: 1.1.1.1 $
- * $Date: 2001/09/10 17:48:21 $
- * $Author: morrone $
- * $Source: /cvsroot/open64/open64/osprey1.0/common/com/ia64/config_targ.cxx,v $
+ * $Revision: 1.2 $
+ * $Date: 2002/11/27 09:49:39 $
+ * $Author: llx $
+ * $Source: /u/merge/src/osprey1.0/common/com/ia64/config_targ.cxx,v $
  *
  *
  * Description:
@@ -310,7 +310,8 @@ Targ_Name ( TARGET_PROCESSOR b)
   char *r;
 
   switch ( b ) {
-    case TARGET_ITANIUM: return "Itanium";
+    case TARGET_ITANIUM:  return "Itanium";
+    case TARGET_ITANIUM2: return "Itanium2";
     default:
       r = bnb[bnb_used].name;
       bnb_used = (bnb_used + 1) % 4;
@@ -409,6 +410,8 @@ Prepare_Target ( void )
 
     if ( strcasecmp ( Processor_Name, "itanium" ) == 0 ) {
       targ = TARGET_ITANIUM;
+    }else if( strcasecmp ( Processor_Name, "itanium2" ) == 0 ) {
+      targ = TARGET_ITANIUM2;
     } else {
       ErrMsg ( EC_Inv_TARG, "processor", Processor_Name );
       targ = TARGET_UNDEF;
@@ -430,6 +433,11 @@ Prepare_Target ( void )
 	Target_ABI = ABI_I64;
 	Target_ISA = TARGET_ISA_I1;
 	Target = TARGET_ITANIUM;
+	break;
+    case TARGET_ITANIUM2:
+	Target_ABI = ABI_I64;
+	Target_ISA = TARGET_ISA_I1;
+	Target = TARGET_ITANIUM2;
 	break;
     case TARGET_UNDEF:
       Target = targ_default;
@@ -501,6 +509,7 @@ Configure_Target ( void )
   /* Set up the target register set: */
   switch ( Target_ISA ) {
     case TARGET_ITANIUM:
+    case TARGET_ITANIUM2:
       Spill_Int_Mtype = MTYPE_I8;
       Spill_Float_Mtype = MTYPE_F16;
       Max_Int_Mtype = Def_Int_Mtype = MTYPE_I8;

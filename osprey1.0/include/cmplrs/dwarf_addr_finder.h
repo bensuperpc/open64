@@ -35,8 +35,8 @@
 
 /*
    dwarf_addr_finder.h
-   $Source: /cvsroot/open64/open64/osprey1.0/include/cmplrs/dwarf_addr_finder.h,v $
-   $Date: 2001/09/10 17:49:59 $
+   $Source: /isms/cmplrs.src/osprey1.0/include/cmplrs/RCS/dwarf_addr_finder.h,v $
+   $Date: 2001/03/10 03:56:49 $
 
    Defines user interface.
 

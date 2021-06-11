@@ -43,10 +43,10 @@ extern "C" {
  * ====================================================================
  *
  * Module: erlib.h
- * $Revision: 1.1.1.1 $
- * $Date: 2001/09/10 17:48:16 $
- * $Author: morrone $
- * $Source: /cvsroot/open64/open64/osprey1.0/common/com/erlib.h,v $
+ * $Revision: 1.7 $
+ * $Date: 2001/03/10 03:11:03 $
+ * $Author: mtibuild $
+ * $Source: /isms/cmplrs.src/osprey1.0/common/com/RCS/erlib.h,v $
  *
  * Revision history:
  *  08-Sep-89 - Original Version
@@ -64,7 +64,7 @@ extern "C" {
 
 
 #ifdef _KEEP_RCS_ID
-static char *erlib_rcs_id = "$Source: /cvsroot/open64/open64/osprey1.0/common/com/erlib.h,v $ $Revision: 1.1.1.1 $";
+static char *erlib_rcs_id = "$Source: /isms/cmplrs.src/osprey1.0/common/com/RCS/erlib.h,v $ $Revision: 1.7 $";
 #endif /* _KEEP_RCS_ID */
 
 #include "errors.h"	/* Always needed */

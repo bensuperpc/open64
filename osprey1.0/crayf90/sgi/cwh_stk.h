@@ -37,10 +37,10 @@
  * ====================================================================
  *
  * Module: cwh_stk.h
- * $Revision: 1.1.1.1 $
- * $Date: 2001/09/10 17:48:52 $
- * $Author: morrone $
- * $Source: /cvsroot/open64/open64/osprey1.0/crayf90/sgi/cwh_stk.h,v $
+ * $Revision: 1.30 $
+ * $Date: 2001/03/10 03:46:53 $
+ * $Author: mtibuild $
+ * $Source: /isms/cmplrs.src/osprey1.0/crayf90/sgi/RCS/cwh_stk.h,v $
  *
  * Revision history:
  *  dd-mmm-95 - Original Version
@@ -56,7 +56,7 @@
 #define CWH_STK_INCLUDED
 
 #ifdef _KEEP_RCS_ID
-static char *rcs_id = "$Source: /cvsroot/open64/open64/osprey1.0/crayf90/sgi/cwh_stk.h,v $ $Revision: 1.1.1.1 $";
+static char *rcs_id = "$Source: /isms/cmplrs.src/osprey1.0/crayf90/sgi/RCS/cwh_stk.h,v $ $Revision: 1.30 $";
 #endif /* _KEEP_RCS_ID */
 
 enum item_class {

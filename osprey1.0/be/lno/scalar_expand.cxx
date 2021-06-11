@@ -35,10 +35,10 @@
 
 // -*-C++-*-
 
-/** $Revision: 1.1.1.1 $
-*** $Date: 2001/09/10 17:47:47 $
-*** $Author: morrone $
-*** $Source: /cvsroot/open64/open64/osprey1.0/be/lno/scalar_expand.cxx,v $
+/** $Revision: 1.150 $
+*** $Date: 2001/03/10 02:30:17 $
+*** $Author: mtibuild $
+*** $Source: /isms/cmplrs.src/osprey1.0/be/lno/RCS/scalar_expand.cxx,v $
 **/
 
 #ifdef USE_PCH
@@ -48,7 +48,7 @@
 
 #ifdef _KEEP_RCS_ID
 /*REFERENCED*/
-static char *rcs_id = "$Source: /cvsroot/open64/open64/osprey1.0/be/lno/scalar_expand.cxx,v $ $Revision: 1.1.1.1 $";
+static char *rcs_id = "$Source: /isms/cmplrs.src/osprey1.0/be/lno/RCS/scalar_expand.cxx,v $ $Revision: 1.150 $";
 #endif /* _KEEP_RCS_ID */
 
 #include <sys/types.h>

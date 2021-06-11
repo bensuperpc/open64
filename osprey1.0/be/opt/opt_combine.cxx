@@ -3,10 +3,10 @@
 // ====================================================================
 //
 // Module: opt_combine.cxx
-// $Revision: 1.1.1.1 $
-// $Date: 2001/09/10 17:47:55 $
-// $Author: morrone $
-// $Source: /cvsroot/open64/open64/osprey1.0/be/opt/opt_combine.cxx,v $
+// $Revision: 1.14 $
+// $Date: 2001/03/10 02:39:32 $
+// $Author: mtibuild $
+// $Source: /isms/cmplrs.src/osprey1.0/be/opt/RCS/opt_combine.cxx,v $
 //
 // Revision history:
 //  12-SEP-94 shin - Original Version
@@ -60,7 +60,7 @@
 
 #ifdef _KEEP_RCS_ID
 #define opt_combine_CXX	"opt_combine.cxx"
-static char *rcs_id = 	opt_combine_CXX"$Revision: 1.1.1.1 $";
+static char *rcs_id = 	opt_combine_CXX"$Revision: 1.14 $";
 #endif /* _KEEP_RCS_ID */
 
 #include <sys/types.h>

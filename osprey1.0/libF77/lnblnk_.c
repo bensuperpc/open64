@@ -34,7 +34,7 @@
 */
 
 
-/* $Header: /cvsroot/open64/open64/osprey1.0/libF77/lnblnk_.c,v 1.1.1.1 2001/09/10 17:50:04 morrone Exp $ */
+/* $Header: /isms/cmplrs.src/osprey1.0/libF77/RCS/lnblnk_.c,v 8.7 2001/03/10 04:38:48 mtibuild Exp $ */
 
 /*	function lnblnk(s)
  *		Returns index of last nonblank character in string s

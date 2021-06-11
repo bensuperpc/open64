@@ -82,13 +82,13 @@
 
 
 //  $Revision: 1.3 $
-//  $Date: 2002/10/13 21:35:15 $
-//  $Author: douillet $
-//  $Source: /cvsroot/open64/open64/osprey1.0/be/cg/gra_mon/gra_split.cxx,v $
+//  $Date: 2002/03/20 09:58:48 $
+//  $Author: llx $
+//  $Source: /u/merge/src/osprey1.0/be/cg/gra_mon/gra_split.cxx,v $
 
 
 #ifdef _KEEP_RCS_ID
-static char *rcs_id = "$Source: /cvsroot/open64/open64/osprey1.0/be/cg/gra_mon/gra_split.cxx,v $ $Revision: 1.3 $";
+static char *rcs_id = "$Source: /u/merge/src/osprey1.0/be/cg/gra_mon/gra_split.cxx,v $ $Revision: 1.3 $";
 #endif
 
 #ifdef USE_PCH

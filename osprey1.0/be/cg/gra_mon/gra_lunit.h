@@ -32,10 +32,10 @@
 
 */
 
-//  $Revision: 1.2 $
-//  $Date: 2002/10/13 21:35:15 $
-//  $Author: douillet $
-//  $Source: /cvsroot/open64/open64/osprey1.0/be/cg/gra_mon/gra_lunit.h,v $
+//  $Revision: 1.4 $
+//  $Date: 2002/03/20 00:53:52 $
+//  $Author: yliu $
+//  $Source: /u/merge/src/osprey1.0/be/cg/gra_mon/gra_lunit.h,v $
 //  Description: GRA Live Units
 //
 //      This data structure started its life (in the Chow GRA) as an
@@ -75,7 +75,7 @@
 #ifndef GRA_LUNIT_RCS_ID
 #define GRA_LUNIT_RCS_ID
 #ifdef _KEEP_RCS_ID
-static char *gra_lunit_rcs_id = "$Source: /cvsroot/open64/open64/osprey1.0/be/cg/gra_mon/gra_lunit.h,v $ $Revision: 1.2 $";
+static char *gra_lunit_rcs_id = "$Source: /u/merge/src/osprey1.0/be/cg/gra_mon/gra_lunit.h,v $ $Revision: 1.4 $";
 #endif
 #endif
 

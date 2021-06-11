@@ -37,10 +37,10 @@
  * =======================================================================
  *
  *  Module: ebo_info.h
- *  $Revision: 1.3 $
- *  $Date: 2002/10/13 21:35:15 $
- *  $Author: douillet $
- *  $Source: /cvsroot/open64/open64/osprey1.0/be/cg/ebo_info.h,v $
+ *  $Revision: 1.4 $
+ *  $Date: 2001/07/13 05:15:34 $
+ *  $Author: lrq $
+ *  $Source: /u/merge/src/osprey1.0/be/cg/ebo_info.h,v $
  *
  *  Revision comments:
  *

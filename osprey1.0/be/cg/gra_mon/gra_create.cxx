@@ -50,11 +50,11 @@
 //
 /////////////////////////////////////
 
-//  $Revision: 1.3 $
-//  $Date: 2002/10/13 21:35:15 $
-//  $Author: douillet $
-//  $Source: /cvsroot/open64/open64/osprey1.0/be/cg/gra_mon/gra_create.cxx,v $
-//  $Source: /cvsroot/open64/open64/osprey1.0/be/cg/gra_mon/gra_create.cxx,v $
+//  $Revision: 1.8 $
+//  $Date: 2002/09/23 01:28:59 $
+//  $Author: wjj $
+//  $Source: /u/merge/src/osprey1.0/be/cg/gra_mon/gra_create.cxx,v $
+//  $Source: /u/merge/src/osprey1.0/be/cg/gra_mon/gra_create.cxx,v $
 
 #ifdef USE_PCH
 #include "cg_pch.h"
@@ -62,7 +62,7 @@
 #pragma hdrstop
 
 #ifdef _KEEP_RCS_ID
-static char *rcs_id = "$Source: /cvsroot/open64/open64/osprey1.0/be/cg/gra_mon/gra_create.cxx,v $ $Revision: 1.3 $";
+static char *rcs_id = "$Source: /u/merge/src/osprey1.0/be/cg/gra_mon/gra_create.cxx,v $ $Revision: 1.8 $";
 #endif
 #include <list.h>
 
@@ -404,6 +404,11 @@ Scan_Region_BB_For_Referenced_TNs( GRA_BB* gbb )
     }
     for (i = 0; i < ROTATING_KERNEL_INFO_copyout(info).size(); i++) {
       TN *tn = ROTATING_KERNEL_INFO_copyout(info)[i];
+      ded_tns[TN_register_class(tn)][TN_register(tn)] = tn;
+      Region_TN_Reference(tn,region);
+    }
+    for (i = 0; i < ROTATING_KERNEL_INFO_localdef(info).size(); i++) {
+      TN *tn = ROTATING_KERNEL_INFO_localdef(info)[i];
       ded_tns[TN_register_class(tn)][TN_register(tn)] = tn;
       Region_TN_Reference(tn,region);
     }
@@ -1514,6 +1519,9 @@ Add_To_Live_Set( LRANGE_SET** live_lrange_sets, GRA_REGION* region,
 //
 /////////////////////////////////////
 {
+if ( lrange==NULL ){
+  return;
+}
   LRANGE* lrange1;
   ISA_REGISTER_CLASS  rc  = lrange->Rc();
   LRANGE_SUBUNIVERSE* sub = region->Subuniverse(rc);
@@ -1544,6 +1552,9 @@ Remove_From_Live_Set( LRANGE_SET** live_lrange_sets, GRA_REGION* region,
 //
 /////////////////////////////////////
 {
+  if ( lrange==NULL ){
+    return;
+  }
   ISA_REGISTER_CLASS  rc  = lrange->Rc();
   LRANGE_SUBUNIVERSE* sub = region->Subuniverse(rc);
   LRANGE_SET*         set = live_lrange_sets[rc];
@@ -1839,7 +1850,7 @@ Compute_GRA_Fat_Point(void) {
        }
    }    
    
-   if ((gra_self_recursive)&&(fatest_point > 115)) {
+   if ((gra_self_recursive)&&(fatest_point > 100)) {
        fat_self_recursive = TRUE;
        DevWarn("The fatest point %d is greater than 80 and also self recursive!\n",fatest_point);
    }    

@@ -38,10 +38,10 @@
 // =======================================================================
 //
 //  Module: cg_swp_allocator.cxx
-//  $Revision: 1.3 $
-//  $Date: 2002/10/13 21:35:14 $
-//  $Author: douillet $
-//  $Source: /cvsroot/open64/open64/osprey1.0/be/cg/cg_swp_allocator.cxx,v $
+//  $Revision: 1.2 $
+//  $Date: 2001/09/07 03:40:32 $
+//  $Author: yliu $
+//  $Source: /u/merge/src/osprey1.0/be/cg/cg_swp_allocator.cxx,v $
 //
 //  Revision comments:
 //

@@ -1,6 +1,6 @@
 /*
 
-  Copyright (C) 2000, 2001 Silicon Graphics, Inc.  All Rights Reserved.
+  Copyright (C) 2000 Silicon Graphics, Inc.  All Rights Reserved.
 
   This program is free software; you can redistribute it and/or modify it
   under the terms of version 2 of the GNU General Public License as
@@ -34,9 +34,9 @@
 
 /*
  *  $Revision: 1.1.1.1 $
- *  $Date: 2001/09/10 17:47:28 $
- *  $Author: morrone $
- *  $Source: /cvsroot/open64/open64/osprey1.0/be/cg/gra_mon/gra_lrange_subuniverse.cxx,v $
+ *  $Date: 2001/06/25 06:32:37 $
+ *  $Author: llx $
+ *  $Source: /u/merge/src/osprey1.0/be/cg/gra_mon/gra_lrange_subuniverse.cxx,v $
  */
 
 #ifdef USE_PCH
@@ -45,7 +45,7 @@
 #pragma hdrstop
 
 #ifdef _KEEP_RCS_ID
-static char *rcs_id = "$Source: /cvsroot/open64/open64/osprey1.0/be/cg/gra_mon/gra_lrange_subuniverse.cxx,v $ $Revision: 1.1.1.1 $";
+static char *rcs_id = "$Source: /u/merge/src/osprey1.0/be/cg/gra_mon/gra_lrange_subuniverse.cxx,v $ $Revision: 1.1.1.1 $";
 #endif
 
 #include "defs.h"

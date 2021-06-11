@@ -34,7 +34,7 @@
 
 */
 
-#ident  "$Header: /cvsroot/open64/open64/osprey1.0/libcsup/msgnew/catmsgfmt.c,v 1.1.1.1 2001/09/10 17:50:07 morrone Exp $"
+#ident  "$Header: /isms/cmplrs.src/osprey1.0/libcsup/msgnew/RCS/catmsgfmt.c,v 1.10 2001/03/10 04:59:33 mtibuild Exp $"
 
 #ifdef	_LITTLE_ENDIAN
 	#pragma weak _catmsgfmt = catmsgfmt

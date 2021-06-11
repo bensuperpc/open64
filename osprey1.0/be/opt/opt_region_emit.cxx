@@ -3,10 +3,10 @@
 // ====================================================================
 //
 // Module: opt_region_emit.cxx
-// $Revision: 1.1.1.1 $
-// $Date: 2001/09/10 17:48:02 $
-// $Author: morrone $
-// $Source: /cvsroot/open64/open64/osprey1.0/be/opt/opt_region_emit.cxx,v $
+// $Revision: 1.28 $
+// $Date: 2001/03/10 02:45:38 $
+// $Author: mtibuild $
+// $Source: /isms/cmplrs.src/osprey1.0/be/opt/RCS/opt_region_emit.cxx,v $
 //
 // Revision history:
 //  03-OCT-96 shin - Original Version
@@ -62,7 +62,7 @@
 
 #ifdef _KEEP_RCS_ID
 #define opt_region_emit_CXX	"opt_region_emit.cxx"
-static char *rcs_id = 	opt_region_emit_CXX"$Revision: 1.1.1.1 $";
+static char *rcs_id = 	opt_region_emit_CXX"$Revision: 1.28 $";
 #endif /* _KEEP_RCS_ID */
 
 #include "defs.h"

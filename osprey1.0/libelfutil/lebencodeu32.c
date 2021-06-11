@@ -37,8 +37,8 @@
 /*
     lebencodeu32.c
 
-    $Revision: 1.1.1.1 $  
-    $Date: 2001/09/10 17:50:11 $
+    $Revision: 1.6 $  
+    $Date: 2001/03/10 05:11:58 $
 */
 
 #ifndef _LP64

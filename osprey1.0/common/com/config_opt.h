@@ -37,10 +37,10 @@
  * ====================================================================
  *
  * Module: config_opt.h
- * $Revision: 1.3 $
- * $Date: 2002/10/13 21:35:18 $
- * $Author: douillet $
- * $Source: /cvsroot/open64/open64/osprey1.0/common/com/config_opt.h,v $
+ * $Revision: 1.5 $
+ * $Date: 2002/09/09 07:52:27 $
+ * $Author: bcheng $
+ * $Source: /u/merge/src/osprey1.0/common/com/config_opt.h,v $
  *
  * Revision history:
  *  05-May-96 - Extracted from be/opt/opt_config.h.
@@ -151,6 +151,7 @@ extern INT32 Feedback_Phase_Num;
 extern OPTION_LIST* Feedback_Option;
 extern UINT32 Phase_Num;
 extern UINT32 Profile_Type;
+extern BOOL Outlining_Enabled; //OUTLINING^$
 #ifdef __cplusplus
 }
 #endif

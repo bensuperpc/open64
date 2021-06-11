@@ -41,7 +41,7 @@
 #pragma hdrstop
 
 #ifdef _KEEP_RCS_ID
-static char *rcs_id = "$Source: /cvsroot/open64/open64/osprey1.0/be/lno/fiz_fuse.cxx,v $ $Revision: 1.1.1.1 $";
+static char *rcs_id = "$Source: /isms/cmplrs.src/osprey1.0/be/lno/RCS/fiz_fuse.cxx,v $ $Revision: 1.80 $";
 #endif /* _KEEP_RCS_ID */
 
 #include <sys/types.h>

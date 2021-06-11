@@ -1,6 +1,6 @@
 /*
 
-  Copyright (C) 2000, 2001 Silicon Graphics, Inc.  All Rights Reserved.
+  Copyright (C) 2000 Silicon Graphics, Inc.  All Rights Reserved.
 
   This program is free software; you can redistribute it and/or modify it
   under the terms of version 2 of the GNU General Public License as
@@ -38,9 +38,9 @@
  *
  *  Module: cg_loop_recur.h
  *  $Revision: 1.1.1.1 $
- *  $Date: 2001/09/10 17:47:18 $
- *  $Author: morrone $
- *  $Source: /cvsroot/open64/open64/osprey1.0/be/cg/cg_loop_recur.h,v $
+ *  $Date: 2001/06/25 06:32:37 $
+ *  $Author: llx $
+ *  $Source: /u/merge/src/osprey1.0/be/cg/cg_loop_recur.h,v $
  *
  *  Revision history:
  *   03-Mar-94 - Original Version
@@ -83,7 +83,7 @@
 #define cg_loop_recur_INCLUDED
 
 #ifdef _KEEP_RCS_ID
-static const char cg_loop_recur_rcs_id[] = "$Source: /cvsroot/open64/open64/osprey1.0/be/cg/cg_loop_recur.h,v $ $Revision: 1.1.1.1 $";
+static const char cg_loop_recur_rcs_id[] = "$Source: /u/merge/src/osprey1.0/be/cg/cg_loop_recur.h,v $ $Revision: 1.1.1.1 $";
 #endif /* _KEEP_RCS_ID */
 
 class CG_LOOP;

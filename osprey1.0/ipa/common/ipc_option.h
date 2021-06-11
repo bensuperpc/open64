@@ -37,10 +37,10 @@
  * ====================================================================
  *
  * Module: ipc_option.h
- * $Revision: 1.1.1.1 $
- * $Date: 2001/09/10 17:49:59 $
- * $Author: morrone $
- * $Source: /cvsroot/open64/open64/osprey1.0/ipa/common/ipc_option.h,v $
+ * $Revision: 1.16 $
+ * $Date: 2001/03/10 04:02:21 $
+ * $Author: mtibuild $
+ * $Source: /isms/cmplrs.src/osprey1.0/ipa/common/RCS/ipc_option.h,v $
  *
  * Revision history:
  *  31-Jul-95 - Original Version

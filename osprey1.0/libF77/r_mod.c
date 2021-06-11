@@ -37,7 +37,7 @@
 /* --------------------------------------------------- */
 /* | All Rights Reserved.                            | */
 /* --------------------------------------------------- */
-/* $Header: /cvsroot/open64/open64/osprey1.0/libF77/r_mod.c,v 1.1.1.1 2001/09/10 17:50:04 morrone Exp $ */
+/* $Header: /isms/cmplrs.src/osprey1.0/libF77/RCS/r_mod.c,v 7.8 2001/03/10 04:43:30 mtibuild Exp $ */
 #include "cmplrs/host.h"
 #include <math.h>
 #include "moremath.h"

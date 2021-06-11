@@ -30,8 +30,8 @@
 /* --------------------------------------------------- */
 /* | All Rights Reserved.                            | */
 /* --------------------------------------------------- */
-/* $Header: /cvsroot/open64/open64/osprey1.0/libU77/alarm_.c,v 1.1.1.1 2001/09/10 17:50:04 morrone Exp $ */
-/* $Header: /cvsroot/open64/open64/osprey1.0/libU77/alarm_.c,v 1.1.1.1 2001/09/10 17:50:04 morrone Exp $ */
+/* $Header: /isms/cmplrs.src/osprey1.0/libU77/RCS/alarm_.c,v 8.4 2001/02/20 23:39:38 mtibuild Exp $ */
+/* $Header: /isms/cmplrs.src/osprey1.0/libU77/RCS/alarm_.c,v 8.4 2001/02/20 23:39:38 mtibuild Exp $ */
 /*
  *
  * set an alarm time, arrange for user specified action, and return.

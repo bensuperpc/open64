@@ -81,8 +81,8 @@ configure:1829: gcc -o conftest  -g -O2 -DHOST_IA64 -D__MIPS_AND_IA64_ELF_H -I/u
 configure:1813: warning: conflicting types for built-in function `memset'
 configure:1801: checking for mkstemps
 configure:1829: gcc -o conftest  -g -O2 -DHOST_IA64 -D__MIPS_AND_IA64_ELF_H -I/usr/sgi/include/ -L/usr/sgi/lib64   conftest.c  1>&5
-/tmp/ccNIn1j8.o: In function `main':
-/home/douillet/open64_update/open64/osprey1.0/targcygnus_ia64_ia64/libiberty/configure:1823: undefined reference to `mkstemps'
+/tmp/ccpMCf9J.o: In function `main':
+/home/douillet/orc-2.0/src/osprey1.0/targcygnus_ia64_ia64/libiberty/configure:1823: undefined reference to `mkstemps'
 collect2: ld returned 1 exit status
 configure: failed program was:
 #line 1806 "configure"
@@ -139,8 +139,8 @@ configure:1801: checking for strtoul
 configure:1829: gcc -o conftest  -g -O2 -DHOST_IA64 -D__MIPS_AND_IA64_ELF_H -I/usr/sgi/include/ -L/usr/sgi/lib64   conftest.c  1>&5
 configure:1801: checking for tmpnam
 configure:1829: gcc -o conftest  -g -O2 -DHOST_IA64 -D__MIPS_AND_IA64_ELF_H -I/usr/sgi/include/ -L/usr/sgi/lib64   conftest.c  1>&5
-/tmp/ccrbE5K1.o: In function `main':
-/home/douillet/open64_update/open64/osprey1.0/targcygnus_ia64_ia64/libiberty/configure:1823: the use of `tmpnam' is dangerous, better use `mkstemp'
+/tmp/cca3KDuh.o: In function `main':
+/home/douillet/orc-2.0/src/osprey1.0/targcygnus_ia64_ia64/libiberty/configure:1823: the use of `tmpnam' is dangerous, better use `mkstemp'
 configure:1801: checking for vasprintf
 configure:1829: gcc -o conftest  -g -O2 -DHOST_IA64 -D__MIPS_AND_IA64_ELF_H -I/usr/sgi/include/ -L/usr/sgi/lib64   conftest.c  1>&5
 configure:1801: checking for vfprintf
@@ -170,12 +170,12 @@ configure:2284: checking for working vfork
 configure:2435: gcc -o conftest  -g -O2 -DHOST_IA64 -D__MIPS_AND_IA64_ELF_H -I/usr/sgi/include/ -L/usr/sgi/lib64   conftest.c  1>&5
 configure:2462: checking for sys_errlist
 configure:2474: gcc -o conftest  -g -O2 -DHOST_IA64 -D__MIPS_AND_IA64_ELF_H -I/usr/sgi/include/ -L/usr/sgi/lib64   conftest.c  1>&5
-/tmp/ccab3VtM.o: In function `main':
-/home/douillet/open64_update/open64/osprey1.0/targcygnus_ia64_ia64/libiberty/configure:2470: `sys_errlist' is deprecated; use `strerror' or `strerror_r' instead
+/tmp/ccP3DNb4.o: In function `main':
+/home/douillet/orc-2.0/src/osprey1.0/targcygnus_ia64_ia64/libiberty/configure:2470: `sys_errlist' is deprecated; use `strerror' or `strerror_r' instead
 configure:2462: checking for sys_nerr
 configure:2474: gcc -o conftest  -g -O2 -DHOST_IA64 -D__MIPS_AND_IA64_ELF_H -I/usr/sgi/include/ -L/usr/sgi/lib64   conftest.c  1>&5
-/tmp/ccr05Tkg.o: In function `main':
-/home/douillet/open64_update/open64/osprey1.0/targcygnus_ia64_ia64/libiberty/configure:2470: `sys_nerr' is deprecated; use `strerror' or `strerror_r' instead
+/tmp/ccPBN3ir.o: In function `main':
+/home/douillet/orc-2.0/src/osprey1.0/targcygnus_ia64_ia64/libiberty/configure:2470: `sys_nerr' is deprecated; use `strerror' or `strerror_r' instead
 configure:2462: checking for sys_siglist
 configure:2474: gcc -o conftest  -g -O2 -DHOST_IA64 -D__MIPS_AND_IA64_ELF_H -I/usr/sgi/include/ -L/usr/sgi/lib64   conftest.c  1>&5
 configure:2500: checking for getrusage

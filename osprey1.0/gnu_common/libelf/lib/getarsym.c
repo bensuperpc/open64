@@ -21,7 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #include <byteswap.h>
 
 #ifndef lint
-static const char rcsid[] = "@(#) $Id: getarsym.c,v 1.1.1.1 2001/09/10 17:49:56 morrone Exp $";
+static const char rcsid[] = "@(#) $Id: getarsym.c,v 1.1 2000/03/08 22:26:17 mpm Exp $";
 #endif /* lint */
 
 Elf_Arsym*

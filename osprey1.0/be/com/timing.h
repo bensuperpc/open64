@@ -43,10 +43,10 @@ extern "C" {
  * ====================================================================
  *
  * Module: timing.h
- * $Revision: 1.3 $
- * $Date: 2002/10/13 21:35:17 $
- * $Author: douillet $
- * $Source: /cvsroot/open64/open64/osprey1.0/be/com/timing.h,v $
+ * $Revision: 1.4 $
+ * $Date: 2002/04/30 06:54:50 $
+ * $Author: llx $
+ * $Source: /u/merge/src/osprey1.0/be/com/timing.h,v $
  *
  * Revision history:
  *  06-Feb-90 - Original Version
@@ -64,7 +64,7 @@ extern "C" {
 
 
 #ifdef _KEEP_RCS_ID
-static char *timing_rcs_id = "$Source: /cvsroot/open64/open64/osprey1.0/be/com/timing.h,v $ $Revision: 1.3 $";
+static char *timing_rcs_id = "$Source: /u/merge/src/osprey1.0/be/com/timing.h,v $ $Revision: 1.4 $";
 #endif /* _KEEP_RCS_ID */
 
 /* Provide identifiers for the various time accumulators supplied: */

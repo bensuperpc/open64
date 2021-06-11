@@ -36,7 +36,7 @@
 /* ====================================================================
  * ====================================================================
  *
- * $Source: /cvsroot/open64/open64/osprey1.0/common/com/ia64/config_TARG.cxx,v $
+ * $Source: /osprey.src/osprey1.0/common/com/ia64/RCS/config_TARG.cxx,v $
  *
  * Revision history:
  *  26-Feb-97 - Original Version, extracted from config.c.

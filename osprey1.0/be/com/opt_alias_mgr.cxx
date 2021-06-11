@@ -38,10 +38,10 @@
 * ====================================================================
 *
 * Module: opt_alias_mgr.cxx
-* $Revision: 1.2 $
-* $Date: 2002/10/13 21:35:17 $
-* $Author: douillet $
-* $Source: /cvsroot/open64/open64/osprey1.0/be/com/opt_alias_mgr.cxx,v $
+* $Revision: 1.3 $
+* $Date: 2002/06/06 06:57:58 $
+* $Author: sxyang $
+* $Source: /u/merge/src/osprey1.0/be/com/opt_alias_mgr.cxx,v $
 *
 * Revision history:
 *  04-APR-95 lo - Split from opt_alias.cxx
@@ -58,7 +58,7 @@
 #pragma hdrstop
 #ifdef _KEEP_RCS_ID
 #define opt_alias_mgr_CXX	"opt_alias_mgr.cxx"
-static char *rcs_id = 	opt_alias_mgr_CXX"$Revision: 1.2 $";
+static char *rcs_id = 	opt_alias_mgr_CXX"$Revision: 1.3 $";
 #endif /* _KEEP_RCS_ID */
 
 #include "string.h"

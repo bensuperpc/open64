@@ -1761,4 +1761,4 @@ ar_convert_str_to_float (ar_data *result, const AR_TYPE *resulttype,
 
 
 static char USMID [] = "\n%Z%%M%	%I%	%G% %U%\n";
-static char rcsid [] = "$Id: native.c,v 1.1.1.1 2001/09/10 17:47:14 morrone Exp $";
+static char rcsid [] = "$Id: native.c,v 2.14 1997/05/06 17:28:22 gbt Exp $";

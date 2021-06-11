@@ -3,10 +3,10 @@
 // ====================================================================
 //
 // Module: profile.h
-// $Revision: 1.1.1.1 $
-// $Date: 2001/09/10 17:50:05 $
-// $Author: morrone $
-// $Source: /cvsroot/open64/open64/osprey1.0/instrumentation/libinstr/profile.h,v $
+// $Revision: 1.2 $
+// $Date: 2002/12/29 09:44:52 $
+// $Author: qzhao2 $
+// $Source: /u/merge/src/osprey1.0/instrumentation/libinstr/profile.h,v $
 //
 // ====================================================================
 //
@@ -68,7 +68,7 @@
 
 
 extern PU_PROFILE_HANDLE Get_PU_Handle(char *file_name, char* pu_name,
-				       long current_pc, INT32 checksum);
+				       long current_pc, INT32 pu_size, INT32 checksum);
 
 
 extern void Profile_Invoke_Init(PU_PROFILE_HANDLE pu_handle,
@@ -124,6 +124,10 @@ extern void Profile_Call_Init(PU_PROFILE_HANDLE pu_handle, INT32 num_calls);
 extern void Profile_Call_Entry(PU_PROFILE_HANDLE pu_handle, INT32 call_id);
 
 extern void Profile_Call_Exit(PU_PROFILE_HANDLE pu_handle, INT32 call_id);
+
+extern void Profile_Icall_Init(PU_PROFILE_HANDLE pu_handle, INT32 num_icalls);
+
+extern void Profile_Icall(PU_PROFILE_HANDLE pu_handle, INT32 icall_id, void * called_fun_address);
 
 
 extern void Set_Instrumentation_Phase_Num(PROFILE_PHASE phase_num);

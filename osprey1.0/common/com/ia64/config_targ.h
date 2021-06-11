@@ -43,10 +43,10 @@ extern "C" {
  * ====================================================================
  *
  * Module: config_targ.h
- * $Revision: 1.1.1.1 $
- * $Date: 2001/09/10 17:48:21 $
- * $Author: morrone $
- * $Source: /cvsroot/open64/open64/osprey1.0/common/com/ia64/config_targ.h,v $
+ * $Revision: 1.2 $
+ * $Date: 2002/11/27 09:49:39 $
+ * $Author: llx $
+ * $Source: /u/merge/src/osprey1.0/common/com/ia64/config_targ.h,v $
  *
  * Revision history:
  *  15-Jun-91 - Original Version
@@ -80,7 +80,7 @@ extern "C" {
 
 
 #ifdef _KEEP_RCS_ID
-static char *config_targ_rcs_id = "$Source: /cvsroot/open64/open64/osprey1.0/common/com/ia64/config_targ.h,v $ $Revision: 1.1.1.1 $";
+static char *config_targ_rcs_id = "$Source: /u/merge/src/osprey1.0/common/com/ia64/config_targ.h,v $ $Revision: 1.2 $";
 #endif /* _KEEP_RCS_ID */
 
 #include "mtypes.h"
@@ -119,7 +119,8 @@ extern TARGET_ABI Target_ABI;
  */
 typedef enum {
   TARGET_UNDEF,		/* Undefined */
-  TARGET_ITANIUM	/* Intel Itanium */
+  TARGET_ITANIUM,	/* Intel Itanium */
+  TARGET_ITANIUM2	/* Intel Itanium 2*/
 } TARGET_PROCESSOR;
 
 extern TARGET_PROCESSOR Target;		/* -Tc */
@@ -127,7 +128,7 @@ extern TARGET_PROCESSOR Target;		/* -Tc */
 /* return the target name for <target> */
 extern char *Targ_Name (TARGET_PROCESSOR target);
 
-#define Is_Target_Itanium()	(Target==TARGET_ITANIUM)
+#define Is_Target_Itanium()	(Target==TARGET_ITANIUM || Target==TARGET_ITANIUM2)
 
 
 /* ========== */

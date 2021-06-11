@@ -43,10 +43,10 @@ extern "C" {
  * ====================================================================
  *
  * Module: config_elf_targ.h
- * $Revision: 1.1.1.1 $
- * $Date: 2001/09/10 17:48:11 $
- * $Author: morrone $
- * $Source: /cvsroot/open64/open64/osprey1.0/common/com/config_elf_targ.h,v $
+ * $Revision: 1.8 $
+ * $Date: 2001/03/10 03:05:55 $
+ * $Author: mtibuild $
+ * $Source: /isms/cmplrs.src/osprey1.0/common/com/RCS/config_elf_targ.h,v $
  *
  * Description:
  *

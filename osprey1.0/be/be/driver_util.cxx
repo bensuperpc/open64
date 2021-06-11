@@ -38,9 +38,9 @@
  *
  * Module: driver_util.c
  * $Revisionr: 1.34 $
- * $Date: 2002/10/13 21:35:14 $
- * $Author: douillet $
- * $Source: /cvsroot/open64/open64/osprey1.0/be/be/driver_util.cxx,v $
+ * $Date: 2001/12/29 08:10:12 $
+ * $Author: llx $
+ * $Source: /u/merge/src/osprey1.0/be/be/driver_util.cxx,v $
  *
  * Revision history:
  *  16-Feb-95 - Original Version

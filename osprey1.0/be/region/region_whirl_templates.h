@@ -37,10 +37,10 @@
 //============================================================================
 //
 // Module: region_templates.h
-// $Revision: 1.1.1.1 $
-// $Date: 2001/09/10 17:48:06 $
-// $Author: morrone $
-// $Source: /cvsroot/open64/open64/osprey1.0/be/region/region_whirl_templates.h,v $
+// $Revision: 1.5 $
+// $Date: 2001/03/10 02:53:59 $
+// $Author: mtibuild $
+// $Source: /isms/cmplrs.src/osprey1.0/be/region/RCS/region_whirl_templates.h,v $
 //
 // Revision history:
 //  1-SEP-97 dahl - Original Version

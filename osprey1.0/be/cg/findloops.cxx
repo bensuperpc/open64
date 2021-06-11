@@ -36,10 +36,10 @@
 /* ====================================================================
  *
  * Module: findloops.c
- * $Revision: 1.1.1.1 $
- * $Date: 2001/09/10 17:47:22 $
- * $Author: morrone $
- * $Source: /cvsroot/open64/open64/osprey1.0/be/cg/findloops.cxx,v $
+ * $Revision: 1.27 $
+ * $Date: 2001/03/10 01:58:51 $
+ * $Author: mtibuild $
+ * $Source: /isms/cmplrs.src/osprey1.0/be/cg/RCS/findloops.cxx,v $
  *
  * Description:
  *
@@ -48,7 +48,7 @@
  * ====================================================================
  */
 #ifdef _KEEP_RCS_ID
-static const char rcs_id[] = "$Source: /cvsroot/open64/open64/osprey1.0/be/cg/findloops.cxx,v $ $Revision: 1.1.1.1 $";
+static const char rcs_id[] = "$Source: /isms/cmplrs.src/osprey1.0/be/cg/RCS/findloops.cxx,v $ $Revision: 1.27 $";
 #endif /* _KEEP_RCS_ID */
 
 #include "defs.h"

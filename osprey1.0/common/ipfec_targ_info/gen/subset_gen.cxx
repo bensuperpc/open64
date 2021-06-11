@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2000-2002, Intel Corporation
+  Copyright (C) 2000-2003, Intel Corporation
   All rights reserved.
   
   Redistribution and use in source and binary forms, with or without modification,
@@ -30,9 +30,9 @@
 //*********************************************************************
 //
 // Module: subset_gen.cxx
-// $Date: 2002/10/13 21:35:19 $
-// $Author: douillet $
-// $Source: /cvsroot/open64/open64/osprey1.0/common/ipfec_targ_info/gen/subset_gen.cxx,v $
+// $Date: 2003/01/15 08:07:10 $
+// $Author: sxyang $
+// $Source: /u/merge/src/osprey1.0/common/ipfec_targ_info/gen/subset_gen.cxx,v $
 //
 // Description:
 //   Generate the definition of opcode and opcode name.
@@ -41,7 +41,7 @@
 
 #include "subset_gen.h"
 
-static const char description[]= "\
+static const char * const description[]= {"\
 /* ====================================================================\n\
  * ====================================================================\n\
  *\n\
@@ -67,7 +67,7 @@ static const char description[]= "\
  *\n\
  * ====================================================================\n\
  * ====================================================================\n\
- */";
+ */", NULL};
 
 static const char func_subset_name[]= "\
 const char* ISA_SUBSET_Name( ISA_SUBSET subset ) {\n\

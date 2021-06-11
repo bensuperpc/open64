@@ -38,10 +38,10 @@
 // ====================================================================
 //
 // Module: ipa_preopt.cxx
-// $Revision: 1.1.1.1 $
-// $Date: 2001/09/10 17:50:01 $
-// $Author: morrone $
-// $Source: /cvsroot/open64/open64/osprey1.0/ipa/main/analyze/ipa_preopt.cxx,v $
+// $Revision: 1.33 $
+// $Date: 2001/03/10 04:13:10 $
+// $Author: mtibuild $
+// $Source: /isms/cmplrs.src/osprey1.0/ipa/main/analyze/RCS/ipa_preopt.cxx,v $
 //
 // Revision history:
 //  7-15-98 - Original Version

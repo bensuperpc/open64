@@ -3,10 +3,10 @@
 // ====================================================================
 //
 // Module: opt_tail.h
-// $Revision: 1.1.1.1 $
-// $Date: 2001/09/10 17:48:04 $
-// $Author: morrone $
-// $Source: /cvsroot/open64/open64/osprey1.0/be/opt/opt_tail.h,v $
+// $Revision: 1.6 $
+// $Date: 2001/03/10 02:47:59 $
+// $Author: mtibuild $
+// $Source: /isms/cmplrs.src/osprey1.0/be/opt/RCS/opt_tail.h,v $
 //
 // Revision history:
 //  14-MAR-96 - Original Version
@@ -56,7 +56,7 @@
 
 
 #ifdef _KEEP_RCS_ID
-static char *opt_tail_rcs_id = opt_tail_INCLUDED" $Revision: 1.1.1.1 $";
+static char *opt_tail_rcs_id = opt_tail_INCLUDED" $Revision: 1.6 $";
 #endif /* _KEEP_RCS_ID */
 
 

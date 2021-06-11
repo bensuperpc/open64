@@ -37,10 +37,10 @@
 //============================================================================
 //
 // Module: region_bounds.cxx
-// $Revision: 1.1.1.1 $
-// $Date: 2001/09/10 17:48:06 $
-// $Author: morrone $
-// $Source: /cvsroot/open64/open64/osprey1.0/be/region/region_bounds.cxx,v $
+// $Revision: 1.22 $
+// $Date: 2001/03/10 02:53:32 $
+// $Author: mtibuild $
+// $Source: /isms/cmplrs.src/osprey1.0/be/region/RCS/region_bounds.cxx,v $
 //
 // Revision history:
 //  1-MAY-97 dahl - Original Version
@@ -68,7 +68,7 @@
 
 #define region_bounds_CXX	"region_bounds.cxx"
 #ifdef _KEEP_RCS_ID
-static char *rcs_id = region_bounds_CXX"$Revision: 1.1.1.1 $";
+static char *rcs_id = region_bounds_CXX"$Revision: 1.22 $";
 #endif /* _KEEP_RCS_ID */
 
 #include "wn.h"			// WN type

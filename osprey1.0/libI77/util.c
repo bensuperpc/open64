@@ -34,7 +34,7 @@
 */
 
 
-/* $Header: /cvsroot/open64/open64/osprey1.0/libI77/util.c,v 1.1.1.1 2001/09/10 17:50:06 morrone Exp $ */
+/* $Header: /isms/cmplrs.src/osprey1.0/libI77/RCS/util.c,v 9.19 2001/03/10 04:54:52 mtibuild Exp $ */
 /*	3.0 SID #	1.2	*/
 #include <sys/types.h>
 #include <sys/stat.h>

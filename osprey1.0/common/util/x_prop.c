@@ -35,7 +35,7 @@
 
 
 static const char source_file[] = __FILE__;
-static const char rcs_id[] = "$Source: /cvsroot/open64/open64/osprey1.0/common/util/x_prop.c,v $ $Revision: 1.1.1.1 $";
+static const char rcs_id[] = "$Source: /isms/cmplrs.src/osprey1.0/common/util/RCS/x_prop.c,v $ $Revision: 1.10 $";
 
 
 /* ====================================================================

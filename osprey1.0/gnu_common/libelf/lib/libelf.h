@@ -17,7 +17,7 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */
 
-/* @(#) $Id: libelf.h,v 1.1.1.1 2001/09/10 17:49:56 morrone Exp $ */
+/* @(#) $Id: libelf.h,v 1.1 2000/03/08 22:26:19 mpm Exp $ */
 
 #ifndef _LIBELF_H
 #define _LIBELF_H

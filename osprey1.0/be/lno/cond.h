@@ -130,10 +130,10 @@
 ***	  Update feedback to reflect the fact that if_wn guards do_wn.
 **/
 
-/** $Revision: 1.1.1.1 $
-*** $Date: 2001/09/10 17:47:39 $
-*** $Author: morrone $
-*** $Source: /cvsroot/open64/open64/osprey1.0/be/lno/cond.h,v $
+/** $Revision: 1.19 $
+*** $Date: 2001/03/10 02:21:54 $
+*** $Author: mtibuild $
+*** $Source: /isms/cmplrs.src/osprey1.0/be/lno/RCS/cond.h,v $
 **/
 
 #ifndef _defs_INCLUDED
@@ -159,7 +159,7 @@ class WN;
 typedef struct mem_pool MEM_POOL;
 
 #ifdef _KEEP_RCS_ID
-static char *cond_rcs_id = cond_INCLUDED "$Revision: 1.1.1.1 $";
+static char *cond_rcs_id = cond_INCLUDED "$Revision: 1.19 $";
 #endif /* _KEEP_RCS_ID */
 
 enum COND_IF_INFO {COND_IF_THEN_ONLY, COND_IF_ELSE_ONLY, COND_IF_NOT_SURE};

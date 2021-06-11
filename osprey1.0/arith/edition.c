@@ -865,14 +865,8 @@ Edition 42:
 
 
 static char USMID [] = "\n%Z%%M%	%I%	%G% %U%\n";
-static char rcsid [] = "$Id: edition.c,v 1.3 2002/10/13 21:35:14 douillet Exp $";
+static char rcsid [] = "$Id: edition.c,v 1.1.1.1 2001/06/25 06:32:38 llx Exp $";
 /* $Log: edition.c,v $
-/* Revision 1.3  2002/10/13 21:35:14  douillet
-/* added the new files and directories from ORC 1.1
-/*
-/* Revision 1.8  2002/07/01 05:10:49  llx
-/* *** empty log message ***
-/*
 /* Revision 1.1.1.1  2001/06/25 06:32:38  llx
 /* Merged Version
 /*

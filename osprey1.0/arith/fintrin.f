@@ -146,4 +146,4 @@ CDIR$ INTEGER=64
       END
 
 c USMID = "\n%Z%%M%	%I%	%G% %U%\n";
-c rcsid = "$Id: fintrin.f,v 1.1.1.1 2001/09/10 17:47:13 morrone Exp $";
+c rcsid = "$Id: fintrin.f,v 2.1 1994/10/18 19:48:38 jk Exp $";

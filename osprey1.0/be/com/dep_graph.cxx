@@ -44,10 +44,10 @@
  * ====================================================================
  *
  * Module: dep_graph.cxx  
- * $Revision: 1.1.1.1 $
- * $Date: 2001/09/10 17:47:32 $
- * $Author: morrone $
- * $Source: /cvsroot/open64/open64/osprey1.0/be/com/dep_graph.cxx,v $
+ * $Revision: 1.128 $
+ * $Date: 2001/03/10 02:09:50 $
+ * $Author: mtibuild $
+ * $Source: /isms/cmplrs.src/osprey1.0/be/com/RCS/dep_graph.cxx,v $
  *
  * Revision history:
  *  dd-mmm-94 - Original Version
@@ -63,7 +63,7 @@
 #endif /* USE_PCH */
 #pragma hdrstop
 #ifdef _KEEP_RCS_ID
-static char *rcs_id = "$Source: /cvsroot/open64/open64/osprey1.0/be/com/dep_graph.cxx,v $ $Revision: 1.1.1.1 $";
+static char *rcs_id = "$Source: /isms/cmplrs.src/osprey1.0/be/com/RCS/dep_graph.cxx,v $ $Revision: 1.128 $";
 #endif /* _KEEP_RCS_ID */
 
 #include <sys/types.h>

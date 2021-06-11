@@ -43,9 +43,9 @@
  *
  * Module: doacross.cxx
  * $Revision: 1.2 $
- * $Date: 2002/10/13 21:35:17 $
- * $Author: douillet $
- * $Source: /cvsroot/open64/open64/osprey1.0/be/lno/doacross.cxx,v $
+ * $Date: 2002/03/20 09:58:48 $
+ * $Author: llx $
+ * $Source: /u/merge/src/osprey1.0/be/lno/doacross.cxx,v $
  *
  * Revision history:
  *  dd-mmm-95 - Original Version
@@ -63,7 +63,7 @@
 
 #ifdef _KEEP_RCS_ID
 /*REFERENCED*/
-static char *rcs_id = "$Source: /cvsroot/open64/open64/osprey1.0/be/lno/doacross.cxx,v $";
+static char *rcs_id = "$Source: /u/merge/src/osprey1.0/be/lno/doacross.cxx,v $";
 #endif /* _KEEP_RCS_ID */
 
 #include <sys/types.h>

@@ -473,4 +473,4 @@ AR_compare
 
 
 static char USMID [] = "\n%Z%%M%	%I%	%G% %U%\n";
-static char rcsid [] = "$Id: compare.c,v 1.1.1.1 2001/09/10 17:47:13 morrone Exp $";
+static char rcsid [] = "$Id: compare.c,v 2.7 1997/04/25 02:55:47 gbt Exp $";

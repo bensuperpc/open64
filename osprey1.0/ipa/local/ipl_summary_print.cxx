@@ -37,7 +37,7 @@
 /* ====================================================================
  *
  * Module: ipl_summary_print.cxx
- * $Source: /cvsroot/open64/open64/osprey1.0/ipa/local/ipl_summary_print.cxx,v $
+ * $Source: /u/merge/src/osprey1.0/ipa/local/ipl_summary_print.cxx,v $
  *
  * Description:
  *	all the print functions for summary info.
@@ -1206,4 +1206,40 @@ SUMMARY_COMMON_SHAPE::Trace_array ( INT32 size ) const
 {
     Print_array ( TFile, size );
 }
+/*-----------------------------------------------------------*/
+/*reorder*/
+void
+SUMMARY_STRUCT_ACCESS::Print ( FILE *fp, INT32 id ) const
+{
+	UINT i;
+  fprintf ( fp, "FLD ACCESS [%d]: name:%s  ", id,Get_ty_name() ); 
+	for(i=0; i<max_hot_num;i++){
+		if(Get_hot_fld_id(i)==0) /*fld_id=1,2,...*/
+			break;
+      	fprintf ( fp, " field_id= %d, count = %lld  \n", Get_hot_fld_id(i),Get_hot_fld(i));
+	}
+} // SUMMARY_STRUCT_ACCESS::Print
+void
+SUMMARY_STRUCT_ACCESS::Trace_array ( INT32 size ) const
+{
+    Print_array ( TFile, size );
+}
+void
+SUMMARY_STRUCT_ACCESS::Print_array (FILE* fp, INT32 size ) const
+{
+    INT i;
+
+    fprintf ( fp, "%sStart fld access array\n%s", SBar, SBar );
+    for ( i=0; i<size; ++i ) {
+	this[i].Print ( fp, i );
+    }
+    fprintf ( fp, "%sEnd fld access array \n%s", SBar, SBar );
+}
+void
+SUMMARY_STRUCT_ACCESS::Trace ( INT32 id ) const
+{
+    Print ( TFile, id );
+}
+
+
 

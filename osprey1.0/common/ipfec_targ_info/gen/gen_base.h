@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2000-2002, Intel Corporation
+  Copyright (C) 2000-2003, Intel Corporation
   All rights reserved.
   
   Redistribution and use in source and binary forms, with or without modification,
@@ -30,8 +30,8 @@
 //
 //  Module : gen_base.h
 //  $Date  : $
-//  $Author: douillet $
-//  $Source: /cvsroot/open64/open64/osprey1.0/common/ipfec_targ_info/gen/gen_base.h,v $
+//  $Author: sxyang $
+//  $Source: /u/merge/src/osprey1.0/common/ipfec_targ_info/gen/gen_base.h,v $
 //
 //  Description:
 //  ============
@@ -55,6 +55,11 @@ typedef enum {
     GEN_MODE_SCREEN
 }GEN_MODE;
 
+typedef enum {
+    ITM_TYPE,
+    MCK_TYPE
+}MACHINE_TYPE;
+
 /**********************************************************
  * Emit_Header
  * Write the common header of a header file
@@ -66,7 +71,7 @@ typedef enum {
  */
 extern void Emit_Header (FILE *hfile,
 		  const char *name,
-		  const char *interface_desc,
+		  const char * const *interface_desc,
                   bool  cplusplus = false);
 
 /**********************************************************

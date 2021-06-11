@@ -3,10 +3,10 @@
 // ====================================================================
 //
 // Module: opt_htable.cxx
-// $Revision: 1.2 $
-// $Date: 2002/10/13 21:35:18 $
-// $Author: douillet $
-// $Source: /cvsroot/open64/open64/osprey1.0/be/opt/opt_htable.cxx,v $
+// $Revision: 1.4 $
+// $Date: 2003/01/06 03:45:26 $
+// $Author: cwu $
+// $Source: /u/merge/src/osprey1.0/be/opt/opt_htable.cxx,v $
 //
 // ====================================================================
 //
@@ -4848,7 +4848,12 @@ CODEMAP::Print(FILE *fp) const
     if (bucket)
       fprintf(fp, "----bucket %d\n", codemap_iter.Cur());
     FOR_ALL_NODE(cr, cr_iter, Init(bucket)) {
-      Print_CR(cr, fp);
+#if 1 // Fix 12-20-2002
+      // Some IVAR become dangling node after folding,
+      // which will trigger assertion in Print_CR().
+      // We need to update use_cnt to fix the root cause of this problem.
+      // Print_CR(cr, fp);
+#endif
       count++;
       if (cr->Kind() == CK_IVAR && cr->Opr() != OPR_PREFETCH) 
         ivar_count++;

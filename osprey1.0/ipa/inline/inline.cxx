@@ -38,10 +38,10 @@
 // ====================================================================
 //
 // Module: inline.cxx
-// $Revision: 1.1.1.1 $
-// $Date: 2001/09/10 17:49:59 $
-// $Author: morrone $
-// $Source: /cvsroot/open64/open64/osprey1.0/ipa/inline/inline.cxx,v $
+// $Revision: 1.183 $
+// $Date: 2001/03/10 04:04:51 $
+// $Author: mtibuild $
+// $Source: /isms/cmplrs.src/osprey1.0/ipa/inline/RCS/inline.cxx,v $
 // Revision history:
 //  20-Apr-95 - Original Version
 //

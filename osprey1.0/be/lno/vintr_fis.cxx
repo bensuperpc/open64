@@ -42,10 +42,10 @@
  * ====================================================================
  *
  * Module: vintr_fis.cxx
- * $Revision: 1.1.1.1 $
- * $Date: 2001/09/10 17:47:52 $
- * $Author: morrone $
- * $Source: /cvsroot/open64/open64/osprey1.0/be/lno/vintr_fis.cxx,v $
+ * $Revision: 1.73 $
+ * $Date: 2001/03/10 02:37:18 $
+ * $Author: mtibuild $
+ * $Source: /isms/cmplrs.src/osprey1.0/be/lno/RCS/vintr_fis.cxx,v $
  *
  * Revision history:
  *  dd-mmm-95 - Original Version
@@ -64,7 +64,7 @@
 
 #ifdef _KEEP_RCS_ID
 /*REFERENCED*/
-static char *rcs_id = "$Source: /cvsroot/open64/open64/osprey1.0/be/lno/vintr_fis.cxx,v $ $Revision: 1.1.1.1 $";
+static char *rcs_id = "$Source: /isms/cmplrs.src/osprey1.0/be/lno/RCS/vintr_fis.cxx,v $ $Revision: 1.73 $";
 #endif /* _KEEP_RCS_ID */
 
 #include <sys/types.h>

@@ -39,7 +39,7 @@
 
 
 #ifdef _KEEP_RCS_ID
-static char *dwarf_DST_dump_rcs_id = "$Source: /cvsroot/open64/open64/osprey1.0/common/com/dwarf_DST_dump.h,v $ $Revision: 1.1.1.1 $";
+static char *dwarf_DST_dump_rcs_id = "$Source: /isms/cmplrs.src/osprey1.0/common/com/RCS/dwarf_DST_dump.h,v $ $Revision: 1.8 $";
 #endif /* _KEEP_RCS_ID */
 
 #include "dwarf_DST.h"

@@ -36,7 +36,7 @@
 
 /*
    xlate_pro_add_range.c
-   $Revision: 1.1.1.1 $
+   $Revision: 1.7 $
 
    'range' is the same meaning as 'length' and is length in bytes
    of instructions. (not numbers of instructions)

@@ -40,8 +40,8 @@
   This is the #include in the c files.
   xlateincl.h
 
-  $Revision: 1.1.1.1 $
-  $Date: 2001/09/10 17:50:12 $
+  $Revision: 1.5 $
+  $Date: 2001/03/10 05:14:43 $
 
 */
 

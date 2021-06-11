@@ -39,10 +39,10 @@
  * ====================================================================
  *
  * Module: wn2f.h
- * $Revision: 1.1.1.1 $
- * $Date: 2001/09/10 17:48:09 $
- * $Author: morrone $
- * $Source: /cvsroot/open64/open64/osprey1.0/be/whirl2f/wn2f.h,v $
+ * $Revision: 1.30 $
+ * $Date: 2001/03/10 02:59:35 $
+ * $Author: mtibuild $
+ * $Source: /isms/cmplrs.src/osprey1.0/be/whirl2f/RCS/wn2f.h,v $
  *
  * Revision history:
  *  07-Apr-1995 - Original Version

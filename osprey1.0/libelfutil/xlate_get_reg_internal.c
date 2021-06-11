@@ -38,7 +38,7 @@
 
   xlate_get_reg_internal.c
 
-  $Revision: 1.1.1.1 $
+  $Revision: 1.8 $
 
 
 */

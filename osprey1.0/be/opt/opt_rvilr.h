@@ -3,10 +3,10 @@
 // ====================================================================
 //
 // Module: opt_rvilr.h
-// $Revision: 1.1.1.1 $
-// $Date: 2001/09/10 17:48:03 $
-// $Author: morrone $
-// $Source: /cvsroot/open64/open64/osprey1.0/be/opt/opt_rvilr.h,v $
+// $Revision: 1.15 $
+// $Date: 2001/03/10 02:46:26 $
+// $Author: mtibuild $
+// $Source: /isms/cmplrs.src/osprey1.0/be/opt/RCS/opt_rvilr.h,v $
 //
 // ====================================================================
 //
@@ -53,7 +53,7 @@
 #ifndef opt_rvilr_INCLUDED
 #define opt_rvilr_INCLUDED "opt_rvilr.h"
 #ifdef _KEEP_RCS_ID
-static char *opt_rvilrrcs_id = opt_rvilr_INCLUDED"$ $Revision: 1.1.1.1 $";
+static char *opt_rvilrrcs_id = opt_rvilr_INCLUDED"$ $Revision: 1.15 $";
 #endif /* _KEEP_RCS_ID */
 
 // forward declarations

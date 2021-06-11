@@ -38,7 +38,7 @@
 #define __LTOSTR_H__
 
 
-#ident "$Revision: 1.1.1.1 $"
+#ident "$Revision: 1.4 $"
 
 #include <stdio.h>
 #include <cmplrs/fio.h>

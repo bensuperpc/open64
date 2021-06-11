@@ -41,10 +41,10 @@
 //
 /////////////////////////////////////
 
-//  $Revision: 1.3 $
-//  $Date: 2002/10/13 21:35:15 $
-//  $Author: douillet $
-//  $Source: /cvsroot/open64/open64/osprey1.0/be/cg/gra_mon/gra_spill.cxx,v $
+//  $Revision: 1.10 $
+//  $Date: 2003/01/03 03:55:10 $
+//  $Author: lyz $
+//  $Source: /u/merge/src/osprey1.0/be/cg/gra_mon/gra_spill.cxx,v $
 
 #ifdef USE_PCH
 #include "cg_pch.h"
@@ -272,7 +272,7 @@ Need_UNAT_Entry_Exit(void) {
 }
 
 ////////////////////////////////////
-static void
+void
 UNAT_Spill_OPS(TN *lrange_tn, ST *lrange_st, OPS *ops, CGSPILL_CLIENT client, BB *bb)
 ///////////////////////////////////
 //
@@ -308,7 +308,7 @@ UNAT_Spill_OPS(TN *lrange_tn, ST *lrange_st, OPS *ops, CGSPILL_CLIENT client, BB
   CGSPILL_Store_To_Memory(spill_tn, st, ops, CGSPILL_GRA, bb);
 }
 ////////////////////////////////////
-static void
+void
 UNAT_Restore_OPS(TN *lrange_tn, ST *lrange_st, OPS *ops, CGSPILL_CLIENT client, BB *bb)
 ///////////////////////////////////
 //

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2000-2002, Intel Corporation
+  Copyright (C) 2000-2003, Intel Corporation
   All rights reserved.
   
   Redistribution and use in source and binary forms, with or without modification,
@@ -31,9 +31,9 @@
 //*********************************************************************
 //
 // Module: prdb.cxx
-// $Date: 2002/10/13 21:35:17 $
-// $Author: douillet $
-// $Source: /cvsroot/open64/open64/osprey1.0/be/cg/orc_intel/prdb_util.cxx,v $
+// $Date: 2003/01/15 08:05:07 $
+// $Author: sxyang $
+// $Source: /u/merge/src/osprey1.0/be/cg/orc_intel/prdb_util.cxx,v $
 //
 // Description:
 //

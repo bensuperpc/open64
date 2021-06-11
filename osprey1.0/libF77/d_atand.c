@@ -34,7 +34,7 @@
 */
 
 
-/* $Header: /cvsroot/open64/open64/osprey1.0/libF77/d_atand.c,v 1.1.1.1 2001/09/10 17:50:03 morrone Exp $ */
+/* $Header: /isms/cmplrs.src/osprey1.0/libF77/RCS/d_atand.c,v 8.7 2001/03/10 04:31:43 mtibuild Exp $ */
 /*   VMS Compatibility Version  @(#)d_atand.c	1.1    9/28/87 */
 
 #include <math.h>

@@ -34,7 +34,7 @@
 */
 
 
-/* $Header: /cvsroot/open64/open64/osprey1.0/libF77/s_rnge.c,v 1.1.1.1 2001/09/10 17:50:04 morrone Exp $ */
+/* $Header: /isms/cmplrs.src/osprey1.0/libF77/RCS/s_rnge.c,v 8.8 2001/03/10 04:45:21 mtibuild Exp $ */
 #include <stdio.h>
 
 /* called when a subscript is out of range */

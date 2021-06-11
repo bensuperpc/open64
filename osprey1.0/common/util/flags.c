@@ -37,10 +37,10 @@
  * ====================================================================
  *
  * Module: flags.c
- * $Revision: 1.1.1.1 $
- * $Date: 2001/09/10 17:48:25 $
- * $Author: morrone $
- * $Source: /cvsroot/open64/open64/osprey1.0/common/util/flags.c,v $
+ * $Revision: 2.31 $
+ * $Date: 2001/03/10 03:28:00 $
+ * $Author: mtibuild $
+ * $Source: /isms/cmplrs.src/osprey1.0/common/util/RCS/flags.c,v $
  *
  * Revision history:
  *  17-Jun-91 - Original Version
@@ -55,7 +55,7 @@
 
 #ifdef _KEEP_RCS_ID
 static const char source_file[] = __FILE__;
-static const char rcs_id[] = "$Source: /cvsroot/open64/open64/osprey1.0/common/util/flags.c,v $ $Revision: 1.1.1.1 $";
+static const char rcs_id[] = "$Source: /isms/cmplrs.src/osprey1.0/common/util/RCS/flags.c,v $ $Revision: 2.31 $";
 #endif
 
 #include <string.h>

@@ -34,7 +34,7 @@
 */
 
 
-/*  $Header: /cvsroot/open64/open64/osprey1.0/libF77/and_b.c,v 1.1.1.1 2001/09/10 17:50:03 morrone Exp $ */
+/*  $Header: /isms/cmplrs.src/osprey1.0/libF77/RCS/and_b.c,v 1.4 2001/03/10 04:26:35 mtibuild Exp $ */
 
 /*	  All Rights Reserved  	*/
 

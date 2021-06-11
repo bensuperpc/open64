@@ -37,10 +37,10 @@
  * ====================================================================
  *
  * Module: ipc_option.c
- * $Revision: 1.1.1.1 $
- * $Date: 2001/09/10 17:49:59 $
- * $Author: morrone $
- * $Source: /cvsroot/open64/open64/osprey1.0/ipa/common/ipc_option.cxx,v $
+ * $Revision: 1.32 $
+ * $Date: 2001/03/10 04:02:15 $
+ * $Author: mtibuild $
+ * $Source: /isms/cmplrs.src/osprey1.0/ipa/common/RCS/ipc_option.cxx,v $
  *
  * Description: Option processing for -INLINE options.
  * 

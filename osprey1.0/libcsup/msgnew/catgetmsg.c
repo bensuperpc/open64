@@ -35,7 +35,7 @@
 */
 
 
-#ident  "$Header: /cvsroot/open64/open64/osprey1.0/libcsup/msgnew/catgetmsg.c,v 1.1.1.1 2001/09/10 17:50:07 morrone Exp $"
+#ident  "$Header: /isms/cmplrs.src/osprey1.0/libcsup/msgnew/RCS/catgetmsg.c,v 1.9 2001/03/10 04:59:27 mtibuild Exp $"
 
 #if defined(__STDC__) && defined(_LITTLE_ENDIAN)
 	#pragma weak _catgetmsg = catgetmsg

@@ -1,6 +1,6 @@
 /*
 
-  Copyright (C) 2000, 2001 Silicon Graphics, Inc.  All Rights Reserved.
+  Copyright (C) 2000 Silicon Graphics, Inc.  All Rights Reserved.
 
   This program is free software; you can redistribute it and/or modify it
   under the terms of version 2 of the GNU General Public License as
@@ -37,10 +37,10 @@
  * =======================================================================
  *
  *  Module: op_map.h
- *  $Revision: 1.1.1.1 $
- *  $Date: 2001/09/10 17:47:26 $
- *  $Author: morrone $
- *  $Source: /cvsroot/open64/open64/osprey1.0/be/cg/op_map.h,v $
+ *  $Revision: 1.2 $
+ *  $Date: 2002/09/23 01:28:59 $
+ *  $Author: wjj $
+ *  $Source: /u/merge/src/osprey1.0/be/cg/op_map.h,v $
  *
  *  Revision comments:
  *
@@ -153,6 +153,7 @@ extern OP_MAP _OP_MAP_Create(_OP_MAP_KIND kind);
 #define OP_MAP64_Create() _OP_MAP_Create(_I64)
 
 void OP_MAP_Delete(OP_MAP map);
+BOOL OP_MAP_Is_Delete(OP_MAP map);
 
 void OP_MAP_Set(OP_MAP map, OP *op, void *value);
 void OP_MAP32_Set(OP_MAP map, OP *op, INT32 value);

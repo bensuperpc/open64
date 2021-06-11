@@ -33,7 +33,7 @@
 */
 
 
-/* $Header: /cvsroot/open64/open64/osprey1.0/include/obj_list.h,v 1.1.1.1 2001/09/10 17:49:59 morrone Exp $ */
+/* $Header: /isms/cmplrs.src/osprey1.0/include/RCS/obj_list.h,v 7.8 2001/03/10 03:59:14 mtibuild Exp $ */
 
 #ifndef __OBJ_LIST_H__
 #define __OBJ_LIST_H__

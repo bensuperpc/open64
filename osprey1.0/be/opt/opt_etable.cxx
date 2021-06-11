@@ -3,10 +3,10 @@
 // ====================================================================
 //
 // Module: opt_etable.cxx
-// $Revision: 1.2 $
-// $Date: 2002/10/13 21:35:18 $
-// $Author: douillet $
-// $Source: /cvsroot/open64/open64/osprey1.0/be/opt/opt_etable.cxx,v $
+// $Revision: 1.4 $
+// $Date: 2002/12/17 09:18:15 $
+// $Author: cwu $
+// $Source: /u/merge/src/osprey1.0/be/opt/opt_etable.cxx,v $
 //
 // ====================================================================
 //

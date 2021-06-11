@@ -39,10 +39,10 @@
  * ====================================================================
  *
  * Module: init2c.c
- * $Revision: 1.1.1.1 $
- * $Date: 2001/09/10 17:48:08 $
- * $Author: morrone $
- * $Source: /cvsroot/open64/open64/osprey1.0/be/whirl2c/init2c.h,v $
+ * $Revision: 1.7 $
+ * $Date: 2001/03/10 02:55:31 $
+ * $Author: mtibuild $
+ * $Source: /isms/cmplrs.src/osprey1.0/be/whirl2c/RCS/init2c.h,v $
  *
  * Revision history:
  *  07-Oct-94 - Original Version

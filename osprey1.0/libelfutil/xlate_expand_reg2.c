@@ -38,7 +38,7 @@
 
   xlate_expand_reg.c
 
-  $Revision: 1.1.1.1 $
+  $Revision: 1.5 $
 
   These are used little: mainly by elfdump.
 

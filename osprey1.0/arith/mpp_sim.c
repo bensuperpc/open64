@@ -3074,4 +3074,4 @@ AR_INT_64*	result;
 #endif
 
 static char USMID [] = "\n%Z%%M%	%I%	%G% %U%\n";
-static char rcsid [] = "$Id: mpp_sim.c,v 1.1.1.1 2001/09/10 17:47:14 morrone Exp $";
+static char rcsid [] = "$Id: mpp_sim.c,v 2.21 1997/04/25 02:56:24 gbt Exp $";

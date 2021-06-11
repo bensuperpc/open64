@@ -42,10 +42,10 @@
 /////////////////////////////////////
 
 
-//  $Revision: 1.2 $
-//  $Date: 2002/10/13 21:35:15 $
-//  $Author: douillet $
-//  $Source: /cvsroot/open64/open64/osprey1.0/be/cg/gra_mon/gra_color.cxx,v $
+//  $Revision: 1.11 $
+//  $Date: 2003/01/17 06:36:38 $
+//  $Author: cwu $
+//  $Source: /u/merge/src/osprey1.0/be/cg/gra_mon/gra_color.cxx,v $
 
 #ifdef USE_PCH
 #include "cg_pch.h"
@@ -53,7 +53,7 @@
 #pragma hdrstop
 
 #ifdef _KEEP_RCS_ID
-static char *rcs_id = "$Source: /cvsroot/open64/open64/osprey1.0/be/cg/gra_mon/gra_color.cxx,v $ $Revision: 1.2 $";
+static char *rcs_id = "$Source: /u/merge/src/osprey1.0/be/cg/gra_mon/gra_color.cxx,v $ $Revision: 1.11 $";
 #endif
 
 #include <limits.h>

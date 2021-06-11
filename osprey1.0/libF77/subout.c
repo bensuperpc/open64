@@ -34,7 +34,7 @@
 */
 
 
-/* $Header: /cvsroot/open64/open64/osprey1.0/libF77/subout.c,v 1.1.1.1 2001/09/10 17:50:04 morrone Exp $ */
+/* $Header: /isms/cmplrs.src/osprey1.0/libF77/RCS/subout.c,v 8.7 2001/03/10 04:46:31 mtibuild Exp $ */
 #include <stdio.h>
 #include <stdlib.h>
 #include "cmplrs/host.h"

@@ -38,7 +38,7 @@
 
   xlate_get_range.c
 
-  $Revision: 1.1.1.1 $
+  $Revision: 1.10 $
 
   These are the 9 possible versions implementing all combinations of
   table format and tablekind.

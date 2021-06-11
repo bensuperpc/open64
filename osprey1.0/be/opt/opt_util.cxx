@@ -3,10 +3,10 @@
 // ====================================================================
 //
 // Module: opt_util.cxx
-// $Revision: 1.1.1.1 $
-// $Date: 2001/09/10 17:48:04 $
-// $Author: morrone $
-// $Source: /cvsroot/open64/open64/osprey1.0/be/opt/opt_util.cxx,v $
+// $Revision: 1.39 $
+// $Date: 2001/03/10 02:48:21 $
+// $Author: mtibuild $
+// $Source: /isms/cmplrs.src/osprey1.0/be/opt/RCS/opt_util.cxx,v $
 //
 // Revision history:
 //  12-SEP-94 shin - Original Version
@@ -53,7 +53,7 @@
 
 #define opt_util_CXX	"opt_util.cxx"
 #ifdef _KEEP_RCS_ID
-static char *rcs_id = 	opt_util_CXX"$Revision: 1.1.1.1 $";
+static char *rcs_id = 	opt_util_CXX"$Revision: 1.39 $";
 #endif /* _KEEP_RCS_ID */
 
 #include <stdarg.h>

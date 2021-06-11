@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2000-2002, Intel Corporation
+  Copyright (C) 2000-2003, Intel Corporation
   All rights reserved.
   
   Redistribution and use in source and binary forms, with or without modification,
@@ -32,8 +32,8 @@
 //
 //  Module :  recovery.h
 //  $Date  :  2001/02/20 21:12:34 $
-//  $Author: douillet $
-//  $Source: /cvsroot/open64/open64/osprey1.0/be/cg/orc_intel/recovery.h,v $
+//  $Author: sxyang $
+//  $Source: /u/merge/src/osprey1.0/be/cg/orc_intel/recovery.h,v $
 //
 //  Description:
 //  ============

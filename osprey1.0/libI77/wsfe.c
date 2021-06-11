@@ -35,7 +35,7 @@
 
 
 
-/* $Header: /cvsroot/open64/open64/osprey1.0/libI77/wsfe.c,v 1.1.1.1 2001/09/10 17:50:06 morrone Exp $ */
+/* $Header: /isms/cmplrs.src/osprey1.0/libI77/RCS/wsfe.c,v 9.26 2001/03/10 04:55:25 mtibuild Exp $ */
 /*	3.0 SID #	1.2	*/
 /*write sequential formatted external*/
 

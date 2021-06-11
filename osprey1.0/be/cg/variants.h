@@ -40,10 +40,10 @@
  * ====================================================================
  *
  * Module: variants.h
- * $Revision: 1.3 $
- * $Date: 2002/10/13 21:35:15 $
- * $Author: douillet $
- * $Source: /cvsroot/open64/open64/osprey1.0/be/cg/variants.h,v $
+ * $Revision: 1.1.1.1 $
+ * $Date: 2001/06/25 06:32:37 $
+ * $Author: llx $
+ * $Source: /u/merge/src/osprey1.0/be/cg/variants.h,v $
  *
  * Revision history:
  *  01-Nov-89 - Original Version (STAPUFT GE/PE)
@@ -60,7 +60,7 @@
  */
 
 #ifdef _KEEP_RCS_ID
-static const char variants_rcs_id[] = "$Source: /cvsroot/open64/open64/osprey1.0/be/cg/variants.h,v $ $Revision: 1.3 $";
+static const char variants_rcs_id[] = "$Source: /u/merge/src/osprey1.0/be/cg/variants.h,v $ $Revision: 1.1.1.1 $";
 #endif /* _KEEP_RCS_ID */
 
 /* Type used to hold a variant:

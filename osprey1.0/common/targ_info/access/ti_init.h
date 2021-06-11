@@ -37,10 +37,10 @@
  * ====================================================================
  *
  *  Module: ti_init.h
- *  $Revision: 1.1.1.1 $
- *  $Date: 2001/09/10 17:48:23 $
- *  $Author: morrone $
- *  $Source: /cvsroot/open64/open64/osprey1.0/common/targ_info/access/ti_init.h,v $
+ *  $Revision: 1.2 $
+ *  $Date: 2002/11/27 09:49:41 $
+ *  $Author: llx $
+ *  $Source: /u/merge/src/osprey1.0/common/targ_info/access/ti_init.h,v $
  *
  *  Synopsis:
  *
@@ -64,7 +64,7 @@
 #define ti_init_INCLUDED
 
 #ifdef _KEEP_RCS_ID
-static const char ti_init_rcs_id[] = "$Source: /cvsroot/open64/open64/osprey1.0/common/targ_info/access/ti_init.h,v $ $Revision: 1.1.1.1 $";
+static const char ti_init_rcs_id[] = "$Source: /u/merge/src/osprey1.0/common/targ_info/access/ti_init.h,v $ $Revision: 1.2 $";
 #endif /* _KEEP_RCS_ID */
 
 #include "targ_abi_properties.h"
@@ -76,7 +76,7 @@ extern "C" {
 #endif
 
 extern void
-TI_Initialize (ABI_PROPERTIES_ABI, ISA_SUBSET, PROCESSOR, char *tpath);
+TI_Initialize (ABI_PROPERTIES_ABI, ISA_SUBSET, PROCESSOR, char *tpath, char *version);
 
 #ifdef __cplusplus
 }

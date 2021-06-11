@@ -49,10 +49,10 @@
  * ====================================================================
  *
  * Module: lego_local.cxx
- * $Revision: 1.1.1.1 $
- * $Date: 2001/09/10 17:47:44 $
- * $Author: morrone $
- * $Source: /cvsroot/open64/open64/osprey1.0/be/lno/lego_local.cxx,v $
+ * $Revision: 1.36 $
+ * $Date: 2001/03/10 02:26:54 $
+ * $Author: mtibuild $
+ * $Source: /isms/cmplrs.src/osprey1.0/be/lno/RCS/lego_local.cxx,v $
  *
  * Revision history:
  *  08-21-96 - Original Version
@@ -69,7 +69,7 @@
 #pragma hdrstop
 
 static char *source_file = __FILE__;
-static char *rcs_id = "$Source: /cvsroot/open64/open64/osprey1.0/be/lno/lego_local.cxx,v $";
+static char *rcs_id = "$Source: /isms/cmplrs.src/osprey1.0/be/lno/RCS/lego_local.cxx,v $";
 
 #include <sys/types.h>
 #include <alloca.h>

@@ -35,7 +35,7 @@
 
 
 
-/* $Header: /cvsroot/open64/open64/osprey1.0/libI77/close.c,v 1.1.1.1 2001/09/10 17:50:05 morrone Exp $ */
+/* $Header: /isms/cmplrs.src/osprey1.0/libI77/RCS/close.c,v 9.20 2001/03/10 04:49:06 mtibuild Exp $ */
 /*	3.0 SID #	1.2	*/
 
 /* who	ref.		date		description			*/

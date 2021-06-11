@@ -38,10 +38,10 @@
  * ====================================================================
  *
  * Module: tn.h
- * $Revision: 1.3 $
- * $Date: 2002/10/13 21:35:15 $
- * $Author: douillet $
- * $Source: /cvsroot/open64/open64/osprey1.0/be/cg/tn.h,v $
+ * $Revision: 1.2 $
+ * $Date: 2001/10/13 09:01:23 $
+ * $Author: gange $
+ * $Source: /u/merge/src/osprey1.0/be/cg/tn.h,v $
  *
  * Description:
  *

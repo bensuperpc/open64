@@ -63,9 +63,9 @@
  * ====================================================================
  *
  * Module: soe.c  
- * $Revision: 1.1.1.1 $
- * $Date: 2001/09/10 17:47:51 $
- * $Author: morrone $
+ * $Revision: 1.50 $
+ * $Date: 2001/03/10 02:36:24 $
+ * $Author: mtibuild $
  * Revision history:
  *  dd-mmm-94 - Original Version
  *

@@ -37,10 +37,10 @@
  * ====================================================================
  *
  * Module: w2c_driver.c
- * $Revision: 1.1.1.1 $
- * $Date: 2001/09/10 17:48:08 $
- * $Author: morrone $
- * $Source: /cvsroot/open64/open64/osprey1.0/be/whirl2c/w2c_driver.cxx,v $
+ * $Revision: 1.4 $
+ * $Date: 2002/07/19 09:12:27 $
+ * $Author: zdu $
+ * $Source: /u/merge/src/osprey1.0/be/whirl2c/w2c_driver.cxx,v $
  *
  * Revision history:
  *  07-Oct-95 - Original Version
@@ -61,7 +61,7 @@
  */
 
 #ifdef _KEEP_RCS_ID
-static char *rcs_id = "$Source: /cvsroot/open64/open64/osprey1.0/be/whirl2c/w2c_driver.cxx,v $ $Revision: 1.1.1.1 $";
+static char *rcs_id = "$Source: /u/merge/src/osprey1.0/be/whirl2c/w2c_driver.cxx,v $ $Revision: 1.4 $";
 #endif /* _KEEP_RCS_ID */
 
 #include <sys/elf_whirl.h>  /* for WHIRL_REVISION */
@@ -532,23 +532,7 @@ W2C_Enter_Global_Symbols(void)
    FLD_HANDLE   fld;
    TY_IDX    ty;
 
-   /* Enter_Sym_Info for every struct or class type in the global
-    * symbol table, with associated fields.  Do this prior to any
-    * variable declarations, just to ensure that field names and
-    * common block names retain their names to the extent this is
-    * possible.
-    */
-   for (ty = 1; ty < TY_Table_Size(); ty++)
-   {
-      if (TY_Is_Structured(ty))
-      {
-	 (void)W2CF_Symtab_Nameof_Ty(ty);
-	 for (fld = TY_flist(Ty_Table[ty]); !fld.Is_Null (); fld = FLD_next(fld))
-	    (void)W2CF_Symtab_Nameof_Fld(fld);
-      } /* if a struct */
-   } /* for all types */
-
-   /* Enter_Sym_Info for every variable, function, and const in the global
+    /* Enter_Sym_Info for every variable, function, and const in the global
     * symbol table.
     */
    FOREACH_SYMBOL(GLOBAL_SYMTAB, st, st_idx)
@@ -566,6 +550,25 @@ W2C_Enter_Global_Symbols(void)
 	 (void)W2CF_Symtab_Nameof_St(st);
       }
    }
+  /* Enter_Sym_Info for every struct or class type in the global
+    * symbol table, with associated fields.  Do this prior to any
+    * variable declarations, just to ensure that field names and
+    * common block names retain their names to the extent this is
+    * possible.
+    */
+   for (ty = 1; ty < TY_Table_Size(); ty++)
+   {
+      //There're two kinds of TY_IDX in orc
+      //we should use make_TY_IDX to translate table index into type index.
+      TY_IDX ty_idx = make_TY_IDX(ty);
+      if (TY_Is_Structured(ty_idx))
+      {
+	 (void)W2CF_Symtab_Nameof_Ty(ty_idx);
+	 for (fld = TY_flist(Ty_Table[ty_idx]); !fld.Is_Null (); fld = FLD_next(fld))
+	    (void)W2CF_Symtab_Nameof_Fld(fld);
+      } /* if a struct */
+   } /* for all types */
+
 } /* W2C_Enter_Global_Symbols */
 
 

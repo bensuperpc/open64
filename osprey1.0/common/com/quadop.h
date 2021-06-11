@@ -42,10 +42,10 @@ extern "C" {
  * ====================================================================
  *
  * Module: quadop.h
- * $Revision: 1.1.1.1 $
- * $Date: 2001/09/10 17:48:18 $
- * $Author: morrone $
- * $Source: /cvsroot/open64/open64/osprey1.0/common/com/quadop.h,v $
+ * $Revision: 2.8 $
+ * $Date: 2001/03/10 03:15:24 $
+ * $Author: mtibuild $
+ * $Source: /isms/cmplrs.src/osprey1.0/common/com/RCS/quadop.h,v $
  *
  * Revision history:
  *  15-Nov-92 - Original Version
@@ -117,7 +117,7 @@ extern "C" {
 
 
 #ifdef _KEEP_RCS_ID
-static char *quadop_rcs_id = "$Source: /cvsroot/open64/open64/osprey1.0/common/com/quadop.h,v $ $Revision: 1.1.1.1 $";
+static char *quadop_rcs_id = "$Source: /isms/cmplrs.src/osprey1.0/common/com/RCS/quadop.h,v $ $Revision: 2.8 $";
 #endif /* _KEEP_RCS_ID */
 
 extern QUAD_TYPE QUADOP_SQRT(QUAD_TYPE);

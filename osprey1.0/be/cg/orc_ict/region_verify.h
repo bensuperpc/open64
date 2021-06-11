@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2000-2002, Institute of Computing Technology, Chinese Academy of Sciences
+  Copyright (C) 2000-2003, Institute of Computing Technology, Chinese Academy of Sciences
   All rights reserved.
   
   Redistribution and use in source and binary forms, with or without modification,
@@ -31,9 +31,9 @@
 //
 // Module: region_verify.h
 // Author: lren
-// $Revision: 1.2 $
-// $Date: 2002/10/13 21:35:16 $
-// $Source: /cvsroot/open64/open64/osprey1.0/be/cg/orc_ict/region_verify.h,v $
+// $Revision: 1.6 $
+// $Date: 2003/01/21 12:57:08 $
+// $Source: /u/merge/src/osprey1.0/be/cg/orc_ict/region_verify.h,v $
 //
 //=============================================================================
 //=============================================================================

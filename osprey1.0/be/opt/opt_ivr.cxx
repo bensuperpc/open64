@@ -3,10 +3,10 @@
 // ====================================================================
 //
 // Module: opt_ivr.cxx
-// $Revision: 1.3 $
-// $Date: 2002/10/13 21:35:18 $
-// $Author: douillet $
-// $Source: /cvsroot/open64/open64/osprey1.0/be/opt/opt_ivr.cxx,v $
+// $Revision: 1.2 $
+// $Date: 2001/06/29 03:04:58 $
+// $Author: llx $
+// $Source: /u/merge/src/osprey1.0/be/opt/opt_ivr.cxx,v $
 //
 // Revision history:
 //  28-JAN-95 shin - Original Version
@@ -87,7 +87,7 @@
 
 #ifdef _KEEP_RCS_ID
 #define opt_ivr_CXX	"opt_ivr.cxx"
-static char *rcs_id = 	opt_ivr_CXX"$Revision: 1.3 $";
+static char *rcs_id = 	opt_ivr_CXX"$Revision: 1.2 $";
 #endif /* _KEEP_RCS_ID */
 
 #define USE_STANDARD_TYPES

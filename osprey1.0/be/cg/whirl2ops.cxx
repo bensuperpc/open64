@@ -37,10 +37,10 @@
  * ====================================================================
  *
  * Module: whirl2ops.cxx
- * $Revision: 1.3 $
- * $Date: 2002/10/13 21:35:15 $
- * $Author: douillet $
- * $Source: /cvsroot/open64/open64/osprey1.0/be/cg/whirl2ops.cxx,v $
+ * $Revision: 1.5 $
+ * $Date: 2002/11/13 07:46:32 $
+ * $Author: gange $
+ * $Source: /u/merge/src/osprey1.0/be/cg/whirl2ops.cxx,v $
  *
  * Description:
  *
@@ -367,12 +367,12 @@ Handle_Bool_As_Predicate(WN*condition, WN*parent, BOOL invert)
       OP* op1;
       OP* op2;
       if(condition_opr == OPR_BIOR){
-        op1 = Mk_OP(TOP_cmp_eq, predicate_result0, predicate_result1, kid0_guard, Zero_TN, Zero_TN);
-        op2 = Mk_OP(TOP_cmp_eq, predicate_result0, predicate_result1, kid1_guard, Zero_TN, Zero_TN);
+        op1 = Mk_OP(TOP_cmp_eq_or_andcm, predicate_result0, predicate_result1, kid0_guard, Zero_TN, Zero_TN);
+        op2 = Mk_OP(TOP_cmp_eq_or_andcm, predicate_result0, predicate_result1, kid1_guard, Zero_TN, Zero_TN);
         preset_op = Mk_OP(TOP_cmp_eq, predicate_result1, predicate_result0, True_TN, Zero_TN, Zero_TN);
       }else if(condition_opr == OPR_BAND){
-        op1 = Mk_OP(TOP_cmp_eq, predicate_result1, predicate_result0, kid0_guard, Zero_TN, Zero_TN);
-        op2 = Mk_OP(TOP_cmp_eq, predicate_result1, predicate_result0, kid1_guard, Zero_TN, Zero_TN);
+        op1 = Mk_OP(TOP_cmp_eq_or_andcm, predicate_result1, predicate_result0, kid0_guard, Zero_TN, Zero_TN);
+        op2 = Mk_OP(TOP_cmp_eq_or_andcm, predicate_result1, predicate_result0, kid1_guard, Zero_TN, Zero_TN);
         preset_op = Mk_OP(TOP_cmp_eq, predicate_result0, predicate_result1, True_TN, Zero_TN, Zero_TN);
       }else{
         Is_True(FALSE,("Can not get to here!")); 

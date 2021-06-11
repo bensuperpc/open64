@@ -37,10 +37,10 @@
  * ====================================================================
  *
  * Module: config_wopt.c
- * $Revision: 1.1.1.1 $
- * $Date: 2001/09/10 17:48:12 $
- * $Author: morrone $
- * $Source: /cvsroot/open64/open64/osprey1.0/common/com/config_wopt.cxx,v $
+ * $Revision: 1.2 $
+ * $Date: 2002/08/13 06:49:30 $
+ * $Author: zdu $
+ * $Source: /u/merge/src/osprey1.0/common/com/config_wopt.cxx,v $
  *
  * Revision history:
  *  08-Sep-94 - Original Version (wodriver.c)
@@ -124,7 +124,7 @@ BOOL  WOPT_Enable_Exp_PRE = TRUE;
 INT32 WOPT_Enable_Exp_PRE_Limit = -1;
 BOOL  WOPT_Enable_Fast_Simp = TRUE;
 BOOL  WOPT_Enable_Fold2const = TRUE;
-BOOL  WOPT_Enable_Fold_Lda_Iload_Istore = FALSE;
+BOOL  WOPT_Enable_Fold_Lda_Iload_Istore = TRUE;
 BOOL  WOPT_Enable_LNO_Copy_Propagate = TRUE;
 BOOL  WOPT_Enable_FSA = TRUE;
 INT32 WOPT_Enable_Generate_Trip_Count = 1;

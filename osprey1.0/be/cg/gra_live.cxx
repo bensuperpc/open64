@@ -37,10 +37,10 @@
  * =======================================================================
  *
  *  Module: gra_live.c
- *  $Revision: 1.3 $
- *  $Date: 2002/10/13 21:35:15 $
- *  $Author: douillet $
- *  $Source: /cvsroot/open64/open64/osprey1.0/be/cg/gra_live.cxx,v $
+ *  $Revision: 1.5 $
+ *  $Date: 2002/09/17 01:58:28 $
+ *  $Author: gange $
+ *  $Source: /u/merge/src/osprey1.0/be/cg/gra_live.cxx,v $
  *
  *  Description:
  *  ============
@@ -1160,6 +1160,10 @@ Live_Init(
       TN *tn = ROTATING_KERNEL_INFO_copyout(info)[i];
       BB_defreach_out(bb) = GTN_SET_Union1D(BB_defreach_out(bb), tn, &liveness_pool);
     }
+    for (i = 0; i < ROTATING_KERNEL_INFO_localdef(info).size(); i++) {
+      TN *tn = ROTATING_KERNEL_INFO_localdef(info)[i];
+      BB_defreach_out(bb) = GTN_SET_Union1D(BB_defreach_out(bb), tn, &liveness_pool);
+    }
   }
 }
 
@@ -2121,6 +2125,13 @@ GRA_LIVE_Compute_Local_Info(
       TN *tn = ROTATING_KERNEL_INFO_copyout(info)[i];
       tmp_live_def = TN_SET_Union1D(tmp_live_def,tn,&gra_live_local_pool);
     }
+    for (i = 0; i < ROTATING_KERNEL_INFO_localdef(info).size(); i++) {
+      TN *tn = ROTATING_KERNEL_INFO_localdef(info)[i];
+      tmp_live_def = TN_SET_Union1D(tmp_live_def,tn,&gra_live_local_pool);
+    }
+
+
+
   }
 
   GRA_LIVE_Init_BB_End(bb);

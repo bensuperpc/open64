@@ -34,6 +34,6 @@
 */
 
 
-/*  $Header: /cvsroot/open64/open64/osprey1.0/libF77/cmplx.h,v 1.1.1.1 2001/09/10 17:50:03 morrone Exp $ */
+/*  $Header: /isms/cmplrs.src/osprey1.0/libF77/RCS/cmplx.h,v 1.5 2001/03/10 04:30:57 mtibuild Exp $ */
 typedef struct { float real, imag; } complex;
 typedef struct { double dreal, dimag; } dcomplex;

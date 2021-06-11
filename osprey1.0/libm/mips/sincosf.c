@@ -38,10 +38,10 @@
  * ====================================================================
  *
  * Module: sincosf.c
- * $Revision: 1.1.1.1 $
- * $Date: 2001/09/10 17:50:21 $
- * $Author: morrone $
- * $Source: /cvsroot/open64/open64/osprey1.0/libm/mips/sincosf.c,v $
+ * $Revision: 1.6 $
+ * $Date: 2001/03/10 08:57:20 $
+ * $Author: mtibuild $
+ * $Source: /isms/cmplrs.src/osprey1.0/libm/mips/RCS/sincosf.c,v $
  *
  * Revision history:
  *  10-Mar-00 - Original Version

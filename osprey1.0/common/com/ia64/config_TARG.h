@@ -37,10 +37,10 @@
  * ====================================================================
  *
  * Module: config_TARG.h
- * $Revision: 1.1.1.1 $
- * $Date: 2001/09/10 17:48:21 $
- * $Author: morrone $
- * $Source: /cvsroot/open64/open64/osprey1.0/common/com/ia64/config_TARG.h,v $
+ * $Revision: 1.6 $
+ * $Date: 2001/03/10 01:14:00 $
+ * $Author: mtibuild $
+ * $Source: /osprey.src/osprey1.0/common/com/ia64/RCS/config_TARG.h,v $
  *
  * Revision history:
  *  11-Apr-96 - Original Version
@@ -70,7 +70,7 @@
 
 #ifdef _KEEP_RCS_ID
 /*REFERENCED*/
-static char *config_TARG_h_rcs_id = "$Source: /cvsroot/open64/open64/osprey1.0/common/com/ia64/config_TARG.h,v $ $Revision: 1.1.1.1 $";
+static char *config_TARG_h_rcs_id = "$Source: /osprey.src/osprey1.0/common/com/ia64/RCS/config_TARG.h,v $ $Revision: 1.6 $";
 #endif /* _KEEP_RCS_ID */
 
 #ifdef __cplusplus

@@ -37,10 +37,10 @@
  * =======================================================================
  *
  *  Module: cg_flags.h
- *  $Revision: 1.3 $
- *  $Date: 2002/10/13 21:35:14 $
- *  $Author: douillet $
- *  $Source: /cvsroot/open64/open64/osprey1.0/be/cg/cg_flags.h,v $
+ *  $Revision: 1.5 $
+ *  $Date: 2001/11/20 10:17:30 $
+ *  $Author: lrq $
+ *  $Source: /u/merge/src/osprey1.0/be/cg/cg_flags.h,v $
  *
  *  Description:
  *  ============

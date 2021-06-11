@@ -37,7 +37,7 @@
 /*
     xlate_proTypes.h
 
-    $Revision: 1.1.1.1 $
+    $Revision: 1.5 $
 
     This is internal to libxlate.
 

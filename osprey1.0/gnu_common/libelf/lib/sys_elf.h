@@ -18,7 +18,7 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */
 
-/* @(#) $Id: sys_elf.h,v 1.1.1.1 2001/09/10 17:49:56 morrone Exp $ */
+/* @(#) $Id: sys_elf.h,v 1.1 2000/03/08 22:26:23 mpm Exp $ */
 
 /*
  * DO NOT USE THIS IN APPLICATIONS - #include <libelf.h> INSTEAD!

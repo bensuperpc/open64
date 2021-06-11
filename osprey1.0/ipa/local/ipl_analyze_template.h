@@ -38,7 +38,7 @@
  * ====================================================================
  *
  * Module: ipl_analyze.cxx
- * $Source: /cvsroot/open64/open64/osprey1.0/ipa/local/ipl_analyze_template.h,v $
+ * $Source: /u/merge/src/osprey1.0/ipa/local/ipl_analyze_template.h,v $
  *
  * Description:
  *	Functions for analyzing the procedures for the summary phase,

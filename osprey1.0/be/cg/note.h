@@ -1,6 +1,6 @@
 /*
 
-  Copyright (C) 2000, 2001 Silicon Graphics, Inc.  All Rights Reserved.
+  Copyright (C) 2000 Silicon Graphics, Inc.  All Rights Reserved.
 
   This program is free software; you can redistribute it and/or modify it
   under the terms of version 2 of the GNU General Public License as
@@ -41,9 +41,9 @@
  *
  *  Module: note.h
  *  $Revision: 1.1.1.1 $
- *  $Date: 2001/09/10 17:47:26 $
- *  $Author: morrone $
- *  $Source: /cvsroot/open64/open64/osprey1.0/be/cg/note.h,v $
+ *  $Date: 2001/06/25 06:32:37 $
+ *  $Author: llx $
+ *  $Source: /u/merge/src/osprey1.0/be/cg/note.h,v $
  *
  *  Revision comments:
  *
@@ -168,7 +168,7 @@
  * ======================================================================= */
 
 #ifdef _KEEP_RCS_ID
-static char *notes_rcs_id = "$Source: /cvsroot/open64/open64/osprey1.0/be/cg/note.h,v $ $Revision: 1.1.1.1 $";
+static char *notes_rcs_id = "$Source: /u/merge/src/osprey1.0/be/cg/note.h,v $ $Revision: 1.1.1.1 $";
 #endif /* _KEEP_RCS_ID */
 
 typedef enum {

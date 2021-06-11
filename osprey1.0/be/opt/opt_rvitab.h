@@ -3,10 +3,10 @@
 // ====================================================================
 //
 // Module: opt_rvitab.h
-// $Revision: 1.1.1.1 $
-// $Date: 2001/09/10 17:48:03 $
-// $Author: morrone $
-// $Source: /cvsroot/open64/open64/osprey1.0/be/opt/opt_rvitab.h,v $
+// $Revision: 1.16 $
+// $Date: 2001/03/10 02:46:37 $
+// $Author: mtibuild $
+// $Source: /isms/cmplrs.src/osprey1.0/be/opt/RCS/opt_rvitab.h,v $
 //
 // ====================================================================
 //
@@ -53,7 +53,7 @@
 #ifndef opt_rvitab_INCLUDED
 #define opt_rvitab_INCLUDED "opt_rvitab.h"
 #ifdef _KEEP_RCS_ID
-static char *opt_rvitabrcs_id = opt_rvitab_INCLUDED"$ $Revision: 1.1.1.1 $";
+static char *opt_rvitabrcs_id = opt_rvitab_INCLUDED"$ $Revision: 1.16 $";
 #endif /* _KEEP_RCS_ID */
 
 #ifndef wn_INCLUDED

@@ -3,10 +3,10 @@
 // ====================================================================
 //
 // Module: optimizer.h
-// $Revision: 1.1.1.1 $
-// $Date: 2001/09/10 17:48:05 $
-// $Author: morrone $
-// $Source: /cvsroot/open64/open64/osprey1.0/be/opt/optimizer.h,v $
+// $Revision: 1.23 $
+// $Date: 2001/03/10 02:49:53 $
+// $Author: mtibuild $
+// $Source: /isms/cmplrs.src/osprey1.0/be/opt/RCS/optimizer.h,v $
 //
 // Revision history:
 //  14-SEP-94 - Original Version
@@ -56,7 +56,7 @@
 #ifndef optimizer_INCLUDED
 #define optimizer_INCLUDED      "optimizer.h"
 #ifdef _KEEP_RCS_ID
-static char *optimizerrcs_id =	optimizer_INCLUDED"$Revision: 1.1.1.1 $";
+static char *optimizerrcs_id =	optimizer_INCLUDED"$Revision: 1.23 $";
 #endif /* _KEEP_RCS_ID */
 
 #include "opt_alias_interface.h"

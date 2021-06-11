@@ -37,10 +37,10 @@
  * ====================================================================
  *
  * Module: config.c
- * $Revision: 1.3 $
- * $Date: 2002/10/13 21:35:18 $
- * $Author: douillet $
- * $Source: /cvsroot/open64/open64/osprey1.0/common/com/config.cxx,v $
+ * $Revision: 1.10 $
+ * $Date: 2002/12/27 03:22:11 $
+ * $Author: lhb $
+ * $Source: /u/merge/src/osprey1.0/common/com/config.cxx,v $
  *
  * Revision history:
  *  06-Jun-90 -	Original Version (moved	from cdriver.c)
@@ -61,7 +61,7 @@
 
 #ifdef _KEEP_RCS_ID
 /*REFERENCED*/
-static char *rcs_id = "$Source: /cvsroot/open64/open64/osprey1.0/common/com/config.cxx,v $ $Revision: 1.3 $";
+static char *rcs_id = "$Source: /u/merge/src/osprey1.0/common/com/config.cxx,v $ $Revision: 1.10 $";
 #endif /* _KEEP_RCS_ID */
 
 #ifdef FRONT_END	/* For setting fullwarn, woff in front end */
@@ -146,7 +146,7 @@ INT8 Debug_Level = DEF_DEBUG_LEVEL;     /* -gn: debug level */
 /***** Alignment (misaligned memory reference) control *****/
 BOOL	UseAlignedCopyForStructs = FALSE;	/* control aggregrate copy */
 INT32	MinStructCopyLoopSize =    16;		/* 0 = always expand */
-INT32	MinStructCopyMemIntrSize=  0;		/* generate bcopy */
+INT32	MinStructCopyMemIntrSize=  78;		/* generate memcpy */
 INT32	Aggregate_Alignment = -1;		/* This alignment for aggregate layout */
 
 INT32 iolist_reuse_limit = 100;
@@ -1314,6 +1314,11 @@ Configure_Source ( char	*filename )
      Allow_wrap_around_opt = Simp_Unsafe_Relops;
   }
 #endif
+  
+  if (!Allow_wrap_around_opt_Set && Opt_Level > 2) {
+     Allow_wrap_around_opt = TRUE;
+  }
+  
   if (!Simp_Unsafe_Relops_Set && Opt_Level > 2) {
      Simp_Unsafe_Relops = TRUE;
   }

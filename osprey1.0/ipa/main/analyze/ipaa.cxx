@@ -37,7 +37,7 @@
 // ====================================================================
 //
 // Module: ipaa.cxx
-// $Source: /cvsroot/open64/open64/osprey1.0/ipa/main/analyze/ipaa.cxx,v $
+// $Source: /isms/cmplrs.src/osprey1.0/ipa/main/analyze/RCS/ipaa.cxx,v $
 //
 // Revision history:
 //  14-Jun-95 - Original Version

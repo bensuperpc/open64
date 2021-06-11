@@ -3,10 +3,10 @@
 // ====================================================================
 //
 // Module: dump.h
-// $Revision: 1.1.1.1 $
-// $Date: 2001/09/10 17:50:05 $
-// $Author: morrone $
-// $Source: /cvsroot/open64/open64/osprey1.0/instrumentation/libinstr/dump.h,v $
+// $Revision: 1.7 $
+// $Date: 2001/03/12 18:39:11 $
+// $Author: mtibuild $
+// $Source: /isms/cmplrs.src/osprey1.0/instrumentation/libinstr/RCS/dump.h,v $
 //
 // ====================================================================
 //

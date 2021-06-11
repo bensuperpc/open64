@@ -38,9 +38,9 @@
  * ====================================================================
  *
  * Module: inline_summarize.h
- * $Date: 2002/10/13 21:35:22 $
- * $Author: douillet $
- * $Source: /cvsroot/open64/open64/osprey1.0/ipa/inline/inline_summarize.h,v $
+ * $Date: 2002/06/18 02:50:46 $
+ * $Author: lyz $
+ * $Source: /u/merge/src/osprey1.0/ipa/inline/inline_summarize.h,v $
  *
  * Description:
  *	aux. data structures used by the inliner version of summary phase.

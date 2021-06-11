@@ -33,7 +33,7 @@
 */
 
 
-static char *rcs_id = "$Source: /cvsroot/open64/open64/osprey1.0/driver/main.c,v $ $Revision: 1.3 $";
+static char *rcs_id = "$Source: /u/merge/src/osprey1.0/driver/main.c,v $ $Revision: 1.3 $";
 
 #include <stdio.h>
 #include <stdlib.h>

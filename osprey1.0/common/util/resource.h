@@ -42,7 +42,7 @@ extern "C" {
 
 
 #ifdef _KEEP_RCS_ID
-static char *resource_rcs_id = "$Source: /cvsroot/open64/open64/osprey1.0/common/util/resource.h,v $ $Revision: 1.1.1.1 $";
+static char *resource_rcs_id = "$Source: /isms/cmplrs.src/osprey1.0/common/util/RCS/resource.h,v $ $Revision: 1.8 $";
 #endif /* _KEEP_RCS_ID */
 
 /* Request codes: */

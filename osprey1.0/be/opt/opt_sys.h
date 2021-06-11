@@ -3,10 +3,10 @@
 // ====================================================================
 //
 // Module: opt_sys.h
-// $Revision: 1.1.1.1 $
-// $Date: 2001/09/10 17:48:04 $
-// $Author: morrone $
-// $Source: /cvsroot/open64/open64/osprey1.0/be/opt/opt_sys.h,v $
+// $Revision: 1.7 $
+// $Date: 2001/03/10 02:47:48 $
+// $Author: mtibuild $
+// $Source: /isms/cmplrs.src/osprey1.0/be/opt/RCS/opt_sys.h,v $
 //
 // Revision history:
 //  09-JAN-94 shin - Original Version
@@ -56,7 +56,7 @@
 #ifndef opt_sys_INCLUDED
 #define opt_sys_INCLUDED "opt_sys.h"
 #ifdef _KEEP_RCS_ID
-static char *opt_sysrcs_id = opt_sys_INCLUDED"$ $Revision: 1.1.1.1 $";
+static char *opt_sysrcs_id = opt_sys_INCLUDED"$ $Revision: 1.7 $";
 #endif /* _KEEP_RCS_ID */
 
 #define BZERO bzero

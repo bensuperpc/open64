@@ -38,7 +38,7 @@
 #define __RDFMT_H__
 
 
-#ident "$Revision: 1.1.1.1 $"
+#ident "$Revision: 9.10 $"
 
 #include <stdio.h>
 #include <cmplrs/fio.h>

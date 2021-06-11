@@ -181,17 +181,17 @@
 ***
 **/
 
-/** $Revision: 1.1.1.1 $
-*** $Date: 2001/09/10 17:47:49 $
-*** $Author: morrone $
-*** $Source: /cvsroot/open64/open64/osprey1.0/be/lno/snl_dist.h,v $
+/** $Revision: 1.25 $
+*** $Date: 2001/03/10 02:35:03 $
+*** $Author: mtibuild $
+*** $Source: /isms/cmplrs.src/osprey1.0/be/lno/RCS/snl_dist.h,v $
 **/
 
 #ifndef snl_dist_INCLUDED
 #define snl_dist_INCLUDED "snl_dist.h"
 
 #ifdef _KEEP_RCS_ID
-static char *snl_dist_rcs_id = snl_dist_INCLUDED "$Revision: 1.1.1.1 $";
+static char *snl_dist_rcs_id = snl_dist_INCLUDED "$Revision: 1.25 $";
 #endif /* _KEEP_RCS_ID */
 
 #ifndef snl_INCLUDED

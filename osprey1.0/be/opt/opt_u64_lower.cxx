@@ -4,9 +4,9 @@
 //
 // Module: opt_u64_lower.cxx
 // $Revision: 1.2 $
-// $Date: 2002/10/13 21:35:18 $
-// $Author: douillet $
-// $Source: /cvsroot/open64/open64/osprey1.0/be/opt/opt_u64_lower.cxx,v $
+// $Date: 2002/06/19 01:30:59 $
+// $Author: jczhang $
+// $Source: /u/merge/src/osprey1.0/be/opt/opt_u64_lower.cxx,v $
 //
 // ====================================================================
 //

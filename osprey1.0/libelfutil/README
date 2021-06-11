@@ -1,6 +1,6 @@
 
 README
-$Revision: 1.1.1.1 $
+$Revision: 1.2 $
 
 The xlate reader code is written with the idea that on opening
 a handle one decides what functions to call to implement the

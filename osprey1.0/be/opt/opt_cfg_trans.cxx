@@ -3,10 +3,10 @@
 // ====================================================================
 //
 // Module: opt_cfg_trans.cxx
-// $Revision: 1.1.1.1 $
-// $Date: 2001/09/10 17:47:55 $
-// $Author: morrone $
-// $Source: /cvsroot/open64/open64/osprey1.0/be/opt/opt_cfg_trans.cxx,v $
+// $Revision: 1.2 $
+// $Date: 2003/01/10 08:45:20 $
+// $Author: gange $
+// $Source: /u/merge/src/osprey1.0/be/opt/opt_cfg_trans.cxx,v $
 //
 // ====================================================================
 //
@@ -560,8 +560,7 @@ struct comp_zones {
     bool t = vx > vy;
 
     if (t) {
-      Is_True( !(vy > vx),
-	       ("vx > vy && vy > vx."));
+      FmtAssert( !(vy > vx), ("vx > vy && vy > vx."));
     }
 #endif
     return t;

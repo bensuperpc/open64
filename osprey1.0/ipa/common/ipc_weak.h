@@ -37,7 +37,7 @@
  * ====================================================================
  *
  * Module: ipc_weak.h
- * $Source: /cvsroot/open64/open64/osprey1.0/ipa/common/ipc_weak.h,v $
+ * $Source: /u/merge/src/osprey1.0/ipa/common/ipc_weak.h,v $
  *
  * Revision history:
  *  14-Jun-95 - Original Version
@@ -94,6 +94,7 @@
 #ifdef __PROCESS_H__
 #pragma weak create_tmpdir
 #pragma weak create_unique_file
+#pragma weak create_tmp_file
 #pragma weak add_to_tmp_file_list
 #pragma weak tmpdir
 #pragma weak get_command_line

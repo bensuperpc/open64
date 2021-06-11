@@ -37,8 +37,8 @@
  * ====================================================================
  *
  * Module: wn_map.c
- * $Author: morrone $
- * $Source: /cvsroot/open64/open64/osprey1.0/common/com/wn_map.cxx,v $
+ * $Author: qzhao2 $
+ * $Source: /u/merge/src/osprey1.0/common/com/wn_map.cxx,v $
  *
  * Revision history:
  *  09-Dec-94 - Original Version (derived from old wn_map.cxx file)
@@ -314,6 +314,13 @@ WN_MAP_get_map_id (WN_MAP_TAB *maptab, OPERATOR_MAPCAT category, WN *wn)
   }
 
   /* nothing on the free list, give it a new id */
+  if (category == OPERATOR_MAPCAT_CALL || category == OPERATOR_MAPCAT_ICALL)
+  {
+	  if ( maptab->_last_map_id[OPERATOR_MAPCAT_CALL] > maptab->_last_map_id[OPERATOR_MAPCAT_ICALL] )
+		   maptab->_last_map_id[OPERATOR_MAPCAT_ICALL] = maptab->_last_map_id[OPERATOR_MAPCAT_CALL];
+	  else if ( maptab->_last_map_id[OPERATOR_MAPCAT_CALL] < maptab->_last_map_id[OPERATOR_MAPCAT_ICALL] )
+		  maptab->_last_map_id[OPERATOR_MAPCAT_CALL] = maptab->_last_map_id[OPERATOR_MAPCAT_ICALL];
+  }
   WN_map_id(wn) = ++maptab->_last_map_id[category];
   return WN_map_id(wn);
 }

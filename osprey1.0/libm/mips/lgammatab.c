@@ -38,10 +38,10 @@
  * ====================================================================
  *
  * Module: lgammatab.c
- * $Revision: 1.1.1.1 $
- * $Date: 2001/09/10 17:50:21 $
- * $Author: morrone $
- * $Source: /cvsroot/open64/open64/osprey1.0/libm/mips/lgammatab.c,v $
+ * $Revision: 1.7 $
+ * $Date: 2001/03/10 08:55:19 $
+ * $Author: mtibuild $
+ * $Source: /isms/cmplrs.src/osprey1.0/libm/mips/RCS/lgammatab.c,v $
  *
  * Revision history:
  *  14-Jan-98 - Original Version

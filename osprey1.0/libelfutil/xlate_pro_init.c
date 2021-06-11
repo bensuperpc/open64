@@ -37,7 +37,7 @@
 
 /*
    xlate_pro_init.c
-   $Revision: 1.1.1.1 $
+   $Revision: 1.5 $
 
    This is the initialization and release of data 
    involved in production of a translate section.

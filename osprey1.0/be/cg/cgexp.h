@@ -37,10 +37,10 @@
  * ====================================================================
  *
  * Module: cgexp.h
- * $Revision: 1.1.1.1 $
- * $Date: 2001/09/10 17:47:21 $
- * $Author: morrone $
- * $Source: /cvsroot/open64/open64/osprey1.0/be/cg/cgexp.h,v $
+ * $Revision: 3.71 $
+ * $Date: 2001/03/10 01:56:55 $
+ * $Author: mtibuild $
+ * $Source: /isms/cmplrs.src/osprey1.0/be/cg/RCS/cgexp.h,v $
  *
  * Description:
  * ------------

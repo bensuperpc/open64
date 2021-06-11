@@ -38,8 +38,8 @@
  *
  * Module: cwh_stats.c
  * $Revision: 
- * $Date: 2001/09/10 17:48:52 $
- * $Author: morrone $
+ * $Date: 2001/03/10 03:46:33 $
+ * $Author: mtibuild $
  * $Source: 
  *
  * Revision history:
@@ -62,7 +62,7 @@
 static char *source_file = __FILE__;
 
 #ifdef _KEEP_RCS_ID
-static char *rcs_id = "$Source: /cvsroot/open64/open64/osprey1.0/crayf90/sgi/cwh_stats.cxx,v $ $Revision: 1.1.1.1 $";
+static char *rcs_id = "$Source: /isms/cmplrs.src/osprey1.0/crayf90/sgi/RCS/cwh_stats.cxx,v $ $Revision: 1.4 $";
 #endif /* _KEEP_RCS_ID */
 
 

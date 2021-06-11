@@ -392,4 +392,4 @@ ar_ifmul128(AR_IEEE_128 *x,
 
 
 static char USMID [] = "\n%Z%%M%	%I%	%G% %U%\n";
-static char rcsid [] = "$Id: ieee_fmul.c,v 1.1.1.1 2001/09/10 17:47:14 morrone Exp $";
+static char rcsid [] = "$Id: ieee_fmul.c,v 2.5 1997/07/22 23:31:29 gbt Exp $";

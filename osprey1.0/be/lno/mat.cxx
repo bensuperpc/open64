@@ -35,10 +35,10 @@
 
 // -*-C++-*-
 
-/** $Revision: 1.1.1.1 $
-*** $Date: 2001/09/10 17:47:46 $
-*** $Author: morrone $
-*** $Source: /cvsroot/open64/open64/osprey1.0/be/lno/mat.cxx,v $
+/** $Revision: 1.26 $
+*** $Date: 2001/03/10 02:29:41 $
+*** $Author: mtibuild $
+*** $Source: /isms/cmplrs.src/osprey1.0/be/lno/RCS/mat.cxx,v $
 **/
 
 #ifndef mat_CXX

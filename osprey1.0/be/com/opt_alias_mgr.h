@@ -37,10 +37,10 @@
 * ====================================================================
 *
 * Module: opt_alias_mgr.h
-* $Revision: 1.1.1.1 $
-* $Date: 2001/09/10 17:47:33 $
-* $Author: morrone $
-* $Source: /cvsroot/open64/open64/osprey1.0/be/com/opt_alias_mgr.h,v $
+* $Revision: 1.29 $
+* $Date: 2001/03/10 02:13:48 $
+* $Author: mtibuild $
+* $Source: /isms/cmplrs.src/osprey1.0/be/com/RCS/opt_alias_mgr.h,v $
 *
 * Revision history:
 *  07-APR-95 lo - spilt from opt_alias.h
@@ -54,7 +54,7 @@
 #ifndef opt_alias_mgr_INCLUDED
 #define opt_alias_mgr_INCLUDED	"opt_alias_mgr.h"
 #ifdef _KEEP_RCS_ID
-static char *opt_alias_mgrrcs_id = 	opt_alias_mgr_INCLUDED"$Revision: 1.1.1.1 $";
+static char *opt_alias_mgrrcs_id = 	opt_alias_mgr_INCLUDED"$Revision: 1.29 $";
 #endif /* _KEEP_RCS_ID */
 
 /***********************************************************************

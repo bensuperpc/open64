@@ -17,7 +17,7 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */
 
-/* @(#) $Id: private.h,v 1.1.1.1 2001/09/10 17:49:56 morrone Exp $ */
+/* @(#) $Id: private.h,v 1.1 2000/03/08 22:26:21 mpm Exp $ */
 
 #ifndef _PRIVATE_H
 #define _PRIVATE_H

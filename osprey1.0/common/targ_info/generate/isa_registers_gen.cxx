@@ -42,10 +42,10 @@
 //
 /////////////////////////////////////
 //
-//  $Revision: 1.3 $
-//  $Date: 2002/10/13 21:35:19 $
-//  $Author: douillet $
-//  $Source: /cvsroot/open64/open64/osprey1.0/common/targ_info/generate/isa_registers_gen.cxx,v $
+//  $Revision: 1.2 $
+//  $Date: 2001/07/25 02:55:54 $
+//  $Author: cwu $
+//  $Source: /u/merge/src/osprey1.0/common/targ_info/generate/isa_registers_gen.cxx,v $
 
 
 #include <stddef.h>

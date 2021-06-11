@@ -50,9 +50,9 @@
  *
  * Module: access_main.cxx
  * $Revision: 1.2 $
- * $Date: 2002/10/13 21:35:17 $
- * $Author: douillet $
- * $Source: /cvsroot/open64/open64/osprey1.0/be/lno/access_main.cxx,v $
+ * $Date: 2002/03/18 02:50:17 $
+ * $Author: ltuo $
+ * $Source: /u/merge/src/osprey1.0/be/lno/access_main.cxx,v $
  *
  * Revision history:
  *  11-6-96 - Original Version

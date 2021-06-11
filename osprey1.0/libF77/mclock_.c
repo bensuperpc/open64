@@ -34,7 +34,7 @@
 */
 
 
-/* $Header: /cvsroot/open64/open64/osprey1.0/libF77/mclock_.c,v 1.1.1.1 2001/09/10 17:50:04 morrone Exp $ */
+/* $Header: /isms/cmplrs.src/osprey1.0/libF77/RCS/mclock_.c,v 8.8 2001/03/10 04:39:06 mtibuild Exp $ */
 
 #include <sys/types.h>
 #include <sys/times.h>

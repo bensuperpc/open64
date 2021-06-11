@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2000-2002, Institute of Computing Technology, Chinese Academy of Sciences
+  Copyright (C) 2000-2003, Institute of Computing Technology, Chinese Academy of Sciences
   All rights reserved.
   
   Redistribution and use in source and binary forms, with or without modification,
@@ -30,10 +30,10 @@
 //=============================================================================
 //
 // Module: region.cxx
-// $Revision: 1.2 $
-// $Date: 2002/10/13 21:35:16 $
-// $Author: douillet $ 
-// $Source: /cvsroot/open64/open64/osprey1.0/be/cg/orc_ict/region.cxx,v $
+// $Revision: 1.13 $
+// $Date: 2003/01/21 12:56:56 $
+// $Author: sxyang $ 
+// $Source: /u/merge/src/osprey1.0/be/cg/orc_ict/region.cxx,v $
 //
 //=============================================================================
 #include <stdio.h>
@@ -3506,6 +3506,8 @@ REGION::Edge_Splitting(BB *from, BB *to){
     if (!CG_localize_tns) {
         GRA_LIVE_Compute_Liveness_For_BB(new_bb);
     }
+
+    Set_BB_edge_splitting (new_bb);
 
     return new_bb;
 }

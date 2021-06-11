@@ -36,10 +36,10 @@
  * ====================================================================
  *
  * Module: float_rf.cxx
- * $Revision: 1.1.1.1 $
- * $Date: 2001/09/10 17:47:30 $
- * $Author: morrone $
- * $Source: /cvsroot/open64/open64/osprey1.0/be/cg/ia64/float_rf.cxx,v $
+ * $Revision: 1.4 $
+ * $Date: 2001/03/10 01:12:01 $
+ * $Author: mtibuild $
+ * $Source: /osprey.src/osprey1.0/be/cg/ia64/RCS/float_rf.cxx,v $
  *
  * 82-bit register format floating point utilities interface.
  *
@@ -3443,10 +3443,10 @@ uint32_t neg;
  * ====================================================================
  *
  * Module: fpround.c
- * $Revision: 1.1.1.1 $
- * $Date: 2001/09/10 17:47:30 $
- * $Author: morrone $
- * $Source: /cvsroot/open64/open64/osprey1.0/be/cg/ia64/float_rf.cxx,v $
+ * $Revision: 1.4 $
+ * $Date: 2001/03/10 01:12:01 $
+ * $Author: mtibuild $
+ * $Source: /osprey.src/osprey1.0/be/cg/ia64/RCS/float_rf.cxx,v $
  *
  * Revision history:
  *  12-Jun-94 - Original Version
@@ -3457,7 +3457,7 @@ uint32_t neg;
  * ====================================================================
  */
 
-#ident "$Revision: 1.1.1.1 $"
+#ident "$Revision: 1.4 $"
 
 #include <stdio.h>
 

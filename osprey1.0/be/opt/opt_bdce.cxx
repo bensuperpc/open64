@@ -3,10 +3,10 @@
 // ====================================================================
 //
 // Module: opt_bdce.cxx
-// $Revision: 1.1.1.1 $
-// $Date: 2001/09/10 17:47:53 $
-// $Author: morrone $
-// $Source: /cvsroot/open64/open64/osprey1.0/be/opt/opt_bdce.cxx,v $
+// $Revision: 1.2 $
+// $Date: 2002/07/09 12:43:25 $
+// $Author: qzhao2 $
+// $Source: /u/merge/src/osprey1.0/be/opt/opt_bdce.cxx,v $
 //
 // ====================================================================
 //
@@ -505,7 +505,7 @@ BITWISE_DCE::Mark_tree_bits_live(CODEREP *cr, UINT64 live_bits,
 
     // binary ops
 
-    case OPR_ADD: case OPR_SUB: case OPR_MPY:
+    case OPR_ADD: case OPR_SUB: case OPR_MPY: case OPR_MPYU2: case OPR_MPYI2:
       Mark_tree_bits_live(cr->Opnd(0), 
 			  Bits_in_type(dsctyp) & Fill_lower_bits(Livebits(cr)),
 			  stmt_visit);

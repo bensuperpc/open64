@@ -37,10 +37,10 @@
 /* ====================================================================
  *
  * Module: DaVinci.cxx
- * $Revision: 1.3 $
- * $Date: 2002/10/13 21:35:17 $
- * $Author: douillet $
- * $Source: /cvsroot/open64/open64/osprey1.0/be/com/DaVinci.cxx,v $
+ * $Revision: 1.1.1.1 $
+ * $Date: 2001/06/25 06:32:37 $
+ * $Author: llx $
+ * $Source: /u/merge/src/osprey1.0/be/com/DaVinci.cxx,v $
  *
  * Description:
  *	Interface to daVinci, a visualization system for displaying

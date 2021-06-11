@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2000-2002, Institute of Computing Technology, Chinese Academy of Sciences
+  Copyright (C) 2000-2003, Institute of Computing Technology, Chinese Academy of Sciences
   All rights reserved.
   
   Redistribution and use in source and binary forms, with or without modification,
@@ -30,9 +30,9 @@
 //*********************************************************************
 //
 // Module: vt_dag.h
-// $Date: 2002/10/13 21:35:16 $
-// $Author: douillet $
-// $Source: /cvsroot/open64/open64/osprey1.0/be/cg/orc_ict/vt_dag.h,v $
+// $Date: 2003/01/21 12:57:16 $
+// $Author: sxyang $
+// $Source: /u/merge/src/osprey1.0/be/cg/orc_ict/vt_dag.h,v $
 //
 // Description:
 //

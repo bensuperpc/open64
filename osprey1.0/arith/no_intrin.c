@@ -160,4 +160,4 @@ ar_divide_complex (ar_data *result, const AR_TYPE *resulttype,
 
 
 static char USMID [] = "\n%Z%%M%	%I%	%G% %U%\n";
-static char rcsid [] = "$Id: no_intrin.c,v 1.1.1.1 2001/09/10 17:47:14 morrone Exp $";
+static char rcsid [] = "$Id: no_intrin.c,v 2.5 1997/04/25 02:56:29 gbt Exp $";

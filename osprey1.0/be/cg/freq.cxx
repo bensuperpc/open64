@@ -37,9 +37,9 @@
  *
  * Module: freq.cxx
  * $Revision: 1.3 $
- * $Date: 2002/10/13 21:35:15 $
- * $Author: douillet $
- * $Source: /cvsroot/open64/open64/osprey1.0/be/cg/freq.cxx,v $
+ * $Date: 2002/03/26 07:48:17 $
+ * $Author: xlp $
+ * $Source: /u/merge/src/osprey1.0/be/cg/freq.cxx,v $
  *
  * Description:
  *

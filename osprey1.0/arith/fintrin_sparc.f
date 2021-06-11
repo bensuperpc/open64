@@ -270,4 +270,4 @@ C
       END
 
 c USMID = "\n%Z%%M%	%I%	%G% %U%\n";
-c rcsid = "$Id: fintrin_sparc.f,v 1.1.1.1 2001/09/10 17:47:14 morrone Exp $";
+c rcsid = "$Id: fintrin_sparc.f,v 2.3 1995/09/26 20:40:23 jk Exp $";

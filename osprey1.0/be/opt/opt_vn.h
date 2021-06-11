@@ -3,10 +3,10 @@
 // ====================================================================
 //
 // Module: opt_vn.h
-// $Revision: 1.1.1.1 $
-// $Date: 2001/09/10 17:48:05 $
-// $Author: morrone $
-// $Source: /cvsroot/open64/open64/osprey1.0/be/opt/opt_vn.h,v $
+// $Revision: 1.24 $
+// $Date: 2001/03/10 02:48:53 $
+// $Author: mtibuild $
+// $Source: /isms/cmplrs.src/osprey1.0/be/opt/RCS/opt_vn.h,v $
 //
 // ====================================================================
 //

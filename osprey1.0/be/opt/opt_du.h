@@ -3,10 +3,10 @@
 // ====================================================================
 //
 // Module: opt_du.h
-// $Revision: 1.1.1.1 $
-// $Date: 2001/09/10 17:47:57 $
-// $Author: morrone $
-// $Source: /cvsroot/open64/open64/osprey1.0/be/opt/opt_du.h,v $
+// $Revision: 1.35 $
+// $Date: 2001/03/10 02:41:03 $
+// $Author: mtibuild $
+// $Source: /isms/cmplrs.src/osprey1.0/be/opt/RCS/opt_du.h,v $
 //
 // Revision history:
 //  12-JAN-95 shin - Original Version
@@ -206,7 +206,7 @@
 #ifndef opt_du_INCLUDED
 #define opt_du_INCLUDED	"opt_du.h"
 #ifdef _KEEP_RCS_ID
-static char *opt_durcs_id = 	opt_du_INCLUDED"$Revision: 1.1.1.1 $";
+static char *opt_durcs_id = 	opt_du_INCLUDED"$Revision: 1.35 $";
 #endif /* _KEEP_RCS_ID */
 
 #ifndef defs_INCLUDED

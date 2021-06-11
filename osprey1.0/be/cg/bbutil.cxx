@@ -37,10 +37,10 @@
  * ====================================================================
  *
  * Module: bbutil.c
- * $Revision: 1.3 $
- * $Date: 2002/10/13 21:35:14 $
- * $Author: douillet $
- * $Source: /cvsroot/open64/open64/osprey1.0/be/cg/bbutil.cxx,v $
+ * $Revision: 1.13 $
+ * $Date: 2002/09/13 03:31:59 $
+ * $Author: flv $
+ * $Source: /u/merge/src/osprey1.0/be/cg/bbutil.cxx,v $
  *
  * Revision history:
  *  22-Sept-89 - Original Version
@@ -1294,6 +1294,7 @@ Print_Flow_Graph ( char *banner, BOOL verbose )
 OP *
 BB_branch_op( BB *bb )
 {
+  
   OP *op = BB_last_op(bb);
 
   /* Test the last two OPs looking for the terminating branch (it may not 
@@ -1311,7 +1312,39 @@ BB_branch_op( BB *bb )
   return NULL;
 }
 
+/* ====================================================================
+ *
+ * Last_Non_Nop_op
+ *
+ * Return the last non nop OP in a given BB   
+ *
+ * ====================================================================
+ */
 
+OP *
+Last_Non_Nop_op( BB *bb )
+{
+  OP *op;
+  for (op =BB_last_op(bb); op; op = OP_prev(op)) {
+      if (!(OP_noop(op))) return op;
+  }
+  return NULL;
+ 
+}
+
+OP *
+BB_Last_chk_op( BB *bb )
+{
+  
+  OP *op = Last_Non_Nop_op(bb);
+
+  if (!op || !OP_chk(op)){
+      return NULL;
+  } else {
+      return op;
+  }
+  return NULL;
+}
 /* ====================================================================
  *
  * BB_xfer_op

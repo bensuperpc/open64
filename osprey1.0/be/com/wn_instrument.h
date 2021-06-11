@@ -3,10 +3,10 @@
 // ====================================================================
 //
 // Module: wn_instrument.h
-// $Revision: 1.1.1.1 $
-// $Date: 2001/09/10 17:47:35 $
-// $Author: morrone $
-// $Source: /cvsroot/open64/open64/osprey1.0/be/com/wn_instrument.h,v $
+// $Revision: 1.2 $
+// $Date: 2002/12/29 09:44:47 $
+// $Author: qzhao2 $
+// $Source: /u/merge/src/osprey1.0/be/com/wn_instrument.h,v $
 //
 // ====================================================================
 //
@@ -139,6 +139,8 @@ extern void Set_Instrumentation_File_Name( char *fname );
 #define SHORT_CIRCUIT_INIT_NAME   "__profile_short_circuit_init"
 #define SHORT_CIRCUIT_INST_NAME   "__profile_short_circuit"
 #define CALL_INIT_NAME            "__profile_call_init"
+#define ICALL_INIT_NAME           "__profile_icall_init"
+#define ICALL_INSTRUMENT_NAME     "__profile_icall"
 #define CALL_INST_ENTRY_NAME      "__profile_call_entry"
 #define CALL_INST_EXIT_NAME       "__profile_call_exit"
 #define SWITCH_INIT_NAME          "__profile_switch_init"

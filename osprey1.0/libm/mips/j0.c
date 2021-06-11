@@ -38,10 +38,10 @@
  * ====================================================================
  *
  * Module: j0.c
- * $Revision: 1.1.1.1 $
- * $Date: 2001/09/10 17:50:21 $
- * $Author: morrone $
- * $Source: /cvsroot/open64/open64/osprey1.0/libm/mips/j0.c,v $
+ * $Revision: 1.26 $
+ * $Date: 2001/03/10 08:55:49 $
+ * $Author: mtibuild $
+ * $Source: /isms/cmplrs.src/osprey1.0/libm/mips/RCS/j0.c,v $
  *
  * Revision history:
  *  20-Mar-98 - Original Version
@@ -65,7 +65,7 @@
  * ====================================================================
  */
 
-static char *rcs_id = "$Source: /cvsroot/open64/open64/osprey1.0/libm/mips/j0.c,v $ $Revision: 1.1.1.1 $";
+static char *rcs_id = "$Source: /isms/cmplrs.src/osprey1.0/libm/mips/RCS/j0.c,v $ $Revision: 1.26 $";
 
 /****************************  IMPORTANT NOTE  ****************************
  *

@@ -39,10 +39,10 @@
  * ====================================================================
  *
  * Module: wn2c_pragma.h
- * $Revision: 1.1.1.1 $
- * $Date: 2001/09/10 17:48:08 $
- * $Author: morrone $
- * $Source: /cvsroot/open64/open64/osprey1.0/be/whirl2c/wn2c_pragma.h,v $
+ * $Revision: 1.9 $
+ * $Date: 2001/03/10 02:57:42 $
+ * $Author: mtibuild $
+ * $Source: /isms/cmplrs.src/osprey1.0/be/whirl2c/RCS/wn2c_pragma.h,v $
  *
  * Revision history:
  *    12-Aug-95 - Original Version

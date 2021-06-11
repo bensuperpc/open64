@@ -37,10 +37,10 @@
  * =======================================================================
  *
  *  Module: cg_swp_target.cxx
- *  $Revision: 1.2 $
- *  $Date: 2002/10/13 21:35:15 $
- *  $Author: douillet $
- *  $Source: /cvsroot/open64/open64/osprey1.0/be/cg/ia64/cg_swp_target.cxx,v $
+ *  $Revision: 1.3 $
+ *  $Date: 2002/09/20 01:21:01 $
+ *  $Author: lzl $
+ *  $Source: /u/merge/src/osprey1.0/be/cg/ia64/cg_swp_target.cxx,v $
  *
  * =======================================================================
  * ======================================================================= */
@@ -247,8 +247,13 @@ SWP_Loop_Init_Fini(bool is_doloop,
   // Reset CFM.rrb pr
   Build_OP(TOP_clrrrb_pr, prolog_ops);
 
+  // TODO: set the clrrrb in epilog depends on the number 
+  //       of the alloc in current PU.
+  // In current, we don't need clrrrb in epilog because of
+  // single alloc in each PU!
+
   // Reset CFM.rrb 
-  Build_OP(TOP_clrrrb, epilog_ops);
+  //Build_OP(TOP_clrrrb, epilog_ops);
 
   // Initialize the rotating predicate registers
   //   mov pr.rot = 1 << 16 for doloop

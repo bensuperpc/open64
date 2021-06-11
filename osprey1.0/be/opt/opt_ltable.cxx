@@ -4,9 +4,9 @@
 //
 // Module: opt_lpre.cxx
 // $Revision: 1.2 $
-// $Date: 2002/10/13 21:35:18 $
-// $Author: douillet $
-// $Source: /cvsroot/open64/open64/osprey1.0/be/opt/opt_ltable.cxx,v $
+// $Date: 2002/05/21 07:16:38 $
+// $Author: lfei $
+// $Source: /u/merge/src/osprey1.0/be/opt/opt_ltable.cxx,v $
 //
 // ====================================================================
 //

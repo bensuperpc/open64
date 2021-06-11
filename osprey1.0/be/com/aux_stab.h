@@ -42,10 +42,10 @@ extern "C" {
  * ====================================================================
  *
  * Module: aux_stab.h
- * $Revision: 1.1.1.1 $
- * $Date: 2001/09/10 17:47:31 $
- * $Author: morrone $
- * $Source: /cvsroot/open64/open64/osprey1.0/be/com/aux_stab.h,v $
+ * $Revision: 3.18 $
+ * $Date: 2001/03/10 02:06:44 $
+ * $Author: mtibuild $
+ * $Source: /isms/cmplrs.src/osprey1.0/be/com/RCS/aux_stab.h,v $
  *
  * Description:
  *

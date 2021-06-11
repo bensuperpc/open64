@@ -34,7 +34,7 @@
 */
 
 
-/* $Header: /cvsroot/open64/open64/osprey1.0/libF77/ef1asc_.c,v 1.1.1.1 2001/09/10 17:50:03 morrone Exp $ */
+/* $Header: /isms/cmplrs.src/osprey1.0/libF77/RCS/ef1asc_.c,v 8.6 2001/03/10 04:34:34 mtibuild Exp $ */
 /*	3.0 SID #	1.2	*/
 /* EFL support routine to copy string b to string a */
 

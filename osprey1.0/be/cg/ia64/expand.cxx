@@ -37,10 +37,10 @@
  * ====================================================================
  *
  * Module: expand.c
- * $Revision: 1.3 $
- * $Date: 2002/10/13 21:35:16 $
- * $Author: douillet $
- * $Source: /cvsroot/open64/open64/osprey1.0/be/cg/ia64/expand.cxx,v $
+ * $Revision: 1.5 $
+ * $Date: 2002/07/09 12:43:24 $
+ * $Author: qzhao2 $
+ * $Source: /u/merge/src/osprey1.0/be/cg/ia64/expand.cxx,v $
  *
  * Description:
  *
@@ -1129,7 +1129,7 @@ Expand_Constant_Multiply (TN *result, TN *var_tn, TARG_INT constant, TYPE_ID mty
 }
 
 void
-Expand_Multiply (TN *result, TN *src1, TN *src2, TYPE_ID mtype, OPS *ops)
+Expand_Multiply (TN *result, TN *src1, TN *src2, TYPE_ID mtype, OPS *ops, OPCODE opcode)
 {
   TOP new_opcode;
   INT64 constant;
@@ -1185,6 +1185,27 @@ Expand_Multiply (TN *result, TN *src1, TN *src2, TYPE_ID mtype, OPS *ops)
     case MTYPE_I4:
     case MTYPE_U4:
       if (!OPT_Space) {
+	  if (OPCODE_operator(opcode) == OPR_MPYU2)
+	  {
+	  	TN *t0 = Build_TN_Of_Mtype(MTYPE_I8);
+	  	TN *t1 = Build_TN_Of_Mtype(MTYPE_I8);
+
+		Build_OP(TOP_pmpyshr2_u, t0, True_TN, src1, src2, Gen_Literal_TN(0, 4), ops);
+		Build_OP(TOP_pmpyshr2_u, t1, True_TN, src1, src2, Gen_Literal_TN(16, 4), ops);
+		Build_OP(TOP_dep, result, True_TN, t1, t0, Gen_Literal_TN(16, 4), Gen_Literal_TN(16, 4),ops);
+		return;
+	  }
+	  else if (OPCODE_operator(opcode) == OPR_MPYI2)
+	  {
+	  	TN *t0 = Build_TN_Of_Mtype(MTYPE_I8);
+	  	TN *t1 = Build_TN_Of_Mtype(MTYPE_I8);
+
+		Build_OP(TOP_pmpyshr2, t0, True_TN, src1, src2, Gen_Literal_TN(0, 4), ops);
+		Build_OP(TOP_pmpyshr2, t1, True_TN, src1, src2, Gen_Literal_TN(16, 4), ops);
+		Build_OP(TOP_dep, result, True_TN, t1, t0, Gen_Literal_TN(16, 4), Gen_Literal_TN(16, 4),ops);
+		return;
+	  }
+
 	TN *t0 = Build_TN_Of_Mtype(MTYPE_I8);
 	TN *t1 = Build_TN_Of_Mtype(MTYPE_I8);
 	TN *t2 = Build_TN_Of_Mtype(MTYPE_I8);

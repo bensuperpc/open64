@@ -35,7 +35,7 @@
 
 
 
-/* $Header: /cvsroot/open64/open64/osprey1.0/libI77/backward.c,v 1.1.1.1 2001/09/10 17:50:05 morrone Exp $ */
+/* $Header: /isms/cmplrs.src/osprey1.0/libI77/RCS/backward.c,v 9.7 2001/03/10 04:48:50 mtibuild Exp $ */
 /*	3.0 SID #	1.3	*/
 /* who	ref.	date		description		      */
 /* sjc	#1677	25Nov87		Provide dummy f77vms_flag_ for backward */

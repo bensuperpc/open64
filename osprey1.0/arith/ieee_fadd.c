@@ -603,4 +603,4 @@ ar_ifsub128(AR_IEEE_128 *x,
 
 
 static char USMID [] = "\n%Z%%M%	%I%	%G% %U%\n";
-static char rcsid [] = "$Id: ieee_fadd.c,v 1.1.1.1 2001/09/10 17:47:14 morrone Exp $";
+static char rcsid [] = "$Id: ieee_fadd.c,v 2.2 1996/08/15 23:09:15 gbt Exp $";

@@ -39,10 +39,10 @@
 // ====================================================================
 //
 // Module: instr_memory.h
-// $Revision: 1.1.1.1 $
-// $Date: 2001/09/10 17:48:22 $
-// $Author: morrone $
-// $Source: /cvsroot/open64/open64/osprey1.0/common/instrument/instr_memory.h,v $
+// $Revision: 1.5 $
+// $Date: 2001/03/10 03:19:12 $
+// $Author: mtibuild $
+// $Source: /isms/cmplrs.src/osprey1.0/common/instrument/RCS/instr_memory.h,v $
 //
 // Revision history:
 //  30-Oct-98 - Original Version

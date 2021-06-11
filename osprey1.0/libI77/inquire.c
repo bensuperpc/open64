@@ -35,7 +35,7 @@
 
 
 
-/* $Header: /cvsroot/open64/open64/osprey1.0/libI77/inquire.c,v 1.1.1.1 2001/09/10 17:50:05 morrone Exp $ */
+/* $Header: /isms/cmplrs.src/osprey1.0/libI77/RCS/inquire.c,v 9.13 2001/03/10 04:51:26 mtibuild Exp $ */
 /* sjc  #1963	11Dec87		Dynamically allocate unit table		*/
 
 #include <cmplrs/fio.h>

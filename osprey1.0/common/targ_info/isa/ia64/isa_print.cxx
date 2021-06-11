@@ -54,9 +54,9 @@
 /////////////////////////////////////
 //
 //  $Revision: 1.2 $
-//  $Date: 2002/10/13 21:35:20 $
-//  $Author: douillet $
-//  $Source: /cvsroot/open64/open64/osprey1.0/common/targ_info/isa/ia64/isa_print.cxx,v $
+//  $Date: 2002/03/26 07:54:05 $
+//  $Author: xlp $
+//  $Source: /u/merge/src/osprey1.0/common/targ_info/isa/ia64/isa_print.cxx,v $
 
 #include <stddef.h>
 #include <string.h>

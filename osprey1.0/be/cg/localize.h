@@ -37,10 +37,10 @@
  * =======================================================================
  *
  *  Module: localize.h
- *  $Revision: 1.1.1.1 $
- *  $Date: 2001/09/10 17:47:25 $
- *  $Author: morrone $
- *  $Source: /cvsroot/open64/open64/osprey1.0/be/cg/localize.h,v $
+ *  $Revision: 1.10 $
+ *  $Date: 2001/03/10 02:03:40 $
+ *  $Author: mtibuild $
+ *  $Source: /isms/cmplrs.src/osprey1.0/be/cg/RCS/localize.h,v $
  *
  *  Description:
  *  ============

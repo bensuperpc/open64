@@ -47,10 +47,10 @@
  * ====================================================================
  *
  * Module: mem_sim.cxx
- * $Revision: 1.1.1.1 $
- * $Date: 2001/09/10 17:47:47 $
- * $Author: morrone $
- * $Source: /cvsroot/open64/open64/osprey1.0/be/lno/mem_sim.cxx,v $
+ * $Revision: 1.7 $
+ * $Date: 2001/03/10 02:30:22 $
+ * $Author: mtibuild $
+ * $Source: /isms/cmplrs.src/osprey1.0/be/lno/RCS/mem_sim.cxx,v $
  *
  * Revision history:
  *  02-07-96 - Original Version
@@ -67,7 +67,7 @@
 #pragma hdrstop
 
 static char *source_file = __FILE__;
-static char *rcs_id = "$Source: /cvsroot/open64/open64/osprey1.0/be/lno/mem_sim.cxx,v $ $Revision: 1.1.1.1 $";
+static char *rcs_id = "$Source: /isms/cmplrs.src/osprey1.0/be/lno/RCS/mem_sim.cxx,v $ $Revision: 1.7 $";
 
 #ifndef _NEW_SYMTAB
 

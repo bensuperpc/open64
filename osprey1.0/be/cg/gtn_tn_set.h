@@ -1,6 +1,6 @@
 /*
 
-  Copyright (C) 2000, 2001 Silicon Graphics, Inc.  All Rights Reserved.
+  Copyright (C) 2000 Silicon Graphics, Inc.  All Rights Reserved.
 
   This program is free software; you can redistribute it and/or modify it
   under the terms of version 2 of the GNU General Public License as
@@ -38,9 +38,9 @@
  *
  *  Module: gtn_tn_set.h
  *  $Revision: 1.1.1.1 $
- *  $Date: 2001/09/10 17:47:24 $
- *  $Author: morrone $
- *  $Source: /cvsroot/open64/open64/osprey1.0/be/cg/gtn_tn_set.h,v $
+ *  $Date: 2001/06/25 06:32:37 $
+ *  $Author: llx $
+ *  $Source: /u/merge/src/osprey1.0/be/cg/gtn_tn_set.h,v $
  *
  *  Description:
  *  ============

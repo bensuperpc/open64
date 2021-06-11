@@ -40,7 +40,7 @@
  * ====================================================================
  *
  * Module: targ_const.h
- * $Source: /cvsroot/open64/open64/osprey1.0/common/com/targ_const.h,v $
+ * $Source: /isms/cmplrs.src/osprey1.0/common/com/RCS/targ_const.h,v $
  *
  * Revision history:
  *  12-Jun-91 - Integrated from Josie

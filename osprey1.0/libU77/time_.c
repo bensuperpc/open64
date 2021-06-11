@@ -28,7 +28,7 @@
 */
 
 
-/* $Header: /cvsroot/open64/open64/osprey1.0/libU77/time_.c,v 1.1.1.1 2001/09/10 17:50:04 morrone Exp $ */
+/* $Header: /isms/cmplrs.src/osprey1.0/libU77/RCS/time_.c,v 8.6 2001/02/20 23:40:07 mtibuild Exp $ */
 /*
  *
  * return the current time as an integer

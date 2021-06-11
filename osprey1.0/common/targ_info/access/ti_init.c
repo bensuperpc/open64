@@ -35,7 +35,7 @@
 
 #ifdef _KEEP_RCS_ID
 static const char source_file[] = __FILE__;
-static const char rcs_id[] = "$Source: /cvsroot/open64/open64/osprey1.0/common/targ_info/access/ti_init.c,v $ $Revision: 1.1.1.1 $";
+static const char rcs_id[] = "$Source: /u/merge/src/osprey1.0/common/targ_info/access/ti_init.c,v $ $Revision: 1.2 $";
 #endif /* _KEEP_RCS_ID */
 
 #include <alloca.h>
@@ -61,19 +61,22 @@ static const char rcs_id[] = "$Source: /cvsroot/open64/open64/osprey1.0/common/t
  * ====================================================================
  */
 void
-TI_Initialize(ABI_PROPERTIES_ABI tabi, ISA_SUBSET tisa, PROCESSOR tproc, char *tpath)
+TI_Initialize(ABI_PROPERTIES_ABI tabi, ISA_SUBSET tisa, PROCESSOR tproc, char *tpath, char *version)
 {
   static BOOL initialized;
 
   if ( !initialized ) {
     INT                i;
     const char        *targ_name     = PROCESSOR_Name(tproc);
-    INT                targ_name_len = strlen(targ_name);
+    INT                targ_name_len = strlen(targ_name) + strlen(version);
     char              *targ_so_name  = alloca(targ_name_len + sizeof(".so"));
-
+    
     for (i = 0; i < targ_name_len; i++) {
       targ_so_name[i] = tolower(targ_name[i]);
     }
+
+    if (strlen(version) > 0)  strcat(targ_so_name, version);
+    
     strcpy(targ_so_name + targ_name_len, ".so");
 
     load_so(targ_so_name, tpath, FALSE /*verbose*/);

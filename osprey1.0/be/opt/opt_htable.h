@@ -3,10 +3,10 @@
 // ====================================================================
 //
 // Module: opt_htable.h
-// $Revision: 1.2 $
-// $Date: 2002/10/13 21:35:18 $
-// $Author: douillet $
-// $Source: /cvsroot/open64/open64/osprey1.0/be/opt/opt_htable.h,v $
+// $Revision: 1.3 $
+// $Date: 2002/05/21 07:21:30 $
+// $Author: lfei $
+// $Source: /u/merge/src/osprey1.0/be/opt/opt_htable.h,v $
 //
 // Revision history:
 //  27-SEP-94 shin - Original Version

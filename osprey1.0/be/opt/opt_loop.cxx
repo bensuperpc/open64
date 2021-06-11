@@ -3,10 +3,10 @@
 // ====================================================================
 //
 // Module: opt_loop.cxx
-// $Revision: 1.1.1.1 $
-// $Date: 2001/09/10 17:48:02 $
-// $Author: morrone $
-// $Source: /cvsroot/open64/open64/osprey1.0/be/opt/opt_loop.cxx,v $
+// $Revision: 1.63 $
+// $Date: 2001/03/10 02:44:06 $
+// $Author: mtibuild $
+// $Source: /isms/cmplrs.src/osprey1.0/be/opt/RCS/opt_loop.cxx,v $
 //
 // Revision history:
 //  28-JAN-95 shin - Original Version
@@ -73,7 +73,7 @@
 
 #ifdef _KEEP_RCS_ID
 #define opt_loop_CXX	"opt_loop.cxx"
-static char *rcs_id = 	opt_loop_CXX"$Revision: 1.1.1.1 $";
+static char *rcs_id = 	opt_loop_CXX"$Revision: 1.63 $";
 #endif /* _KEEP_RCS_ID */
 
 #define USE_STANDARD_TYPES

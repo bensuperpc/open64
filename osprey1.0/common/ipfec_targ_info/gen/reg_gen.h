@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2000-2002, Intel Corporation
+  Copyright (C) 2000-2003, Intel Corporation
   All rights reserved.
   
   Redistribution and use in source and binary forms, with or without modification,
@@ -27,9 +27,9 @@
 
 //*********************************************************
 // Module: reg_gen.h 
-// $Date: 2002/10/13 21:35:19 $
-// $Author: douillet $
-// $Source: /cvsroot/open64/open64/osprey1.0/common/ipfec_targ_info/gen/reg_gen.h,v $
+// $Date: 2003/01/15 08:07:08 $
+// $Author: sxyang $
+// $Source: /u/merge/src/osprey1.0/common/ipfec_targ_info/gen/reg_gen.h,v $
 //
 // Description:
 //   Generate the definition of opcode and opcode name.

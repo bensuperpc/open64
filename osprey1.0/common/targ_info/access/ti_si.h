@@ -326,9 +326,9 @@
  */
 
 /*  $REVISION: $
- *  $Date: 2001/09/10 17:48:23 $
- *  $Author: morrone $
- *  $Source: /cvsroot/open64/open64/osprey1.0/common/targ_info/access/ti_si.h,v $
+ *  $Date: 2002/11/27 09:49:41 $
+ *  $Author: llx $
+ *  $Source: /u/merge/src/osprey1.0/common/targ_info/access/ti_si.h,v $
  */
 
 #ifndef SI_INCLUDED
@@ -339,7 +339,7 @@ extern "C" {
 #ifndef SI_RCS_ID
 #define SI_RCS_ID
 #ifdef _KEEP_RCS_ID
-static const char SI_rcs_id[] = "$Source: /cvsroot/open64/open64/osprey1.0/common/targ_info/access/ti_si.h,v $ $Revision: 1.1.1.1 $";
+static const char SI_rcs_id[] = "$Source: /u/merge/src/osprey1.0/common/targ_info/access/ti_si.h,v $ $Revision: 1.2 $";
 #endif
 #endif
 
@@ -422,7 +422,7 @@ inline UINT SI_RESOURCE_Bit_Index( SI_RESOURCE* res )
 }
 
 extern const INT SI_resource_count;
-#pragma weak SI_resource_count
+// #pragma weak SI_resource_count
 
 extern SI_RESOURCE* const SI_resources[];
 #pragma weak SI_resources

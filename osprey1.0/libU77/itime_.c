@@ -30,8 +30,8 @@
 /* --------------------------------------------------- */
 /* | All Rights Reserved.                            | */
 /* --------------------------------------------------- */
-/* $Header: /cvsroot/open64/open64/osprey1.0/libU77/itime_.c,v 1.2 2002/10/13 21:35:23 douillet Exp $ */
-/* $Header: /cvsroot/open64/open64/osprey1.0/libU77/itime_.c,v 1.2 2002/10/13 21:35:23 douillet Exp $ */
+/* $Header: /u/merge/src/osprey1.0/libU77/itime_.c,v 1.2 2002/03/20 09:58:49 llx Exp $ */
+/* $Header: /u/merge/src/osprey1.0/libU77/itime_.c,v 1.2 2002/03/20 09:58:49 llx Exp $ */
 /*
  *
  * return the current time in numerical form

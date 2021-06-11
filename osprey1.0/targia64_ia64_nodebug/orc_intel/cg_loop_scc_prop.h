@@ -1,4 +1,4 @@
-/* Constructed by gen_x_prop $Revision: 1.1 $
+/* Constructed by gen_x_prop $Revision: 1.7 $
  */
 #ifndef cg_loop_scc_prop_included
 #define cg_loop_scc_prop_included

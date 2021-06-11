@@ -39,9 +39,9 @@
 //
 // Module: fb_freq.h
 // $Revision: 1.2 $
-// $Date: 2002/10/13 21:35:18 $
-// $Author: douillet $
-// $Source: /cvsroot/open64/open64/osprey1.0/common/com/fb_freq.h,v $
+// $Date: 2002/03/19 08:42:36 $
+// $Author: ltuo $
+// $Source: /u/merge/src/osprey1.0/common/com/fb_freq.h,v $
 //
 // Description:
 //

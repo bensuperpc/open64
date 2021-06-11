@@ -27,7 +27,7 @@
 
 */
 
-/* $Header: /cvsroot/open64/open64/osprey1.0/libU77/iargc_.c,v 1.1.1.1 2001/09/10 17:50:04 morrone Exp $ */
+/* $Header: /isms/cmplrs.src/osprey1.0/libU77/RCS/iargc_.c,v 8.7 2001/02/20 23:39:56 mtibuild Exp $ */
  /* 
    return the number of args on the command line following the command name
   

@@ -30,8 +30,8 @@
 /* --------------------------------------------------- */
 /* | All Rights Reserved.                            | */
 /* --------------------------------------------------- */
-/* $Header: /cvsroot/open64/open64/osprey1.0/libU77/rename_.c,v 1.1.1.1 2001/09/10 17:50:04 morrone Exp $ */
-/* $Header: /cvsroot/open64/open64/osprey1.0/libU77/rename_.c,v 1.1.1.1 2001/09/10 17:50:04 morrone Exp $ */
+/* $Header: /isms/cmplrs.src/osprey1.0/libU77/RCS/rename_.c,v 8.4 2001/02/20 23:40:03 mtibuild Exp $ */
+/* $Header: /isms/cmplrs.src/osprey1.0/libU77/RCS/rename_.c,v 8.4 2001/02/20 23:40:03 mtibuild Exp $ */
 /*
 char	id_rename[] = "@(#)rename_.c	1.2";
  *

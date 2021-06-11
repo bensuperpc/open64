@@ -37,10 +37,10 @@
  * =======================================================================
  *
  *  Module: cg_dep_graph.h
- *  $Revision: 1.3 $
- *  $Date: 2002/10/13 21:35:14 $
- *  $Author: douillet $
- *  $Source: /cvsroot/open64/open64/osprey1.0/be/cg/cg_dep_graph.h,v $
+ *  $Revision: 1.4 $
+ *  $Date: 2002/12/08 04:56:12 $
+ *  $Author: lyz $
+ *  $Source: /u/merge/src/osprey1.0/be/cg/cg_dep_graph.h,v $
  *
  *  Revision comments:
  *
@@ -387,7 +387,7 @@
 #define CG_DEP_GRAPH_INCLUDED
 
 #ifdef _KEEP_RCS_ID
-static char *cg_dep_graph_rcs_id = "$Source: /cvsroot/open64/open64/osprey1.0/be/cg/cg_dep_graph.h,v $ $Revision: 1.3 $";
+static char *cg_dep_graph_rcs_id = "$Source: /u/merge/src/osprey1.0/be/cg/cg_dep_graph.h,v $ $Revision: 1.4 $";
 #endif /* _KEEP_RCS_ID */
 
 #include <list.h>
@@ -463,6 +463,8 @@ typedef enum cg_dep_kind {
 
   CG_DEP_PRECHK,    /* Pre-chk: the succ is a check op  */
   CG_DEP_POSTCHK,   /* Post-chk: the pred is a check op */
+  CG_DEP_CTLSPEC, /* control speculation, a special dep between a cmp 
+  				* and its guarded operations. */
 
   CG_DEP_MISC,		/* Everything else: the pred must be issued
 			 * before the succ. */
@@ -651,7 +653,7 @@ inline ARC *ARC_LIST_Find_First(ARC_LIST *list, CG_DEP_KIND kind, INT16 opnd)
   return arcs ? ARC_LIST_first(arcs) : NULL;
 }
 
-typedef BOOL (*COMPARE_FUNCTION)(const void*, const void*);
+typedef BOOL (*COMPARE_FUNCTION)(void*, void*);
 
 void CG_DEP_Compute_Graph(struct bb      *bb,
 			  BOOL           assigned_regs,
@@ -735,9 +737,12 @@ BOOL CG_DEP_Call_Aliases(OP *call_op, OP *op, BOOL read, BOOL write);
 
 BOOL CG_DEP_Can_OP_Move_Across_Call(OP *cur_op, OP *call_op, BOOL forw, BOOL Ignore_TN_Dep);
 
-extern BOOL OP_has_subset_predicate(const void *value1, const void *value2);
+extern BOOL OP_has_subset_predicate(void *value1, void *value2);
 
-extern BOOL OP_has_disjoint_predicate(const OP *value1, const OP *value2);
+extern BOOL OP_has_disjoint_predicate(OP *value1, OP *value2);
+inline BOOL TN_is_predicate (TN * tn) {
+      return TN_is_register(tn) && TN_register_class(tn) == ISA_REGISTER_CLASS_predicate; 
+}
 
 extern void CG_DEP_Detach_Arc(ARC *arc);
 

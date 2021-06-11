@@ -37,10 +37,10 @@
  * ====================================================================
  *
  * Module: be_version.h
- * $Revision: 1.1.1.1 $
- * $Date: 2001/09/10 17:47:31 $
- * $Author: morrone $
- * $Source: /cvsroot/open64/open64/osprey1.0/be/com/be_version.h,v $
+ * $Revision: 1.7 $
+ * $Date: 2001/03/10 02:07:51 $
+ * $Author: mtibuild $
+ * $Source: /isms/cmplrs.src/osprey1.0/be/com/RCS/be_version.h,v $
  *
  * Revision history:
  *  06-Dec -95 - Original Version
