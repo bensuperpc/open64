@@ -36,7 +36,7 @@
 # are located
 #
 
-LIB_BUILD_DIR = osprey1.0/targia64
+LIB_BUILD_DIR = kpro64/targia64
 
 
 # All LIB compiler components:
@@ -45,12 +45,11 @@ LIB_COMPONENTS = \
                 $(LIB_BUILD_DIR)/libu/libffio.a \
                 $(LIB_BUILD_DIR)/libmsgi/libmsgi.a \
                 $(LIB_BUILD_DIR)/libmv/libmv.a \
+                $(LIB_BUILD_DIR)/libgcc/libgcc.a \
+                $(LIB_BUILD_DIR)/libstdc++/libstdc++.a \
                 $(LIB_BUILD_DIR)/libinstr/libinstr.a \
-                $(LIB_BUILD_DIR)/libcginstr/libcginstr.a \
                 $(LIB_BUILD_DIR)/init/ftz.o
 
-.PHONY: all
-all:build
 
 $(LIB_BUILD_DIR)/libfortran/libfortran.a:
 		cd $(LIB_BUILD_DIR)/include ; gmake ; cd ../../..
@@ -75,15 +74,8 @@ $(LIB_BUILD_DIR)/libstdc++/libstdc++.a:
 $(LIB_BUILD_DIR)/libinstr/libinstr.a:
 		cd $(LIB_BUILD_DIR)/libinstr ; gmake ; cd ../../..
 
-$(LIB_BUILD_DIR)/libcginstr/libcginstr.a:
-		cd $(LIB_BUILD_DIR)/libcginstr ; gmake ; cd ../../..
-
-$(LIB_BUILD_DIR)/cg_fb_tools/dump_cg_fb:
-		cd $(LIB_BUILD_DIR)/cg_fb_tools ; gmake ; cd ../../..
-
 $(LIB_BUILD_DIR)/init/ftz.o:
 		cd $(LIB_BUILD_DIR)/init ; gmake ; cd ../../..
-
 
 
 
@@ -98,7 +90,5 @@ clobber:
 		cd $(LIB_BUILD_DIR)/libgcc ; gmake clobber ; cd ../../..
 		cd $(LIB_BUILD_DIR)/libstdc++ ; gmake clobber ; cd ../../..
 		cd $(LIB_BUILD_DIR)/libinstr ; gmake clobber ; cd ../../..
-		cd $(LIB_BUILD_DIR)/libcginstr ; gmake clobber ; cd ../../..
-		cd $(LIB_BUILD_DIR)/cg_fb_tools ; gmake clobber ; cd ../../..
 		cd $(LIB_BUILD_DIR)/init ; gmake clobber ; cd ../../..
 

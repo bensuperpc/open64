@@ -33,7 +33,7 @@
 #
 #
 
-VER_MAJOR="1"
+VER_MAJOR="2"
 VER_MINOR="0"
 #PATCH_LEVEL=""
 VERSION="${VER_MAJOR}.${VER_MINOR}"
@@ -58,10 +58,10 @@ BUILD_OS="linux"
     # everything we will install is under $ROOT
 ROOT=${TOOLROOT}/
 
-INTERPOSE=#${TARG_HOST}-open64-${TARG_OS}
+INTERPOSE=
 [ "$BUILD_HOST" = "$TARG_HOST" ] &&  INTERPOSE="" ; 
 
-AREA="osprey1.0/targ${BUILD_HOST}_${TARG_HOST}_nodebug"
+AREA="kpro64/targ${BUILD_HOST}_${TARG_HOST}_nodebug"
 
 PHASEPATH=${ROOT}/usr/${INTERPOSE}/lib/gcc-lib/${TARG_HOST}-open64-linux/${VERSION}/
 NATIVE_LIB_DIR=${PHASEPATH}
@@ -73,7 +73,7 @@ INSTALL_DATA="/usr/bin/install -D -m 644"
 
 INSTALL_EXEC_SUB () {
 
-    [ $# -ne 2 ] && echo "Usage: INSTALL_EXEC_SUB SRC_file DEST_file" && return 1
+    [ $# -ne 2 ] && echo "!!!Component is missing, you probably need to install prebuilt binaries/archives" && return 1
     
     [ ! -e "$1" ] && echo "$1 does not exist" && return 1
 
@@ -85,7 +85,7 @@ INSTALL_EXEC_SUB () {
 
 INSTALL_DATA_SUB () {
 
-    [ $# -ne 2 ] && echo "Usage: INSTALL_DATA_SUB SRC_file DEST_file" && exit 1
+    [ $# -ne 2 ] && echo "!!!Component is missing, you probably need to install prebuilt binaries/archives" && return 1
 
     [ ! -e "$1" ] && echo "$1 does not exist" && return 1
 
@@ -114,9 +114,8 @@ INSTALL_FE () {
     INSTALL_EXEC_SUB ${AREA}/gccfe/gfec  ${PHASEPATH}/gfec
     INSTALL_EXEC_SUB ${AREA}/g++fe/gfecc ${PHASEPATH}/gfecc
 
-    # Currently we do not install fortran 90 front-end
-    # INSTALL_EXEC_SUB ${AREA}/crayf90/sgi/mfef90   ${PHASEPATH}/mfef90
-    # INSTALL_EXEC_SUB ${AREA}/crayf90/sgi/cf90.cat ${PHASEPATH}/cf90.cat
+    INSTALL_EXEC_SUB ${AREA}/crayf90/sgi/mfef95   ${PHASEPATH}/mfef95
+    INSTALL_EXEC_SUB ${AREA}/crayf90/sgi/cf95.cat ${PHASEPATH}/cf95.cat
 
     return 0
 }
@@ -135,16 +134,11 @@ INSTALL_IPA () {
     INSTALL_EXEC_SUB ${AREA}/ipa/ipa.so ${PHASEPATH}/ipa.so
     INSTALL_EXEC_SUB ${AREA}/ipl/ipl.so ${PHASEPATH}/ipl.so
 
-    ld_new_dir="osprey1.0/targcygnus_${BUILD_HOST}_${TARG_HOST}/ld"
+    ld_new_dir="kpro64/targcygnus_${BUILD_HOST}_${TARG_HOST}/ld"
 
     INSTALL_EXEC_SUB ${ld_new_dir}/ld-new  ${PHASEPATH}/ipa_link
 
     ln -sf ${PHASEPATH}/be ${PHASEPATH}/ipl 
-
-        # gen_cord stuff
-    INSTALL_EXEC_SUB ${AREA}/cord/gen_cord ${BIN_DIR}/gen_cord 
-    INSTALL_DATA_SUB ${AREA}/cord/cord_prologue ${BIN_DIR}/cord_prologue
-    INSTALL_DATA_SUB ${AREA}/cord/cord_epilogue ${BIN_DIR}/cord_epilogue
 
     return 0
 }
@@ -183,7 +177,7 @@ INSTALL_PHASE_SPECIFIC_ARCHIVES () {
     INSTALL_DATA_SUB ${AREA}/temp_f90libs/lib.exp  ${PHASEPATH}/lib.exp
 
         # instrument archieves.
-    d="osprey1.0/targ${TARG_HOST}/"
+    d="kpro64/targ${TARG_HOST}/"
     INSTALL_DATA_SUB $d/libcginstr/libcginstr.a  ${PHASEPATH}/libcginstr.a  
     INSTALL_DATA_SUB $d/libinstr/libinstr.a      ${PHASEPATH}/libinstr.a 
 
@@ -191,26 +185,23 @@ INSTALL_PHASE_SPECIFIC_ARCHIVES () {
     INSTALL_DATA_SUB $d/init/ftz.o     ${PHASEPATH}/ftz.o
 
         # libgcc.a and libstdc++.a are deemed as "GNU link" specific archieves
-    d="${PREBUILT_LIB}/${TARG_HOST}-${TARG_OS}/gnu/" 
     for i in libstdc++.a libgcc.a ; do 
-        INSTALL_DATA_SUB ${d}/${i}  ${PHASEPATH}/$i
+        F=`gcc --print-file-name $i`
+        [ ! -z "$F" ] && [ -e $F ] && INSTALL_DATA_SUB $F ${PHASEPATH}/$i
     done
-    
+
     return 0
 }
 
    
 INSTALL_GENERAL_PURPOSE_NATIVE_ARCHIVES () {
 
-    d="osprey1.0/targ${TARG_HOST}/"
+    d="kpro64/targ${TARG_HOST}/"
 
-    INSTALL_DATA_SUB ${d}/libfortran/libfortran.a ${NATIVE_LIB_DIR}/libfortran.a 
-    INSTALL_DATA_SUB ${d}/libu/libffio.a          ${NATIVE_LIB_DIR}/libffio.a
-    INSTALL_DATA_SUB ${d}/libmsgi/libmsgi.a       ${NATIVE_LIB_DIR}/libmsgi.a
-    INSTALL_DATA_SUB ${d}/libmv/libmv.a           ${NATIVE_LIB_DIR}/libmv.a
-        
-        # It seems libm.so sometimes could not work, so we put it at ${PHASEPATH}
-        #
+    INSTALL_DATA_SUB ${d}/libfortran/libfortran.a ${PHASEPATH}/libfortran.a 
+    INSTALL_DATA_SUB ${d}/libu/libffio.a          ${PHASEPATH}/libffio.a
+    INSTALL_DATA_SUB ${d}/libmsgi/libmsgi.a       ${PHASEPATH}/libmsgi.a
+    INSTALL_DATA_SUB ${d}/libmv/libmv.a           ${PHASEPATH}/libmv.a
     INSTALL_DATA_SUB ${PREBUILT_LIB}/${TARG_HOST}-${TARG_OS}/gnu/libm.a ${PHASEPATH}/libm.a
 
     return 0
@@ -228,6 +219,7 @@ INSTALL_PREBUILD_GNU_NATIVE_CRT_STARTUP () {
 
 
 INSTALL_PREBUILD_OPEN64_NATIVE_LIB () {
+
 
     for i in ${PREBUILT_LIB}/${TARG_HOST}-${TARG_OS}/open64/* ; do 
 
@@ -279,7 +271,7 @@ INSTALL_CROSS_UTIL () {
 
     for i in ${PREBUILT_BIN}/${BUILD_HOST}-${BUILD_OS}/util/* ; do 
 	[ "`basename $i`" = "CVS" ] && continue
-        INSTALL_EXEC_SUB $i ${BIN_DIR}/`basename $i`
+    	INSTALL_EXEC_SUB $i ${BIN_DIR}/`basename $i`
     done
 
     return 0
@@ -287,17 +279,17 @@ INSTALL_CROSS_UTIL () {
 
 INSTALL_NATIVE_HEADER () {
 
-    INSTALL_DATA_SUB osprey1.0/include/nue/stdarg.h  ${PHASEPATH}/include/stdarg.h
-    INSTALL_DATA_SUB osprey1.0/include/nue/va-ia64.h  ${PHASEPATH}/include/va-ia64.h 
+    INSTALL_DATA_SUB kpro64/include/nue/stdarg.h  ${PHASEPATH}/include/stdarg.h
+    INSTALL_DATA_SUB kpro64/include/nue/va-ia64.h  ${PHASEPATH}/include/va-ia64.h 
 
-    cp -f -a osprey1.0/include ${PHASEPATH}/ 
+    cp -f -a kpro64/include ${PHASEPATH}/ 
 
     return 0
 }
 
 INSTALL_MAN_PAGE () {
 
-    d1=osprey1.0/man/linux/man1
+    d1=kpro64/man/linux/man1
     d2=$ROOT/usr/man/man1
 
     INSTALL_DATA_SUB $d1/sgicc.1 $d2 
@@ -314,13 +306,12 @@ INSTALL_MISC () {
     INSTALL_EXEC_SUB ${AREA}/lno/lno.so           ${PHASEPATH}/lno.so
     INSTALL_EXEC_SUB ${AREA}/targ_info/itanium.so ${PHASEPATH}/itanium.so
     INSTALL_EXEC_SUB ${AREA}/targ_info/itanium2.so ${PHASEPATH}/itanium2.so
-    [ "$BUILD_HOST" != "$TARG_HOST" ] && ln -s /nue/usr/bin ${ALT_BIN_DIR} 2>/dev/null
 
-    if [ ! -z "$ROOT" ] ; then 
-		for i in gcc f77 as ld g++ gas as ; do 
-			x=`which $i 2>/dev/null`
-			[ ! -z "$x" ] && ln -s $x $BIN_DIR/`basename $x` 2>/dev/null
-		done
+    if [ ! -z "$ROOT" ] ; then
+        for i in gcc f77 as ld g++ gas as ; do
+            x=`which $i 2>/dev/null`
+            [ ! -z "$x" ] && ln -s $x $BIN_DIR/`basename $x` 2>/dev/null
+        done
     fi
 
         # install some scripts
@@ -339,33 +330,34 @@ INSTALL_BE
 INSTALL_IPA 
 INSTALL_CG 
 INSTALL_WHIRL_STUFF 
+INSTALL_MISC
 
 cat << _EOF_
  ------------------------------------------------------------------------
- NOTE: Following archives may not present. These archives are built by 
-   by 'make build -f Make.NUE.lib', but do not worry, prebuild versions
-   of them are provided.
-
-   osprey1.0/targia64/{libcginstr.a libinstr.a ftz.o libfortran.a libffio.a
+ NOTE: Following archives may not present. these archives are built on 
+   Native or NUE platform (by 'make build -f Make.NUE.lib'), but do not
+   worry, prebuild verion of them are provided.
+  
+   kpro64/targia64/{libcginstr.a libinstr.a ftz.o libfortran.a libffio.a
                        libmsgi.a libmv.a}
-
+  
    Normally, you need not to build these archives.
  ------------------------------------------------------------------------
 _EOF_
 
     # Install archieves 
 INSTALL_PHASE_SPECIFIC_ARCHIVES 
-INSTALL_PREBUILD_OPEN64_NATIVE_LIB 
-INSTALL_GENERAL_PURPOSE_NATIVE_ARCHIVES
-INSTALL_PREBUILD_GNU_NATIVE_CRT_STARTUP 
-
-INSTALL_PREBUILD_PHASE 
-
-INSTALL_MISC
-
 [ "$BUILD_HOST" != "$TARG_HOST" ] && INSTALL_PREBUILD_GLIBC_NATIVE_LIB 
 [ "$BUILD_HOST" != "$TARG_HOST" ] && INSTALL_NATIVE_HEADER 
+INSTALL_PREBUILD_OPEN64_NATIVE_LIB 
+INSTALL_GENERAL_PURPOSE_NATIVE_ARCHIVES
+
+# We use /usr/lib instead.
+INSTALL_PREBUILD_GNU_NATIVE_CRT_STARTUP 
+
 [ "$BUILD_HOST" != "$TARG_HOST" ] && INSTALL_CROSS_UTIL
+INSTALL_PREBUILD_PHASE 
+
 
 exit 0
 
