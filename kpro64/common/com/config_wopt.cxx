@@ -89,6 +89,7 @@ BOOL  WOPT_Enable_Aggressive_Phi_Simp = TRUE;
 UINT32 WOPT_Enable_Autoaggstr_Reduction_Threshold = 11;
 BOOL  WOPT_Enable_Alias_ANSI = TRUE;
 BOOL  WOPT_Enable_Alias_Classification = TRUE;
+BOOL  WOPT_Enable_Aggressive_Alias_Classification = TRUE;
 BOOL  WOPT_Enable_Alias_Class_Fortran_Rule = TRUE;
 BOOL  WOPT_Enable_Alias_Qualifer = TRUE;
 BOOL  WOPT_Enable_Alias_Ragnarok_Unnamed = TRUE;
@@ -278,7 +279,8 @@ BOOL  WOPT_Enable_Lpre_Before_Ivr = FALSE; // For running lpre early
 BOOL  WOPT_Enable_Spre_Before_Ivr = FALSE; // For running spre early
 BOOL  WOPT_Enable_Bdce_Before_Ivr = FALSE; // For running bdce early
 BOOL  WOPT_Enable_New_Phase_Ordering = TRUE; // Enables some phases before ivr
-BOOL  WOPT_Enable_This_Ptr_Opt = FALSE;
+BOOL  WOPT_Enable_Pt_Keep_Track_Ptr = TRUE;  // POINTS_TO keeps track of pointer
+                                             // of iload/istore
 #ifdef KEY
 BOOL  WOPT_Enable_Preserve_Mem_Opnds = FALSE; // if TRUE, suppress EPRE on 
 				// iloads that are operands of FP operations
@@ -294,7 +296,6 @@ INT32 WOPT_Enable_WN_Unroll = 1;	// 0: disable;
 					// 2: unroll all loop bodies
 #endif
 BOOL  WOPT_Enable_WOVP = TRUE; // For running write-once variable promotion
-
 
 /* ====================================================================
  *
@@ -332,6 +333,8 @@ static OPTION_DESC Options_WOPT[] = {
     UINT32_MAX, 0, UINT32_MAX, &WOPT_Enable_Autoaggstr_Reduction_Threshold, NULL },
   { OVK_BOOL,   OV_VISIBLE,	TRUE, "alias_classification", "alias_class",
     0, 0, 0,    &WOPT_Enable_Alias_Classification, NULL },
+  { OVK_BOOL,   OV_VISIBLE,	TRUE, "agg_alias_classification", "agg_alias_class",
+    0, 0, 0,    &WOPT_Enable_Aggressive_Alias_Classification, NULL },
   { OVK_BOOL,   OV_VISIBLE,	TRUE, "ac_fortran", "",
     0, 0, 0,    &WOPT_Enable_Alias_Class_Fortran_Rule, NULL },
   { OVK_BOOL,	OV_VISIBLE,	TRUE, "avoid_rehash",		"",
@@ -677,7 +680,7 @@ static OPTION_DESC Options_WOPT[] = {
 #endif
   { OVK_BOOL,	OV_VISIBLE,	TRUE, "wovp",	"wovp",
     0, 0, 0,	&WOPT_Enable_WOVP, NULL },
-  { OVK_BOOL,  OV_INTERNAL,    TRUE, "this_ptr_opt",   "this_ptr",
-    0, 0, 0,   &WOPT_Enable_This_Ptr_Opt, NULL },
+  { OVK_BOOL,  OV_INTERNAL,    TRUE, "trk_ptr",   NULL, 
+    0, 0, 0,   &WOPT_Enable_Pt_Keep_Track_Ptr, NULL },
   { OVK_COUNT }		/* List terminator -- must be last */
 };

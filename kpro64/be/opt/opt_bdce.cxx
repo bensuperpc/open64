@@ -1057,7 +1057,10 @@ BITWISE_DCE::Redundant_cvtl(BOOL sign_xtd, INT32 to_bit, INT32 from_bit,
       return FALSE;
     if (ST_class(aux->St()) == CLASS_PREG) {
       // follow use-def edge
-      Is_True(! opnd->Is_flag_set(CF_DEF_BY_CHI),
+      Is_True(! opnd->Is_flag_set(CF_DEF_BY_CHI) ||
+              // begin - fix for OSP_209
+              opnd->Defstmt()->Opr() == OPR_OPT_CHI,
+              // end   -
 	      ("BITWISE_DCE::Redundant_cvtl: preg cannot be defined by chi"));
       if (opnd->Is_flag_set(CF_DEF_BY_PHI)) {
 	// could also apply to each phi operand, but need to prevent infinite
@@ -1069,7 +1072,14 @@ BITWISE_DCE::Redundant_cvtl(BOOL sign_xtd, INT32 to_bit, INT32 from_bit,
       else if (MTYPE_size_min(dtyp) == 32)
 	return FALSE;
 #endif
-      else return Redundant_cvtl(sign_xtd, to_bit, from_bit, opnd->Defstmt()->Rhs());
+      // bug fix for OSP_140
+      else if (opnd->Defstmt() && 
+               // begin - fix for OSP_209
+	           opnd->Defstmt()->Rhs())
+               // end   -
+        return Redundant_cvtl(sign_xtd, to_bit, from_bit, opnd->Defstmt()->Rhs());
+      else
+	return FALSE;
     }
     // load from memory
     if (Split_64_Bit_Int_Ops && to_bit == 64)

@@ -104,7 +104,7 @@ static char* _Global_Insn_Sched_Phase_Name = "ORC:Global code motion"  ;
 static char* _Local_Insn_Sched_Phase_Name = "ORC:Local code motion" ;
 static char* _Cur_Phase_Name = NULL ;
 
-
+#define MAX_BB_LENGTH (360)
 
     /* ================================================================
      *
@@ -2151,6 +2151,12 @@ SCHEDULER::Sched_Rgn_Preproc (void) {
 
         if ((*iter)->Is_Region()) continue ;
         BB * bb = (*iter)->BB_Node();
+
+        if (IPFEC_Query_Skiplist (glos_skip_bb, BB_id(bb), Current_PU_Count())) {
+           Isolate_BB_From_Sched_Scope (bb);
+           DevWarn ("BB:%d in PU%d is skipped\n", BB_id(bb), Current_PU_Count());
+        }
+
         if (BB_entry(bb) || BB_exit(bb)) continue ;
 
         Identify_Actual_Argument_Defs (bb);
@@ -2320,10 +2326,6 @@ SCHEDULER::Glos_Should_Sched_This_BB (BB* b) {
         return FALSE;
     }
 
-    if (IPFEC_Query_Skiplist (glos_skip_bb, BB_id(b), Current_PU_Count())) {
-        DevWarn ("BB:%d in PU%d is skipped\n", BB_id(b), Current_PU_Count());
-        return FALSE;
-    }
 
     INT32 len = BB_length(b);
     if (len > 1)  { return TRUE;  }
@@ -2396,6 +2398,12 @@ SCHEDULER::Schedule_Cycle (void) {
                          &etime_constraint);
 
         if (!cand) { return ; }
+
+        if (BB_length (_target_bb) >= MAX_BB_LENGTH &&
+          OP_bb(cand->Op ()) != _target_bb) {
+          _cand_mgr.Get_Cand_List (cand)-> Erase_Cand (cand);
+          continue;
+        }
 
         if (!CGGRP_Issue_OP(cand->Op())) {
 
@@ -2590,6 +2598,10 @@ SCHEDULER::Need_Resched_To_Obtain_Better_Performance (void) {
 
     if (_upward_motion_num <= 0) {
         return FALSE;
+    }
+
+    if (BB_length(_target_bb) >= MAX_BB_LENGTH) {
+      return FALSE;
     }
 
     return TRUE;

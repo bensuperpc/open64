@@ -424,6 +424,26 @@ WFE_Expand_End_Case_Dummy (void)
 {
 } /* WFE_Expand_End_Case_Dummy */
 
+// bug fix for OSP_206
+static WN* WN_CreateIfForCaseGotoRange(
+  ST_IDX value, TYPE_ID value_ty,
+  INT64 case_lb, INT64 case_ub, INT32 case_label)
+{
+  TY_IDX ty = MTYPE_To_TY(value_ty);
+  WN* wn_lb = WN_Intconst(value_ty, case_lb);
+  WN* wn_ub = WN_Intconst(value_ty, case_ub);
+  WN* wn_lv = WN_Ldid(value_ty, 0, value, ty, 0);
+  WN* wn_uv = WN_Ldid(value_ty, 0, value, ty, 0);
+  WN* cmp_l = WN_CreateExp2(OPR_GE, MTYPE_I4, value_ty, wn_lv, wn_lb);
+  WN* cmp_u = WN_CreateExp2(OPR_LE, MTYPE_I4, value_ty, wn_uv, wn_ub);
+  WN* cond  = WN_CreateExp2(OPR_LAND, MTYPE_I4, MTYPE_V, cmp_l, cmp_u);
+  WN* wn_goto = WN_CreateGoto(case_label);
+  WN* then_blk = WN_CreateBlock();
+  WN* else_blk = WN_CreateBlock();
+  WN_INSERT_BlockLast(then_blk, wn_goto);
+  return WN_CreateIf(cond, then_blk, else_blk);
+} /* WN_CreateIfForCaseGotoRange */
+
 void
 WFE_Expand_End_Case (tree orig_index)
 {
@@ -435,6 +455,14 @@ WFE_Expand_End_Case (tree orig_index)
   WN    *case_entry;
   WN    *def_goto;
   WN    *wn;
+  // bug fix for OSP_206
+  /* for moving case 1 ... 10000 out side of the switch */
+  ST    *value_st = NULL;
+  WN    *value_stid = NULL;
+  WN    *if_block = NULL;
+  char st_name[32];
+  const int CASE_VALUE_THRESHOLD = 512;
+  
   TYPE_ID index_mtype = switch_info_stack [switch_info_i].index_mtype;
 
   n = case_info_i - switch_info_stack [switch_info_i].start_case_index + 1;
@@ -458,34 +486,87 @@ WFE_Expand_End_Case (tree orig_index)
       WN_INSERT_BlockLast (case_block, case_entry);
     }
     else {
-      if (MTYPE_is_signed (index_mtype)) {
-        INT64 case_value;
-        for (case_value  = case_info_stack [i].case_lower_bound_value;
-             case_value <= case_info_stack [i].case_upper_bound_value;
-             case_value++) {
+      // bug fix for OSP_206
+      UINT64 range;
+      if (MTYPE_is_signed (index_mtype))
+        range = (INT64)case_info_stack [i].case_upper_bound_value -
+		(INT64)case_info_stack [i].case_lower_bound_value;
+      else
+        range = (UINT64)case_info_stack [i].case_upper_bound_value -
+		(UINT64)case_info_stack [i].case_lower_bound_value;
+      if ( range > CASE_VALUE_THRESHOLD ) {
 
-          case_entry = WN_CreateCasegoto (case_value, case_label_idx);
-          WN_INSERT_BlockLast (case_block, case_entry);
-        }
+        WN    *if_stmt;
+	if ( value_st == NULL ) {
+	  Is_True(value_stid == NULL, ("Convert Multi CaseGoto to if: value_stid is not NULL"));
+	  Is_True(if_block == NULL, ("Convert Multi CaseGoto to if: if_block is not NULL"));
+
+	  value_st = New_ST();
+	  sprintf(st_name, "__tmp_switch_value_%d", switch_info_i);
+	  ST_Init(value_st, Save_Str(st_name),
+	          CLASS_VAR, SCLASS_AUTO, EXPORT_LOCAL, MTYPE_To_TY(index_mtype));
+	  value_stid = WN_Stid(index_mtype,
+			       0, value_st, MTYPE_To_TY(index_mtype),
+			       switch_info_stack [switch_info_i].index, 0);
+	  if_block = WN_CreateBlock();
+	}
+
+	Is_True( value_st != NULL, ("Convert Multi CaseGoto to if: value_st is NULL"));
+	Is_True( value_stid != NULL, ("Convert Multi CaseGoto to if: value_stid is NULL"));
+	Is_True( if_block != NULL, ("Convert Multi CaseGoto to if: if_block is NULL"));
+	if_stmt = WN_CreateIfForCaseGotoRange(ST_st_idx(value_st), index_mtype,
+			                      case_info_stack [i].case_lower_bound_value,
+					      case_info_stack [i].case_upper_bound_value,
+					      case_label_idx);
+	WN_INSERT_BlockLast(if_block, if_stmt);
       }
       else {
-        UINT64 case_value;
-        for (case_value  = (UINT64) case_info_stack [i].case_lower_bound_value;
-             case_value <= (UINT64) case_info_stack [i].case_upper_bound_value;
-             case_value++) {
+        if (MTYPE_is_signed (index_mtype)) {
+	  INT64 case_value;
+          for (case_value  = case_info_stack [i].case_lower_bound_value;
+               case_value <= case_info_stack [i].case_upper_bound_value;
+               case_value++) {
 
-          case_entry = WN_CreateCasegoto (case_value, case_label_idx);
-          WN_INSERT_BlockLast (case_block, case_entry);
+            case_entry = WN_CreateCasegoto (case_value, case_label_idx);
+            WN_INSERT_BlockLast (case_block, case_entry);
+          }
+        }
+        else {
+          UINT64 case_value;
+          for (case_value  = (UINT64) case_info_stack [i].case_lower_bound_value;
+               case_value <= (UINT64) case_info_stack [i].case_upper_bound_value;
+               case_value++) {
+
+            case_entry = WN_CreateCasegoto (case_value, case_label_idx);
+            WN_INSERT_BlockLast (case_block, case_entry);
+          }
         }
       }
     }
   }
-  switch_wn = WN_CreateSwitch (n,
-                               switch_info_stack [switch_info_i].index,
-                               case_block,
-                               def_goto,
-                               switch_info_stack [switch_info_i].exit_label_idx);
+    
+  // bug fix for OSP_206
   switch_block = WFE_Stmt_Pop (wfe_stmk_switch);
+  if ( value_stid != NULL ) {
+    WN *value_ldid = WN_CreateLdid(OPR_LDID, index_mtype, index_mtype,
+		              0, ST_st_idx(value_st),
+			      MTYPE_To_TY(index_mtype),0);
+    switch_wn = WN_CreateSwitch (n,
+		                 value_ldid,
+				 case_block,
+				 def_goto,
+				 switch_info_stack [switch_info_i].exit_label_idx);
+    WFE_Stmt_Append (value_stid, WN_Get_Linenum(switch_block));
+    WFE_Stmt_Append (if_block, WN_Get_Linenum(switch_block));
+  }
+  else {
+    switch_wn = WN_CreateSwitch (n,
+                                 switch_info_stack [switch_info_i].index,
+                                 case_block,
+                                 def_goto,
+                                 switch_info_stack [switch_info_i].exit_label_idx);
+  }
+
 #ifndef KEY
   WFE_Stmt_Append (switch_wn, Get_Srcpos ());
   WFE_Stmt_Append (switch_block, Get_Srcpos ());
@@ -1113,7 +1194,21 @@ Wfe_Expand_Asm_Operands (tree  string,
 				 (UINT) 0);
 	}
       }
-
+      
+      // bug fix for OSP_141
+      // When considering the related ASM statement as following:
+      // __asm__ ("xma.hu %0 = %1, %2, f0": "=f" (_q):"f" ((-x)),"f" ((__di)));
+      // where "_q", "x" and "__di" are all unsigned long(MTYPE_U8)
+      // gcc can build it through type conversion, the same as we will do
+      //
+      if (*constraint_string == 'f') {
+        TYPE_ID rtype = (input_rvalue != NULL ? WN_rtype(input_rvalue) : MTYPE_F8);
+	Is_True(MTYPE_bit_size(rtype) >= 64, ("bit size must equal or greater than 64"));
+	if (WN_rtype(input_rvalue) == MTYPE_U8 || WN_rtype(input_rvalue) == MTYPE_I8) {
+	  input_rvalue = WN_CreateExp1(OPR_CVT, MTYPE_F8, WN_rtype(input_rvalue), input_rvalue);
+	}
+      }
+      
       WN_kid (asm_wn, i) =
 	WN_CreateAsm_Input (constraint_string, opnd_num, input_rvalue);
       ++i;
@@ -1165,7 +1260,19 @@ Wfe_Expand_Asm_Operands (tree  string,
 	       || TREE_CODE (output) == FIX_CEIL_EXPR)
 	  output = TREE_OPERAND (output, 0);
 #endif
-
+	
+	// bug fix for OSP_141
+	//
+	if (strchr (constraint_string, 'f') != NULL) {
+	  TY_IDX hi_ty_idx = Get_TY(TREE_TYPE(output)); 
+	  // TYPE_ID rtype = Widen_Mtype(TY_mtype(hi_ty_idx));
+	  TYPE_ID rtype = TY_mtype(hi_ty_idx);
+	  Is_True(MTYPE_bit_size(rtype) >= 64, ("bit size must equal or greater than 64"));
+	  if (rtype == MTYPE_U8 || rtype == MTYPE_I8) {
+	    Set_TY_mtype(hi_ty_idx, MTYPE_F8); 
+	  }
+	}
+	
 	if (plus_modifier)
 	  {
 	    // de-plus the output operand's constraint string.
@@ -1182,7 +1289,7 @@ Wfe_Expand_Asm_Operands (tree  string,
 #ifdef KEY
 	nonmem_opnd_num ++;
 #endif
-
+	
 	WN *output_rvalue_wn = WFE_Lhs_Of_Modify_Expr (MODIFY_EXPR,
 						       output,
 						       plus_modifier,
@@ -1208,6 +1315,14 @@ Wfe_Expand_Asm_Operands (tree  string,
 	// reference in the output operand. This duplicates work done in
 	// WFE_Lhs_Of_Modify_Expr.
 	TYPE_ID desc = TY_mtype (Get_TY (TREE_TYPE (TREE_VALUE (tail))));
+	
+	// bug fix for OSP_141
+	// 
+	if (strchr (constraint_string, 'f') != NULL) {
+	  Is_True(MTYPE_bit_size(desc) >= 64, ("bit size must equal or greater than 64"));
+	  desc = MTYPE_F8;
+	}
+	
 	ST *preg_st = MTYPE_To_PREG(desc);
 
 	ST *constraint_st = New_ST(CURRENT_SYMTAB);
@@ -1272,6 +1387,10 @@ WFE_Null_ST_References (tree* node)
 {
   if ( TREE_CODE (*node) == VAR_DECL )
   {
+    // bug fix for OSP_207
+    if(DECL_ST (*node)==NULL)
+         return 0;
+
     ST_SCLASS sc = ST_sclass (DECL_ST (*node));
 
     // Don't null out global symbols
