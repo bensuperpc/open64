@@ -114,6 +114,7 @@
 #include "hb.h"
 #include "pqs_cg.h"
 #include "tag.h"
+#include <sstream>
 #ifdef TARG_IA64
 #include "ipfec.h"
 #include "ipfec_defs.h"
@@ -226,6 +227,8 @@ extern BOOL fat_self_recursive;
 #if defined(TARG_SL) || defined(TARG_MIPS)
 REGISTER_SET caller_saved_regs_used[ISA_REGISTER_CLASS_MAX+1];
 #endif
+
+extern void draw_vcg_flow_graph(const char* fname);
 
 /* Stuff that needs to be done at the start of each PU in cg. */
 void
@@ -748,11 +751,13 @@ CG_Generate_Code(
   Set_Error_Phase( "Code Generation" );
   Start_Timer( T_CodeGen_CU );
 
+
 #ifdef TARG_X8664
 // Cannot enable emit_unwind_info if Force_Frame_Pointer is not set
 // Need this flag set for C++ exceptions and for -g
   if (!CG_emit_unwind_info_Set)
-  	CG_emit_unwind_info = Force_Frame_Pointer;
+  	CG_emit_unwind_info = (Force_Frame_Pointer 
+	  || (PU_cxx_lang (Get_Current_PU()) && PU_has_region (Get_Current_PU())));
 
   // Don't eliminate prologue OPs in main because they guide cgemit.cxx on
   // where to insert OPs to set up the control registers.  Bug 8141.
@@ -798,7 +803,7 @@ CG_Generate_Code(
     // after it. In this scenario, don't emit .org. Also emit a
     // proper .align based on the alignment of the symbol instead of
     // .align 0.
-    if (LANG_Enable_Global_Asm)
+    if (LANG_Enable_Global_Asm || FILE_INFO_has_global_asm(File_info))
       CG_file_scope_asm_seen = TRUE;
 #endif
     return rwn;
@@ -1485,10 +1490,25 @@ extern void Generate_Return_Address(void);
   Check_for_Dump_ALL ( TP_CGEXP, NULL, "Pre LIS" );
 
 #else
-  GRA_LIVE_Recalc_Liveness(region ? REGION_get_rid( rwn) : NULL);
-  GRA_LIVE_Rename_TNs();
+  if (!CG_localize_tns) {
+    GRA_LIVE_Recalc_Liveness(region ? REGION_get_rid( rwn) : NULL);
+    GRA_LIVE_Rename_TNs();
+  }
 #if !defined(TARG_PPC32)    //  PPC IGLS_Schedule_Region bugs
   IGLS_Schedule_Region (TRUE /* before register allocation */);
+#ifdef TARG_X8664
+  Examine_Loop_Info("after prescheduling", TRUE);
+  void Counter_Merge (char*);
+  if (CG_merge_counters_x86 == TRUE && CG_opt_level > 1) {
+    if (Enable_CG_Peephole) {
+      Set_Error_Phase ( "SIB counter merging" );
+      GRA_LIVE_Recalc_Liveness(region ? REGION_get_rid( rwn) : NULL);
+      GRA_LIVE_Rename_TNs ();
+      Counter_Merge (Cur_PU_Name);
+    }
+  }
+#endif
+
 #endif 
 
 #endif // TARG_SL
@@ -2060,6 +2080,33 @@ Trace_IR(
 #endif    	
   }
 }
+  
+static void
+Trace_VCG (
+  INT phase,            /* Phase after which we're printing */
+  const char *pname )   /* Print name for phase */
+{
+  if ( Get_Trace ( TKIND_VCG, phase ) ) {
+    std::stringstream vcg_title_ss;
+    char *proc_name = Get_Procedure_Name();
+    if (proc_name) 
+      vcg_title_ss << proc_name << ".";
+    else
+      vcg_title_ss << "noname" << "."; 
+    char *phase_id = Get_Trace_Phase_Id(phase);
+    if (phase_id)
+      vcg_title_ss << phase_id << ".vcg";
+    else
+      vcg_title_ss << phase << ".vcg";
+    MEM_POOL temp_pool;
+    MEM_POOL_Initialize(&temp_pool, "temp pool", FALSE);
+    char* vcg_title =
+      (char *) MEM_POOL_Alloc(&temp_pool, vcg_title_ss.str().size()+1);
+    strcpy(vcg_title, vcg_title_ss.str().c_str());
+    draw_vcg_flow_graph(vcg_title);
+    MEM_POOL_Delete(&temp_pool);
+  }
+}
 
 static void
 Trace_TN (
@@ -2121,6 +2168,10 @@ Check_for_Dump ( INT32 pass, BB *bb )
      */
     Trace_IR ( pass, s, bb );
 
+    /* Check to see if we should create a VCG of the CFG.
+     */
+    Trace_VCG ( pass, s );
+    
     /* Check to see if we should give a memory allocation trace.
      */
     Trace_Memory_Allocation ( pass, s );

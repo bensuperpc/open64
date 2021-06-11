@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2010 Advanced Micro Devices, Inc.  All Rights Reserved.
+ * Copyright (C) 2008-2011 Advanced Micro Devices, Inc.  All Rights Reserved.
  */
 
 /*
@@ -72,6 +72,7 @@
 #include "config_cache.h"
 #include "config_list.h"
 #include "config_lno.h"
+#include "config_opt.h"
 #include "erbe.h"
 #include "glob.h"		    /* Irb_File_Name, Cur_PU_Name */
 #include "wn.h"
@@ -139,7 +140,7 @@
 #include "wn_lower.h"
 #include "array_copy.h"
 
-
+#ifndef BUILD_SKIP_PROMPF
 #pragma weak Prompf_Emit_Whirl_to_Source__GP7pu_infoP2WN
 #if ! defined(BUILD_OS_DARWIN)
 #pragma weak Anl_File_Path  
@@ -147,10 +148,10 @@
 #pragma weak Print_file__16PROJECTED_REGIONGP8__file_s
 #pragma weak Print_file__14PROJECTED_NODEGP8__file_s
  
-extern WN *Convert_Intrinsic_To_Alloca_Dealloca (WN *wn);
-extern void Prompf_Emit_Whirl_to_Source(PU_Info* current_pu,
-                                        WN* func_nd);
+extern void Prompf_Emit_Whirl_to_Source(PU_Info* current_pu, WN* func_nd);
+#endif
 
+extern WN *Convert_Intrinsic_To_Alloca_Dealloca (WN *wn);
 extern BOOL Phase_123(PU_Info* current_pu, WN* func_nd, 
 		      BOOL do_fiz_fuse, BOOL do_phase25,
                       BOOL do_inner_fission);
@@ -180,8 +181,14 @@ typedef STACK<WN *> STACK_OF_WN;
   // (only of the above two is alive at any given time)
   WN_MAP Array_Dependence_Map;
 
+  // Map pre-computation use to its def.
+  WN_MAP LNO_Precom_Map;
+
   // Each statement maps to vertex in the statement dependence graph
   WN_MAP Stmt_Dependence_Map;
+
+  // Whether to do aggressive loop fusion to bring defs and uses in the same loop.
+  BOOL Do_Aggressive_Fuse;
 
   MEM_POOL LNO_default_pool;
   MEM_POOL LNO_local_pool;
@@ -228,6 +235,7 @@ void Outer_Unroll_For_Factorization(WN *func_nd, STACK_OF_WN *inner_do_stack);
 
 void Prompf_Init()
 {
+#ifndef BUILD_SKIP_PROMPF
   prompf_dumped = FALSE; 
   if (Run_prompf) {
     Prompf_Info->Enable(); 
@@ -236,6 +244,7 @@ void Prompf_Init()
     MEM_POOL_Initialize(&PROMPF_pool, "PROMPF_pool", FALSE); 
     MEM_POOL_Push(&PROMPF_pool);
   }  
+#endif
 }
  
 //-----------------------------------------------------------------------
@@ -245,6 +254,7 @@ void Prompf_Init()
 
 void Prompf_Finish()
 {
+#ifndef BUILD_SKIP_PROMPF
   if (Run_prompf) {
     Prompf_Info->Disable(); 
     MEM_POOL_Pop(&PROMPF_pool);
@@ -254,6 +264,7 @@ void Prompf_Finish()
     MEM_POOL_Pop(&PROMPF_pool);
     MEM_POOL_Delete(&PROMPF_pool);
   } 
+#endif
 }
 
 //-----------------------------------------------------------------------
@@ -266,6 +277,7 @@ void Prompf_Finish()
 static void Prompf_Dump(PU_Info* current_pu,
 			WN* func_nd) 
 {
+#ifndef BUILD_SKIP_PROMPF
   FILE *fp_anl = NULL; 
   prompf_dumped = TRUE; 
   if (Run_prompf) {
@@ -277,6 +289,7 @@ static void Prompf_Dump(PU_Info* current_pu,
   } else if (Run_w2fc_early) { 
     Prompf_Emit_Whirl_to_Source(current_pu, func_nd);
   } 
+#endif
 }
 
 //-----------------------------------------------------------------------
@@ -288,6 +301,7 @@ static void Prompf_Dump(PU_Info* current_pu,
 static void Prompf_Post_Dump(PU_Info* current_pu,
                              WN* func_nd)
 {
+#ifndef BUILD_SKIP_PROMPF
   if (Prompf_Info != NULL && Prompf_Info->Is_Enabled()) {  
 #ifdef Is_True_On 
     Prompf_Info->Check(stdout, func_nd); 
@@ -297,6 +311,7 @@ static void Prompf_Post_Dump(PU_Info* current_pu,
     Print_Prompf_Parallel_Region_Log(current_pu, func_nd, TRUE);
     Print_Prompf_Nest_Log(func_nd, TRUE); 
   } 
+#endif
 }
 
 extern void
@@ -887,20 +902,23 @@ BOOL Peel_2D_Triangle_Loops(WN* outer_loop)
 }
 
 // returns true if any inner loop in wn is fully unrolled.
-
+// 'is_seq_iter' indicates whether caller site is iterating the WHIRLs sequentially.
 BOOL
-Fully_Unroll_Short_Loops(WN* wn)
+Fully_Unroll_Short_Loops(WN* wn, BOOL is_seq_iter = FALSE)
 {
   WN* first;
   WN* last;
   WN* next;
   BOOL unrolled = FALSE;
   OPERATOR oper = WN_operator(wn);
+  // This routine can be destructive to 'wn', verify that 'wn' was not deleted.
+  Is_True(oper != OPERATOR_UNKNOWN, ("invalid operator"));
+
   if (oper == OPR_BLOCK) {
     wn = WN_first(wn); 
     while (wn) {
       next = WN_next(wn);
-      unrolled  |=  Fully_Unroll_Short_Loops(wn);
+      unrolled  |=  Fully_Unroll_Short_Loops(wn, TRUE);
       wn = next;
     }
     return unrolled;
@@ -924,7 +942,7 @@ Fully_Unroll_Short_Loops(WN* wn)
           if(Num_Inner_Loops(wn) == MAX_INNER_LOOPS &&
              Is_Invariant_Factorization_Beneficial(wn)) {
              DO_LOOP_INFO *dli = Get_Do_Loop_Info(wn);
-            if(dli && dli->Delay_Full_Unroll==FALSE){
+           if(dli && dli->Delay_Full_Unroll==FALSE){
                dli->Delay_Full_Unroll = TRUE;
               return unrolled;              
            }
@@ -945,18 +963,41 @@ Fully_Unroll_Short_Loops(WN* wn)
     }
     if (trip_count >= 1 && trip_count <= LNO_Full_Unrolling_Limit) {
       if (trip_count > 1) {
+	WN * wn_prev = WN_prev(wn);
+	WN * wn_next = WN_next(wn);
+	DO_LOOP_INFO *dli = Get_Do_Loop_Info(wn);
+	WN * wn_body = WN_do_body(wn);
+	WN * wn_kid = (wn_body && (WN_operator(wn_body) == OPR_BLOCK)) ? WN_first(wn_body) : NULL;
+
+	// Attempt unrolling if wn has a child loop whose iteration space is compatible
+	// with that of wn_prev or wn_next.  Unrolling enables loop fusion.
+	if (Do_Aggressive_Fuse) {
+	  OPERATOR opr = WN_operator(wn);
+	  if (dli && wn_kid && (WN_operator(wn_kid) == opr)
+	      && ((wn_prev && (WN_operator(wn_prev) == opr)
+		   && WN_has_compatible_iter_space(wn_kid, wn_prev, NULL, NULL, FALSE)
+		   && Same_Bounds(wn_prev, wn_kid))
+		  || (wn_next && (WN_operator(wn_next) == opr) 
+		      && WN_has_compatible_iter_space(wn_kid, wn_next, NULL, NULL, FALSE)
+		      && Same_Bounds(wn_next, wn_kid)))) {
+	    dli->Required_Unroll = 1;
+	  }
+	}
+
 #ifdef KEY
         //trip_count already used in calculating Loop_Size(do_loop), so don't mul
         //bug 11954, 11958: Regression caused by not multiplying trip_count, because
         //we need new LNO_Full_Unrolling_Loop_Size_Limit default.
         //TODO: re-investigate here after work bug 10644
-	if (Loop_Size(wn)*trip_count > LNO_Full_Unrolling_Loop_Size_Limit ||
-            //bug 5159:  Loops having PREG with -ve offsets can not be unrolled since they are
-            //ASM output values and duplicating them will break CG assumption.
-            Has_Negative_Offset_Preg(WN_do_body(wn))){
-//       if (Loop_Size(wn) > LNO_Full_Unrolling_Loop_Size_Limit) {
-	  unrolled |= Fully_Unroll_Short_Loops(WN_do_body(wn));
-	  return unrolled;
+	if (!dli || !dli->Required_Unroll) {
+	  if (Loop_Size(wn)*trip_count > LNO_Full_Unrolling_Loop_Size_Limit ||
+	      //bug 5159:  Loops having PREG with -ve offsets can not be unrolled since they are
+	      //ASM output values and duplicating them will break CG assumption.
+	      Has_Negative_Offset_Preg(WN_do_body(wn))){
+	    //       if (Loop_Size(wn) > LNO_Full_Unrolling_Loop_Size_Limit) {
+	    unrolled |= Fully_Unroll_Short_Loops(WN_do_body(wn));
+	    return unrolled;
+	  }
 	}
 	static INT count = 0;
 	count ++;
@@ -968,13 +1009,15 @@ Fully_Unroll_Short_Loops(WN* wn)
 	}
 	if (LNO_Full_Unroll_Outer == FALSE) {
 	  DO_LOOP_INFO *dli = Get_Do_Loop_Info(wn);
-	  WN* parent = LWN_Get_Parent(wn);
-	  while(parent && WN_operator(parent) != OPR_DO_LOOP &&
-		WN_operator(parent) != OPR_FUNC_ENTRY)
-	    parent = LWN_Get_Parent(parent);
-	  if (!parent || WN_operator(parent) == OPR_FUNC_ENTRY) {
-	    unrolled |= Fully_Unroll_Short_Loops(WN_do_body(wn));
-	    return unrolled;	    
+	  if (!dli || !dli->Required_Unroll) {
+	    WN* parent = LWN_Get_Parent(wn);
+	    while(parent && WN_operator(parent) != OPR_DO_LOOP &&
+		  WN_operator(parent) != OPR_FUNC_ENTRY)
+	      parent = LWN_Get_Parent(parent);
+	    if (!parent || WN_operator(parent) == OPR_FUNC_ENTRY) {
+	      unrolled |= Fully_Unroll_Short_Loops(WN_do_body(wn));
+	      return unrolled;	    
+	    }
 	  }
 	}
 #endif
@@ -982,17 +1025,27 @@ Fully_Unroll_Short_Loops(WN* wn)
         unrolled = TRUE;
         // Du_Sanity_Check(Current_Func_Node);
       }
+      WN * next_wn = WN_next(wn);
       Remove_Unity_Trip_Loop(wn, TRUE, &first, &last, NULL, Du_Mgr);
       // Du_Sanity_Check(Current_Func_Node);
-      wn = first; 
-      while (wn) {
-        next = WN_next(wn);
-        unrolled |= Fully_Unroll_Short_Loops(wn);
-        if (wn == last) {
-          break;
-        }
-        wn = next;
+      // If caller is sequentially visiting the WHIRLs, the 'next_wn'
+      // will be visited in the caller site.  if the 'next_wn' is the
+      // same as 'first', we should not recursively invoke the routine
+      // 'Fully_Unroll_Short_Loops', otherwise if 'first' is deleted,
+      // the caller site will visit the deleted wn.
+      if (!is_seq_iter || (first != next_wn)) {
+	wn = first; 
+
+	while (wn) {
+	  next = WN_next(wn);
+	  unrolled |= Fully_Unroll_Short_Loops(wn, TRUE);
+	  if (wn == last) {
+	    break;
+	  }
+	  wn = next;
+	}
       }
+
       return unrolled;
     }
   }
@@ -1147,6 +1200,8 @@ extern WN * Lnoptimizer(PU_Info* current_pu,
   ROUNDOFF Roundoff_Level_Save = Roundoff_Level;
 
   Du_Mgr = du_mgr;
+  if(Run_autopar)
+    WN_Register_Delete_Cleanup_Function(LWN_Delete_SR);
   WN_Register_Delete_Cleanup_Function(LWN_Delete_DU);
   VINDEX16 save_graph_capacity = GRAPH16_CAPACITY; 
   GRAPH16_CAPACITY = LNO_Graph_Capacity;
@@ -1163,6 +1218,21 @@ extern WN * Lnoptimizer(PU_Info* current_pu,
     snl_debug += 2;
   if (Get_Trace(TP_LNOPT, TT_LNO_SNL_DEBUG1))
     snl_debug += 1;
+
+  // Check whether to attempt aggressive loop fusion.
+  Do_Aggressive_Fuse = FALSE;
+  if ((LNO_Fusion >= 2) && (LNO_Sclrze) && (LNO_Aequiv) && OPT_Scale) {
+    Do_Aggressive_Fuse = TRUE;
+    int pu_cnt = Current_PU_Count();
+    UINT limit = LNO_Aggressive_Fusion_Limit;
+    if (limit > 0) {
+      if ((pu_cnt + 1) >= limit) {
+	Do_Aggressive_Fuse = FALSE;
+	if (LNO_Verbose)
+	  fprintf(stdout, "Disable aggressive loop fusion for function:%d\n", pu_cnt);	  
+      }
+    }
+  }
 
   LNO_Allow_Nonlinear = !Get_Trace(TP_LNOPT,TT_LNO_SKIP_NONLIN);
   LNO_Debug_Delinearization = Get_Trace(TP_LNOPT,TT_LNO_DEBUG_DELIN);
@@ -1203,6 +1273,8 @@ extern WN * Lnoptimizer(PU_Info* current_pu,
   FmtAssert(Parent_Map != -1,("Ran out of mappings in Lnoptimizer"));
   LNO_Info_Map = WN_MAP_Create(&LNO_default_pool);
   FmtAssert(LNO_Info_Map != -1,("Ran out of mappings in Lnoptimizer"));
+  LNO_Precom_Map = WN_MAP_Create(&LNO_default_pool);
+  FmtAssert(LNO_Precom_Map != -1,("Ran out of mappings in Lnoptimizer"));
   Array_Dependence_Map = WN_MAP_Create(&LNO_default_pool);
   FmtAssert(Array_Dependence_Map != -1,("Ran out of mappings in Lnoptimizer"));
   Stmt_Dependence_Map = WN_MAP_Create(&LNO_default_pool);
@@ -1270,6 +1342,8 @@ extern WN * Lnoptimizer(PU_Info* current_pu,
       goto return_point;
     } 
 
+    SAC sac(func_nd); 
+    sac.Perform_Structure_Split_Opt();
 
     // mark do loops
     // doesn't affect access vectors
@@ -1326,7 +1400,6 @@ extern WN * Lnoptimizer(PU_Info* current_pu,
           (REDUCTION_MANAGER(&LNO_default_pool), &LNO_default_pool);
       red_manager->Build(func_nd,TRUE,FALSE); // build scalar and array reductions
     }
-  
   
     // Get rid of inconsistent control flow
     if (Eliminate_Dead_SCF(func_nd,LWN_Delete_Tree)) {
@@ -1408,7 +1481,7 @@ extern WN * Lnoptimizer(PU_Info* current_pu,
 
     // Scalarize the invariants
     if (LNO_Sclrze) {
-      Scalarize_Arrays(Array_Dependence_Graph,0,1,red_manager);
+      Scalarize_Arrays(Array_Dependence_Graph,0,1,red_manager, func_nd);
     }
   
     // Mark parallel loops before fusion so fusion will not
@@ -1514,20 +1587,32 @@ extern WN * Lnoptimizer(PU_Info* current_pu,
     }
     if (early_exit) 
       goto return_point; 
-  
+
+    if (Do_Aggressive_Fuse) {
+      if (LNO_Sclrze) {
+	// Rebuild Array_Dependence_Graph
+	Array_Dependence_Graph->Erase_Graph();
+	Build_Array_Dependence_Graph(func_nd);	
+	// Run scalarization before prefetch to avoid prefetches that are not needed.	
+	Scalarize_Arrays(Array_Dependence_Graph,1,0,red_manager, func_nd);
+      }
+    }
+    
     // Driver determines whether to run prefetching or not,
     // based on the options.
     Prefetch_Driver (func_nd, Array_Dependence_Graph);
   
     // Scalarize the variants
-    if (LNO_Sclrze) {
-      Scalarize_Arrays(Array_Dependence_Graph,1,0,red_manager);
+    if (!Do_Aggressive_Fuse) {
+      if (LNO_Sclrze) 
+	Scalarize_Arrays(Array_Dependence_Graph,1,0,red_manager, NULL);
     }
-  
+
     if (LNO_Aequiv) { 
       AEQUIV aequiv(func_nd,Array_Dependence_Graph);
       aequiv.Equivalence_Arrays();
     }
+
     if (!Get_Trace(TP_LNOPT, TT_LNO_GUARD)) {
       Guard_Dos(func_nd); // put guards around all the do statments
       if (LNO_Minvar) {
@@ -1676,6 +1761,7 @@ return_point:
   // Let the simplifier know about it
   WN_SimpParentMap = WN_MAP_UNDEFINED;
   WN_MAP_Delete(LNO_Info_Map);
+  WN_MAP_Delete(LNO_Precom_Map);
   WN_MAP_Delete(Stmt_Dependence_Map);
   WN_MAP_Delete(Array_Dependence_Map);
   WN_MAP_Delete(Safe_Spec_Map);
@@ -1685,6 +1771,8 @@ return_point:
   MEM_POOL_Pop(&SNL_local_pool);
   MEM_POOL_Pop_Unfreeze(&LNO_default_pool);
 
+  if(Run_autopar)
+    WN_Remove_Delete_Cleanup_Function(LWN_Delete_SR);
   WN_Remove_Delete_Cleanup_Function(LWN_Delete_DU);
   GRAPH16_CAPACITY = save_graph_capacity; 
 
@@ -2217,10 +2305,12 @@ if(red_manager){
   return FALSE; 
 }
 
+// NB: the two constructors for DO_LOOP_INFO need to remain in sync.
 DO_LOOP_INFO::DO_LOOP_INFO(MEM_POOL *pool, ACCESS_ARRAY *lb, ACCESS_ARRAY *ub,
 	ACCESS_VECTOR *step, BOOL has_calls, BOOL has_nested_calls, BOOL has_unsummarized_calls,
 	BOOL has_unsummarized_call_cost, BOOL has_gotos, BOOL has_exits, 
-	BOOL has_gotos_this_level,BOOL is_inner) {
+	BOOL has_gotos_this_level,BOOL is_inner)
+{
     _pool = pool;
     _id = 0;
     LB = lb;
@@ -2232,9 +2322,7 @@ DO_LOOP_INFO::DO_LOOP_INFO(MEM_POOL *pool, ACCESS_ARRAY *lb, ACCESS_ARRAY *ub,
     Has_Unsummarized_Call_Cost = has_unsummarized_call_cost;
     Has_Threadprivate = FALSE; 
     Has_Gotos = has_gotos;
-#ifndef KEY
     Has_Conditional = FALSE;
-#endif
     Has_Gotos_This_Level = has_gotos_this_level;
     Has_Exits = has_exits;
     Has_EH_Regions = FALSE;
@@ -2242,15 +2330,19 @@ DO_LOOP_INFO::DO_LOOP_INFO(MEM_POOL *pool, ACCESS_ARRAY *lb, ACCESS_ARRAY *ub,
     Has_Bad_Mem = FALSE;
     Has_Barriers = FALSE;
     Multiversion_Alias = FALSE;
+    Loop_Vectorized = FALSE;
     Is_Ivdep = FALSE;
     Is_Concurrent_Call = FALSE;
     Concurrent_Directive = FALSE;
     No_Fission = FALSE;
     No_Fusion = FALSE; 
     Aggressive_Inner_Fission = FALSE;
+    Depth = 0;
     _wind_down_flags = 0;
     Est_Num_Iterations = -1;
     Est_Max_Iterations_Index = -1;
+    // Est_Register_Usage has it's own constructor
+    // Matching comment (provides a hint for tkdiff).
     Num_Iterations_Symbolic = TRUE;
     Num_Iterations_Profile = FALSE;
     Guard = NULL;
@@ -2261,10 +2353,16 @@ DO_LOOP_INFO::DO_LOOP_INFO(MEM_POOL *pool, ACCESS_ARRAY *lb, ACCESS_ARRAY *ub,
     Serial_Version_of_Concurrent_Loop = FALSE; 
     Auto_Parallelized = FALSE; 
     Required_Unroll = 0;
+    Prefer_Fuse = 0;
+    Has_Precom_Def = 0;
+    Has_Precom_Use = 0;
+    Is_Precom_Init = 0;
+    Sclrze_Dse = 0;
     for (INT i = 0; i < MHD_MAX_LEVELS; i++)
       Required_Blocksize[i] = -1;
     Permutation_Spec_Array = NULL;
     Permutation_Spec_Count = 0;
+    // Matching comment (provides a hint for tkdiff).
     Blockable_Specification = 0;
     Is_Inner_Tile = FALSE; 
     Is_Outer_Tile = FALSE; 
@@ -2277,7 +2375,7 @@ DO_LOOP_INFO::DO_LOOP_INFO(MEM_POOL *pool, ACCESS_ARRAY *lb, ACCESS_ARRAY *ub,
     Is_Doacross = FALSE; 
     Doacross_Tile_Size = 0; 
     Sync_Distances[0] = NULL_DIST; 
-    Sync_Distances[0] = NULL_DIST; 
+    Sync_Distances[1] = NULL_DIST; 
     Parallelizable = FALSE; 
 #ifdef KEY
     Vectorizable = FALSE; 
@@ -2319,27 +2417,29 @@ extern BOOL Last_Value_Peeling()
   return last_value_peeling; 
 } 
 
-DO_LOOP_INFO::DO_LOOP_INFO(DO_LOOP_INFO *dli, MEM_POOL *pool) {
+// NB: the two constructors for DO_LOOP_INFO need to remain in sync.
+DO_LOOP_INFO::DO_LOOP_INFO(DO_LOOP_INFO *dli, MEM_POOL *pool)
+{
     _pool = pool;
     _id = 0;
     if (dli->LB) LB = CXX_NEW(ACCESS_ARRAY(dli->LB,pool),pool);
     if (dli->UB) UB = CXX_NEW(ACCESS_ARRAY(dli->UB,pool),pool);
     if (dli->Step) Step = CXX_NEW(ACCESS_VECTOR(dli->Step,pool),pool);
     Has_Calls = dli->Has_Calls;
-#ifdef KEY //bug 14284
     Has_Nested_Calls = dli->Has_Nested_Calls;
-#endif    
     Has_Unsummarized_Calls = dli->Has_Unsummarized_Calls;
     Has_Unsummarized_Call_Cost = dli->Has_Unsummarized_Call_Cost;
     Has_Threadprivate = dli->Has_Threadprivate; 
     Has_Gotos = dli->Has_Gotos;
+    Has_Conditional = dli->Has_Conditional;
     Has_Gotos_This_Level = dli->Has_Gotos_This_Level;
     Has_Exits = dli->Has_Exits;
     Has_EH_Regions = dli->Has_EH_Regions;
+    Is_Inner = dli->Is_Inner;
     Has_Bad_Mem = dli->Has_Bad_Mem;
     Has_Barriers = dli->Has_Barriers;
     Multiversion_Alias = dli->Multiversion_Alias;
-    Is_Inner = dli->Is_Inner;
+    Loop_Vectorized = dli->Loop_Vectorized;
     Is_Ivdep = dli->Is_Ivdep;
     Is_Concurrent_Call = dli->Is_Concurrent_Call;
     Concurrent_Directive = dli->Concurrent_Directive;
@@ -2351,6 +2451,7 @@ DO_LOOP_INFO::DO_LOOP_INFO(DO_LOOP_INFO *dli, MEM_POOL *pool) {
     Est_Num_Iterations = dli->Est_Num_Iterations;
     Est_Max_Iterations_Index = dli->Est_Max_Iterations_Index;
     Est_Register_Usage = dli->Est_Register_Usage;
+    // Matching comment (provides a hint for tkdiff).
     Num_Iterations_Symbolic = dli->Num_Iterations_Symbolic;
     Num_Iterations_Profile = dli->Num_Iterations_Profile;
     Guard = dli->Guard;
@@ -2361,6 +2462,11 @@ DO_LOOP_INFO::DO_LOOP_INFO(DO_LOOP_INFO *dli, MEM_POOL *pool) {
     Serial_Version_of_Concurrent_Loop = dli->Serial_Version_of_Concurrent_Loop;
     Auto_Parallelized = dli->Auto_Parallelized; 
     Required_Unroll = dli->Required_Unroll;
+    Prefer_Fuse = dli->Prefer_Fuse;
+    Has_Precom_Def = dli->Has_Precom_Def;
+    Has_Precom_Use = dli->Has_Precom_Use;
+    Is_Precom_Init = dli->Is_Precom_Init;
+    Sclrze_Dse = dli->Sclrze_Dse;
     for (INT i = 0; i < MHD_MAX_LEVELS; i++)
       Required_Blocksize[i] = dli->Required_Blocksize[i];
     Permutation_Spec_Array = NULL;  
@@ -2371,6 +2477,7 @@ DO_LOOP_INFO::DO_LOOP_INFO(DO_LOOP_INFO *dli, MEM_POOL *pool) {
       for (INT i = 0; i < Permutation_Spec_Count; i++) 
 	Permutation_Spec_Array[i] = dli->Permutation_Spec_Array[i]; 
     }
+    // Matching comment (provides a hint for tkdiff).
     Blockable_Specification = dli->Blockable_Specification;
     Is_Inner_Tile = dli->Is_Inner_Tile; 
     Is_Outer_Tile = dli->Is_Outer_Tile; 
@@ -2392,7 +2499,7 @@ DO_LOOP_INFO::DO_LOOP_INFO(DO_LOOP_INFO *dli, MEM_POOL *pool) {
     Last_Value_Peeled = dli->Last_Value_Peeled; 
     Not_Enough_Parallel_Work = dli->Not_Enough_Parallel_Work; 
     Inside_Critical_Section = dli->Inside_Critical_Section;
-    Work_Estimate= dli->Work_Estimate; 
+    Work_Estimate = dli->Work_Estimate; 
     Lego_Mp_Key_Lower = dli->Lego_Mp_Key_Lower; 
     Lego_Mp_Key_Upper = dli->Lego_Mp_Key_Upper; 
     Lego_Mp_Key_Depth = dli->Lego_Mp_Key_Depth; 

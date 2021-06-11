@@ -393,8 +393,12 @@ Gen_exp_wn(CODEREP *exp, EMITTER *emitter)
               else if (
 		       ! MTYPE_is_float(exp->Asm_input_rtype()) &&
 		       exp->Asm_input_rtype() != exp->Asm_input_dsctype()) {
-                WN_set_rtype(WN_kid(wn, i), exp->Asm_input_rtype());
-                WN_set_desc(WN_kid(wn, i), exp->Asm_input_dsctype());
+                   if(Is_Valid_Opcode_Parts(WN_operator(WN_kid(wn, i)),
+                      exp->Asm_input_rtype(),exp->Asm_input_dsctype()))
+                   {
+                     WN_set_rtype(WN_kid(wn, i), exp->Asm_input_rtype());
+                     WN_set_desc(WN_kid(wn, i), exp->Asm_input_dsctype());
+                   }
               }
             }
             else{
@@ -654,13 +658,6 @@ Gen_exp_wn(CODEREP *exp, EMITTER *emitter)
     {
       AUX_STAB_ENTRY *aux_entry = 
 	emitter->Opt_stab()->Aux_stab_entry(exp->Aux_id());
-#ifdef TARG_SL
-      if (exp->Dtyp() == MTYPE_I2 && exp->Dsctyp() == MTYPE_I2) {
-        wn = WN_Create((aux_entry->Bit_size() > 0 && aux_entry->Field_id() == 0)
-			? OPR_LDBITS : OPR_LDID,
-	   	        MTYPE_I4, exp->Dsctyp(), 0); 
-      } else
-#endif
       wn = WN_Create((aux_entry->Bit_size() > 0 && aux_entry->Field_id() == 0)
 			? OPR_LDBITS : OPR_LDID,
 		     exp->Dtyp(), exp->Dsctyp(), 0); 
@@ -1388,6 +1385,13 @@ Gen_stmt_wn(STMTREP *srep, STMT_CONTAINER *stmt_container, EMITTER *emitter)
   case OPR_COMMENT:
     return NULL;
 #endif
+
+  case OPR_ZDLBR:
+    {
+      rwn = WN_CreateZDLBr(srep->Label_number());
+    }
+    break;
+
   default:
     FmtAssert(FALSE, ("Gen_stmt_wn: opcode %s is not implemented yet",
 		      OPCODE_name(srep->Op())));

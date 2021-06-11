@@ -238,6 +238,16 @@ ST_st_idx (const ST& s)			{ return s.st_idx; }
 inline void
 Set_ST_st_idx (ST& s, ST_IDX idx)	{ s.st_idx = idx; }
 
+inline TY_IDX
+ST_vtable_ty_idx (const ST& s)			{ return s.vtable_ty_idx; }
+inline void
+Set_ST_vtable_ty_idx (ST& s, TY_IDX idx)	{ s.vtable_ty_idx = idx; }
+
+inline mUINT32
+ST_Line (const ST& s)    { return s.line; }
+inline void
+Set_ST_Line (ST& s, mUINT32 lineno)    { s.line = lineno; }
+
 inline ST*
 ST_ptr (ST_IDX idx)                     { return &(St_Table[idx]); }
 
@@ -700,6 +710,20 @@ inline void
 Set_ST_is_array_remapping_candidate_malloc(ST *s) { s->flags_ext |= ST_IS_ARRAY_REMAPPING_CANDIDATE_MALLOC; }
 inline void
 Clear_ST_is_array_remapping_candidate_malloc(ST *s) { s->flags_ext &= ~ST_IS_ARRAY_REMAPPING_CANDIDATE_MALLOC; }
+inline BOOL
+ST_is_global_as_local(const ST * s) { return s->flags_ext & ST_IS_GLOBAL_AS_LOCAL; }
+inline void
+Set_ST_is_global_as_local(ST * s) { s->flags_ext |= ST_IS_GLOBAL_AS_LOCAL; }
+inline void 
+Clear_ST_is_global_as_local(ST *s) { s->flags_ext &= ~ST_IS_GLOBAL_AS_LOCAL; }
+
+inline BOOL
+ST_is_vtable (const ST* s)  { return s->flags_ext & ST_IS_VTABLE; }
+inline void
+Set_ST_is_vtable (ST* s)    { s->flags_ext |= ST_IS_VTABLE; }
+inline void
+Reset_ST_is_vtable (ST* s)  { s->flags_ext &= ~ST_IS_VTABLE; }
+
 #endif /* KEY */
 
 //----------------------------------------------------------------------
@@ -1117,6 +1141,13 @@ inline UINT64
 PU_src_lang (const PU& pu)		{ return pu.src_lang; }
 
 inline BOOL
+PU_simple_eh(const PU& pu)		{ return (pu.flags & PU_SIMPLE_EH_RANGE) != 0;}
+inline void
+Set_PU_simple_eh(PU& pu)			{ pu.flags |= PU_SIMPLE_EH_RANGE; }
+inline void
+Clear_PU_simple_eh(PU& pu)		{ pu.flags &= ~PU_SIMPLE_EH_RANGE; }
+
+inline BOOL
 PU_mixed_lang (const PU& pu)		{ return (pu.src_lang & PU_MIXED_LANG) != 0; }
 inline void
 Set_PU_mixed_lang (PU& pu)		{ pu.src_lang |= PU_MIXED_LANG; }
@@ -1274,6 +1305,15 @@ TY_copy_constructor (const TY_IDX tyi)	{ return Ty_Table[tyi].Copy_constructor (
 inline void
 Set_TY_copy_constructor (TY_IDX tyi, ST_IDX idx) { Set_TY_copy_constructor(Ty_Table[tyi],idx); }
 #endif
+inline ST_IDX
+TY_vtable (const TY& ty)	{ return ty.Vtable (); }
+inline void
+Set_TY_vtable (TY& ty, ST_IDX idx)	{ ty.Set_vtable (idx); }
+inline ST_IDX
+TY_vtable (const TY_IDX tyi)	{ return Ty_Table[tyi].Vtable (); }
+inline void
+Set_TY_vtable (TY_IDX tyi, ST_IDX idx) { Set_TY_vtable(Ty_Table[tyi],idx); }
+
 
 //----------------------------------------------------------------------
 // TY flags
@@ -1743,6 +1783,13 @@ Set_FLD_is_base_class (FLD_HANDLE fld)   { fld.Entry()->flags |= FLD_IS_BASE_CLA
 inline void
 Clear_FLD_is_base_class (FLD_HANDLE fld) { fld.Entry()->flags &= ~FLD_IS_BASE_CLASS; }
 
+inline BOOL
+FLD_is_virtual (FLD_HANDLE fld)       { return fld.Entry()->flags & FLD_IS_VIRTUAL; }
+inline void
+Set_FLD_is_virtual (FLD_HANDLE fld)   { fld.Entry()->flags |= FLD_IS_VIRTUAL; }
+inline void
+Clear_FLD_is_virtual (FLD_HANDLE fld) { fld.Entry()->flags &= ~FLD_IS_VIRTUAL; }
+
 //----------------------------------------------------------------------
 // access functions for TYLIST
 //----------------------------------------------------------------------
@@ -1975,6 +2022,12 @@ Set_FILE_INFO_has_mp (FILE_INFO& f)	{ f.flags |= FI_HAS_MP; }
 inline void
 Clear_FILE_INFO_has_mp (FILE_INFO& f){ f.flags &= ~FI_HAS_MP; }
 
+inline BOOL
+FILE_INFO_has_global_asm (const FILE_INFO& f)  { return f.flags & FI_HAS_GLOBAL_ASM; }
+inline void
+Set_FILE_INFO_has_global_asm (FILE_INFO& f)    { f.flags |= FI_HAS_GLOBAL_ASM; }
+inline void
+Clear_FILE_INFO_has_global_asm (FILE_INFO& f)  { f.flags &= ~FI_HAS_GLOBAL_ASM; }
 
 
 //----------------------------------------------------------------------

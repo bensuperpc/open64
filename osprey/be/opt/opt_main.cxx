@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2010 Advanced Micro Devices, Inc.  All Rights Reserved.
+ * Copyright (C) 2008-2011 Advanced Micro Devices, Inc.  All Rights Reserved.
  */
 
 //-*-c++-*-
@@ -367,6 +367,8 @@
 
 #include "wssa_utils.h"   // WHIRL SSA
 
+#include "../opt/init.cxx"          // force include of Wopt_Initializer
+
 extern "C" void
 Perform_Procedure_Summary_Phase (WN* w, struct DU_MANAGER *du_mgr,
 				 struct ALIAS_MANAGER *alias_mgr,
@@ -539,12 +541,14 @@ private:
   BOOL  _useless_store_elimination; // eliminate useless store in a loop
   BOOL _pro_loop_fusion_trans; 
   BOOL _pro_loop_interchange_trans;
+  BOOL _pro_loop_ext_trans;
   BOOL _mem_clear_remove;
   BOOL _bool_simp;
   BOOL _fold_lda_iload_istore;
   BOOL _no_return;
   BOOL _nothrow;
   BOOL _simp_if_conv;
+  BOOL _eh_cfg_opt;
 
   WOPT_SWITCHES(const WOPT_SWITCHES&);
   WOPT_SWITCHES& operator = (const WOPT_SWITCHES&);
@@ -671,6 +675,8 @@ private:
           OPT_Enable_WHIRL_SSA)
 	WOPT_Enable_Zero_Version = FALSE;
 
+      if (!OPT_Enable_EH_CFG_OPT_Set)
+        OPT_Enable_EH_CFG_OPT = TRUE;
       break; // end MAINOPT_PHASE
 
 #ifdef TARG_NVISA
@@ -710,7 +716,8 @@ private:
       } 
 
       if (WOPT_Enable_Pro_Loop_Fusion_Trans
-	  || WOPT_Enable_Pro_Loop_Interchange_Trans) {
+	  || WOPT_Enable_Pro_Loop_Interchange_Trans
+	  || WOPT_Enable_Pro_Loop_Ext_Trans) {
 	WOPT_Enable_Noreturn_Attr_Opt = FALSE;
       }
       
@@ -750,6 +757,7 @@ private:
     {
       WOPT_Enable_Pro_Loop_Fusion_Trans = FALSE;
       WOPT_Enable_Pro_Loop_Interchange_Trans = FALSE;
+      WOPT_Enable_Pro_Loop_Ext_Trans = FALSE;
     }
   }
 
@@ -816,6 +824,7 @@ private:
       WOPT_Enable_Generate_Trip_Count = _trip;
       WOPT_Enable_LNO_Copy_Propagate  = _lno_copy;
       WOPT_Enable_Zero_Version   = _zero_version;
+      OPT_Enable_EH_CFG_OPT = _eh_cfg_opt;
       break;
 #ifdef TARG_NVISA
     case PREOPT_CMC_PHASE:
@@ -846,6 +855,7 @@ private:
 
     WOPT_Enable_Pro_Loop_Fusion_Trans = _pro_loop_fusion_trans;
     WOPT_Enable_Pro_Loop_Interchange_Trans = _pro_loop_interchange_trans;
+    WOPT_Enable_Pro_Loop_Ext_Trans = _pro_loop_ext_trans;
     WOPT_Enable_Mem_Clear_Remove = _mem_clear_remove;
     WOPT_Enable_Noreturn_Attr_Opt = _no_return;
     WOPT_Enable_Nothrow_Opt = _nothrow;
@@ -948,12 +958,14 @@ public:
     _useless_store_elimination = WOPT_Enable_Useless_Store_Elimination;
     _pro_loop_fusion_trans = WOPT_Enable_Pro_Loop_Fusion_Trans;
     _pro_loop_interchange_trans = WOPT_Enable_Pro_Loop_Interchange_Trans;
+    _pro_loop_ext_trans = WOPT_Enable_Pro_Loop_Ext_Trans;
     _mem_clear_remove = WOPT_Enable_Mem_Clear_Remove;
     _bool_simp = WOPT_Enable_Bool_Simp;
     _fold_lda_iload_istore = WOPT_Enable_Fold_Lda_Iload_Istore;
     _no_return = WOPT_Enable_Noreturn_Attr_Opt;
     _nothrow = WOPT_Enable_Nothrow_Opt;
     _simp_if_conv = WOPT_Enable_Simple_If_Conv;
+    _eh_cfg_opt = OPT_Enable_EH_CFG_OPT;
 
     Adjust_Optimization();
   }
@@ -1978,6 +1990,11 @@ Pre_Optimizer(INT32 phase, WN *wn_tree, DU_MANAGER *du_mgr,
 
       if (Get_Trace(TP_GLOBOPT, ENABLE_STAT)) {
       	comp_unit->Collect_statistics();
+      }
+
+      if (WOPT_Enable_ZDL) {
+        SET_OPT_PHASE("ZDL transformation");
+        comp_unit->Do_zdl(&rvi);
       }
 
       SET_OPT_PHASE("MainOpt emitter");

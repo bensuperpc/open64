@@ -923,12 +923,6 @@ CR_opcode(CODEREP *cr)
       // cr->Dsctyp() is meaningless for FP constants
       return OPCODE_make_op(OPR_CONST, cr->Dtyp(), MTYPE_V);
     case CK_VAR:
-#ifdef TARG_SL
-      if ( cr->Dtyp() == MTYPE_I2 &&  cr->Dsctyp() == MTYPE_I2) {
-        return OPCODE_make_op(cr->Bit_field_valid() ? OPR_LDBITS : OPR_LDID,
-			      MTYPE_I4, cr->Dsctyp());
-      } else
-#endif
       return OPCODE_make_op(cr->Bit_field_valid() ? OPR_LDBITS : OPR_LDID,
 			    cr->Dtyp(), cr->Dsctyp());
     default:
@@ -957,6 +951,51 @@ CR_operator(CODEREP *cr)
       FmtAssert(FALSE,("CRSIMP, CR_operator, unknown kind, 0x%x",cr->Kind()));
       return OPERATOR_UNKNOWN;		// to satisfy compiler
    }
+}
+
+TY_IDX
+CODEREP::lod_addr_ty()
+{
+  switch (Kind()) {
+  case CK_IVAR:
+    return CR_ty(Ilod_base());
+  default:
+    return TY_IDX_ZERO;
+  }
+}
+
+TY_IDX
+CODEREP::object_ty()
+{
+  switch (Kind()) {
+    case CK_VAR:
+      if (Field_id() != 0) {
+          UINT cur_field_id = 0;
+          TY_IDX ty_idx = Lod_ty();
+          UINT field_id = Field_id();
+          FLD_HANDLE fld = FLD_get_to_field (ty_idx, field_id, cur_field_id);
+          Is_True (!fld.Is_Null(), ("Invalid field id %d for type 0x%x",
+                                     field_id, ty_idx));
+          return FLD_type(fld);
+      } else {
+        return Lod_ty();
+      }
+    case CK_IVAR:
+      if (I_field_id() != 0) {
+          UINT cur_field_id = 0;
+          TY_IDX ty_idx = Ilod_ty();
+          UINT field_id = I_field_id();
+          FLD_HANDLE fld = FLD_get_to_field (ty_idx, field_id, cur_field_id);
+          Is_True (!fld.Is_Null(), ("Invalid field id %d for type 0x%x",
+                                     field_id, ty_idx));
+          return FLD_type(fld);
+      } else {
+        return Ilod_ty();
+      }
+      
+    default:
+      return TY_IDX_ZERO;
+  }
 }
 
 static TY_IDX

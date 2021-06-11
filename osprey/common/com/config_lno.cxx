@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009 Advanced Micro Devices, Inc.  All Rights Reserved.
+ * Copyright (C) 2009, 2011 Advanced Micro Devices, Inc.  All Rights Reserved.
  */
 
 /*
@@ -179,14 +179,19 @@ static LNO_FLAGS Default_LNO = {
 #ifdef TARG_X8664
   0,		/* Fission */
   TRUE,		/* Serial_distribute */
+  1,		/* Iter_threshold */
 #else
   1,		/* Fission */
   FALSE,	/* Serial_distribute */
+  1,		/* Iter_threshold */
 #endif
   0,		/* Fission_inner_register_limit */
   TRUE,		/* Forward_substitution */
   1,		/* Fusion */
+  0,            /* Aggression_fusion_limit */
+  0,            /* Sclrze_dse_limit */
   5,		/* Fusion_peeling_limit */
+  9,            /* Fusion_ddep_limit */
   1,		/* Gather_Scatter */
   0xfffe,	/* Graph_capacity */
   TRUE,		/* Hoist_messy_bounds */
@@ -195,6 +200,7 @@ static LNO_FLAGS Default_LNO = {
   FALSE, FALSE,	/* Run_lego */
   TRUE,		/* Run_lego_localizer */
   TRUE,		/* Loop_finalization */
+  FALSE,	/* Loop_model_simd*/
   8,		/* Max_do_loop_depth_strict */
   FALSE,	/* Mem_sim */
   TRUE,		/* Minvar */
@@ -264,6 +270,8 @@ static LNO_FLAGS Default_LNO = {
   FALSE,	/* Simd_Verbose */
   TRUE,         /* Simd_Reduction */
   TRUE,         /* Simd_Avoid_Fusion */
+  FALSE,        /* Simd_Rm_Unity_Remainder */  
+  TRUE,         /* Simd_Vect_If */
   TRUE,         /* Run_hoistif */
   TRUE,		/* Ignore_Feedback */
   TRUE,         /* Run_unswitch */
@@ -326,7 +334,8 @@ static LNO_FLAGS Default_LNO = {
   UINT32_MAX,  /* IfMinMax_Limit */
   UINT32_MAX,  /* IfMinMax_Fix_Cond_Limit */
   0,           /* IfMinMax_Trace */
-  TRUE,        /* Struct_Array_Copy */
+  NULL,        /* Sac_Skip */
+  NULL,	       /* Sac_Skip_List */
   { 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0 }	/* buffer[16] */
 };
 
@@ -394,14 +403,19 @@ LNO_FLAGS Initial_LNO = {
 #ifdef TARG_X8664
   0,		/* Fission */
   TRUE,		/* Serial_distribute */
+  1,		/* Iter_threshold */
 #else
   1,		/* Fission */
   FALSE,	/* Serial_distribute */
+  1,		/* Iter_threshold */
 #endif
   0,		/* Fission_inner_register_limit */
   TRUE,		/* Forward_substitution */
   1,		/* Fusion */
+  0,            /* Aggressive_fusion_limit */
+  0,            /* Sclrze_dse_limit */
   5,		/* Fusion_peeling_limit */
+  9,            /* Fusion_ddep_limit */
   1,		/* Gather_Scatter */
   0xfffe,	/* Graph_capacity */
   TRUE,		/* Hoist_messy_bounds */
@@ -410,6 +424,7 @@ LNO_FLAGS Initial_LNO = {
   FALSE, FALSE,	/* Run_lego */
   TRUE,		/* Run_lego_localizer */
   TRUE,		/* Loop_finalization */
+  FALSE,	/* Loop_model_simd*/
   8,		/* Max_do_loop_depth_strict */
   FALSE,	/* Mem_sim */
   TRUE,		/* Minvar */
@@ -479,6 +494,8 @@ LNO_FLAGS Initial_LNO = {
   FALSE,	/* Simd_Verbose */
   TRUE,         /* Simd_Reduction */
   TRUE,         /* Simd_Avoid_Fusion */
+  FALSE,        /* Simd_Rm_Unity_Remainder*/
+  TRUE,         /* Simd_Vect_If */
   TRUE,         /* Run_hoistif */
   TRUE,	 	/* Ignore_Feedback */
   TRUE,         /* Run_unswitch */
@@ -541,7 +558,8 @@ LNO_FLAGS Initial_LNO = {
   1000000,     /* IfMinMax_Limit */
   1000000,     /* IfMinMax_Fix_Cond_Limit */
   0,           /* IfMinMax_Trace */
-  TRUE,        /* Struct_Array_Copy */
+  NULL,        /* Sac_Skip */
+  NULL,	       /* Sac_Skip_List */
   { 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0 }	/* buffer[16] */
 };
 
@@ -713,16 +731,24 @@ static OPTION_DESC Options_LNO[] = {
 #ifdef TARG_X8664
   LNOPT_U32  ( "fission",		"fis",	0,0,2,	Fission ),
   LNOPT_BOOL ( "distribute",		NULL,	Serial_distribute ),
+  LNOPT_U32  ( "iter_threshold",	NULL,	0,0,16, Iter_threshold ),
 #else
   LNOPT_U32  ( "fission",		"fis",	1,0,2,	Fission ),
   LNOPT_BOOL ( "distribute",		NULL,	Serial_distribute ),
+  LNOPT_U32  ( "iter_threshold",	NULL,	0,0,16, Iter_threshold ),
 #endif
   LNOPT_U32  ( "fission_inner_register_limit",	NULL,	32,0,99999,
 					Fission_inner_register_limit ),
   LNOPT_BOOL ( "forward_substitution",	NULL,	Forward_substitution ),
   LNOPT_U32  ( "fusion",		"fus",	1,0,2,	Fusion ),
+  LNOPT_U32  ( "aggressive_fusion_limit",	NULL,	0,0,99999,
+					Aggressive_fusion_limit ),
+  LNOPT_U32  ( "sclrze_dse_limit",	NULL,	0,0,99999,
+	                                Sclrze_dse_limit ),
   LNOPT_U32  ( "fusion_peeling_limit",	NULL,	5,0,99999,
 					Fusion_peeling_limit ),
+  LNOPT_U32  ( "fusion_ddep_limit",	NULL,	9,0,99999,
+					Fusion_ddep_limit ),
   LNOPT_U32  ( "gather_scatter",	"gath",	1,0,100, Gather_Scatter ),
   LNOPT_U32  ( "gc",			NULL,	0xfffe, 0, 0xfffe,
 					Graph_capacity ),
@@ -856,6 +882,8 @@ static OPTION_DESC Options_LNO[] = {
   LNOPT_BOOL ( "simd_verbose",		NULL,	Simd_Verbose ),
   LNOPT_BOOL ( "simd_reduction",	"simd_red",	Simd_Reduction ),
   LNOPT_BOOL ( "simd_avoid_fusion",	NULL,	Simd_Avoid_Fusion ),
+  LNOPT_BOOL ( "simd_rm_unity_remainder", NULL,	Simd_Rm_Unity_Remainder),
+  LNOPT_BOOL ( "simd_vect_if",	        NULL,	Simd_Vect_If ),
   LNOPT_BOOL ( "hoistif",		NULL,	Run_hoistif ),
   LNOPT_BOOL ( "ignore_feedback",	NULL,	Ignore_Feedback ),
   LNOPT_BOOL ( "unswitch",		NULL,	Run_unswitch ),
@@ -884,6 +912,7 @@ static OPTION_DESC Options_LNO[] = {
   LNOPT_BOOL ( "ifminmax",              NULL,   IfMinMax ), 
   LNOPT_BOOL ( "call_info",             NULL,   Run_call_info ), 
   LNOPT_BOOL ( "loop_finalize", 	NULL,   Loop_finalization),
+  LNOPT_BOOL ( "loop_model_simd", 	NULL,   Loop_model_simd),
   LNOPT_BOOL ( "shackle", 		NULL,   Shackle),
   LNOPT_BOOL ( "cross_loop", 		NULL,   Cross_loop),
   LNOPT_BOOL ( "ipa",                   NULL,   IPA_Enabled),
@@ -918,7 +947,19 @@ static OPTION_DESC Options_LNO[] = {
 	       UINT32_MAX,0,UINT32_MAX, IfMinMax_Fix_Cond_Limit),
   LNOPT_U32  ( "ifmm_trace", 	NULL,   
 	       0,0,3, IfMinMax_Trace),
-  LNOPT_BOOL ( "struct_array_copy", NULL, Struct_Array_Copy),
+
+  { OVK_LIST,	OV_SHY,		FALSE, "sac_skip_equal",		"sac_skip_e",
+    0, 0, 4096,	&IL.Sac_Skip,	NULL,
+    "Skip optimization on the structure and field" },
+
+  { OVK_LIST,	OV_SHY,		FALSE, "sac_skip_before",		"sac_skip_b",
+    0, 0, 4096,	&IL.Sac_Skip,	NULL,
+    "Skip optimization on the structure and field" },
+
+  { OVK_LIST,	OV_SHY,		FALSE, "sac_skip_after",		"sac_skip_a",
+    0, 0, 4096,	&IL.Sac_Skip,	NULL,
+    "Skip optimization on the structure and field" },
+
   { OVK_COUNT }		    /* List terminator -- must be last */
 };
 

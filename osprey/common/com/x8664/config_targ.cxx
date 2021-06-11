@@ -86,6 +86,9 @@
 #include "mtypes.h"
 #include "stab.h"
 #include "targ_sim.h"
+#ifdef BACK_END
+#include "config_lno.h"
+#endif
 
 #if defined(FRONT_END_C) || defined(FRONT_END_CPLUSPLUS)
 typedef unsigned char an_integer_kind;
@@ -715,6 +718,13 @@ Configure_Target ( void )
   FmtAssert (IS_POW2(Align_Instructions), 
 	("-OPT:align_instructions=<n> must equal power of two"));
 
+#ifdef BACK_END
+  /* Value of LNO_Iter_threshold is interpreted as default in which case 
+     the flag is set based on target. Otherwise use user-specified value.
+   */
+  LNO_Iter_threshold = (Is_Target_SSE41())? 8 : 0;
+#endif
+
   return;
 }
 
@@ -818,9 +828,9 @@ Configure_Source_Target ( char * /* filename */ )
   if ( DEBUG_Trap_Uv )
     FP_Exception_Enable_Min |= FPX_V;
 
-// TMP: ignore cpic until we figure out what to do with it
+  // TMP: ignore cpic until we figure out what to do with it
   if (Gen_PIC_Call_Shared)
-	Gen_PIC_Call_Shared = FALSE;
+    Gen_PIC_Call_Shared = FALSE;
 
   return;
 }

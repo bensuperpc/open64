@@ -289,6 +289,21 @@
  *    puts the branch there. This is used as a placeholder  <bb> to keep 
  *    all the instructions which are moved out of the loop. This relies on
  *    CFLOW pass to later merge them.
+ *
+ *  BB* CG_LOOP_Append_BB_To_Prolog_MV(BB *loop_prolog, BB *loop_head)
+ *    Create and append a <new_bb) to the <loop_prolog> bb (if necessary),
+ (*    such that if it ends in a branch, it creates a fall-through block and
+ *    puts a branch there, will added a conditional branch from the
+ *    old prolog block to its branch target.  This is used as a 
+ *    placeholder  <bb> to keep all the instructions which are moved 
+ *    out of the loop. This relies on CFLOW pass to later merge them.
+ *
+ *  BB* CG_LOOP_Prepend_BB_To_Epilog_MV(BB *loop_epilog, BB *loop_head)
+ *    Create and append a <new_bb> after a <loop_body> bb (if necessary), 
+ *    such that it creates a goto from the <new_bb> to the formal
+ *    epilog.  This is used as a placeholder  <bb> to keep 
+ *    all the instructions which are moved out of the loop. This relies on
+ *    CFLOW pass to later merge them.
  *  
  *  double CG_LOOP_Prefetch_Stride(OP *pref)
  *    Requires: OP_prefetch(pref)
@@ -453,6 +468,7 @@ extern BOOL CG_LOOP_unroll_fb_required;
 extern BOOL CG_LOOP_unroll_remainder_fully;
 extern UINT32 CG_LOOP_unroll_min_trip;
 extern BOOL CG_LOOP_unroll_analysis;
+extern BOOL CG_LOOP_unroll_best_fit;
 extern BOOL CG_LOOP_ooo_unroll_heuristics;
 extern BOOL CG_LOOP_ooo_unroll_heuristics_set;
 extern UINT32 CG_LOOP_reorder_buffer_size;
@@ -528,6 +544,11 @@ void CG_LOOP_Remove_Epilog_OPs(BB *tail);
 BB* CG_LOOP_Gen_And_Prepend_To_Prolog(BB *loop_head, LOOP_DESCR* loop);
 BB* CG_LOOP_Append_BB_To_Prolog(BB *loop_prolog, BB *loop_head);
 
+#if defined(TARG_X8664)
+BB* CG_LOOP_Append_BB_To_Prolog_MV(BB *loop_prolog, BB *loop_head);
+BB* CG_LOOP_Prepend_BB_To_Epilog_MV(BB *loop_epilog, BB *loop_head);
+#endif
+
 void CG_LOOP_Coalesce_Backedges(LOOP_DESCR *loop);
 
 TN *CG_LOOP_unroll_names_get(TN *tn, UINT8 unrolling);
@@ -588,6 +609,7 @@ public:
   void Set_has_prolog()   { flags |= CG_LOOP_HAS_PROLOG; }
   void Set_has_epilog()   { flags |= CG_LOOP_HAS_EPILOG; }
   BB  *Prolog_start() const { return prolog_start; }
+  void Set_prolog_end(BB *new_prolog_end) { prolog_end = new_prolog_end; }
   BB  *Prolog_end() const { return prolog_end; }
   BB  *Epilog_start() const { return epilog_start; }
   BB  *Epilog_end() const { return epilog_end; }
@@ -611,6 +633,7 @@ public:
 
   void Recompute_Liveness();
   bool Determine_Unroll_Fully(BOOL count_multi_bb);
+  void Determine_Best_Unit_Iteration_Interval(BOOL can_refit);
   void Determine_Unroll_Factor();
   void Determine_SWP_Unroll_Factor();
   void Build_CG_LOOP_Info(BOOL single_bb);
@@ -683,6 +706,8 @@ struct OP_VECTOR {
 
 extern CG_LOOP *Current_CG_LOOP;
 
+extern void Examine_Loop_Info(char *usage_str, BOOL after_presched);
+
 #if defined(TARG_IA64) || defined(TARG_SL)  || defined(TARG_MIPS)
 extern void Perform_Loop_Optimizations(void *rgn_loop_update=NULL);
 
@@ -691,7 +716,12 @@ extern BOOL CG_LOOP_Optimize(LOOP_DESCR *loop, SWP_FIXUP_VECTOR& fixup,
 #else
 extern void Perform_Loop_Optimizations();
 
-extern BOOL CG_LOOP_Optimize(LOOP_DESCR *loop, SWP_FIXUP_VECTOR& fixup);
+extern BOOL CG_LOOP_Optimize(LOOP_DESCR *loop, vector<SWP_FIXUP>& fixup);
+#endif
+
+#if defined(TARG_X8664)
+extern void CG_LOOP_Multiversion(LOOP_DESCR *loop, INT num_copies,
+                                 MEM_POOL *pool);
 #endif
 
 #if defined(TARG_SL)

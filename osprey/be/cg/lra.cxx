@@ -118,6 +118,7 @@
 
 #ifdef KEY
 static BOOL large_asm_clobber_set[ISA_REGISTER_CLASS_MAX+1];
+#define AVX_FP_REG_FACTOR 2.5
 #endif
 #ifdef TARG_IA64
 #define FIRST_INPUT_REG (32+REGISTER_MIN)
@@ -784,7 +785,7 @@ Print_Live_Range (LIVE_RANGE *lr)
 }
 
 
-static void
+void
 Print_Live_Ranges (BB *bb)
 {
   LIVE_RANGE *lr;
@@ -794,6 +795,313 @@ Print_Live_Ranges (BB *bb)
   fprintf (TFile, "--------------------------------------------\n");
   for (lr = Live_Range_List; lr != NULL; lr = LR_next(lr)) {
     Print_Live_Range (lr);
+  }
+}
+
+
+static int
+Find_Max_End_Range(void)
+{
+  int max_use = 0;
+  for (LIVE_RANGE *lr = Live_Range_List; lr != NULL; lr = LR_next(lr)) {
+    if (LR_last_use(lr) > max_use)
+      max_use = LR_last_use(lr);
+  }
+  return max_use;
+}
+
+
+void
+Populate_Init_Degrees(BB *bb, INT *regs_in_use)
+{
+  for (INT opnum = 0; opnum < BB_length(bb); opnum++) {
+    regs_in_use[opnum] = 0;
+  }
+}
+
+
+void
+Populate_Degrees_Over_LRs(INT *regs_in_use, LIVE_RANGE *lr)
+{
+  INT opnum;
+
+  // populate the live range, first def to last use,
+  // exposed uses will cause the live range to expand.
+  for (opnum = LR_first_def(lr); opnum < LR_last_use(lr); opnum++) {
+    INT32 degree = regs_in_use[opnum];
+    degree++;
+    regs_in_use[opnum] = degree;
+  }
+}
+
+
+INT
+Find_Max_Degree_For_LR(INT *regs_in_use, LIVE_RANGE *lr)
+{
+  INT opnum;
+  INT32 max_degree = 0;
+  for (opnum = LR_first_def(lr); opnum < LR_last_use(lr); opnum++) {
+    INT32 degree = regs_in_use[opnum];
+    max_degree = (degree > max_degree) ? degree : max_degree;
+  }
+  return max_degree;
+}
+
+
+TN_MAP
+Calculate_All_Conflicts(BB *bb, INT *regs_in_use, ISA_REGISTER_CLASS rclass)
+{
+  TN_MAP conflict_map = TN_MAP_Create();
+
+  // calculate degrees for live range intervals, op by op.
+  Populate_Init_Degrees(bb, regs_in_use);
+  for (LIVE_RANGE *lr = Live_Range_List; lr != NULL; lr = LR_next(lr)) {
+    TN *tn = LR_tn(lr);
+    if (TN_register_class(tn) != rclass) continue;
+    if (LR_use_cnt(lr) == 0) continue;
+    if (LR_last_use(lr) == 0) continue;
+    Populate_Degrees_Over_LRs(regs_in_use, lr);
+  }
+
+  for (LIVE_RANGE *lr = Live_Range_List; lr != NULL; lr = LR_next(lr)) {
+    TN *tn = LR_tn(lr);
+    INT num_conflicts;
+    if (TN_register_class(tn) != rclass) continue;
+    if (LR_use_cnt(lr) == 0) continue;
+    if (LR_last_use(lr) == 0) continue;
+    // true degree does not include the live range itself.
+    num_conflicts = Find_Max_Degree_For_LR(regs_in_use, lr) - 1;
+    TN_MAP_Set(conflict_map, tn, (void*)num_conflicts);
+  }
+
+  return conflict_map;
+}
+
+
+void
+Print_Range_And_Conflict_Info(TN_MAP conflict_map, 
+                              ISA_REGISTER_CLASS rclass)
+{
+  for (LIVE_RANGE *lr = Live_Range_List; lr != NULL; lr = LR_next(lr)) {
+    TN *tn = LR_tn(lr);
+    INT num_conflicts;
+    if (TN_register_class(tn) != rclass) continue;
+    if (LR_use_cnt(lr) == 0) continue;
+    if (LR_last_use(lr) == 0) continue;
+    num_conflicts = (INTPTR)TN_MAP_Get(conflict_map, tn);
+    printf("lr conflicts(%d) :", num_conflicts);
+    Print_Live_Range (lr);  
+  }
+}
+
+
+INT
+Find_Max_Conflicts(TN_MAP conflict_map,
+                   INT *average_conflicts,
+                   INT *num_k_conflicts,
+                   INT *num_edges,
+                   INT *outgoing_edges,
+                   ISA_REGISTER_CLASS rclass)
+{
+  INT max_conflicts = 0;
+  INT sum_conflicts = 0;
+  INT n_ranges = 0;
+  INT n_edges = 0;
+  INT n_defs = 0;
+  INT total_def_degree = 0;
+  INT k_conflicts = 0;
+  INT num_pr = REGISTER_CLASS_register_count(rclass);
+  LIVE_RANGE *last_lr = NULL;
+
+  for (LIVE_RANGE *lr = Live_Range_List; lr != NULL; lr = LR_next(lr)) {
+    TN *tn = LR_tn(lr);
+    INT num_conflicts;
+    if (TN_register_class(tn) != rclass) continue;
+    if (LR_use_cnt(lr) == 0) continue;
+    if (LR_last_use(lr) == 0) continue;
+    num_conflicts = (INTPTR)TN_MAP_Get(conflict_map, tn);
+    if (num_conflicts > max_conflicts)
+      max_conflicts = num_conflicts;
+    if (num_conflicts > num_pr)
+      k_conflicts++;
+    n_edges += LR_use_cnt(lr);
+    n_ranges++;
+    sum_conflicts += num_conflicts;
+    last_lr = lr;
+    if (LR_first_def(lr) != 0) {
+      n_defs += LR_def_cnt(lr);
+      if (total_def_degree < num_conflicts)
+        total_def_degree = num_conflicts;
+    }
+  }
+  if (n_ranges) {
+    TN *tn = LR_tn(last_lr);
+    *average_conflicts = (sum_conflicts/n_ranges);
+    *num_k_conflicts = k_conflicts;
+    *num_edges = n_edges;
+    *outgoing_edges = total_def_degree;
+  }
+  return max_conflicts;
+}
+
+
+bool
+Query_Conflicts_Improved(TN_MAP orig_map, 
+                         TN_MAP new_map, 
+                         INT num_reserved,
+                         INT *num_ranges_mitigated,
+                         ISA_REGISTER_CLASS rclass)
+{
+  INT num_improved = 0;
+  INT num_degraded = 0;
+  INT num_ranges_moved_below_pr_pressure = 0;
+  INT num_pr = REGISTER_CLASS_register_count(rclass) - num_reserved;
+  for (LIVE_RANGE *lr = Live_Range_List; lr != NULL; lr = LR_next(lr)) {
+    TN *tn = LR_tn(lr);
+    INT num_conflicts;
+    if (TN_register_class(tn) != rclass) continue;
+    if (LR_use_cnt(lr) == 0) continue;
+    INT orig_conflicts = (INTPTR)TN_MAP_Get(orig_map, tn);
+    INT new_conflicts = (INTPTR)TN_MAP_Get(new_map, tn);
+    if ((orig_conflicts < num_pr) && (new_conflicts < num_pr)) continue;
+    // Do not count the cases where we do not change.
+    if (orig_conflicts > new_conflicts)
+      num_improved++;
+    else if (orig_conflicts < new_conflicts)
+      num_degraded++;
+
+    // Now track the live ranges which fell below the pr threshold.
+    if ((orig_conflicts >= (num_pr + num_reserved)) &&
+        (new_conflicts < (num_pr + num_reserved))) {
+      num_ranges_moved_below_pr_pressure++;
+    }
+  }
+  *num_ranges_mitigated = num_ranges_moved_below_pr_pressure; 
+ 
+  return (num_improved > num_degraded);
+}
+
+
+INT 
+Find_Degree_For_TN(TN *tn, INT *regs_in_use)
+{
+  LIVE_RANGE *lr = LR_For_TN(tn);
+  return Find_Max_Degree_For_LR(regs_in_use, lr);
+}
+
+
+OP *
+Find_UseOp_For_TN(TN *tn)
+{
+  // only use with sdsu live ranges
+  LIVE_RANGE *lr = LR_For_TN(tn);
+  INT opnum = LR_last_use(lr);
+  OP *cur_op = OP_VECTOR_element (Insts_Vector, opnum);
+  return cur_op;
+}
+
+
+bool 
+Is_TN_Sdsu(TN *tn)
+{
+  bool has_sdsu = false;
+  LIVE_RANGE *lr = LR_For_TN(tn);
+  if ((LR_def_cnt(lr) == 1) && (LR_upward_exposed_use(lr) == 0)) {
+    if (LR_use_cnt(lr) == 1) {
+      // globals are not simple live ranges
+      has_sdsu = (TN_is_global_reg(tn)) ? has_sdsu : true;
+    }
+  }
+  
+  return has_sdsu;
+}
+
+
+void Merge_Live_Ranges(TN *tn1, TN *tn2, bool make_tn1_span)
+{
+  LIVE_RANGE *lr1 = LR_For_TN(tn1);
+  LIVE_RANGE *lr2 = LR_For_TN(tn2);
+
+  // if lr1's first def is above lr2's, it becomes the new first def,
+  // else we already have the first def.
+  if (LR_first_def(lr1) < LR_first_def(lr2))
+    LR_first_def(lr2) = LR_first_def(lr1);
+
+  // override an existing exposed use from lr1 if we meet the conditions
+  if (LR_upward_exposed_use(lr1) && LR_upward_exposed_use(lr2)) {
+    if (LR_upward_exposed_use(lr1) < LR_upward_exposed_use(lr2))
+      LR_upward_exposed_use(lr2) = LR_upward_exposed_use(lr1);
+  }
+
+  // if lr1's last use is below lr2's, it becomes the new last use,
+  // else we already have the last use.
+  if (LR_last_use(lr1) > LR_last_use(lr2))
+    LR_last_use(lr2) = LR_last_use(lr1);
+
+  LR_use_cnt(lr2) += LR_use_cnt(lr1);
+
+  // now nullify the live range so we do not count it
+  if (make_tn1_span) {
+    LR_first_def(lr1) = 0;
+    LR_last_use(lr1) = Find_Max_End_Range();
+  } else {
+    LR_first_def(lr1) = 0;
+    LR_last_use(lr1) = 0;
+  }
+}
+
+
+void
+Truncate_LRs_For_OP (OP *op)
+{
+  if (op == NULL) return;
+
+  BB *bb = OP_bb(op);
+  INT i;
+  INT cur_opnum;
+
+  // Find our current OP's opnum
+  for (cur_opnum = 1; cur_opnum < BB_length(bb); cur_opnum++) {
+    OP *cur_op = OP_VECTOR_element (Insts_Vector, cur_opnum);
+    if (op == cur_op)
+      break;
+  }
+  // did we find it?
+  if (cur_opnum == BB_length(bb))
+    return;
+
+  for (i = 0; i < OP_results(op); i++) {
+    TN *res = OP_result(op, i);  
+    if (TN_is_register(res)) {
+      LIVE_RANGE *lr = LR_For_TN(res);
+      if (LR_first_def(lr) == cur_opnum) {
+        LR_first_def(lr) = 0;
+        if (LR_upward_exposed_use(lr) == cur_opnum) {
+          if (LR_exposed_use(lr) == LR_upward_exposed_use(lr))
+            LR_exposed_use(lr) = 0;
+          LR_upward_exposed_use(lr) = 0;
+        } 
+      }
+      if (LR_def_cnt(lr) > 1)
+        LR_def_cnt(lr)--;
+    }
+  }
+  for (i = 0; i < OP_opnds(op); i++) {
+    TN *opnd_tn = OP_opnd(op,i);
+    if (TN_is_register(opnd_tn)) {
+      LIVE_RANGE *lr = LR_For_TN(opnd_tn);
+      LR_use_cnt(lr)--;
+      if (LR_last_use(lr) == cur_opnum) {
+        // walk up to the closest use, else the last use is 0
+        LR_last_use(lr) = 0;
+        for (INT opnum = cur_opnum; opnum > 0; opnum--) {
+          OP *cur_op = OP_VECTOR_element (Insts_Vector, opnum);
+          if (OP_Refs_TN(cur_op, opnd_tn)) {
+            LR_last_use(lr) = opnum;
+          }
+        }
+      }
+    }
   }
 }
 
@@ -1267,7 +1575,15 @@ Op_has_side_effect(OP *op)
   TN *tn1 = OP_result(op,0);
   TN *tn2 = OP_opnd(op,CGTARG_Copy_Operand(op));
   
-  if ( TN_size(tn1) != TN_size(tn2) ) 
+  // check for merge copy case
+  if ((OP_code(op) == TOP_movss) ||
+      (OP_code(op) == TOP_movsd) ||
+      (OP_code(op) == TOP_vmovss) || 
+      (OP_code(op) == TOP_vmovsd))
+    if (OP_opnd(op,0) != OP_opnd(op,1))
+      return true;
+
+  if ( TN_size(tn1) != TN_size(tn2) )
      return true;
 
   if (Is_Target_64bit() && TN_is_int_retrun_register(tn2)) {
@@ -1985,6 +2301,24 @@ Usable_Registers (TN* tn, LIVE_RANGE* lr)
 }
 
 
+static BOOL check_uses_destructive_dest(TN *tn, BB *bb)
+{
+  BOOL uses_destructive_dest = FALSE;
+
+#ifdef TARG_X8664
+  if( BB_regpressure(bb,TN_register_class(tn)) &&
+      (TN_register_class(tn) == ISA_REGISTER_CLASS_float) ){
+    INT num_pr = REGISTER_CLASS_register_count(ISA_REGISTER_CLASS_float);
+    INT num_measured = BB_regpressure(bb,ISA_REGISTER_CLASS_float);
+    if (num_measured > (AVX_FP_REG_FACTOR * num_pr))
+      uses_destructive_dest = TRUE;
+  }
+#endif
+
+  return uses_destructive_dest;
+}
+
+
 static BOOL
 Assign_Registers_For_OP (OP *op, INT opnum, TN **spill_tn, BB *bb)
 {
@@ -2349,8 +2683,14 @@ Assign_Registers_For_OP (OP *op, INT opnum, TN **spill_tn, BB *bb)
       continue;
     }
 
-    if( opndnum == 0       &&
-        (OP_sse5( op ) == FALSE) &&
+    if ( Is_Target_Orochi() && OP_sse5( op ) ) {
+      // now the test
+      if ( check_uses_destructive_dest(tn, bb) &&
+           opndnum == 0 &&
+           result_reg <= REGISTER_MAX ){
+        prefer_reg = result_reg;
+      }
+    } else if( opndnum == 0       &&
 	OP_x86_style( op ) &&
 	result_reg <= REGISTER_MAX ){
       prefer_reg = result_reg;
@@ -3946,9 +4286,17 @@ Spill_Live_Range (
       Set_TN_spill(new_tn, spill_loc);
       local_spills++;global_spills++;
 
+      BOOL uses_destructive_dest = FALSE;
+#ifdef TARG_X8664
+      if( Is_Target_Orochi() && OP_sse5( op ) ){
+        uses_destructive_dest = check_uses_destructive_dest(prev_tn, bb);
+      }
+#endif
+
       if ((OP_same_res(op)
 #ifdef TARG_X8664
            || OP_x86_style(op)		// bug 4721
+           || uses_destructive_dest
 #endif
 	  )
           && TN_Pair_In_OP(op, spill_tn, prev_tn)) {
@@ -5220,15 +5568,30 @@ Adjust_X86_Style_For_BB (BB* bb, BOOL* redundant_code, MEM_POOL* pool)
   FOR_ALL_BB_OPs( bb, op ){
     opnum++;
 
-    if( !OP_x86_style( op ) )
-      continue;
-
-    if ( OP_sse5(op) )
-      continue;
-
     TN* result = OP_result( op, 0 );
     TN* opnd0 = OP_opnd( op, 0 );
     TN* opnd1 = OP_opnd( op, 1 );
+
+    if( Is_Target_Orochi() && OP_sse5( op ) ){
+      if( check_uses_destructive_dest(result, bb) == FALSE )
+        continue;
+
+      bool same_class = FALSE;
+      for( int opnd = 1; opnd < OP_opnds(op); opnd++ ){
+        TN* tn = OP_opnd( op, opnd );
+        if( TN_is_register(tn) == FALSE ) continue;
+        if( TN_register_class(result) == TN_register_class(tn) ){
+          same_class = TRUE;
+          break;
+        }
+      }
+      if ( same_class == FALSE )
+        continue;
+
+    } else {
+      if( !OP_x86_style( op ) )
+        continue;
+    }
 
     if( TNs_Are_Equivalent( result, opnd0 ) )
       continue;
@@ -5605,7 +5968,14 @@ Preallocate_Single_Register_Subclasses (BB* bb)
 	 Maintain the "result==OP_opnd(op,0)" property for x86-style operations
 	 after register preallocation.
       */
-      if( OP_x86_style( op ) &&
+      if( Is_Target_Orochi() && OP_sse5( op ) ) {
+        if( check_uses_destructive_dest(old_tn, bb) && 
+            new_result_tn != NULL ){
+	  Exp_COPY( new_result_tn, old_tn, &pre_ops );
+	  OP_srcpos(OPS_last(&pre_ops)) = OP_srcpos(op);
+	  Set_OP_opnd( op, 0, new_result_tn );
+        }
+      } else if( OP_x86_style( op ) &&
 	  new_result_tn != NULL ){
 	Exp_COPY( new_result_tn, old_tn, &pre_ops );
 	OP_srcpos(OPS_last(&pre_ops)) = OP_srcpos(op);

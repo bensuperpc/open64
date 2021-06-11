@@ -199,6 +199,8 @@ BOOL EBO_Merge_Memory_Addr( OP*, TN**, EBO_TN_INFO**, EBO_TN_INFO** );
 BOOL EBO_Not_Load_Exec_Opnd( OP* );
 BOOL EBO_Fold_Lea_Const_Component( OP* );
 BOOL EBO_Opt_Const_Array( OP*, LOOP_DESCR*, INT );
+BOOL EBO_Is_FMA4( OP* );
+BOOL EBO_Disassociate_FMA( OP* );
 BOOL EBO_Load_Execution( OP*, TN**, EBO_TN_INFO**, int );
 BOOL EBO_Lea_Insertion( OP*, TN**, EBO_TN_INFO** );
 BOOL EBO_Fold_Load_Duplicate( OP*, TN**, EBO_TN_INFO** );
@@ -206,6 +208,8 @@ void Lea_Insertion ();
 void Init_Load_Exec_Map( BB*, MEM_POOL* );
 BOOL Delete_Unwanted_Prefetches( OP* );
 BOOL EBO_Can_Eliminate_Zero_Opnd_OP(OP *);
+void Counter_Merge();
+void Peel_Spills();
 #endif /* TARG_X8664 */
 
 BOOL EBO_Can_Merge_Into_Offset (OP *op);

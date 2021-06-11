@@ -3,7 +3,7 @@
  */
 
 /*
- * Copyright (C) 2008-2010 Advanced Micro Devices, Inc.  All Rights Reserved.
+ * Copyright (C) 2008-2011 Advanced Micro Devices, Inc.  All Rights Reserved.
  */
 
 /*
@@ -115,9 +115,6 @@
 #endif
 #ifndef BUILD_SKIP_WHIRL2F
 #include "w2f_driver.h"		    /* for W2F_Process_Command_Line, etc. */
-#endif
-#ifndef BUILD_SKIP_PURPLE
-#include "prp_driver.h"		    /* for Prp_Process_Command_Line, etc. */
 #endif
 #ifndef BUILD_SKIP_PROMPF
 #include "anl_driver.h"		    /* for Anl_Process_Command_Line, etc. */
@@ -357,14 +354,6 @@ extern void (*Preprocess_struct_access_p)(void);
 #include "w2f_weak.h"
 
 #if ! defined(BUILD_OS_DARWIN)
-#ifndef BUILD_SKIP_PURPLE
-#pragma weak Prp_Process_Command_Line
-#pragma weak Prp_Needs_Whirl2c
-#pragma weak Prp_Needs_Whirl2f
-#pragma weak Prp_Init
-#pragma weak Prp_Instrument_And_EmitSrc
-#pragma weak Prp_Fini
-#endif // !BUILD_SKIP_PURPLE
 
 #ifndef BUILD_SKIP_PROMPF
 #pragma weak Anl_Cleanup
@@ -390,15 +379,6 @@ extern void (*Preprocess_struct_access_p)(void);
 #define Preprocess_struct_access() Fail_FmtAssertion("lno not built")
 #define Ipl_Extra_Output(a) Fail_FmtAssertion("lno not built")
 #endif // BUILD_SKIP_LNO
-
-#ifdef BUILD_SKIP_PURPLE
-#define Prp_Process_Command_Line(a,b,c,d) Fail_FmtAssertion("purple not built")
-#define Prp_Needs_Whirl2c() FALSE
-#define Prp_Needs_Whirl2f() FALSE
-#define Prp_Init() Fail_FmtAssertion("purple not built")
-#define Prp_Instrument_And_EmitSrc(a) Fail_FmtAssertion("purple not built")
-#define Prp_Fini() Fail_FmtAssertion("purple not built")
-#endif // BUILD_SKIP_PURPLE
 
 #ifdef BUILD_SKIP_PROMPF
 #define Anl_Process_Command_Line(a,b,c,d) Fail_FmtAssertion("prompf not built")
@@ -449,7 +429,6 @@ extern WN_MAP Prompf_Id_Map; /* Maps WN constructs to unique identifiers */
  */
 static BOOL   wopt_loaded = FALSE;
 extern BOOL   Prompf_anl_loaded; /* Defined in cleanup.c */
-extern BOOL   Purple_loaded;     /* Defined in cleanup.c */
 extern BOOL   Whirl2f_loaded;    /* Defined in cleanup.c */
 extern BOOL   Whirl2c_loaded;    /* Defined in cleanup.c */
 
@@ -463,7 +442,7 @@ load_components (INT argc, char **argv)
     char **phase_argv;
 
     if (!(Run_lno || Run_wopt || Run_preopt || Run_cg || 
-	  Run_prompf || Run_purple || Run_w2c || Run_w2f 
+	  Run_prompf || Run_w2c || Run_w2f 
           || Run_w2fc_early || Run_ipl))
       Run_cg = TRUE;		    /* if nothing is set, run CG */
 
@@ -474,7 +453,7 @@ load_components (INT argc, char **argv)
 
     if (Run_ipl) {
       Run_lno = Run_wopt = Run_cg = Run_w2fc_early
-	= Run_prompf = Run_purple = Run_w2c = Run_w2f = FALSE;
+	= Run_prompf = Run_w2c = Run_w2f = FALSE;
     }
 
     if (Run_cg) {
@@ -502,7 +481,6 @@ load_components (INT argc, char **argv)
       Get_Phase_Args (PHASE_IPL, &phase_argc, &phase_argv);
       load_so ("ipl.so", Ipl_Path, Show_Progress);
       ipl_main (phase_argc, phase_argv);
-      Set_Error_Descriptor (EP_BE, EDESC_BE);
     }
 
     if (Run_lno || Run_autopar) {
@@ -525,16 +503,8 @@ load_components (INT argc, char **argv)
       Anl_Process_Command_Line(phase_argc, phase_argv, argc, argv);
     }
 
-    if (Run_purple) {
-      Get_Phase_Args (PHASE_PURPLE, &phase_argc, &phase_argv);
-      load_so("purple.so", Purple_Path, Show_Progress);
-      Purple_loaded = TRUE;
-      Prp_Process_Command_Line(phase_argc, phase_argv, argc, argv);
-    }
-
     if (Run_w2c || 
-	(Run_prompf && Anl_Needs_Whirl2c()) ||
-	(Run_purple && Prp_Needs_Whirl2c()))
+	(Run_prompf && Anl_Needs_Whirl2c()))
     {
       Get_Phase_Args (PHASE_W2C, &phase_argc, &phase_argv);
       load_so("whirl2c.so", W2C_Path, Show_Progress);
@@ -545,8 +515,7 @@ load_components (INT argc, char **argv)
     }
 
     if (Run_w2f || 
-	(Run_prompf && Anl_Needs_Whirl2f()) ||
-	(Run_purple && Prp_Needs_Whirl2f()))
+	(Run_prompf && Anl_Needs_Whirl2f()))
     {
       Get_Phase_Args (PHASE_W2F, &phase_argc, &phase_argv);
       load_so("whirl2f.so", W2F_Path, Show_Progress);
@@ -592,8 +561,6 @@ Phase_Init (void)
 	Lno_Init ();
     if ( Opt_Level > 0 ) /* run VHO at -O1 and above */
         Vho_Init ();
-    if (Run_purple)
-	Prp_Init();
     if (Run_w2c || (Run_prompf && Anl_Needs_Whirl2c()))
 	W2C_Outfile_Init (TRUE/*emit_global_decls*/);
     if (Run_w2f || (Run_prompf && Anl_Needs_Whirl2f()))
@@ -663,11 +630,9 @@ Phase_Fini (void)
 {
     CURRENT_SYMTAB = GLOBAL_SYMTAB;
 
-    /* Always finish prompf analysis file, purple, w2c and w2f first */
+    /* Always finish prompf analysis file, w2c and w2f first */
     if (Run_prompf)
 	Anl_Fini();
-    if (Run_purple)
-	Prp_Fini();
     if (Run_w2c || (Run_prompf && Anl_Needs_Whirl2c()))
 	W2C_Outfile_Fini (TRUE/*emit_global_decls*/);
     if (Run_w2f || (Run_prompf && Anl_Needs_Whirl2f()))
@@ -1820,10 +1785,6 @@ Preprocess_PU (PU_Info *current_pu)
     WB_ANL_Terminate(); 
   }
 
-  if (Run_purple) {
-    Prp_Instrument_And_EmitSrc(pu);
-  }
-
 #ifdef KEY
   if (Early_Goto_Conversion &&
        // bug 14188: by default, disabled for fortran
@@ -1967,7 +1928,7 @@ Preorder_Process_PUs (PU_Info *current_pu)
         Pu_Table [ST_pu (St_Table [PU_Info_proc_sym (current_pu)])];
 
     // C++ PU having exception regions, or with -g
-    if ((PU_cxx_lang (func) && PU_has_region (func)) || Debug_Level > 0
+    if (Debug_Level > 0 
 #ifdef KEY
         || PU_has_goto_outer_block(func)
 #endif
@@ -2171,6 +2132,8 @@ main (INT argc, char **argv)
   Set_Error_Line ( ERROR_LINE_UNKNOWN );
   Set_Error_File ( NULL );
   Set_Error_Phase ( "Back End Driver" );
+  Set_Error_Descriptor (EP_BE, EDESC_BE);
+  Set_Error_Descriptor (EP_CG, EDESC_CG);
 
   Preconfigure ();
   Process_Command_Line (argc, argv);
@@ -2251,6 +2214,7 @@ main (INT argc, char **argv)
 	// Proactive loop nest transformation interferes with branch profiling.
 	WOPT_Enable_Pro_Loop_Fusion_Trans = FALSE;
 	WOPT_Enable_Pro_Loop_Interchange_Trans = FALSE;
+	WOPT_Enable_Pro_Loop_Ext_Trans = FALSE;
 	
 	Instrumentation_Phase_Num = PROFILE_PHASE_NONE;
       }
@@ -2316,12 +2280,6 @@ main (INT argc, char **argv)
   }
 
   Phase_Init ();
-
-  if (Run_preopt || Run_wopt || Run_lno || Run_Distr_Array || Run_autopar 
-	|| Run_cg) {
-    Set_Error_Descriptor (EP_BE, EDESC_BE);
-    Set_Error_Descriptor (EP_CG, EDESC_CG);
-  }
 
   if (Tlog_File)
     Print_Tlog_Header(argc, argv);

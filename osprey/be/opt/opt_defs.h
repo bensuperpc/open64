@@ -173,6 +173,7 @@ Is_fortran(void)
 #define NYSTROM_ALIAS_TAG_FLAG    0x00000400 /* be alias tag after 
                                                 Transfer_alias_tag_to_occ_and_aux */
 #define NYSTROM_LW_SOLVER_FLAG    0x00000800 /* light weight trace constraint graph solver */
+#define NYSTROM_INLINE_FLAG       0x00001000 /* inline trace*/
 
 /* TP_GLOBOPT (phase-number) */
 #define DOM_DUMP_FLAG	     0x0001 /* print dominator tree */
@@ -222,6 +223,7 @@ Is_fortran(void)
 #define ULSE_TRACE_FLAG      0x00001000 /* trace the useless store remove transformation */
 #define REASSO_DUMP_FLAG_DEBUG	     0x2000 /* reassociation before and after dump flag */
 #define REASSO_DUMP_FLAG	     0x4000 /* trace into reassociation flag */
+#define ZDL_DUMP_FLAG                0x8000 /* dump the zdl gen */
 
 
 /* Flags associated with value numbering scheme and the 

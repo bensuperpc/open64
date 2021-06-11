@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2010 Advanced Micro Devices, Inc.  All Rights Reserved.
+ * Copyright (C) 2008-2011 Advanced Micro Devices, Inc.  All Rights Reserved.
  */
 
 /*
@@ -85,9 +85,7 @@
 #include "erglob.h"
 #include "erlib.h"
 #include "errors.h"
-#if !defined(TARG_NVISA)
-#include "erauxdesc.h"
-#endif
+#include "../cg/init.cxx"           /* force include of Cg_Initializer */
 #include "ercg.h"
 #include "file_util.h"
 #include "glob.h"
@@ -128,6 +126,9 @@
 #include "flags.h"
 #endif
 #include "cg_swp.h"
+#ifdef TARG_X8664
+#include "config_wopt.h"
+#endif
 
 extern void Set_File_In_Printsrc(char *);	/* defined in printsrc.c */
 
@@ -469,12 +470,20 @@ static OPTION_DESC Options_CG[] = {
     0, 0, 0,	&CG_fma4_load_exec, NULL },
   { OVK_BOOL,	OV_VISIBLE, TRUE, "dsched", "",
     0, 0, 0,	&CG_dispatch_schedule, NULL },
+  { OVK_BOOL,   OV_VISIBLE, TRUE, "nobest_fit", "",
+    0, 0, 0,    &CG_LOOP_nounroll_best_fit_set, NULL },
   { OVK_BOOL,	OV_VISIBLE, TRUE, "unalign_st", "",
     0, 0, 0,	&CG_128bitstore, NULL },
   { OVK_BOOL,	OV_VISIBLE, TRUE, "brfuse", "",
     0, 0, 0,	&CG_branch_fuse, NULL },
   { OVK_BOOL,   OV_VISIBLE, TRUE, "strcmp_expand", "",
     0, 0, 0,    &CG_strcmp_expand, NULL },
+  { OVK_BOOL,   OV_VISIBLE, TRUE, "merge_counters_x86", "",
+    0, 0, 0,    &CG_merge_counters_x86, &CG_merge_counters_x86_set },
+  { OVK_BOOL,   OV_VISIBLE, TRUE, "interior_ptrs", "",
+    0, 0, 0,    &CG_interior_ptrs_x86, NULL },
+  { OVK_BOOL,   OV_VISIBLE, TRUE, "noavx_clear", "",
+    0, 0, 0,    &CG_NoClear_Avx_Simd, NULL },
 #endif
   { OVK_BOOL,	OV_INTERNAL, TRUE, "skip_local_sched", "",
     0, 0, 0,	&CG_skip_local_sched, NULL },
@@ -646,16 +655,8 @@ static OPTION_DESC Options_CG[] = {
     0, 0, 0,	&CG_LOOP_cloop, NULL },
 #endif
 #if defined(TARG_SL)
-  { OVK_BOOL,	OV_INTERNAL, FALSE, "zero_delay_loop", "zero_delay_loop",
-    0, 0, 0,	&CG_enable_zero_delay_loop, NULL },
   { OVK_INT32, OV_INTERNAL, TRUE, "zdl_enabled_level", "",
     INT32_MAX, 0, INT32_MAX, &CG_zdl_enabled_level, NULL },
-  { OVK_INT32, OV_INTERNAL, TRUE, "zdl_skip_e", "",
-    INT32_MAX, 0, INT32_MAX, &CG_zdl_skip_e, NULL },
-  { OVK_INT32, OV_INTERNAL, TRUE, "zdl_skip_a", "",
-    INT32_MAX, 0, INT32_MAX, &CG_zdl_skip_a, NULL },
-  { OVK_INT32, OV_INTERNAL, TRUE, "zdl_skip_b", "",
-    INT32_MAX, 0, INT32_MAX, &CG_zdl_skip_b, NULL },
   { OVK_BOOL,  OV_INTERNAL, TRUE, "opt_condmv", "",
     0, 0, 0,   &CG_enable_opt_condmv, NULL},
   { OVK_BOOL,  OV_INTERNAL, TRUE, "CBUS_workaround", "",
@@ -925,6 +926,8 @@ static OPTION_DESC Options_CG[] = {
 
   { OVK_BOOL,	OV_INTERNAL, TRUE,"local_scheduler", "local_sched",
     0, 0, 0, &LOCS_Enable_Scheduling, NULL },
+  { OVK_INT32,	OV_INTERNAL, TRUE,"pre_minreg_level", "pre_minreg_level",
+    0, 1, 2, &LOCS_PRE_Enable_Minreg_Level, NULL },
   { OVK_BOOL,	OV_INTERNAL, TRUE,"pre_local_scheduler", "pre_local_sched",
     0, 0, 0, &LOCS_PRE_Enable_Scheduling, NULL },
   { OVK_BOOL,	OV_INTERNAL, TRUE,"post_local_scheduler", "post_local_sched",
@@ -1207,8 +1210,8 @@ static OPTION_DESC Options_CG[] = {
     0, 0, 0, &CG_use_setcc, NULL },
   { OVK_BOOL,	OV_INTERNAL, TRUE,"short_form", "",
     0, 0, 0, &CG_use_short_form, NULL },
-  { OVK_BOOL,	OV_INTERNAL, TRUE, "p2align", "p2align",
-    0, 0, 0,	&CG_p2align, NULL },
+  { OVK_INT32,	OV_VISIBLE, TRUE, "p2align", "p2align",
+    2, 0, 2,	&CG_p2align, NULL },
   { OVK_BOOL,	OV_INTERNAL, TRUE, "loop32", "loop32",
     0, 0, 0,	&CG_loop32, NULL },
   { OVK_BOOL,	OV_INTERNAL, TRUE, "compute_to", "compute_to",
@@ -2015,6 +2018,18 @@ Configure_CG_Options(void)
       OPT_unroll_size = 128;
 #endif
   
+#ifdef TARG_X8664
+  if (Is_Target_Orochi() || Is_Target_Barcelona()) {
+     // check if default to determine if we use best fit unrolling or not
+    if ((OPT_unroll_size == 128) && 
+        (OPT_unroll_times == 4) && 
+        (WOPT_Enable_WN_Unroll == 1)) {
+      if (CG_LOOP_nounroll_best_fit_set == false)
+        CG_LOOP_unroll_best_fit = TRUE;
+    }
+  }
+#endif
+
   if ( OPT_Unroll_Analysis_Set )
   {
     CG_LOOP_unroll_analysis = OPT_Unroll_Analysis;
@@ -2022,6 +2037,16 @@ Configure_CG_Options(void)
   CG_LOOP_unroll_times_max = OPT_unroll_times;
   CG_LOOP_unrolled_size_max = OPT_unroll_size;
   CG_LOOP_unroll_level = OPT_unroll_level;
+
+#if defined(TARG_X8664)
+  // set reg pressure hueristic flags for prescheduling
+  switch (LOCS_PRE_Enable_Minreg_Level) {
+  case 1: LOCS_PRE_Enable_General_RegPressure_Sched = TRUE; break;
+  case 2: LOCS_PRE_Enable_Unroll_RegPressure_Sched = TRUE; break;
+  default:
+    break;
+  }
+#endif
 
   CG_LOOP_ooo_unroll_heuristics = PROC_is_out_of_order();
 
@@ -2178,7 +2203,7 @@ Configure_CG_Options(void)
   if (OPT_Space && !CG_use_xortozero_Set)	// Bug 9717
     CG_use_xortozero = TRUE;
 
-  if (((Target == TARGET_barcelona) || (Target == TARGET_orochi)) && 
+  if ((Target == TARGET_barcelona) && 
       !CG_push_pop_int_saved_regs_Set)
     CG_push_pop_int_saved_regs = TRUE;
 #endif
@@ -2532,11 +2557,6 @@ CG_Process_Command_Line (INT cg_argc, char **cg_argv, INT be_argc, char **be_arg
 		   ("WHIRL revision mismatch between be.so (%s) and cg.so (%s)",
 		    Whirl_Revision, WHIRL_REVISION));
 
-#if !defined(TARG_NVISA) // also set by bedriver, so redundant?
-    Set_Error_Descriptor (EP_BE, EDESC_BE);
-    Set_Error_Descriptor (EP_CG, EDESC_CG);
-#endif
-
 #ifdef KEY
     be_command_line_args = be_argv;
     be_command_line_argc = be_argc;
@@ -2617,6 +2637,16 @@ CG_Init (void)
       //       we have binutils support
       if (CG_loop32 == FALSE)
         CG_loop32 = TRUE; 
+    }
+    if (Is_Target_Orochi() || Is_Target_Barcelona()) {
+      if (CG_interior_ptrs_x86) {
+        // Enable sib translation and scheduling for register pressure
+        // for unrolled loops.
+        CG_merge_counters_x86 = TRUE;
+        LOCS_PRE_Enable_Unroll_RegPressure_Sched = TRUE;
+      } else if (CG_opt_level == 3 && CG_merge_counters_x86_set == FALSE) {
+        CG_merge_counters_x86 = TRUE;
+      }
     }
 #endif //TARG_X8664
 #endif // KEY

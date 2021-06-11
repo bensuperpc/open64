@@ -300,6 +300,8 @@ int main()
   Operand(0, simm64, opnd1);
 
   Instruction_Group( "int8 arithmetic",
+		     TOP_add8,
+		     TOP_sub8,
 		     TOP_and8,
 		     TOP_or8,
 		     TOP_xor8,
@@ -310,6 +312,8 @@ int main()
 
 
   Instruction_Group( "int16 arithmetic",
+		     TOP_add16,
+		     TOP_sub16,
 		     TOP_and16,
 		     TOP_or16,
 		     TOP_xor16,
@@ -1097,10 +1101,6 @@ int main()
 		     TOP_fxor128v64,
 		     TOP_xorps,
 		     TOP_xorpd,
-		     TOP_max128v8,
-		     TOP_max128v16,
-		     TOP_min128v8,
-		     TOP_min128v16,
 		     TOP_fmax128v32,
 		     TOP_fmax128v64,
 		     TOP_fmin128v32,
@@ -1130,10 +1130,14 @@ int main()
                      TOP_pmaddubsw128,
                      /* SSE4.1 instructions */
                      TOP_muldq,
+                     TOP_minu128v8,
+                     TOP_maxu128v8,
                      TOP_mins128v8,
                      TOP_maxs128v8,
                      TOP_minu128v16,
                      TOP_maxu128v16,
+                     TOP_mins128v16,
+                     TOP_maxs128v16,
                      TOP_minu128v32,
                      TOP_maxu128v32,
                      TOP_mins128v32,
@@ -1340,10 +1344,6 @@ int main()
 			   TOP_fmaxx128v64,
 			   TOP_fminx128v32,
 			   TOP_fminx128v64,
-		           TOP_maxx128v8,
-		           TOP_maxx128v16,
-		           TOP_minx128v8,
- 		           TOP_minx128v16,
 			   TOP_fdivx128v32,
 			   TOP_fdivx128v64,
 			   TOP_fmulx128v32,
@@ -1378,10 +1378,14 @@ int main()
                            TOP_muldqx,
                            TOP_ldntdqax,
                            TOP_stntdqx,
+                           TOP_minux128v8,
+                           TOP_maxux128v8,
                            TOP_minsx128v8,
                            TOP_maxsx128v8,
                            TOP_minux128v16,
                            TOP_maxux128v16,
+                           TOP_minsx128v16,
+                           TOP_maxsx128v16,
                            TOP_minux128v32,
                            TOP_maxux128v32,
                            TOP_minsx128v32,
@@ -1541,6 +1545,10 @@ int main()
                            TOP_vaesenclastx,
                            TOP_vaesdecx,
                            TOP_vaesdeclastx,
+                           TOP_vldhpd,
+                           TOP_vldlpd,
+                           TOP_vldhps,
+                           TOP_vldlps,
 			   TOP_UNDEFINED);
   Result(0, fp128);
   Operand(0, fp128, opnd1);
@@ -1580,10 +1588,6 @@ int main()
 			   TOP_fmaxxx128v64,
 			   TOP_fminxx128v32,
 			   TOP_fminxx128v64,
-		           TOP_maxxx128v8,
-		           TOP_maxxx128v16,
-		           TOP_minxx128v8,
-		           TOP_minxx128v16,
 			   TOP_fdivxx128v32,
 			   TOP_fdivxx128v64,
 			   TOP_fmulxx128v32,
@@ -1618,10 +1622,14 @@ int main()
                            TOP_muldqxx,
                            TOP_ldntdqaxx,
                            TOP_stntdqxx,
+                           TOP_minuxx128v8,
+                           TOP_maxuxx128v8,
                            TOP_minsxx128v8,
                            TOP_maxsxx128v8,
                            TOP_minuxx128v16,
                            TOP_maxuxx128v16,
+                           TOP_minsxx128v16,
+                           TOP_maxsxx128v16,
                            TOP_minuxx128v32,
                            TOP_maxuxx128v32,
                            TOP_minsxx128v32,
@@ -1781,6 +1789,10 @@ int main()
                            TOP_vaesenclastxx,
                            TOP_vaesdecxx,
                            TOP_vaesdeclastxx,
+                           TOP_vldhpdx,
+                           TOP_vldhpsx,
+                           TOP_vldlpdx,
+                           TOP_vldlpsx,
 			   TOP_UNDEFINED);
   Result(0, fp128);
   Operand(0, fp128, opnd1);
@@ -1822,10 +1834,6 @@ int main()
 			   TOP_fmaxxxx128v64,
 			   TOP_fminxxx128v32,
 			   TOP_fminxxx128v64,
-		           TOP_maxxxx128v8,
-		           TOP_maxxxx128v16,
-		           TOP_minxxx128v8,
-		           TOP_minxxx128v16,
 			   TOP_fdivxxx128v32,
 			   TOP_fdivxxx128v64,
 			   TOP_fmulxxx128v32,
@@ -1858,10 +1866,14 @@ int main()
                            TOP_pmaddubswxxx128,
                            /* SSE4.1 instructions */
                            TOP_muldqxxx,
+                           TOP_minuxxx128v8,
+                           TOP_maxuxxx128v8,
                            TOP_minsxxx128v8,
                            TOP_maxsxxx128v8,
                            TOP_minuxxx128v16,
                            TOP_maxuxxx128v16,
+                           TOP_minsxxx128v16,
+                           TOP_maxsxxx128v16,
                            TOP_minuxxx128v32,
                            TOP_maxuxxx128v32,
                            TOP_minsxxx128v32,
@@ -2021,6 +2033,10 @@ int main()
                            TOP_vaesenclastxxx,
                            TOP_vaesdecxxx,
                            TOP_vaesdeclastxxx,
+                           TOP_vldhpdxx,
+                           TOP_vldhpsxx,
+                           TOP_vldlpdxx,
+                           TOP_vldlpsxx,
 			   TOP_UNDEFINED);
   Result(0, fp128);
   Operand(0, fp128, opnd1);
@@ -2319,12 +2335,6 @@ int main()
                            TOP_vfblend128v64,
                            TOP_vfblend128v32,
                            TOP_vpclmulqdq,
-                           TOP_vcmppd,
-                           TOP_vcmpps,
-                           TOP_vfcmp128v64,
-                           TOP_vfcmp128v32,
-                           TOP_vfcmpsd,
-                           TOP_vfcmpss,
                            TOP_vfdp128v64,
                            TOP_vfdp128v32,
                            TOP_vfinsrf128,
@@ -2333,10 +2343,6 @@ int main()
                            TOP_vfperm2f128,
                            TOP_vroundsd,
                            TOP_vroundss,
-                           TOP_vfshuf128v64,
-                           TOP_vfshuf128v32,
-                           TOP_vshufpd,
-                           TOP_vshufps,
                            TOP_UNDEFINED);
   Result(0, fp128);
   Operand(0, fp128, opnd1);
@@ -2373,8 +2379,8 @@ int main()
                            TOP_vpclmulqdqx,
                            TOP_vfcmpx128v64,
                            TOP_vfcmpx128v32,
-                           TOP_vfcmpxsd,
-                           TOP_vfcmpxss,
+                           TOP_vcmpxsd,
+                           TOP_vcmpxss,
                            TOP_vfdpx128v64,
                            TOP_vfdpx128v32,
                            TOP_vfinsrxf128,
@@ -2422,8 +2428,8 @@ int main()
                            TOP_vpclmulqdqxx,
                            TOP_vfcmpxx128v64,
                            TOP_vfcmpxx128v32,
-                           TOP_vfcmpxxsd,
-                           TOP_vfcmpxxss,
+                           TOP_vcmpxxsd,
+                           TOP_vcmpxxss,
                            TOP_vfdpxx128v64,
                            TOP_vfdpxx128v32,
                            TOP_vfinsrxx128v32,
@@ -2473,8 +2479,8 @@ int main()
                            TOP_vpclmulqdqxxx,
                            TOP_vfcmpxxx128v64,
                            TOP_vfcmpxxx128v32,
-                           TOP_vfcmpxxxsd,
-                           TOP_vfcmpxxxss,
+                           TOP_vcmpxxxsd,
+                           TOP_vcmpxxxss,
                            TOP_vfdpxxx128v64,
                            TOP_vfdpxxx128v32,
                            TOP_vfinsrxxxf128,
@@ -2878,6 +2884,382 @@ int main()
   Operand(1, int64, base);
   Operand(2, simm32, offset);
 
+  Instruction_Group( "int unary mem res",
+                     TOP_negxr8,
+                     TOP_negxr16,
+                     TOP_negxr32,
+                     TOP_negxr64,
+                     TOP_notxr8,
+                     TOP_notxr16,
+                     TOP_notxr32,
+                     TOP_notxr64,
+                     TOP_incxr8,
+                     TOP_incxr16,
+                     TOP_incxr32,
+                     TOP_incxr64,
+                     TOP_decxr8,
+                     TOP_decxr16,
+                     TOP_decxr32,
+                     TOP_decxr64,
+                     TOP_UNDEFINED);
+  Operand(0, int64, base);
+  Operand(1, simm32, offset);
+
+  Instruction_Group( "int unary index w/ base res",
+                     TOP_negxxr8,
+                     TOP_negxxr16,
+                     TOP_negxxr32,
+                     TOP_negxxr64,
+                     TOP_notxxr8,
+                     TOP_notxxr16,
+                     TOP_notxxr32,
+                     TOP_notxxr64,
+                     TOP_incxxr8,
+                     TOP_incxxr16,
+                     TOP_incxxr32,
+                     TOP_incxxr64,
+                     TOP_decxxr8,
+                     TOP_decxxr16,
+                     TOP_decxxr32,
+                     TOP_decxxr64,
+                     TOP_UNDEFINED);
+  Operand(0, int64, base);
+  Operand(1, simm32, offset);
+  Operand(2, int64, index);
+  Operand(3, uimm8, scale);
+
+  Instruction_Group( "int unary index w/o base res",
+                     TOP_negxxxr8,
+                     TOP_negxxxr16,
+                     TOP_negxxxr32,
+                     TOP_negxxxr64,
+                     TOP_notxxxr8,
+                     TOP_notxxxr16,
+                     TOP_notxxxr32,
+                     TOP_notxxxr64,
+                     TOP_incxxxr8,
+                     TOP_incxxxr16,
+                     TOP_incxxxr32,
+                     TOP_incxxxr64,
+                     TOP_decxxxr8,
+                     TOP_decxxxr16,
+                     TOP_decxxxr32,
+                     TOP_decxxxr64,
+                     TOP_UNDEFINED);
+  Operand(0, int64, index);
+  Operand(1, uimm8, scale);
+  Operand(2, simm32, offset);
+
+  Instruction_Group( "int unary n32 res",
+                     TOP_negxr8_n32,
+                     TOP_negxr16_n32,
+                     TOP_negxr32_n32,
+                     TOP_negxr64_off,
+                     TOP_notxr8_n32,
+                     TOP_notxr16_n32,
+                     TOP_notxr32_n32,
+                     TOP_notxr64_off,
+                     TOP_incxr8_n32,
+                     TOP_incxr16_n32,
+                     TOP_incxr32_n32,
+                     TOP_incxr64_off,
+                     TOP_decxr8_n32,
+                     TOP_decxr16_n32,
+                     TOP_decxr32_n32,
+                     TOP_decxr64_off,
+                     TOP_UNDEFINED);
+  Operand(0, simm32, offset);
+
+  Instruction_Group( "int8 arithmetic mem res",
+                     TOP_addxr8,
+                     TOP_andxr8,
+                     TOP_orxr8,
+                     TOP_subxr8,
+                     TOP_xorxr8,
+                     TOP_UNDEFINED);
+  Operand(0, int8, opnd1);
+  Operand(1, int64, base);
+  Operand(2, simm32, offset);
+
+  Instruction_Group( "int16 arithmetic mem res",
+                     TOP_addxr16,
+                     TOP_andxr16,
+                     TOP_orxr16,
+                     TOP_subxr16,
+                     TOP_xorxr16,
+                     TOP_UNDEFINED);
+  Operand(0, int16, opnd1);
+  Operand(1, int64, base);
+  Operand(2, simm32, offset);
+
+  Instruction_Group( "int32 arithmetic mem res",
+                     TOP_addxr32,
+                     TOP_andxr32,
+                     TOP_orxr32,
+                     TOP_subxr32,
+                     TOP_xorxr32,
+                     TOP_UNDEFINED);
+  Operand(0, int32, opnd1);
+  Operand(1, int64, base);
+  Operand(2, simm32, offset);
+
+  Instruction_Group( "int64 arithmetic mem res",
+                     TOP_addxr64,
+                     TOP_andxr64,
+                     TOP_orxr64,
+                     TOP_subxr64,
+                     TOP_xorxr64,
+                     TOP_UNDEFINED);
+  Operand(0, int64, opnd1);
+  Operand(1, int64, base);
+  Operand(2, simm32, offset);
+
+  Instruction_Group( "int8 arithmetic index w/ base res",
+                     TOP_addxxr8,
+                     TOP_andxxr8,
+                     TOP_orxxr8,
+                     TOP_subxxr8,
+                     TOP_xorxxr8,
+                     TOP_UNDEFINED);
+  Operand(0, int8, opnd1);
+  Operand(1, int64, base);
+  Operand(2, simm32, offset);
+  Operand(3, int64, index);
+  Operand(4, uimm8, scale);
+
+  Instruction_Group( "int16 arithmetic index w/ base res",
+                     TOP_addxxr16,
+                     TOP_andxxr16,
+                     TOP_orxxr16,
+                     TOP_subxxr16,
+                     TOP_xorxxr16,
+                     TOP_UNDEFINED);
+  Operand(0, int16, opnd1);
+  Operand(1, int64, base);
+  Operand(2, simm32, offset);
+  Operand(3, int64, index);
+  Operand(4, uimm8, scale);
+
+  Instruction_Group( "int32 arithmetic index w/ base res",
+                     TOP_addxxr32,
+                     TOP_andxxr32,
+                     TOP_orxxr32,
+                     TOP_subxxr32,
+                     TOP_xorxxr32,
+                     TOP_UNDEFINED);
+  Operand(0, int32, opnd1);
+  Operand(1, int64, base);
+  Operand(2, simm32, offset);
+  Operand(3, int64, index);
+  Operand(4, uimm8, scale);
+
+  Instruction_Group( "int64 arithmetic index w/ base res",
+                     TOP_addxxr64,
+                     TOP_andxxr64,
+                     TOP_orxxr64,
+                     TOP_subxxr64,
+                     TOP_xorxxr64,
+                     TOP_UNDEFINED);
+  Operand(0, int64, opnd1);
+  Operand(1, int64, base);
+  Operand(2, simm32, offset);
+  Operand(3, int64, index);
+  Operand(4, uimm8, scale);
+
+  Instruction_Group( "int8 arithmetic index w/o base res",
+                     TOP_addxxxr8,
+                     TOP_andxxxr8,
+                     TOP_orxxxr8,
+                     TOP_subxxxr8,
+                     TOP_xorxxxr8,
+                     TOP_UNDEFINED);
+  Operand(0, int8, opnd1);
+  Operand(1, int64, index);
+  Operand(2, uimm8, scale);
+  Operand(3, simm32, offset);
+
+  Instruction_Group( "int16 arithmetic index w/o base res",
+                     TOP_addxxxr16,
+                     TOP_andxxxr16,
+                     TOP_orxxxr16,
+                     TOP_subxxxr16,
+                     TOP_xorxxxr16,
+                     TOP_UNDEFINED);
+  Operand(0, int16, opnd1);
+  Operand(1, int64, index);
+  Operand(2, uimm8, scale);
+  Operand(3, simm32, offset);
+
+  Instruction_Group( "int32 arithmetic index w/o base res",
+                     TOP_addxxxr32,
+                     TOP_andxxxr32,
+                     TOP_orxxxr32,
+                     TOP_subxxxr32,
+                     TOP_xorxxxr32,
+                     TOP_UNDEFINED);
+  Operand(0, int32, opnd1);
+  Operand(1, int64, index);
+  Operand(2, uimm8, scale);
+  Operand(3, simm32, offset);
+
+  Instruction_Group( "int64 arithmetic index w/o base res",
+                     TOP_addxxxr64,
+                     TOP_andxxxr64,
+                     TOP_orxxxr64,
+                     TOP_subxxxr64,
+                     TOP_xorxxxr64,
+                     TOP_UNDEFINED);
+  Operand(0, int64, opnd1);
+  Operand(1, int64, index);
+  Operand(2, uimm8, scale);
+  Operand(3, simm32, offset);
+
+  Instruction_Group( "int8 arithmetic n32 res",
+                     TOP_addxr8_n32,
+                     TOP_andxr8_n32,
+                     TOP_orxr8_n32,
+                     TOP_subxr8_n32,
+                     TOP_xorxr8_n32,
+                     TOP_UNDEFINED);
+  Operand(0, int8, opnd1);
+  Operand(1, simm32, offset);
+
+  Instruction_Group( "int16 arithmetic n32 res",
+                     TOP_addxr16_n32,
+                     TOP_andxr16_n32,
+                     TOP_orxr16_n32,
+                     TOP_subxr16_n32,
+                     TOP_xorxr16_n32,
+                     TOP_UNDEFINED);
+  Operand(0, int16, opnd1);
+  Operand(1, simm32, offset);
+
+  Instruction_Group( "int32 arithmetic n32 res",
+                     TOP_addxr32_n32,
+                     TOP_andxr32_n32,
+                     TOP_orxr32_n32,
+                     TOP_subxr32_n32,
+                     TOP_xorxr32_n32,
+                     TOP_UNDEFINED);
+  Operand(0, int32, opnd1);
+  Operand(1, simm32, offset);
+
+  Instruction_Group( "int64 arithmetic 64bit offset",
+                     TOP_addxr64_off,
+                     TOP_andxr64_off,
+                     TOP_orxr64_off,
+                     TOP_subxr64_off,
+                     TOP_xorxr64_off,
+                     TOP_UNDEFINED);
+  Operand(0, int64, opnd1);
+  Operand(1, simm32, offset);
+
+  Instruction_Group( "int32/64 arithmetic mem imm",
+                     TOP_addixr8,
+                     TOP_addixr16,
+                     TOP_addixr32,
+                     TOP_addixr64,
+                     TOP_andixr8,
+                     TOP_andixr16,
+                     TOP_andixr32,
+                     TOP_andixr64,
+                     TOP_orixr8,
+                     TOP_orixr16,
+                     TOP_orixr32,
+                     TOP_orixr64,
+                     TOP_subixr8,
+                     TOP_subixr16,
+                     TOP_subixr32,
+                     TOP_subixr64,
+                     TOP_xorixr8,
+                     TOP_xorixr16,
+                     TOP_xorixr32,
+                     TOP_xorixr64,
+                     TOP_UNDEFINED);
+  Operand(0, simm32, opnd1);
+  Operand(1, int64, base);
+  Operand(2, simm32, offset);
+
+  Instruction_Group( "int32/64 arithmetic index w/ base imm",
+                     TOP_addixxr8,
+                     TOP_addixxr16,
+                     TOP_addixxr32,
+                     TOP_addixxr64,
+                     TOP_andixxr8,
+                     TOP_andixxr16,
+                     TOP_andixxr32,
+                     TOP_andixxr64,
+                     TOP_orixxr8,
+                     TOP_orixxr16,
+                     TOP_orixxr32,
+                     TOP_orixxr64,
+                     TOP_subixxr8,
+                     TOP_subixxr16,
+                     TOP_subixxr32,
+                     TOP_subixxr64,
+                     TOP_xorixxr8,
+                     TOP_xorixxr16,
+                     TOP_xorixxr32,
+                     TOP_xorixxr64,
+                     TOP_UNDEFINED);
+  Operand(0, simm32, opnd1);
+  Operand(1, int64, base);
+  Operand(2, simm32, offset);
+  Operand(3, int64, index);
+  Operand(4, uimm8, scale);
+
+  Instruction_Group( "int32/64 arithmetic index w/o base imm",
+                     TOP_addixxxr8,
+                     TOP_addixxxr16,
+                     TOP_addixxxr32,
+                     TOP_addixxxr64,
+                     TOP_andixxxr8,
+                     TOP_andixxxr16,
+                     TOP_andixxxr32,
+                     TOP_andixxxr64,
+                     TOP_orixxxr8,
+                     TOP_orixxxr16,
+                     TOP_orixxxr32,
+                     TOP_orixxxr64,
+                     TOP_subixxxr8,
+                     TOP_subixxxr16,
+                     TOP_subixxxr32,
+                     TOP_subixxxr64,
+                     TOP_xorixxxr8,
+                     TOP_xorixxxr16,
+                     TOP_xorixxxr32,
+                     TOP_xorixxxr64,
+                     TOP_UNDEFINED);
+  Operand(0, simm32, opnd1);
+  Operand(1, int64, index);
+  Operand(2, uimm8, scale);
+  Operand(3, simm32, offset);
+
+  Instruction_Group( "int32 arithmetic n32 imm",
+                     TOP_addixr8_n32,
+                     TOP_addixr16_n32,
+                     TOP_addixr32_n32,
+                     TOP_addixr64_off,
+                     TOP_andixr8_n32,
+                     TOP_andixr16_n32,
+                     TOP_andixr32_n32,
+                     TOP_andixr64_off,
+                     TOP_orixr8_n32,
+                     TOP_orixr16_n32,
+                     TOP_orixr32_n32,
+                     TOP_orixr64_off,
+                     TOP_subixr8_n32,
+                     TOP_subixr16_n32,
+                     TOP_subixr32_n32,
+                     TOP_subixr64_off,
+                     TOP_xorixr8_n32,
+                     TOP_xorixr16_n32,
+                     TOP_xorixr32_n32,
+                     TOP_xorixr64_off,
+                     TOP_UNDEFINED);
+  Operand(0, simm32, opnd1);
+  Operand(1, simm32, offset);
+
   Instruction_Group( "int8 arithmetic mem opnd w/ scaled index",
 		     TOP_xorxx8,
 		     TOP_orxx8,
@@ -3014,6 +3396,28 @@ int main()
   Result(0, int64);
   Operand(0, int64, opnd1);
 
+  Instruction_Group("int8 arithmetic with simm",
+		    TOP_addi8,
+		    TOP_subi8,
+		    TOP_andi8,
+		    TOP_ori8,
+		    TOP_xori8,
+		    TOP_UNDEFINED);
+  Result(0, int8);
+  Operand(0, int8, opnd1);
+  Operand(1, simm8, opnd2);
+  
+  Instruction_Group("int16 arithmetic with simm",
+		    TOP_addi16,
+		    TOP_subi16,
+		    TOP_andi16,
+		    TOP_ori16,
+		    TOP_xori16,
+		    TOP_UNDEFINED);
+  Result(0, int16);
+  Operand(0, int16, opnd1);
+  Operand(1, simm16, opnd2);
+  
   Instruction_Group("int32 arithmetic with simm",
 		    TOP_xori32,
 		    TOP_ori32,
@@ -3168,6 +3572,30 @@ int main()
   Operand(0, rax, storeval);
   Operand(1, simm64, offset);
 
+  Instruction_Group("imm8 store w/o base or index",
+		    TOP_storei8_n32,
+		    TOP_UNDEFINED);
+  Operand(0, simm8, storeval);
+  Operand(1, simm32, offset);
+
+  Instruction_Group("imm16 store w/o base or index",
+		    TOP_storei16_n32,
+		    TOP_UNDEFINED);
+  Operand(0, simm16, storeval);
+  Operand(1, simm32, offset);
+
+  Instruction_Group("imm32 store w/o base or index",
+		    TOP_storei32_n32,
+		    TOP_UNDEFINED);
+  Operand(0, simm32, storeval);
+  Operand(1, simm32, offset);
+
+  Instruction_Group("imm64 store w/o base or index",
+		    TOP_storei64_off,
+		    TOP_UNDEFINED);
+  Operand(0, simm64, storeval);
+  Operand(1, simm64, offset);
+
   Instruction_Group("int8 store",
 		    TOP_store8,
 		    TOP_UNDEFINED);
@@ -3195,6 +3623,34 @@ int main()
 		    TOP_storenti64,
 		    TOP_UNDEFINED);
   Operand(0, int64, storeval);
+  Operand(1, int64, base);
+  Operand(2, simm32, offset);
+
+  Instruction_Group("imm8 store",
+		    TOP_storei8,
+		    TOP_UNDEFINED);
+  Operand(0, simm8, storeval);
+  Operand(1, int64, base);
+  Operand(2, simm32, offset);
+
+  Instruction_Group("imm16 store",
+		    TOP_storei16,
+		    TOP_UNDEFINED);
+  Operand(0, simm16, storeval);
+  Operand(1, int64, base);
+  Operand(2, simm32, offset);
+
+  Instruction_Group("imm32 store",
+		    TOP_storei32,
+		    TOP_UNDEFINED);
+  Operand(0, simm32, storeval);
+  Operand(1, int64, base);
+  Operand(2, simm32, offset);
+
+  Instruction_Group("imm64 store",
+		    TOP_storei64,
+		    TOP_UNDEFINED);
+  Operand(0, simm64, storeval);
   Operand(1, int64, base);
   Operand(2, simm32, offset);
 
@@ -3412,8 +3868,6 @@ int main()
   Operand(1, rflags, opnd2);
 
   Instruction_Group("fp 2 fp",
-		    TOP_movsd,
-		    TOP_movss,
 		    TOP_cvtss2sd,
 		    TOP_cvtsd2ss,
 		    TOP_UNDEFINED);
@@ -3832,15 +4286,21 @@ int main()
                     TOP_vlddqa_n32,
                     TOP_vldapd_n32,
                     TOP_vldaps_n32,
-                    TOP_vldlpd_n32,
                     TOP_vldupd_n32,
                     TOP_vldups_n32,
+		    TOP_UNDEFINED);
+  Result(0, fp128);
+  Operand(0, simm32, offset);
+
+  Instruction_Group("avx float load vector w/o base or index",
                     TOP_vldhpd_n32,
+                    TOP_vldlpd_n32,
                     TOP_vldhps_n32,
                     TOP_vldlps_n32,
 		    TOP_UNDEFINED);
   Result(0, fp128);
-  Operand(0, simm32, offset);
+  Operand(0, fp128, opnd1);
+  Operand(1, simm32, offset);
 
   Instruction_Group("float load vector",
 		    TOP_lddqa,
@@ -3864,14 +4324,10 @@ int main()
                     TOP_vldntdqa,
                     TOP_vldapd,
                     TOP_vldaps,
-                    TOP_vldlpd,
                     TOP_vldss,
                     TOP_vldupd,
                     TOP_vldups,
-                    TOP_vldhpd,
-                    TOP_vldhps,
                     TOP_vldsd,
-                    TOP_vldlps,
 		    TOP_UNDEFINED);
   Result(0, fp128);
   Operand(0, int64, base);
@@ -4029,6 +4485,10 @@ int main()
   Instruction_Group("shuffle",
 		    TOP_shufps,
 		    TOP_shufpd,
+		    TOP_vfshuf128v64,
+		    TOP_vfshuf128v32,
+		    TOP_vshufpd,
+		    TOP_vshufps,
 		    TOP_UNDEFINED);
   Result(0, fp128);
   Operand(0, fp128, opnd1);
@@ -4212,6 +4672,8 @@ int main()
 		    TOP_minss,
 		    TOP_mulsd,
 		    TOP_mulss,
+		    TOP_movsd,
+		    TOP_movss,
 		    TOP_UNDEFINED);
   Result(0, fp64);
   Operand(0, fp64, opnd1);
@@ -4814,6 +5276,8 @@ int main()
   Operand(1, x87,  opnd2);
 
   Instruction_Group("fp compare",
+                    TOP_vcmpsd,
+                    TOP_vcmpss,
 		    TOP_cmpss,
 		    TOP_cmpsd,
 		    TOP_UNDEFINED);
@@ -4822,6 +5286,7 @@ int main()
   Operand(1, fp64,  opnd2);
   Operand(2, simm8, opnd3);
 
+  // pseudo assembler ops that encode to cmpss, cmpsd, vcmpss and vcmpsd
   Instruction_Group("fp compare I",
 		    TOP_cmpeqsd,
 		    TOP_cmpltsd,
@@ -4839,6 +5304,22 @@ int main()
 		    TOP_cmpnltss,
 		    TOP_cmpnless,
 		    TOP_cmpordss,
+		    TOP_vcmpeqsd,
+		    TOP_vcmpltsd,
+		    TOP_vcmplesd,
+		    TOP_vcmpunordsd,
+		    TOP_vcmpneqsd,
+		    TOP_vcmpnltsd,
+		    TOP_vcmpnlesd,
+		    TOP_vcmpordsd,
+		    TOP_vcmpeqss,
+		    TOP_vcmpltss,
+		    TOP_vcmpless,
+		    TOP_vcmpunordss,
+		    TOP_vcmpneqss,
+		    TOP_vcmpnltss,
+		    TOP_vcmpnless,
+		    TOP_vcmpordss,
 		    TOP_UNDEFINED);
   Result(0, fp64);
   Operand(0, fp64,  opnd1);
@@ -4897,6 +5378,10 @@ int main()
   Instruction_Group("fp vector compare",
 		    TOP_cmpps,
 		    TOP_cmppd,
+                    TOP_vcmppd,
+                    TOP_vcmpps,
+                    TOP_vfcmp128v64,
+                    TOP_vfcmp128v32,
 		    TOP_UNDEFINED);
   Result(0, fp128);
   Operand(0, fp128,  opnd1);
@@ -4920,6 +5405,22 @@ int main()
 		    TOP_cmpnltps,
 		    TOP_cmpnleps,
 		    TOP_cmpordps,
+		    TOP_vcmpeqpd,
+		    TOP_vcmpltpd,
+		    TOP_vcmplepd,
+		    TOP_vcmpunordpd,
+		    TOP_vcmpneqpd,
+		    TOP_vcmpnltpd,
+		    TOP_vcmpnlepd,
+		    TOP_vcmpordpd,
+		    TOP_vcmpeqps,
+		    TOP_vcmpltps,
+		    TOP_vcmpleps,
+		    TOP_vcmpunordps,
+		    TOP_vcmpneqps,
+		    TOP_vcmpnltps,
+		    TOP_vcmpnleps,
+		    TOP_vcmpordps,
 		    TOP_UNDEFINED);
   Result(0, fp128);
   Operand(0, fp128,  opnd1);
@@ -5063,6 +5564,42 @@ int main()
   Operand(3, int64, index);
   Operand(4, uimm8, scale);
 
+  Instruction_Group("imm8 store w/ indx",
+		    TOP_storeix8,
+		    TOP_UNDEFINED);
+  Operand(0, simm8, storeval);
+  Operand(1, int64, base);
+  Operand(2, simm32, offset);
+  Operand(3, int64, index);
+  Operand(4, uimm8, scale);
+
+  Instruction_Group("imm16 store w/ indx",
+		    TOP_storeix16,
+		    TOP_UNDEFINED);
+  Operand(0, simm16, storeval);
+  Operand(1, int64, base);
+  Operand(2, simm32, offset);
+  Operand(3, int64, index);
+  Operand(4, uimm8, scale);
+
+  Instruction_Group("imm32 store w/ indx",
+		    TOP_storeix32,
+		    TOP_UNDEFINED);
+  Operand(0, simm32, storeval);
+  Operand(1, int64, base);
+  Operand(2, simm32, offset);
+  Operand(3, int64, index);
+  Operand(4, uimm8, scale);
+
+  Instruction_Group("imm64 store w/ indx",
+		    TOP_storeix64,
+		    TOP_UNDEFINED);
+  Operand(0, simm64, storeval);
+  Operand(1, int64, base);
+  Operand(2, simm32, offset);
+  Operand(3, int64, index);
+  Operand(4, uimm8, scale);
+
   Instruction_Group("int8 store w/ indx w/o base",
 		    TOP_storexx8,
 		    TOP_UNDEFINED);
@@ -5093,6 +5630,38 @@ int main()
 		    TOP_storentixx64,
 		    TOP_UNDEFINED);
   Operand(0, int64, storeval);
+  Operand(1, int64, index);
+  Operand(2, uimm8, scale);
+  Operand(3, simm32, offset);
+
+  Instruction_Group("imm8 store w/ indx w/o base",
+		    TOP_storeixx8,
+		    TOP_UNDEFINED);
+  Operand(0, simm8, storeval);
+  Operand(1, int64, index);
+  Operand(2, uimm8, scale);
+  Operand(3, simm32, offset);
+
+  Instruction_Group("imm16 store w/ indx w/o base",
+		    TOP_storeixx16,
+		    TOP_UNDEFINED);
+  Operand(0, simm16, storeval);
+  Operand(1, int64, index);
+  Operand(2, uimm8, scale);
+  Operand(3, simm32, offset);
+
+  Instruction_Group("imm32 store w/ indx w/o base",
+		    TOP_storeixx32,
+		    TOP_UNDEFINED);
+  Operand(0, simm32, storeval);
+  Operand(1, int64, index);
+  Operand(2, uimm8, scale);
+  Operand(3, simm32, offset);
+
+  Instruction_Group("imm64 store w/ indx w/o base",
+		    TOP_storeixx64,
+		    TOP_UNDEFINED);
+  Operand(0, simm64, storeval);
   Operand(1, int64, index);
   Operand(2, uimm8, scale);
   Operand(3, simm32, offset);
@@ -5144,6 +5713,7 @@ int main()
 		    TOP_ldupdx,
 		    TOP_ldapdx,
 		    TOP_ldapsx,
+                    TOP_ldupsx,
 		    TOP_fmovsldupxx,
 		    TOP_fmovshdupxx,
 		    TOP_fmovddupxx,
@@ -5153,14 +5723,10 @@ int main()
                     TOP_vldntdqax,
                     TOP_vldapdx,
                     TOP_vldapsx,
-                    TOP_vldlpdx,
                     TOP_vldssx,
                     TOP_vldupdx,
                     TOP_vldupsx,
-                    TOP_vldhpdx,
-                    TOP_vldhpsx,
                     TOP_vldsdx,
-                    TOP_vldlpsx,
 		    TOP_UNDEFINED);
   Result(0,  fp128);
   Operand(0, int64, base);
@@ -5212,6 +5778,7 @@ int main()
 		    TOP_ldupdxx,
 		    TOP_ldapdxx,
 		    TOP_ldapsxx,
+                    TOP_ldupsxx,
 		    TOP_fmovsldupxxx,
 		    TOP_fmovshdupxxx,
 		    TOP_fmovddupxxx,
@@ -5221,14 +5788,10 @@ int main()
                     TOP_vldntdqaxx,
                     TOP_vldapdxx,
                     TOP_vldapsxx,
-                    TOP_vldlpdxx,
                     TOP_vldssxx,
                     TOP_vldupdxx,
                     TOP_vldupsxx,
-                    TOP_vldhpdxx,
-                    TOP_vldhpsxx,
                     TOP_vldsdxx,
-                    TOP_vldlpsxx,
 		    TOP_UNDEFINED);
   Result(0,  fp128);
   Operand(0, int64, index);

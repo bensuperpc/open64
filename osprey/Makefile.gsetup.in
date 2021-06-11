@@ -1,7 +1,10 @@
 # -*- Makefile -*-
 #
-#  Copyright (C) 2000, 2001 Silicon Graphics, Inc.  All Rights Reserved.
+#  Copyright (C) 2011 Advanced Micro Devices, Inc.  All Rights Reserved.
+#
 #  Copyright (C) 2010 Hewlett Packard Company
+#
+#  Copyright (C) 2000, 2001 Silicon Graphics, Inc.  All Rights Reserved.
 #
 #  This program is free software; you can redistribute it and/or modify it
 #  under the terms of version 2 of the GNU General Public License as
@@ -103,7 +106,7 @@ ifndef BUILD_ARCH
      BUILD_ARCH     = @BUILD_ARCH@
 endif
 ifndef BUILD_TYPE
-     BUILD_TYPE     = SHARED
+     BUILD_TYPE     = @BUILD_TYPE@
 endif
 ifndef BUILD_OPTIMIZE
      BUILD_OPTIMIZE = @BUILD_OPTIMIZE@
@@ -137,6 +140,9 @@ ifndef BUILD_BOTH
 endif
 ifndef BUILD_GNU3
      BUILD_GNU3     = @BUILD_GNU3@
+endif
+ifndef BUILD_SKIP_IPA
+     BUILD_SKIP_IPA = @BUILD_SKIP_IPA@
 endif
 ifndef COMPILER_TARG_DIR
      COMPILER_TARG_DIR = @abs_top_builddir@/osprey/targdir
@@ -637,6 +643,17 @@ STD_COMPILE_OPTS += -DEMULATE_LONGLONG
 STD_COMPILE_OPTS += -DEMULATE_FLOAT_POINT
 endif
 
+ifeq ($(BUILD_TARGET), NVISA)
+STD_COMPILE_OPTS += -DBUILD_SKIP_LNO -DBUILD_SKIP_WHIRL2C -DBUILD_SKIP_WHIRL2F
+BUILD_SKIP_LNO = TRUE
+BUILD_SKIP_WHIRL2C = TRUE
+BUILD_SKIP_WHIRL2F = TRUE
+endif
+
+# Always skip obsolete backend components.
+BUILD_SKIP_PROMPF = TRUE
+STD_COMPILE_OPTS += -DBUILD_SKIP_PROMPF
+
 include ${BUILD_TOT}/../defs.mk
 
 STD_C_OPTS = -std=gnu99 -D_GNU_SOURCE
@@ -644,12 +661,8 @@ ERROR_ON_WARNINGS = #-Werror
 # Many files use INTn_MAX/INTn_MIN
 STD_COMPILE_OPTS += -D__STDC_LIMIT_MACROS
 STD_COMPILE_OPTS += -DKEY -DOSP_OPT -DPATHSCALE_MERGE -DPSC_TO_OPEN64 $(LOCAL_CFLAGS) $(ERROR_ON_WARNINGS)
-ifneq ($(BUILD_TARGET), NVISA)
-STD_COMPILE_OPTS += -DSHARED_BUILD
-else
 ifeq ($(BUILD_TYPE), SHARED)
 STD_COMPILE_OPTS += -DSHARED_BUILD
-endif
 endif
 
 #
@@ -695,7 +708,9 @@ ifeq ($(BUILD_ABI), N32BIT)
   endif
  else # MIPS4
   ifeq ($(BUILD_TYPE), SHARED)
-    STD_LOAD_OPTS += -n32 -L$(ROOT)/usr/lib32/mips4 -L$(ROOT)/usr/lib32
+    ifneq ($(BUILD_TARGET),SL)
+      STD_LOAD_OPTS += -n32 -L$(ROOT)/usr/lib32/mips4 -L$(ROOT)/usr/lib32
+    endif
   else
     STD_LOAD_OPTS += -n32 -L$(ROOT)/usr/lib32/mips4/nonshared -L$(ROOT)/usr/lib32/nonshared
   endif

@@ -1,4 +1,8 @@
 /*
+ * Copyright (C) 2011, Hewlett-Packard Development Company, L.P. All Rights Reserved.  
+ */
+
+/*
  * Copyright (C) 2009-2010 Advanced Micro Devices, Inc.  All Rights Reserved.
  */
 
@@ -355,6 +359,7 @@ class DCE {
 #ifdef KEY
 		    case OPR_GOTO_OUTER_BLOCK:
 #endif
+                   case OPR_ZDLBR:
 		      return TRUE;
 		    default:
 		      return FALSE;
@@ -749,6 +754,9 @@ DCE::Check_constant_cond_br( BB_NODE *bb ) const
 	}
 	break;
       }
+   
+   case OPR_ZDLBR:
+    return FALSE;
 
     case OPR_FALSEBR:
     case OPR_TRUEBR:
@@ -2141,7 +2149,7 @@ DCE::Required_stmt( const STMTREP *stmt ) const
 
   if (OPERATOR_is_scalar_store (opr) &&
       Enable_identity_removal() &&
-      stmt->Is_identity_assignment_removable())  // if COPYPROP assumes the stmt is deleted
+      stmt->Is_identity_assignment_removable()) // if COPYPROP assumes the stmt is deleted)
     return FALSE;
 
   // statements with zero-version chi nodes are required
@@ -2149,7 +2157,8 @@ DCE::Required_stmt( const STMTREP *stmt ) const
     return TRUE;
 
 #ifdef KEY // bugs 5401 and 5267
-  if (OPERATOR_is_scalar_store(opr) && 
+  if (_opt_phase != MAINOPT_PHASE &&
+      OPERATOR_is_scalar_store(opr) && 
       Opt_stab()->Aux_stab_entry(stmt->Lhs()->Aux_id())->Mp_no_dse())
     return TRUE;
 #endif
@@ -2174,6 +2183,7 @@ DCE::Required_stmt( const STMTREP *stmt ) const
   case OPR_TRUEBR:
   case OPR_FALSEBR:
   case OPR_GOTO:
+  case OPR_ZDLBR:
     return ( !Enable_aggressive_dce() );
 
   case OPR_COMPGOTO:
@@ -2810,8 +2820,12 @@ DCE::Mark_branch_related_live( STMTREP *stmt ) const
 	  // back out during PRE
 	  // NOTE: this also picks up the Trip_count_stmt().
 	  BB_NODE *dohead = loop->Start();
-	  if ( (dohead && loop->Is_flag_set(LOOP_DO) && dohead->Kind() == BB_DOHEAD) ||
-           (dohead && loop->Is_flag_set(LOOP_PRE_DO) && dohead->Kind() == BB_DOSTART) ) {
+	  if ( (dohead &&  dohead->Kind() == BB_DOHEAD &&
+                (loop->Is_flag_set(LOOP_DO) || 
+                 loop->Is_flag_set(LOOP_WHILE) || 
+                 loop->Is_flag_set(LOOP_REPEAT)))
+             ||
+               (dohead && loop->Is_flag_set(LOOP_PRE_DO) && dohead->Kind() == BB_DOSTART)) {
 	    STMTREP_ITER stmt_iter(dohead->Stmtlist());
 	    STMTREP *dohead_stmt;
 	    FOR_ALL_NODE( dohead_stmt, stmt_iter, Init() ) {
@@ -3304,6 +3318,7 @@ DCE::Mark_statement_live( STMTREP *stmt ) const
 
   case OPR_TRUEBR:
   case OPR_FALSEBR:
+  case OPR_ZDLBR:
     Mark_branch_related_live( stmt );
     break;
 
@@ -4698,6 +4713,7 @@ DCE::Update_branch_to_bbs_labels( BB_LIST *bbs ) const
       if (branch_stmt != NULL) {
         OPERATOR opr = branch_stmt->Opr();
         if ((opr == OPR_GOTO ||
+             opr == OPR_ZDLBR ||
              opr == OPR_TRUEBR ||
              opr == OPR_FALSEBR) && 
              (branch_stmt->Label_number() == bb->Labnam())){
@@ -4764,6 +4780,7 @@ DCE::Update_branch_to_bb_labels( BB_NODE *bb ) const
     if (branch_stmt != NULL) {
       OPERATOR opr = branch_stmt->Opr();
       if ((opr == OPR_GOTO ||
+           opr == OPR_ZDLBR ||
 	   opr == OPR_TRUEBR ||
 	   opr == OPR_FALSEBR) &&
 	  branch_stmt->Label_number() == bb->Labnam()) {
@@ -4895,7 +4912,7 @@ DCE::Remove_dead_statements( void )
         bb = bb->Succ()->Node();
         if (bb->Succ()->Len() == 1 &&
             bb->Succ()->Node()->Pred()->Len() == 1 &&
-            bb->Succ()->Node()->Phi_list()->Is_Empty() &&
+            (bb->Succ()->Node()->Phi_list()== NULL || bb->Succ()->Node()->Phi_list()->Is_Empty()) &&
             bb->Phi_list() != NULL)
           bb = NULL;
       }
@@ -5280,7 +5297,7 @@ COMP_UNIT::Find_uninit_locals_for_entry(BB_NODE *bb)
       }
     }
 
-    ErrMsg(EC_Uninitialized, output_var_name, Cur_PU_Name);
+    ErrMsgLine(EC_Uninitialized, ST_Line(*(sym->St())), output_var_name, output_pu_name);
     if (p != NULL && p != Cur_PU_Name)
       free(p);
     if (v != NULL && v != &Str_Table[sym->St()->u1.name_idx])

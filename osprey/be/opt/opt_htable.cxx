@@ -903,7 +903,11 @@ CODEREP::Print_node(INT32 indent, FILE *fp) const
   case CK_RCONST:
     fprintf(fp, ">");	// mark line visually as htable dump
     for (i = 0; i < indent; i++) fprintf(fp, " ");
-    fprintf(fp, "LDRC %s 0x%p", MTYPE_name(Dtyp()), Const_id());
+    {
+      ST_IDX st_idx = ST_st_idx(Const_id());
+      fprintf(fp, "LDRC %s <%d,%d>", MTYPE_name(Dtyp()),
+              ST_IDX_level (st_idx), ST_IDX_index (st_idx));
+    }
     break;
   case CK_DELETED:
   default:
@@ -995,8 +999,10 @@ CODEREP::Print_str(BOOL name_format) const
       sprintf(buf,"LDC %lld",Const_val());
     break;
   case CK_RCONST:
-    if (name_format)
-      sprintf(buf,"LDRC 0x%p",Const_id());
+    if (name_format) {
+      ST_IDX st_idx = ST_st_idx(Const_id());
+      sprintf(buf,"LDRC <%d,%d>", ST_IDX_level (st_idx), ST_IDX_index (st_idx));
+    }
     break;
   default:
     Warn_todo("CODEREP::Print: CODEKIND is not implemented yet");
@@ -2332,11 +2338,6 @@ CODEMAP::Add_def(IDTYPE st, mINT16 version, STMTREP *stmt,
       dtyp = dsctyp;  // necessary canonicalization
   }
   
-#ifdef TARG_SL
-  if (dtyp == MTYPE_I2 && dsctyp == MTYPE_I2) {
-    dtyp = MTYPE_I4;
-  }
-#endif  
 #ifdef Is_True_On
   // check dtyp and dsctyp consistency
   if (MTYPE_is_float(dtyp)) {
@@ -2538,6 +2539,14 @@ CODEMAP::Add_idef(OPCODE opc, OCC_TAB_ENTRY *occ, STMTREP *stmt,
   CODEREP          *cr = Alloc_stack_cr(IVAR_EXTRA_NODE_CNT);
   CODEREP          *retv;
   OPERATOR         oper = OPCODE_operator(opc);
+
+  // make sure the dtyp for constant base is Pointer_type
+  if (lbase != NULL && lbase->Kind() == CK_CONST 
+      && lbase->Dtyp() != Pointer_type)
+    lbase->Set_dtyp_strictly(Pointer_type);
+  if (sbase != NULL && sbase->Kind() == CK_CONST 
+      && sbase->Dtyp() != Pointer_type)
+    sbase->Set_dtyp_strictly(Pointer_type);
 
   cr->Init_ivar(opc, dtyp, occ, dsctyp, lodty, lbase, sbase,
 		ofst, size, field_id);
@@ -4123,11 +4132,6 @@ STMTREP::Enter_lhs(CODEMAP *htable, OPT_STAB *opt_stab, COPYPROP *copyprop)
         }
         dtyp = Mtype_from_class_size(dsctyp, dtyp);
       }
-#ifdef TARG_SL
-        if (dtyp == MTYPE_I2 && dsctyp == MTYPE_I2) {
-          dtyp = MTYPE_I4;
-        }
-#endif
       opc = OPCODE_make_op(opr == OPR_ISTORE ? OPR_ILOAD : OPR_ILDBITS, dtyp, dsctyp);
       base_ccr.Set_scale(base_ccr.Scale() + WN_offset(Wn()));
       base_ccr.Trim_to_16bits(WN_kid(Wn(), 1), htable);
@@ -5239,6 +5243,7 @@ STMTREP::Print_node(FILE *fp) const
   case OPR_LABEL:
   case OPR_GOTO:
   case OPR_REGION_EXIT:
+  case OPR_ZDLBR:
     fprintf(fp, ">");	// mark line visually as htable dump
     fprintf(fp, "%s %d", OPERATOR_name(_opr), Label_number());
     break;

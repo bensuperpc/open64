@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2009 Advanced Micro Devices, Inc.  All Rights Reserved.
+ * Copyright (C) 2008-2011 Advanced Micro Devices, Inc.  All Rights Reserved.
  */
 
 /*
@@ -733,6 +733,7 @@ extern WN_MAP Parent_Map;  /* contains the mapping for the */
 			   /* parent pointers for all nodes */
 extern WN_MAP LNO_Info_Map;
 extern WN_MAP Array_Dependence_Map;
+extern WN_MAP LNO_Precom_Map;
 // the map to keep track of deleted loop (because of unroll etc.)
 extern HASH_TABLE<WN*, BOOL> *Deleted_Loop_Map;
 extern MEM_POOL LNO_default_pool;
@@ -741,6 +742,7 @@ extern INT snl_debug;
 
 extern BOOL Run_Snl;
 extern BOOL Contains_MP;  // does the PU contain any MP constructs
+extern BOOL Do_Aggressive_Fuse;
 
 extern FILE *STDOUT;
 
@@ -891,7 +893,13 @@ public:
   mBOOL Inside_Critical_Section;
   mBOOL Has_Barriers; 
   mBOOL Multiversion_Alias;
+  mBOOL Loop_Vectorized;  // attribute to mark loops which are vectorized
   mINT8 Required_Unroll;
+  mINT8 Prefer_Fuse;
+  mINT8 Has_Precom_Def;
+  mINT8 Has_Precom_Use;
+  mINT8 Is_Precom_Init;
+  mINT8 Sclrze_Dse;
   mINT32 Tile_Size; 
   double Work_Estimate; 
   mINT32 Required_Blocksize[MHD_MAX_LEVELS];
@@ -1057,6 +1065,8 @@ extern BOOL Build_Array_Dependence_Graph (WN* func_nd);
 extern void Build_CG_Dependence_Graph (WN* func_nd);
 extern void Build_CG_Dependence_Graph (ARRAY_DIRECTED_GRAPH16*
                                        Array_Dependence_Graph);
+extern INT32 Current_PU_Count(void);
+
 #ifdef TARG_X8664
 extern void Mark_Auto_Vectorizable_Loops (WN* func_nd);
 #endif
@@ -1166,6 +1176,8 @@ inline REGION_INFO* Get_Region_Info(const WN* wn)
 #define TT_SHACKLE_DEBUG            0x02000000
 #define TT_CROSS_LOOP               0x04000000
 #define TT_STRUCT_ARRAY_COPY        0x08000000
+#define TT_TRACE_STRUCT_SPLIT_TRANS 0x10000000
+#define TT_STRUCT_SPLIT_DUMP_IR     0x20000000
 
 #ifdef TARG_X8664
 extern BOOL Minvariant_Removal_For_Simd;

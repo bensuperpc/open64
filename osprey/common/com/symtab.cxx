@@ -1229,6 +1229,28 @@ TY_has_union (TY_IDX ty)
   return FALSE;
 }
 
+/* ty has volatile flag in any of its members */
+BOOL
+TY_has_volatile (TY_IDX ty)
+{
+  if (TY_is_volatile(ty)) {
+    return TRUE;
+  }
+  if (TY_kind(ty) != KIND_STRUCT) {
+    return FALSE;
+  }
+  
+  FLD_HANDLE fld = TY_fld(ty);
+  do {
+    TY_IDX fty = FLD_type(fld);
+    if (TY_has_volatile(fty)) {
+      return TRUE;
+    }
+    fld = FLD_next (fld);
+  } while (!fld.Is_Null());
+  return FALSE;
+}
+
 #ifdef TARG_NVISA
 /* number of elements in the vector */
 UINT
@@ -1813,6 +1835,9 @@ ST::Print (FILE *f, BOOL verbose) const
 	    fprintf (f, "Alignment: %d bytes", TY_align (ty_idx));
 	}
 	fprintf (f, "\n");
+	extern char *Orig_Src_File_Name, *Src_File_Name;
+	fprintf (f, "\t\tlocation: file %s, line %d\n", 
+	         (Orig_Src_File_Name ? Orig_Src_File_Name : Src_File_Name), line);
 
 	fprintf (f, "\t\tFlags:\t0x%08x", flags);
 	if (flags) {
@@ -1858,6 +1883,10 @@ ST::Print (FILE *f, BOOL verbose) const
                 fprintf (f, " st_used_as_initialization");
             if (flags_ext & ST_IS_THREAD_LOCAL)
                 fprintf (f, " thread_local");
+	    if (flags_ext & ST_IS_GLOBAL_AS_LOCAL)
+	        fprintf (f, " global_as_local");
+            if (flags_ext & ST_IS_VTABLE)
+                fprintf (f, " vtable");
 	}
 #endif
 #ifdef TARG_NVISA
@@ -1935,6 +1964,10 @@ ST::Print (FILE *f, BOOL verbose) const
 	}
 
 	fprintf (f, "\n\t\tSclass: %s\n", Sclass_Name (storage_class));
+	if(vtable_ty_idx)
+	{
+	    fprintf (f, "\t\tVtable for type: %s\n", TY_name (vtable_ty_idx));
+	}
     }
 } // ST::Print
 
@@ -2379,6 +2412,8 @@ TY::Print (FILE *f) const
 	    } while (! FLD_last_field (iter++));
 	} else
 	    fputc ('\n', f);
+	if (TY_vtable(*this))
+	    fprintf(f, "VTABLE: %s\n", ST_name(TY_vtable(*this)));
 	break;
 
     case KIND_POINTER:

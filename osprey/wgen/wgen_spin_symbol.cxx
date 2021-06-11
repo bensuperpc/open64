@@ -852,6 +852,7 @@ Create_TY_For_Tree (gs_t type_tree, TY_IDX idx)
 			Set_TY_is_union(idx);
 		}
 #ifdef KEY
+                // gs_aggregate_value_p is only set for c++
 		if (gs_aggregate_value_p(type_tree)) {
 			Set_TY_return_in_mem(idx);
 		}
@@ -993,6 +994,7 @@ Create_TY_For_Tree (gs_t type_tree, TY_IDX idx)
 #endif // KEY
 
                 hash_set <gs_t, void_ptr_hash> anonymous_base;
+                hash_set <gs_t, void_ptr_hash> virtual_base;
                 gs_t type_binfo, basetypes;
 
                 // find all base classes
@@ -1004,6 +1006,8 @@ Create_TY_For_Tree (gs_t type_tree, TY_IDX idx)
                     gs_t binfo = gs_operand(list, 0);
                     gs_t basetype = gs_binfo_type(binfo);
                     anonymous_base.insert(basetype);
+                    if (gs_binfo_virtual_p(binfo))
+                       virtual_base.insert(basetype);
                   } 
                 } 
 
@@ -1048,6 +1052,8 @@ Create_TY_For_Tree (gs_t type_tree, TY_IDX idx)
                             Set_FLD_is_anonymous(fld);
                         if (anonymous_base.find(gs_tree_type(field)) != anonymous_base.end())
                             Set_FLD_is_base_class(fld); 
+                        if (virtual_base.find(gs_tree_type(field)) != virtual_base.end())
+                            Set_FLD_is_virtual(fld); 
 		}
 
 		TYPE_FIELD_IDS_USED(type_tree) = next_field_id - 1;
@@ -1889,6 +1895,13 @@ Create_ST_For_Tree (gs_t decl_node)
 	if (st)
 	  return st;
         st = New_ST (level);
+
+        // Set line number where define sym in source file
+        if (gs_operand (decl_node, GS_DECL_SOURCE_LINE))
+          Set_ST_Line(*st, gs_decl_source_line(decl_node));
+        else
+          Set_ST_Line(*st, 0);
+
         if (TY_kind (ty_idx) == KIND_ARRAY &&
             gs_tree_static (decl_node) &&
             gs_decl_initial (decl_node) == FALSE &&
@@ -1909,6 +1922,9 @@ Create_ST_For_Tree (gs_t decl_node)
 	if (gs_tree_this_volatile(decl_node))
 		Set_TY_is_volatile (ty_idx);
 	else Clear_TY_is_volatile (ty_idx);
+	if (gs_decl_user_align (decl_node))
+		Set_TY_is_user_align(ty_idx);
+	else Clear_TY_is_user_align(ty_idx);
 #ifdef KEY
         // Handle aligned attribute (bug 7331)
         if (gs_decl_user_align (decl_node))
@@ -1925,6 +1941,13 @@ Create_ST_For_Tree (gs_t decl_node)
 	if (*p == '*')
 	  p++;
         ST_Init (st, Save_Str(p), CLASS_VAR, sclass, eclass, ty_idx);
+		
+      if (gs_decl_virtual_p(decl_node) && strncmp(name, "_ZTV", 4) == 0)
+      {
+          Set_ST_is_vtable(st);
+          Set_ST_vtable_ty_idx(st, Get_TY(gs_cp_decl_context(decl_node)));
+      }
+	  
 #ifdef KEY
 #ifdef FE_GNU_4_2_0
 	if (gs_tree_code (decl_node) == GS_VAR_DECL &&

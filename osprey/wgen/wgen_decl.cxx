@@ -701,8 +701,17 @@ static void process_local_classes()
 {
 }
 
+static void WGEN_Assemble_Asm(char *asm_string);
+
 void WGEN_Expand_Decl(gs_t decl, BOOL can_skip)
 {
+  if (decl != NULL && gs_code(decl) == GS_STRING_CST) {
+    char *asm_string = gs_tree_string_pointer(decl);
+    Set_FILE_INFO_has_global_asm(File_info);
+    WGEN_Assemble_Asm (asm_string);
+    return;
+  }
+
   Is_True(decl != NULL && gs_tree_code_class(decl) == GS_TCC_DECLARATION,
           ("Argument to WGEN_Expand_Decl isn't a decl node"));
 /*
@@ -1293,7 +1302,11 @@ WGEN_Start_Function(gs_t fndecl)
 	   (gs_decl_lang_specific (fndecl) &&
 	    gs_decl_implicit_instantiation (fndecl) &&
 	    gs_decl_namespace_scope_p (fndecl))))
+#ifndef TARG_SL
 	    eclass = EXPORT_INTERNAL; // bug 7550
+#else
+           eclass = EXPORT_PREEMPTIBLE;
+#endif
       else if (gs_tree_public(fndecl) || gs_decl_weak(fndecl)) {
         if (!gs_decl_declared_inline_p(fndecl)) {
           // global non-inline function has to be preemptible
@@ -1321,7 +1334,11 @@ WGEN_Start_Function(gs_t fndecl)
             eclass = EXPORT_PREEMPTIBLE;
           }
           else {
+#ifndef TARG_SL
             eclass = EXPORT_HIDDEN;
+#else 
+            eclass = EXPORT_PREEMPTIBLE;
+#endif
           }
 	} 
       }
@@ -2578,21 +2595,9 @@ AGGINIT::Add_Initv_For_Tree (gs_t val, UINT size)
 	case GS_NOP_EXPR:
 		gs_t kid;
 		kid = gs_tree_operand(val,0);
-		if (gs_tree_code(kid) == GS_ADDR_EXPR &&
-		    /* bug fix for OSP_279 */
-		    gs_tree_code(gs_tree_operand(kid,0)) == GS_STRING_CST)	
-		{
-			kid = gs_tree_operand(kid,0);
-			WGEN_Add_Aggregate_Init_Address (kid);
-			break;
-		}
-		else
-		if (gs_tree_code(kid) == GS_INTEGER_CST) {
-                      WGEN_Add_Aggregate_Init_Integer (
-                              gs_get_integer_value(kid), size);
-		      break;
-		}
-		// fallthru
+		// [SC] NOP_EXPR does not change representation, so just recurse on kid.
+		Add_Initv_For_Tree (kid, size);
+		break;
 	default:
 		{
         WN *init_wn;
@@ -4183,21 +4188,6 @@ Is_Aggregate_Init_Zero_Struct (gs_t init_list, gs_t type)
 
   gs_t       init;
 
-  gs_t type_binfo, basetypes;
-
-  if ((type_binfo = gs_type_binfo(type)) != NULL &&
-      (basetypes = gs_binfo_base_binfos(type_binfo)) != NULL) {
-
-    gs_t list;
-    for (list = basetypes; gs_code(list) != EMPTY; list = gs_operand(list, 1)) {
-      gs_t binfo = gs_operand(list, 0);
-      gs_t basetype = gs_binfo_type(binfo);
-      if (!is_empty_base_class(basetype) || !gs_binfo_virtual_p(binfo)) {
-        fld = FLD_next (fld);
-      }
-    }
-  }
-
   while (field && gs_tree_code(field) != GS_FIELD_DECL)
     field = next_real_field(type, field);
 
@@ -4733,7 +4723,6 @@ WGEN_Assemble_Alias (gs_t decl, gs_t target)
   else {
     Set_ST_base_idx (st, ST_st_idx (base_st));
     Set_ST_emit_symbol(st);	// for cg
-    Set_ST_sclass (st, ST_sclass (base_st));
     if (ST_is_initialized (base_st))
       Set_ST_is_initialized (st);
 #ifdef KEY
@@ -4744,9 +4733,12 @@ WGEN_Assemble_Alias (gs_t decl, gs_t target)
 #ifdef KEY
   if (!lang_cplus)
   {
-    // bug 4981: symbol class of ST must match that of the target
-    if (ST_sym_class (st) != ST_sym_class (base_st))
+    if (ST_sym_class (st) != ST_sym_class (base_st)) {
+      /* open64.net bug 878, change the aliased sym class and type to the base st */
       ErrMsg (EC_Ill_Alias, ST_name (st), ST_name (base_st));
+      Set_ST_class(st, ST_class(base_st));
+      Set_ST_type(st,ST_type(base_st));
+    }
 
     // bugs 5145, 11993
     if (ST_sym_class (base_st) == CLASS_FUNC)

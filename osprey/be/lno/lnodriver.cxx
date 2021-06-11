@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2010 Advanced Micro Devices, Inc.  All Rights Reserved.
+ * Copyright (C) 2008-2011 Advanced Micro Devices, Inc.  All Rights Reserved.
  */
 
 /*
@@ -77,7 +77,7 @@
 #include "config_wopt.h"
 #include "config_debug.h"	    /* for DEBUG_Ir_Version_Check */
 #include "errors.h"
-#include "erauxdesc.h"
+#include "../lno/init.cxx"          /* force include of Lno_Initializer */
 #include "glob.h"		    /* Irb_File_Name, Cur_PU_Name */
 #include "timing.h"		    /* Start/Stop Timer */
 
@@ -125,8 +125,6 @@ lno_main (INT lno_argc, char **lno_argv, INT be_argc, char **be_argv)
 	FmtAssert (!DEBUG_Ir_Version_Check,
 		   ("WHIRL revision mismatch between be.so (%s) and lno.so (%s)", 
 		    Whirl_Revision, WHIRL_REVISION));
-
-    Set_Error_Descriptor (EP_BE, EDESC_BE);
 } /* lno_main */
 
 extern "C" {
@@ -291,7 +289,8 @@ Perform_Loop_Nest_Optimization (PU_Info* current_pu, WN *pu_wn,
     RID_level(REGION_get_rid(region_wn)) = RL_LNO_PREOPT;
     Is_True(REGION_consistency_check(region_wn),(""));
 
-    if (WOPT_Enable_Pro_Loop_Fusion_Trans || WOPT_Enable_Pro_Loop_Interchange_Trans) {
+    if (WOPT_Enable_Pro_Loop_Fusion_Trans || WOPT_Enable_Pro_Loop_Interchange_Trans
+	|| WOPT_Enable_Pro_Loop_Ext_Trans) {
       Delete_Du_Manager(du_mgr, MEM_pu_nz_pool_ptr);
       du_mgr = Create_Du_Manager(MEM_pu_nz_pool_ptr);
       region_wn =

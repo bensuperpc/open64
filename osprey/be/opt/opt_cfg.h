@@ -378,8 +378,6 @@ private:
   INT	       Is_simple_expr(WN *wn);
   void         Lower_if_stmt(WN *wn, END_BLOCK *ends_bb );
   WN          *if_convert(WN *wn);
-  BOOL         wn_is_assign(WN *wn);
-  BOOL         wn_is_assign_return(WN *wn);
   BOOL         wn_is_return_convert(WN *wn);
   // add various high-level construct statements to CFG so they can
   // later be raised back up (mostly preopt phase)
@@ -735,7 +733,7 @@ public:
   // Clone a BB_LOOP
   BB_LOOP *    Clone_loop(BB_LOOP *);
   // Clone a SC_NODE
-  SC_NODE *    Clone_sc(SC_NODE *, BOOL, float);
+  SC_NODE *    Clone_sc(SC_NODE *, BOOL, float, SC_NODE **);
   // Create a SC node 
   SC_NODE *    Create_sc(SC_TYPE type);
   void         Freq_propagate(SC_NODE *);
@@ -743,6 +741,8 @@ public:
   void         Freq_scale(BB_NODE *, SC_NODE *, float scale);
   SC_NODE *    Split(SC_NODE *);
   SC_NODE *    Insert_block_after(SC_NODE *);
+  SC_NODE *    Insert_block_before(SC_NODE *);
+  SC_NODE *    Insert_if_before(SC_NODE *, BB_NODE *);
   void         Fix_info(SC_NODE *);
 
   // Create a new block and allocate it.

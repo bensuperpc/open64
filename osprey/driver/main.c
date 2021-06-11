@@ -143,9 +143,7 @@ main (int argc, char *argv[])
 	int base_flag;
 	string_item_t *p, *q;
 	int num_files = 0;
-#ifdef KEY
 	char *unrecognized_dashdash_option_name = NULL;
-#endif
         hugepage_desc = NULL;
 
 	init_error_list();
@@ -270,14 +268,12 @@ main (int argc, char *argv[])
 
 			drop_option = FALSE;
 
-#ifdef KEY
 			// Drop IPA options if IPA was turned off due to
 			// options conflict.  Bug 11571.
 			if (ipa == FALSE &&
 			    base_flag == O_IPA_) {
 			  drop_option = TRUE;
 			} else
-#endif
 			// Sets drop_option to TRUE if option should be ignored.
 			opt_action(base_flag);
 
@@ -395,11 +391,9 @@ main (int argc, char *argv[])
 		if (read_stdin) {
 			source_file = "-";
 			if (option_was_seen(O_E)) {
-#ifdef KEY
 				// Lang might already be set with "-x lang".
 				// Bug 4179.
 				if (source_lang == L_NONE)
-#endif
 				source_lang = L_cpp;
 			} else {
 				char *obj_name;
@@ -436,7 +430,6 @@ main (int argc, char *argv[])
 	     && mem_model == M_MEDIUM) {
 	  error("unimplemented: code model medium not supported in PIC mode");
 	}
-#ifdef KEY
 	// bug 10620
 	if (mem_model != M_SMALL &&
 	    abi == ABI_N32) {
@@ -454,7 +447,6 @@ main (int argc, char *argv[])
 		  "execution if a routine with static data is called from a "
 		  "parallel region.");
 	}
-#endif
 
 	if (debug) {
 		dump_args("user flags");
@@ -485,7 +477,6 @@ main (int argc, char *argv[])
 	/* add defaults if not already set */
 	set_defaults();
 
-#ifdef KEY
 	// Perform GNU4-related checks after set_defaults has run, since
 	// set_defaults can change the gnu version.  Bug 10250.
 	if (gnu_major_version == 4) {
@@ -496,6 +487,7 @@ main (int argc, char *argv[])
 	    set_option_unseen(O_fwritable_strings);
 	    set_option_unseen(O_fno_writable_strings);
 	  }
+#ifndef TARG_SL
 	  if ((source_lang == L_cc ||
 	       source_lang == L_CC) &&
 	      option_was_seen(O_mp) &&	// bug 11896
@@ -507,13 +499,13 @@ main (int argc, char *argv[])
 	  else if (gnu_minor_version >= 2 &&
 	           !option_was_seen(O_fno_cxx_openmp)) {
 	    add_option_seen(O_fcxx_openmp);
-	    toggle(&fcxx_openmp,1);
+            toggle(&fcxx_openmp,1);
 	  }
+#endif
 	}
 
 	// Select the appropriate GNU version front-end.
 	init_frontend_phase_names(gnu_major_version, gnu_minor_version);
-#endif
 
 	// Display version after running set_defaults, which can change
 	// gnu_major_version.
@@ -546,11 +538,7 @@ main (int argc, char *argv[])
  * ??? why not just have ar and dsm prelink be set in determine_phase_order?
  */
 	if ((multiple_source_files || 
-	     option_was_seen(O_ar)
-#ifndef KEY	// -dsm no longer supported.  Bug 4406.
-             || option_was_seen(O_dsm)
-#endif
-	     ) && 
+	     option_was_seen(O_ar)) && 
 	     ((last_phase == P_any_ld) && (shared != RELOCATABLE)) || 
 	     (last_phase == P_pixie)) {
 		/* compile all files to object files, do ld later */
@@ -607,6 +595,15 @@ main (int argc, char *argv[])
                              || desc->alloc == ALLOC_BDT)) {
                     BD_or_BDT_with_1GBP = TRUE;
                 }
+                if (option_was_seen(O_pg) &&
+                    (desc->alloc == ALLOC_BD || desc->alloc == ALLOC_BDT)) {
+                  /* See bug 744, libhugetlbfs doesn't detect that the
+                   * allocation of data structures by the profiling library
+                   * code, which causes a program fault after the data section
+                   * is copied and remapped using huge pages.
+                   */
+                  error("-pg and -HP:bdt or -HP:bd are currently incompatible");
+                }
             }
 
             /* With BD or BDT mappings using 1GB pages, the rest
@@ -650,11 +647,9 @@ main (int argc, char *argv[])
 	for (p = files->head, q=file_suffixes->head; p != NULL; p = p->next, q=q->next) 
 	{
             source_file = p->name;
-#ifdef KEY
 		run_inline = UNDEFINED;	// bug 11325
 
 		if (show_flag == TRUE)	// bug 9096
-#endif
 		if (multiple_source_files) {
 			fprintf(stderr, "%s:\n", source_file);
 		}
@@ -686,16 +681,6 @@ main (int argc, char *argv[])
 		source_kind = S_o;
 		source_lang = get_source_lang(source_kind);
 
-#ifndef KEY	// -dsm_clone no longer supported.  Bug 4406.
-		if (option_was_seen(O_dsm_clone)) {
-          	    run_dsm_prelink();
-          	    if (has_errors()) {
-                      cleanup();
-		      cleanup_temp_objects();
-                      return error_status;
-                    }
-                }
-#endif
 		if (option_was_seen(O_ar)) {
 		   run_ar();
 		}
@@ -923,9 +908,7 @@ dump_args (char *msg)
  */
 void do_exit(int code)
 {
-#ifdef KEY	// Bug 6678.
 	unlink(get_report_file_name());
-#endif
 	if (code != 0) {
 		code = 1;
 	}
@@ -1341,7 +1324,11 @@ read_gcc_output(char *cmdline)
 	char *gcc_cmd = NULL;
 	FILE *fp = NULL;
 
+#ifdef TARG_X8664
+	if (asprintf(&gcc_cmd, "%s %s %s", gcc_path, (abi == ABI_N32)?"-m32":"", cmdline) == -1) {
+#else
 	if (asprintf(&gcc_cmd, "%s %s", gcc_path, cmdline) == -1) {
+#endif
 		internal_error("cannot allocate memory");
 		goto bail;
 	}
@@ -1469,7 +1456,7 @@ get_gcc_version(int *v, int nv)
 }
 
 #if defined(TARG_SL)
-  unsigned int SL_version = 0x00204000;	// version 002.04.xxx
+  unsigned int SL_version = 0x00302000;	// version 003.02.xxx
 #endif
 static void
 display_version(boolean dump_version_only)

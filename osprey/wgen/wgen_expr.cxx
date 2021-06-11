@@ -360,6 +360,7 @@ struct operator_from_tree_t {
  GS_VEC_NEW_EXPR,		OPERATOR_UNKNOWN,
  GS_TEMPLATE_TEMPLATE_PARM,	OPERATOR_UNKNOWN,
  GS_FREQ_HINT_STMT,		OPERATOR_UNKNOWN,
+ GS_ZDL_STMT,                   OPERATOR_UNKNOWN,
 };
 
 #ifdef FE_GNU_4_2_0
@@ -1869,7 +1870,6 @@ WGEN_Lhs_Of_Modify_Expr(gs_code_t assign_code,
         wn = NULL;
       }
       else {
-#ifdef KEY
 	// The store target could be an INDIRECT_REF that kg++fe added to make
 	// the store write to the area pointed to by the fake first param.  If
 	// so, check that copying the object does not involve a copy
@@ -1910,7 +1910,6 @@ WGEN_Lhs_Of_Modify_Expr(gs_code_t assign_code,
 	  FmtAssert(!WGEN_has_copy_constructor(type),
 	      ("WGEN_Lhs_Of_Modify_Expr: object needs copy constructor"));
         }
-#endif
         wn = WN_CreateIstore(OPR_ISTORE, MTYPE_V, desc, component_offset, 
 			     Make_Pointer_Type (hi_ty_idx, FALSE),
 			     rhs_wn, addr_wn, field_id);
@@ -7191,6 +7190,16 @@ WGEN_Expand_Expr (gs_t exp,
 	 wn1 = WN_CreateCvtl(OPR_CVTL, Widen_Mtype(mtyp1), MTYPE_V,
 			     MTYPE_size_min(mtyp1), wn1);
 
+       if (MTYPE_is_integral(mtyp) && MTYPE_is_integral(mtyp0) &&
+           MTYPE_size_min(mtyp) > MTYPE_size_min(mtyp0) )
+         wn0 = WN_CreateCvtl(OPR_CVTL, Widen_Mtype(mtyp0), MTYPE_V,
+                             MTYPE_size_min(mtyp0), wn0);
+
+       if (MTYPE_is_integral(mtyp) && MTYPE_is_integral(mtyp1) &&
+           MTYPE_size_min(mtyp) > MTYPE_size_min(mtyp1) )
+         wn1 = WN_CreateCvtl(OPR_CVTL, Widen_Mtype(mtyp1), MTYPE_V,
+                             MTYPE_size_min(mtyp1), wn1);
+
 #ifdef TARG_IA64
        wn  = WN_Relational (Operator_From_Tree [code].opr,
 		            Widen_Mtype(mtyp0), wn0, wn1);
@@ -9114,12 +9123,27 @@ WGEN_Expand_Expr (gs_t exp,
 	        intrinsic_op = TRUE;
 	        break;
                
+#ifdef TARG_X8664
+	      case GSBI_BUILT_IN_POPCOUNT:
+	        iopc = INTRN_I4POPCNT;
+		intrinsic_op = TRUE;
+		break;
+	      case GSBI_BUILT_IN_POPCOUNTL:
+	        iopc = INTRN_I8POPCNT;
+		intrinsic_op = TRUE;
+		break;
+	      case GSBI_BUILT_IN_POPCOUNTLL:
+	        iopc = INTRN_POPCOUNT;
+		intrinsic_op = TRUE;
+		break;
+#else
 	      case GSBI_BUILT_IN_POPCOUNT:
 	      case GSBI_BUILT_IN_POPCOUNTL:
 	      case GSBI_BUILT_IN_POPCOUNTLL:
 	        iopc = INTRN_POPCOUNT;
 		intrinsic_op = TRUE;
 		break;
+#endif
 	
 	      case GSBI_BUILT_IN_PARITY:
 	      case GSBI_BUILT_IN_PARITYL:
@@ -9542,6 +9566,14 @@ WGEN_Expand_Expr (gs_t exp,
             case IRETURN_I2:   ret_mtype = MTYPE_I4;   break; // promote to I4
 	    default: ;
 	    }
+#else 
+#if defined(TARG_SL)
+            switch (ret_mtype) {
+            case MTYPE_I1:
+            case MTYPE_I2: ret_mtype = MTYPE_I4;   break;
+            default: ;
+            }
+#endif
 #endif
 	    wn = WN_Create_Intrinsic (OPR_INTRINSIC_OP, ret_mtype, MTYPE_V,
 				      iopc, num_args, ikids);
@@ -10126,6 +10158,13 @@ WGEN_Expand_Expr (gs_t exp,
 	  else {
 	    enum X86_64_PARM_CLASS classes[MAX_CLASSES];
 	    INT n = Classify_Aggregate(ty_idx, classes);
+            // handle X87 X87UP and COMPLEX_X87 cases
+            if (n != 0 && (classes[0] == X86_64_X87_CLASS ||
+                           classes[0] == X86_64_X87UP_CLASS ||
+                           classes[0] == X86_64_COMPLEX_X87_CLASS)) {
+               // x87, x87up and complex_x87 are passed in memory
+               n = 0;
+            }
 	    if (n == 0) { /* can only pass in memory */
 	      /* increment overflow_arg_area pointer by 8 */
 	      INT delta = ((TY_size(ty_idx) + 7) / 8) * 8;
@@ -10500,6 +10539,7 @@ WGEN_Expand_Expr (gs_t exp,
 #endif
 
     case GS_FREQ_HINT_STMT:
+    case GS_ZDL_STMT:
       WGEN_Expand_Pragma(exp);
       break;
       

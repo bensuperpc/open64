@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2009 Advanced Micro Devices, Inc.  All Rights Reserved.
+ * Copyright (C) 2008-2010 Advanced Micro Devices, Inc.  All Rights Reserved.
  */
 
 /*
@@ -72,7 +72,7 @@
 #include "clone_DST_utils.h"
 
 #include "ipo_inline.h"
-
+#include "ipa_nystrom_alias_analyzer.h"
 static INT initial_initv_tab_size;
 
 MEM_POOL Ipo_mem_pool;
@@ -2014,13 +2014,6 @@ void
 IPO_INLINE::Process_Op_Code (TREE_ITER& iter, IPO_INLINE_AUX& aux)
 {
     WN* wn = iter.Wn ();
-#if defined(KEY) && !defined(_STANDALONE_INLINER) && !defined(_LIGHTWEIGHT_INLINER)
-    // bug 3060
-    // Give everything the linenum of the callsite
-    // bug 6170: for lw-inliner, maintain the callee's line# information
-    if (OPERATOR_has_next_prev(WN_operator(wn)))
-      WN_Set_Linenum (wn, WN_Get_Linenum (Call_Wn()));
-#endif // KEY && !_STANDALONE_INLINER && !_LIGHTWEIGHT_INLINER
     OPERATOR oper = WN_operator (wn);
     switch(oper) {
     case OPR_RETURN_VAL:
@@ -3127,9 +3120,12 @@ IPO_INLINE::Process_Copy_In (PARM_ITER parm, WN* copy_in_block)
 	parm->Set_formal_preg (wn_offset);
 	parm->Set_replace_st (ST_st_idx (copy_st));
 #if (!defined(_STANDALONE_INLINER) && !defined(_LIGHTWEIGHT_INLINER))
-        if (Alias_Nystrom_Analyzer)
+        if (Alias_Nystrom_Analyzer) {
           ConstraintGraph::updateCloneStIdxMap(ST_st_idx(formal_st),
                                                ST_st_idx(copy_st));
+          IPA_NystromAliasAnalyzer::aliasAnalyzer()->processInlineFormal(
+              Caller_node(), Callee_node(), actual, copy_st);
+        }
 #endif
 
     } else {
@@ -3249,9 +3245,12 @@ IPO_INLINE::Process_Copy_In_Copy_Out (PARM_ITER p, IPO_INLINE_AUX& aux)
     p->Set_replace_st (ST_st_idx (copy_st));
 
 #if (!defined(_STANDALONE_INLINER) && !defined(_LIGHTWEIGHT_INLINER))
-    if (Alias_Nystrom_Analyzer)
+    if (Alias_Nystrom_Analyzer){
       ConstraintGraph::updateCloneStIdxMap(ST_st_idx(formal_st),
                                            ST_st_idx(copy_st));
+      IPA_NystromAliasAnalyzer::aliasAnalyzer()->processInlineFormal(
+            Caller_node(), Callee_node(), wn_iload, copy_st);
+    }
 #endif
     
     
@@ -4464,6 +4463,9 @@ IPO_INLINE::Process_Callee (IPO_INLINE_AUX& aux, BOOL same_file)
     if (Alias_Nystrom_Analyzer) {
       ConstraintGraph::promoteLocals(Callee_node());
       ConstraintGraph::cloneConstraintGraphMaps(Caller_node(), Callee_node());
+      IPA_NystromAliasAnalyzer::aliasAnalyzer()->solveInlineConstraints(Callee_node(), Caller_node());
+      IPA_NystromAliasAnalyzer::aliasAnalyzer()->updateCloneTreeWithCgnode(aux.inlined_body);
+      ConstraintGraph::clearOrigToCloneStIdxMap(Caller_node(), Callee_node());
     }
 #endif
 
@@ -4634,7 +4636,8 @@ IPO_INLINE::Post_Process_Caller (IPO_INLINE_AUX& aux)
        WN_next (call) = NULL;
 
        // Check to see if "call" has a return value.
-       if (aux.rp.size () > 0 && WN_opcode (call) != OPC_VCALL) {
+       if (aux.rp.size () > 0 && WN_opcode (call) != OPC_VCALL &&
+           WN_opcode (call) != OPC_VICALL && WN_opcode (call) != OPC_VINTRINSIC_CALL) {
           // Place the call site in a block.
           LWN_Insert_Block_Before(aux.part_inl_leftover_call_site, NULL, call);
           WN_Set_Parent(call, aux.part_inl_leftover_call_site, Parent_Map, Current_Map_Tab);

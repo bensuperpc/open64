@@ -57,6 +57,7 @@
 #include "bb.h"
 #include "op.h"
 #include "register.h"
+#include "tn_map.h"
 
 /* Initialize LRA data structures for PU/region. */
 extern void LRA_Init (void);
@@ -78,6 +79,33 @@ extern mINT8 *LRA_Compute_Register_Request (BB *bb, MEM_POOL *pool);
  */
 extern void LRA_Estimate_Fat_Points (BB* bb, mINT8* fatpoint,
 				     INT* regs_in_use, MEM_POOL* pool);
+
+/* A collection of routines to analyze differences in
+ * code where the utility routines below manipulate the
+ * final result, and which comparisons of live range pressure
+ * can be made.
+ */
+extern TN_MAP Calculate_All_Conflicts(BB *bb, 
+                                      INT *regs_in_use,
+                                      ISA_REGISTER_CLASS rclass);
+extern void Merge_Live_Ranges(TN *tn1, TN *tn2, bool make_tn1_span);
+extern bool Query_Conflicts_Improved(TN_MAP orig_map,
+                                     TN_MAP new_map,
+                                     INT num_reserved,
+                                     INT *num_ranges_mitigated,
+                                     ISA_REGISTER_CLASS rclass);
+extern void Print_Range_And_Conflict_Info(TN_MAP conflict_map,
+                                          ISA_REGISTER_CLASS rclass);
+extern INT Find_Max_Conflicts(TN_MAP conflict_map,
+                              INT *average_conflicts,
+                              INT *num_k_conflicts,
+                              INT *num_edges,
+                              INT *outgoing_conflicts,
+                              ISA_REGISTER_CLASS rclass);
+extern void Truncate_LRs_For_OP(OP *op);
+extern INT Find_Degree_For_TN(TN *tn, INT *regs_in_use);
+extern OP *Find_UseOp_For_TN(TN *tn);
+extern bool Is_TN_Sdsu(TN *tn);
 
 /* Returns the number of registers LRA is requesting from GRA for
  * the class <cl> in the basic block <bb>. If we run the scheduling

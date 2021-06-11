@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2010 Advanced Micro Devices, Inc.  All Rights Reserved.
+ * Copyright (C) 2008-2011 Advanced Micro Devices, Inc.  All Rights Reserved.
  */
 
 //-*-c++-*-
@@ -231,10 +231,14 @@ COMP_UNIT::Pro_loop_trans()
 {
   BOOL do_pro_loop_fusion = WOPT_Enable_Pro_Loop_Fusion_Trans;
   BOOL do_pro_loop_interchange = WOPT_Enable_Pro_Loop_Interchange_Trans;
+  BOOL do_pro_loop_ext = WOPT_Enable_Pro_Loop_Ext_Trans;
 
-  // Disable proactive loop interchange if not optimizing for scalability.
-  if (!OPT_Scale)
+  // Disable proactive loop interchange and extended transformations if not optimizing
+  // for scalability.
+  if (!OPT_Scale) {
     do_pro_loop_interchange = FALSE;
+    do_pro_loop_ext = FALSE;
+  }
 
   // Debug limit
   if ((WOPT_Enable_Pro_Loop_Fusion_Func_Limit >= 0)
@@ -244,7 +248,10 @@ COMP_UNIT::Pro_loop_trans()
   if ((WOPT_Enable_Pro_Loop_Interchange_Func_Limit >= 0)
       && (Current_PU_Count() > WOPT_Enable_Pro_Loop_Interchange_Func_Limit))
     do_pro_loop_interchange = FALSE;
-      
+
+  if ((WOPT_Enable_Pro_Loop_Ext_Func_Limit >= 0)
+      && (Current_PU_Count() > WOPT_Enable_Pro_Loop_Ext_Func_Limit))
+    do_pro_loop_ext = FALSE;
   
   if ( _cfg->Do_pro_loop_trans()) {
     MEM_POOL * pool = _cfg->Loc_pool();
@@ -282,13 +289,13 @@ COMP_UNIT::Pro_loop_trans()
 	if (do_pro_loop_fusion) {
 	  // Start a top-down if-merging.
 	  pro_loop_trans->Set_pass(PASS_GLOBAL);
+          pro_loop_trans->IF_MERGE_TRANS::Normalize(sc_root);
 	  pro_loop_trans->IF_MERGE_TRANS::Top_down_trans(sc_root);
       
 	  // Start a top-down proactive loop fusion transformations.
-	  pro_loop_trans->Set_pass(PASS_LOCAL);
-	  pro_loop_trans->Classify_loops(sc_root);
-	  pro_loop_trans->PRO_LOOP_FUSION_TRANS::Top_down_trans(sc_root);
-
+	  pro_loop_trans->Set_pass(PASS_FUSION);
+	  pro_loop_trans->PRO_LOOP_FUSION_TRANS::Doit(sc_root);
+	  
 	  int pro_loop_trans_count = pro_loop_trans->Transform_count();
     
 	  // Verify branch target labels and feed back info.
@@ -317,7 +324,7 @@ COMP_UNIT::Pro_loop_trans()
 
 	if (do_pro_loop_interchange) {
 	  int count_before = pro_loop_trans->Transform_count();
-	  pro_loop_trans->PRO_LOOP_INTERCHANGE_TRANS::Top_down_trans(sc_root, TRUE);
+	  pro_loop_trans->PRO_LOOP_INTERCHANGE_TRANS::Doit(sc_root);
 	  int count_delta = pro_loop_trans->Transform_count() - count_before;
 	
 	  // Verify branch target labels and feed back info.	
@@ -335,6 +342,26 @@ COMP_UNIT::Pro_loop_trans()
 	  }
 	}
 
+	if (do_pro_loop_ext) {
+	  int count_before = pro_loop_trans->Transform_count();
+	  pro_loop_trans->Do_ext_trans(sc_root);
+	  int count_delta = pro_loop_trans->Transform_count() - count_before;
+	  
+	  // Verify branch target labels and feed back info.	
+	  if (count_delta > 0) {
+	    changed = TRUE;
+	    _cfg->Verify_label();
+
+	    if (Cur_PU_Feedback)
+	      _cfg->Feedback()->Verify(_cfg, "after proactive loop interchange transformation");
+	  }
+
+	  if (trace) {
+	    if (count_delta > 0)
+	      printf("\n\t Extended Proactive Loop Fusion total:%d\n",  count_delta);
+	  }
+	}
+	
 	pro_loop_trans->Delete();
       }
     }
@@ -1402,9 +1429,10 @@ CFG_transformation(COMP_UNIT *cu, bool do_butterfly, bool trace, bool display)
 				  insert_iterator<vector<vertex_id> >
 				  (entry, entry.begin()));
 
-  if (ok == CFG_other_regions) {
+  if (ok == CFG_other_regions ||
+      (ok == CFG_EH_regions && !OPT_Enable_EH_CFG_OPT)) {
     if (trace)
-      fprintf(TFile, ("skip CFG transformation because of non-EH REGION."));
+      fprintf(TFile, ("skip CFG transformation."));
     return;
   }
 
@@ -1422,7 +1450,7 @@ CFG_transformation(COMP_UNIT *cu, bool do_butterfly, bool trace, bool display)
   generate_zones(cu, g, zones, do_butterfly, trace, display);
   clone_zones(g, entry, zones.begin(), zones.end(), cfg, trace, display);
 
-  reconstruct_CFG(g, cfg, trace, ok == CFG_EH_regions);
+  reconstruct_CFG(g, cfg, trace, (ok == CFG_EH_regions && OPT_Enable_EH_CFG_OPT));
 
   cfg->Invalidate_loops();
   cfg->Analyze_loops();

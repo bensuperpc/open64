@@ -223,18 +223,28 @@ Check_TCON ( TCON *tc )
     case MTYPE_I1:
     case MTYPE_I2:
     case MTYPE_I4:
+      // since I1/I2/I4 is negative and sign extend to I8
+      // then store to TCON, tcon_v1 wil be 0xffffffff
+      if (((mINT32)TCON_v0(*tc)) < 0) {
+        Is_True ( ((mINT32)TCON_v1(*tc) == ((mINT32)-1)) &&
+                 ((TCON_v2(*tc)|TCON_v3(*tc)) == 0),
+	       ("TCONV_1 is not -1 or high order word of %s TCON non zero %x",
+		  Mtype_Name(TCON_ty(*tc)), TCON_v1(*tc)) );
+        break;
+      }
+      /* fall thru */
     case MTYPE_U1:
     case MTYPE_U2:
     case MTYPE_U4:
     case MTYPE_F4:
-     Is_True ( TCON_v1(*tc)|TCON_v2(*tc)|TCON_v3(*tc) == 0,
+     Is_True ( (TCON_v1(*tc)|TCON_v2(*tc)|TCON_v3(*tc)) == 0,
 	       ("High order word of %s TCON non zero %x",
 		Mtype_Name(TCON_ty(*tc)), TCON_v1(*tc)) );
      break;
     case MTYPE_I8:
     case MTYPE_U8:
     case MTYPE_F8:
-     Is_True ( TCON_v2(*tc)|TCON_v3(*tc) == 0,
+     Is_True ( (TCON_v2(*tc)|TCON_v3(*tc)) == 0,
 	       ("High order word of %s TCON non zero %x",
 		Mtype_Name(TCON_ty(*tc)), TCON_v1(*tc)) );
      break;
@@ -2422,6 +2432,8 @@ Targ_WhirlOp ( OPCODE op, TCON c0, TCON c1, BOOL *folded )
    printf(" 0x%llx (%s)\n",TCON_I8(c0),Mtype_Name(TCON_ty(c0)));
 #endif
 
+   if(TCON_ty(c0) == MTYPE_I4)
+     TCON_v1(c0)=(TCON_I4(c0)<0)?-1:0;
    return c0;
 } /* Targ_WhirlOp */
 
@@ -3599,20 +3611,25 @@ Host_To_Targ(TYPE_ID ty, INT64 v)
       ErrMsg ( EC_Inv_Mtype, Mtype_Name(ty), "Host_To_Targ" );
 
     case MTYPE_B:
-    case MTYPE_I1:
-    case MTYPE_I2:
-    case MTYPE_I4:
-    case MTYPE_U1:
-    case MTYPE_U2:
-    case MTYPE_U4:
-      TCON_ty(c) = ty;
-      TCON_I8(c) = v; /* Don't change the upper bits */
-      return c;
     case MTYPE_I8:
     case MTYPE_U8:
       TCON_ty(c) = ty;
       TCON_I8(c) = v;
       return c;
+    case MTYPE_I1:
+    case MTYPE_I2:
+    case MTYPE_I4:
+      TCON_ty(c) = ty;
+      TCON_I4(c) = v;
+      if (TCON_I4(c) < 0 )
+	TCON_v1(c) = -1;  // make sure TCON_v1 sign extension
+      return c;
+    case MTYPE_U1:
+    case MTYPE_U2:
+    case MTYPE_U4:
+      TCON_ty(c) = ty;
+      TCON_I4(c) = v;
+      return c; 
   }
 } /* Host_To_Targ */
 
@@ -5135,6 +5152,26 @@ BOOL Targ_Is_Zero ( TCON t )
   }
   return FALSE;
 } /* Targ_Is_Zero */
+
+/*----------------------------------------------------------------------------
+ * return TRUE if the target representation of this TCON is negative zero
+ *--------------------------------------------------------------------------*/
+BOOL Targ_Is_Neg_Zero ( TCON t )
+{
+  switch (TCON_ty(t)) {
+    case MTYPE_F4:
+      return (TCON_R4(t) == 0.0 && TCON_v0(t) != 0);
+    case MTYPE_F8:
+      return (TCON_R8(t) == 0.0
+        && (TCON_v0(t)|TCON_v1(t)) != 0);
+    case MTYPE_F10:
+      return (TCON_R16(t) == 0.0 &&
+        (TCON_v0(t)|TCON_v1(t)|TCON_v2(t)|TCON_v3(t)) != 0);
+    default:
+      return FALSE;
+  }
+}
+
 
 /* ====================================================================
  *

@@ -239,7 +239,7 @@ struct tn {
     } reg_tn;
   } u1;
   /* offset 8 */
-  mUINT16	flags;		/* Attribute flags */
+  mUINT32	flags;		/* Attribute flags */
 #ifdef TARG_NVISA
   /* nvisa doesn't use relocs, needs space info, so overlap space and relocs */
   union {
@@ -284,6 +284,7 @@ struct tn {
 #ifdef TARG_X8664
 #define TN_PREALLOCATED	    0x4000  /* TN is pre-allocated in LRA */
 #define TN_THREAD_SEG_PTR   0x8000  /* TN is pointer to thread-local storage */
+#define TN_NO_RENAME        0x10000 /* TN does not get auto renamed */
 #endif
 
 #ifdef TARG_IA64
@@ -573,6 +574,10 @@ inline void  Set_TN_number(TN *t, int x)
 #define       TN_is_thread_seg_ptr(r)	(TN_flags(r) &   TN_THREAD_SEG_PTR)
 #define   Set_TN_is_thread_seg_ptr(r)	(TN_flags(r) |=  TN_THREAD_SEG_PTR)
 #define Reset_TN_is_thread_seg_ptr(r)	(TN_flags(r) &= ~TN_THREAD_SEG_PTR)
+
+#define       TN_is_norename(r)	(TN_flags(r) &   TN_NO_RENAME)
+#define   Set_TN_is_norename(r)	(TN_flags(r) |=  TN_NO_RENAME)
+#define Reset_TN_is_norename(r)	(TN_flags(r) &= ~TN_NO_RENAME)
 #endif
 
 /* Macros to check if a TN is a particular dedicated register. */
@@ -868,8 +873,39 @@ inline TN *Build_TN_Like(TN *tn)
 
 inline TN *Build_TN_Of_Mtype(TYPE_ID mtype)
 {
-  ISA_REGISTER_CLASS rc = Register_Class_For_Mtype(mtype);
-  return Gen_Register_TN (rc, MTYPE_RegisterSize(mtype) );
+  ISA_REGISTER_CLASS rc;  // register class
+  INT rs;                 // register size
+#ifdef TARG_SL
+  extern void Create_TN_Pair(TN* key, TN* pair);
+#ifdef EMULATE_LONGLONG
+  if (mtype == MTYPE_I8 || mtype == MTYPE_U8) {
+    TYPE_ID new_mtype = (mtype == MTYPE_I8 ? MTYPE_I4 : MTYPE_U4);
+    rc = Register_Class_For_Mtype(new_mtype);
+    rs = MTYPE_RegisterSize(new_mtype);
+    TN *tn1 = Gen_Register_TN (rc, rs);
+    TN *tn2 = Gen_Register_TN (rc, rs);
+    Create_TN_Pair (tn1, tn2);
+    return tn1;
+  }
+#endif
+#ifdef EMULATE_FLOAT_POINT
+  if (mtype == MTYPE_F8) {
+    rc = Register_Class_For_Mtype(MTYPE_U4);
+    rs = MTYPE_RegisterSize(MTYPE_U4);
+    TN *tn1 = Gen_Register_TN (rc, rs);
+    TN *tn2 = Gen_Register_TN (rc, rs);
+    Create_TN_Pair (tn1, tn2);
+    return tn1;
+  } else if (mtype = MTYPE_F4) {
+    rc = Register_Class_For_Mtype(MTYPE_U4);
+    rs = MTYPE_RegisterSize(MTYPE_U4);
+    return Gen_Register_TN (rc, rs);
+  }
+#endif
+#endif
+  rc = Register_Class_For_Mtype(mtype);
+  rs = MTYPE_RegisterSize(mtype);
+  return Gen_Register_TN (rc, rs);
 }
 
 extern	TN *Dup_TN ( TN *tn );	/* Duplicate an existing TN */

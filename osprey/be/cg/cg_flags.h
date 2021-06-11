@@ -101,6 +101,9 @@
  *  BOOL CG_dispatch_schedule
  *     Enable dispatch scheduling for Orochi style architectures.
  *
+ *  BOOL CG_LOOP_unroll_best_fit
+ *     Toggle default state of unroll best fit behavior.
+ *
  *  BOOL CG_128bitstore
  *     Enable 128bit unaligned stores optimization which emits movup{s|d}
  *     instead of movhp{s|d} with movlp{s|d}.
@@ -458,11 +461,8 @@
 extern BOOL CG_warn_bad_freqs;
 extern BOOL CG_enable_loop_optimizations;
 #ifdef TARG_SL
-extern BOOL CG_enable_zero_delay_loop;
-extern UINT32 CG_zdl_enabled_level;
-extern UINT32 CG_zdl_skip_e;
-extern UINT32 CG_zdl_skip_a;
-extern UINT32 CG_zdl_skip_b;
+extern INT32 CG_zdl_enabled_level;
+extern INT32 CG_max_zdl_level;    //hardware max supported zero delay loop level
 extern BOOL CG_enable_opt_condmv;
 extern BOOL CG_enable_CBUS_workaround;
 extern BOOL CG_enable_LD_NOP_workaround;
@@ -530,9 +530,14 @@ extern BOOL CG_skip_local_swp;
 extern BOOL CG_cmp_load_exec;
 extern BOOL CG_fma4_load_exec;
 extern BOOL CG_dispatch_schedule;
+extern BOOL CG_LOOP_nounroll_best_fit_set;
 extern BOOL CG_128bitstore;
 extern BOOL CG_branch_fuse;
 extern BOOL CG_strcmp_expand;
+extern BOOL CG_merge_counters_x86;
+extern BOOL CG_merge_counters_x86_set;
+extern BOOL CG_interior_ptrs_x86;  // enable,disable interior pointer trans
+extern BOOL CG_NoClear_Avx_Simd;
 #endif
 extern INT CG_opt_level;
 extern BOOL CG_localize_tns;
@@ -640,6 +645,9 @@ extern BOOL CGSPILL_Enable_Force_Rematerialization;
 
 /* GCM, LOCS and IGLS */
 
+extern UINT32 LOCS_PRE_Enable_Minreg_Level;
+extern BOOL LOCS_PRE_Enable_General_RegPressure_Sched;
+extern BOOL LOCS_PRE_Enable_Unroll_RegPressure_Sched;
 extern BOOL LOCS_PRE_Enable_Scheduling;
 extern BOOL LOCS_POST_Enable_Scheduling;
 extern BOOL LOCS_Enable_Bundle_Formation;
@@ -855,6 +863,7 @@ extern BOOL LOCS_Balance_Unsched_Fp_set;
 extern BOOL LOCS_Reduce_Prefetch;
 extern BOOL LOCS_Reduce_Prefetch_set;
 #endif
+extern INT32 CG_p2align;
 #if defined(TARG_X8664) || defined(TARG_LOONGSON)
 extern INT32 CG_sse_load_execute;
 extern INT32 CG_load_execute;
@@ -863,7 +872,6 @@ extern BOOL CG_use_setcc;
 extern BOOL CG_use_short_form;
 extern BOOL CG_loadbw_execute;
 extern BOOL CG_Movext_ICMP;
-extern BOOL CG_p2align;
 extern BOOL CG_loop32;
 extern BOOL CG_compute_to;
 extern UINT64 CG_p2align_freq;

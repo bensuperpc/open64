@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009 Advanced Micro Devices, Inc.  All Rights Reserved.
+ * Copyright (C) 2009-2010 Advanced Micro Devices, Inc.  All Rights Reserved.
  */
 
 /*
@@ -101,6 +101,7 @@
 #include "data_layout.h"
 #include "dwarf_DST.h"
 #include "dwarf_DST_mem.h"
+#include "ir_reader.h"
 #include "const.h"
 #include "cg.h"
 #include "cgtarget.h"
@@ -123,6 +124,8 @@ static Dwarf_P_Debug dw_dbg;
 static Dwarf_Error dw_error;
 static BOOL Disable_DST = FALSE;
 static DST_INFO_IDX cu_idx;
+static Dwarf_Unsigned cu_text_begin = 0;
+static Dwarf_Unsigned cu_text_end = 0;
 static Elf64_Word cur_text_index;
 static DST_language Dwarf_Language;
 //static INT Current_Tree_Level;
@@ -133,6 +136,17 @@ static mINT32 CGD_enclosing_proc_max = 0;
 
 #define GLOBAL_LEVEL 0
 #define LOCAL_LEVEL 1
+
+// the class Scope_Dwarf_Expr_Ptr is used for deallocate the allocated 
+// Dwarf_P_Expr pointer in C++ way
+class Scope_Dwarf_Expr_Ptr
+{
+   public:
+      Scope_Dwarf_Expr_Ptr(Dwarf_P_Expr p) : _ptr(p) {}
+      ~Scope_Dwarf_Expr_Ptr() { dwarf_p_dealloc(_ptr, DW_DLA_STRING); }
+   private:
+     Dwarf_P_Expr _ptr; 
+};
 
 struct CGD_SYMTAB_ENTRY {
   CGD_SYMTAB_ENTRY_TYPE type;
@@ -679,7 +693,6 @@ put_subprogram(DST_flag flag,
 	       DST_SUBPROGRAM *attr,
 	       Dwarf_P_Die die)
 {
-  Dwarf_P_Expr expr;
 
   if (DST_IS_memdef(flag))  /* Not yet supported */ {
     ErrMsg (EC_Unimplemented, 
@@ -708,7 +721,8 @@ put_subprogram(DST_flag flag,
        dwarf_add_AT_unsigned_const(dw_dbg, die, DW_AT_virtuality,
 			           DST_SUBPROGRAM_decl_virtuality(attr),
 				   &dw_error);
-       expr = dwarf_new_expr(dw_dbg, &dw_error);
+       Dwarf_P_Expr expr = dwarf_new_expr(dw_dbg, &dw_error);
+       Scope_Dwarf_Expr_Ptr expr_ptr(expr);
        dwarf_add_expr_gen(expr,
               	 	  DW_OP_const2u,
 			  DST_SUBPROGRAM_decl_vtable_elem_location(attr),
@@ -795,7 +809,8 @@ put_subprogram(DST_flag flag,
        dwarf_add_AT_unsigned_const(dw_dbg, die, DW_AT_virtuality,
 			           DST_SUBPROGRAM_def_virtuality(attr),
 				   &dw_error);
-       expr = dwarf_new_expr(dw_dbg, &dw_error);
+       Dwarf_P_Expr expr = dwarf_new_expr(dw_dbg, &dw_error);
+       Scope_Dwarf_Expr_Ptr expr_ptr(expr);
        dwarf_add_expr_gen(expr,
               	 	  DW_OP_const2u,
 			  DST_SUBPROGRAM_def_vtable_elem_location(attr),
@@ -911,7 +926,6 @@ put_location (
   Dwarf_P_Die die,
   Dwarf_Half loc_attr)
 {
-  Dwarf_P_Expr expr;
   ST *st;
   ST *base_st;
   INT64 base_ofst;
@@ -948,7 +962,8 @@ put_location (
   if (DST_IS_deref(flag))  /* f90 formals, dope, etc */
 	deref = TRUE;
 
-  expr = dwarf_new_expr (dw_dbg, &dw_error);
+  Dwarf_P_Expr expr = dwarf_new_expr (dw_dbg, &dw_error);
+  Scope_Dwarf_Expr_Ptr expr_ptr(expr);
 
   if (st == base_st && ST_class(st) != CLASS_BLOCK 
 	&& ST_sclass(st) != SCLASS_COMMON && ST_sclass(st) != SCLASS_EXTERN) 
@@ -1563,8 +1578,6 @@ put_union_type(DST_flag flag, DST_UNION_TYPE *attr, Dwarf_P_Die die)
 static void
 put_member(DST_flag flag, DST_MEMBER *attr, Dwarf_P_Die die)
 {
-  Dwarf_P_Expr expr;
-
   put_decl(DST_MEMBER_decl(attr), die);
   put_name (DST_MEMBER_name(attr), die, pb_none);
   put_reference (DST_MEMBER_type(attr), DW_AT_type, die);
@@ -1585,7 +1598,8 @@ put_member(DST_flag flag, DST_MEMBER *attr, Dwarf_P_Die die)
 	 * decl and static flags are set at same time,
 	 * so use decl flag. */
   	/* For now, assume that the member location is always a constant. */
-  	expr = dwarf_new_expr (dw_dbg, &dw_error);
+        Dwarf_P_Expr expr = dwarf_new_expr (dw_dbg, &dw_error);
+        Scope_Dwarf_Expr_Ptr expr_ptr(expr);
 #ifdef KEY
         // the dwarf spec says that the location expression for a structure member
         // assumes that the location of the struct itself is on the stack.  This
@@ -1645,10 +1659,11 @@ put_template_value_param(DST_flag flag, DST_TEMPLATE_VALUE_PARAMETER *attr,
 static void
 put_inheritance(DST_flag flag, DST_INHERITANCE *attr, Dwarf_P_Die die)
 {
-  Dwarf_P_Expr expr;
-
   put_reference (DST_INHERITANCE_type(attr), DW_AT_type, die);
+
+  Dwarf_P_Expr expr;
   expr = dwarf_new_expr (dw_dbg, &dw_error);
+  Scope_Dwarf_Expr_Ptr expr_ptr( expr);
 #ifdef KEY
   // Bug 3107
   // Quote from Dave's last fix:
@@ -2333,7 +2348,6 @@ Cg_Dwarf_Process_PU (Elf64_Word	scn_index,
 {
   DST_INFO *info;
   Dwarf_P_Die PU_die;
-  Dwarf_P_Expr expr;
   Dwarf_P_Fde fde;
 #ifdef TARG_X8664
   Dwarf_P_Fde eh_fde = 0;
@@ -2394,7 +2408,8 @@ Cg_Dwarf_Process_PU (Elf64_Word	scn_index,
   }
 
   /* setup the frame_base attribute. */
-  expr = dwarf_new_expr (dw_dbg, &dw_error);
+  Dwarf_P_Expr expr = dwarf_new_expr (dw_dbg, &dw_error);
+  Scope_Dwarf_Expr_Ptr expr_ptr(expr);
 #ifndef TARG_X8664
 #ifndef TARG_NVISA /* no stack frames yet */
   if (Current_PU_Stack_Model != SMODEL_SMALL)
@@ -2430,6 +2445,8 @@ Cg_Dwarf_Process_PU (Elf64_Word	scn_index,
   Dwarf_Unsigned end_entry   = Cg_Dwarf_Symtab_Entry(CGD_LABIDX,
 						     end_label,
 						     scn_index);
+  if( !cu_text_begin ) cu_text_begin = begin_entry;
+  cu_text_end = end_entry;
 
 #ifndef TARG_X8664
   fde = Build_Fde_For_Proc (dw_dbg, REGION_First_BB,
@@ -2438,15 +2455,25 @@ Cg_Dwarf_Process_PU (Elf64_Word	scn_index,
 			    end_offset,
 			    low_pc, high_pc);
 #else
-  Dwarf_Unsigned pushbp_entry = Cg_Dwarf_Symtab_Entry(CGD_LABIDX,
-						      eh_pushbp_label[0],
-						      scn_index);
-  Dwarf_Unsigned movespbp_entry   = Cg_Dwarf_Symtab_Entry(CGD_LABIDX,
-							  eh_movespbp_label[0],
-							  scn_index);
-  Dwarf_Unsigned adjustsp_entry   = Cg_Dwarf_Symtab_Entry(CGD_LABIDX,
-							  eh_adjustsp_label[0],
-							  scn_index);
+  Dwarf_Unsigned pushbp_entry;
+  Dwarf_Unsigned movespbp_entry;
+  if (Current_PU_Stack_Model != SMODEL_SMALL)
+  {
+    pushbp_entry = Cg_Dwarf_Symtab_Entry(CGD_LABIDX,
+					      eh_pushbp_label[0],
+					      scn_index);
+    movespbp_entry   = Cg_Dwarf_Symtab_Entry(CGD_LABIDX,
+						  eh_movespbp_label[0],
+						  scn_index);
+  }
+  Dwarf_Unsigned adjustsp_entry;
+  if (eh_adjustsp_label[0] != 0)
+     adjustsp_entry = Cg_Dwarf_Symtab_Entry(CGD_LABIDX,
+						  eh_adjustsp_label[0],
+						  scn_index);
+  else 
+    adjustsp_entry = begin_entry;
+
   Dwarf_Unsigned callee_saved_reg;
   INT num_callee_saved_regs;
   if (num_callee_saved_regs = Cgdwarf_Num_Callee_Saved_Regs())
@@ -2508,12 +2535,15 @@ Cg_Dwarf_Process_PU (Elf64_Word	scn_index,
       end_entry   = Cg_Dwarf_Symtab_Entry(CGD_LABIDX,
 					  last_bb_labels[pu_entry],
 					  scn_index);
-      pushbp_entry = Cg_Dwarf_Symtab_Entry(CGD_LABIDX,
+      if (Current_PU_Stack_Model != SMODEL_SMALL)
+      {
+        pushbp_entry = Cg_Dwarf_Symtab_Entry(CGD_LABIDX,
 					   eh_pushbp_label[pu_entry],
 					   scn_index);
-      movespbp_entry   = Cg_Dwarf_Symtab_Entry(CGD_LABIDX,
+        movespbp_entry   = Cg_Dwarf_Symtab_Entry(CGD_LABIDX,
 					       eh_movespbp_label[pu_entry],
 					       scn_index);
+      }
       adjustsp_entry   = Cg_Dwarf_Symtab_Entry(CGD_LABIDX,
 					       eh_adjustsp_label[pu_entry],
 					       scn_index);
@@ -2603,6 +2633,12 @@ Cg_Dwarf_Begin (BOOL is_64bit)
   CGD_Symtab.push_back(CGD_SYMTAB_ENTRY(CGD_ELFSYM, (Dwarf_Unsigned) -1));
 }
 
+void
+Mark_CU_begin_end(Dwarf_P_Die cu_die, Dwarf_Unsigned low_pc, Dwarf_Unsigned high_pc)
+{
+  put_pc_value_symbolic (DW_AT_low_pc, low_pc, (Dwarf_Addr) 0, cu_die);
+  put_pc_value_symbolic (DW_AT_high_pc, high_pc, (Dwarf_Addr) 0, cu_die);
+}
 
 /* go through any remaining DST entries after the last subprogram. This
    also handles the case of a file with no PUs.
@@ -2610,6 +2646,7 @@ Cg_Dwarf_Begin (BOOL is_64bit)
 void Cg_Dwarf_Finish (pSCNINFO text_scninfo)
 {
   if (Disable_DST) return;
+  Mark_CU_begin_end(CGD_enclosing_proc[GLOBAL_LEVEL], cu_text_begin, cu_text_end);
   Traverse_Extra_DST();	/* do final pass for any info not emitted yet */
 }
 
@@ -2709,7 +2746,6 @@ void Cg_Dwarf_Gen_Asm_File_Table (void)
 #endif
 
   }
-
 }
 
 #ifdef KEY
@@ -2859,8 +2895,12 @@ print_source (SRCPOS srcpos)
     for (i = cur_file->max_line_printed; i < USRCPOS_linenum(usrcpos); i++) {
       if (fgets (text, sizeof(text), cur_file->fileptr) != NULL) {
 	// check for really long line
-       if (strlen(text) >= 1023) text[1022] = '\n';
-#if defined(TARG_SL)
+	int len = strlen(text);
+	if (len >= sizeof(text)-1) 
+	  text[sizeof(text)-2] = '\n';
+
+        // This also may happen when "no newline at the end of the file." 
+
         // Fixed a source information bug with IPA turn on. When turning on
         // IPA there is no '\n' after source line info "#endif\0", but correct
         // content should be "#endif\n\0". This will cause real instruction
@@ -2870,11 +2910,11 @@ print_source (SRCPOS srcpos)
         //     mv16 $4, $0
         // With IPA:
         //   #endif mv16 $4, $0
-        if (text[strlen(text)-1] != '\n') {
-          text[strlen(text)+1] = '\0';
-          text[strlen(text)] = '\n';
+        if (len == 0 || text[len-1] != '\n') {
+          text[len] = '\n';
+          text[len+1] = '\0';
         }
-#endif
+
         fprintf (Asm_File, "%s%4d  %s", ASM_CMNT_LINE, i+1, text);
       }
     }

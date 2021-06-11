@@ -105,14 +105,14 @@ INT32 CG_LOOP_DCE_op_skip_before = -1;
 INT32 CG_LOOP_DCE_op_skip_after = -1;
 INT32 CG_LOOP_DCE_op_skip_equal = -1;
 
-BOOL CG_GCM_enable_critical_edge_motion = TRUE;
+BOOL CG_GCM_enable_critical_edge_motion = FALSE;
 BOOL CG_GCM_enable_mvtc_optimization = TRUE;
-BOOL CG_GCM_enable_reduce_loop_count = TRUE;
-BOOL CG_GCM_enable_licm = TRUE;
-BOOL CG_GCM_enable_dce = TRUE;
-BOOL CG_GCM_enable_rce = TRUE;
+BOOL CG_GCM_enable_reduce_loop_count = FALSE;
+BOOL CG_GCM_enable_licm = FALSE;
+BOOL CG_GCM_enable_dce = FALSE;
+BOOL CG_GCM_enable_rce = FALSE;
 BOOL CG_GCM_enable_break_dependence = FALSE;
-BOOL CG_GCM_enable_merge_small_bbs = TRUE;
+BOOL CG_GCM_enable_merge_small_bbs = FALSE;
 #endif 
 BOOL CG_skip_local_hbf = FALSE;
 BOOL CG_skip_local_loop = FALSE;
@@ -124,7 +124,12 @@ BOOL CG_fma4_load_exec = FALSE;
 BOOL CG_128bitstore = TRUE;
 BOOL CG_branch_fuse = TRUE;
 BOOL CG_dispatch_schedule = FALSE;
+BOOL CG_LOOP_nounroll_best_fit_set = FALSE;
 BOOL CG_strcmp_expand = TRUE;
+BOOL CG_merge_counters_x86 = FALSE;
+BOOL CG_merge_counters_x86_set = FALSE;
+BOOL CG_interior_ptrs_x86 = FALSE;
+BOOL CG_NoClear_Avx_Simd = FALSE;
 #endif
 BOOL CG_opt_level;
 BOOL CG_localize_tns = FALSE;
@@ -229,6 +234,9 @@ BOOL CG_tail_call = TRUE;
 BOOL GCM_Speculative_Loads = FALSE;
 BOOL GCM_Predicated_Loads = FALSE;
 #endif
+UINT32 LOCS_PRE_Enable_Minreg_Level = 0;
+BOOL LOCS_PRE_Enable_General_RegPressure_Sched = FALSE;
+BOOL LOCS_PRE_Enable_Unroll_RegPressure_Sched = FALSE;
 BOOL LOCS_PRE_Enable_Scheduling = TRUE;
 BOOL LOCS_POST_Enable_Scheduling = TRUE;
 BOOL LOCS_Enable_Scheduling = TRUE;
@@ -245,21 +253,8 @@ BOOL CG_SL2_enable_peephole = TRUE;
 BOOL CG_SL2_enable_v1buf_expansion = TRUE;
 BOOL CG_Enable_Macro_Instr_Combine = TRUE;
 
-/* CG_zdl_enabled_level : The enabled levels counting from inside to
- *                        outside.
- * CG_zdl_skip_e        : the sequential number of loops that wont be
- *                        zdl'ed. The sequential number is counted for
- *                        each compilation unit. 
- * CG_zdl_skip_a/b      : the loops whose sequential number bigger than
- *                        (or smaller than) this will be ignored, not 
- *                        including this number.
- * The sequentional number of loops beginnes from 1, not 0.
- */
-BOOL CG_enable_zero_delay_loop = TRUE;
-UINT32 CG_zdl_enabled_level = 2; // default value is 2
-UINT32 CG_zdl_skip_e = 0;  
-UINT32 CG_zdl_skip_a = INT32_MAX;
-UINT32 CG_zdl_skip_b = 0;
+INT32 CG_zdl_enabled_level = 2; // default value is 2
+INT32 CG_max_zdl_level = 4;
 BOOL CG_enable_opt_condmv = TRUE;
 BOOL CG_enable_CBUS_workaround = FALSE;
 BOOL CG_enable_LD_NOP_workaround = FALSE;
@@ -296,7 +291,7 @@ BOOL CG_use_short_form = FALSE;
 UINT64 CG_p2align_freq = 10000;
 UINT32 CG_p2align_max_skip_bytes = 3;
 UINT32 CG_movnti = 1000;
-BOOL CG_use_incdec = FALSE;
+BOOL CG_use_incdec = TRUE;
 BOOL CG_use_xortozero = TRUE; // bug 8592
 BOOL CG_use_xortozero_Set = FALSE;
 BOOL CG_use_test = FALSE;
@@ -517,11 +512,17 @@ INT32 CG_sse_cse_regs = INT32_MAX - 1000;
 INT32 CG_sse_load_execute = 0;
 INT32 CG_load_execute = 1;
 BOOL CG_loadbw_execute = FALSE;
-BOOL CG_p2align = FALSE;
+#if defined(TARG_X8664)
+INT32 CG_p2align = 2;
+#else
+INT32 CG_p2align = 0;
+#endif
 BOOL CG_loop32 = FALSE;
 BOOL CG_compute_to = FALSE;
 BOOL CG_valgrind_friendly = TRUE;
 BOOL CG_Movext_ICMP = TRUE;
+#else
+INT32 CG_p2align = 0;
 #endif
 #ifdef TARG_LOONGSON
 BOOL CGEXP_float_use_madd = FALSE;

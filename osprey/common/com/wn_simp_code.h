@@ -935,14 +935,34 @@ INT32 SIMPNODE_Simp_Compare_Trees(simpnode t1, simpnode t2)
       return SIMPNODE_Compare_Symbols(t1,t2);
       
     case OPR_ILOAD:
+    {
+      int ret;
+      
       if (SIMPNODE_load_offset(t1) < SIMPNODE_load_offset(t2)) return(-1);
       if (SIMPNODE_load_offset(t1) > SIMPNODE_load_offset(t2)) return(1);
       if (SIMPNODE_desc(t1) == MTYPE_BS || SIMPNODE_desc(t2) == MTYPE_BS) {
-	if (SIMPNODE_i_field_id(t1) < SIMPNODE_i_field_id(t2)) return(-1);
-	if (SIMPNODE_i_field_id(t1) > SIMPNODE_i_field_id(t2)) return(1);
+          if (SIMPNODE_i_field_id(t1) < SIMPNODE_i_field_id(t2)) return(-1);
+          if (SIMPNODE_i_field_id(t1) > SIMPNODE_i_field_id(t2)) return(1);
       }
-      return (SIMPNODE_Simp_Compare_Trees(SIMPNODE_kid0(t1),
-					  SIMPNODE_kid0(t2)));
+      ret = SIMPNODE_Simp_Compare_Trees(SIMPNODE_kid0(t1),SIMPNODE_kid0(t2));
+      if (ret == 0) {
+          BOOL ty_is_volatile ;
+          BOOL lod_addr_volatile ;
+          BOOL item_is_volatile ;
+
+          ty_is_volatile = TY_is_volatile(SIMPNODE_ty(t1)) 
+              || TY_is_volatile(SIMPNODE_ty(t2));
+          lod_addr_volatile = TY_is_volatile(TY_pointed(SIMPNODE_load_addr_ty(t1))) 
+              || TY_is_volatile(TY_pointed(SIMPNODE_load_addr_ty(t2)));
+          item_is_volatile = TY_is_volatile(SIMPNODE_object_ty(t1)) 
+            || TY_is_volatile(SIMPNODE_object_ty(t2));
+
+          if (ty_is_volatile || lod_addr_volatile || item_is_volatile) {
+              return t1 - t2;
+          }
+      }
+      return ret;
+    }
 
     case OPR_ILDBITS:
       if (SIMPNODE_load_offset(t1) < SIMPNODE_load_offset(t2)) return(-1);
@@ -962,13 +982,33 @@ INT32 SIMPNODE_Simp_Compare_Trees(simpnode t1, simpnode t2)
 					  SIMPNODE_kid1(t2)));
 
     case OPR_LDID:
-      if (SIMPNODE_load_offset(t1) < SIMPNODE_load_offset(t2)) return(-1);
-      if (SIMPNODE_load_offset(t1) > SIMPNODE_load_offset(t2)) return(1);
-      if (SIMPNODE_desc(t1) == MTYPE_BS || SIMPNODE_desc(t2) == MTYPE_BS) {
-	if (SIMPNODE_field_id(t1) < SIMPNODE_field_id(t2)) return(-1);
-	if (SIMPNODE_field_id(t1) > SIMPNODE_field_id(t2)) return(1);
-      }
-      return SIMPNODE_Compare_Symbols(t1,t2);
+    {
+        int ret;
+
+        if (SIMPNODE_load_offset(t1) < SIMPNODE_load_offset(t2)) return(-1);
+        if (SIMPNODE_load_offset(t1) > SIMPNODE_load_offset(t2)) return(1);
+        if (SIMPNODE_desc(t1) == MTYPE_BS || SIMPNODE_desc(t2) == MTYPE_BS) {
+            if (SIMPNODE_field_id(t1) < SIMPNODE_field_id(t2)) return(-1);
+            if (SIMPNODE_field_id(t1) > SIMPNODE_field_id(t2)) return(1);
+        }
+        ret = SIMPNODE_Compare_Symbols(t1,t2);
+        if (ret == 0){
+            BOOL ty_is_volatile = TY_is_volatile(SIMPNODE_ty(t1)) || TY_is_volatile(SIMPNODE_ty(t2));
+            if (ty_is_volatile) {
+                return t1 - t2;
+            }
+            if (SIMPNODE_field_id(t1) || SIMPNODE_field_id(t2)) {
+              TY_IDX t1_obj_ty = SIMPNODE_object_ty(t1);
+              TY_IDX t2_obj_ty = SIMPNODE_object_ty(t2);
+              
+              ty_is_volatile = TY_is_volatile(t1_obj_ty) || TY_is_volatile(t2_obj_ty);
+              if (ty_is_volatile) {
+                return t1 - t2;
+              }
+            }
+        }
+        return ret;
+    }
 
     case OPR_LDBITS:
       if (SIMPNODE_load_offset(t1) < SIMPNODE_load_offset(t2)) return(-1);
@@ -2200,7 +2240,7 @@ static simpnode  simp_add_sub(OPCODE opc,
    if (r) return r;
 
 #ifdef TARG_X8664
-   if (MTYPE_C8 == ty)
+   if (MTYPE_C8 == ty && Opt_Level != 0)
    {
       if (MTYPE_F8 == SIMPNODE_rtype(k0) && MTYPE_F8 == SIMPNODE_rtype(k1))
       {
@@ -2899,7 +2939,7 @@ static simpnode  simp_times( OPCODE opc,
    }
    if (r) return r;
 #ifdef TARG_X8664
-   if (MTYPE_C8 == ty || MTYPE_V16C8 == ty)
+   if ((MTYPE_C8 == ty || MTYPE_V16C8 == ty) && Opt_Level != 0)
    {
       if (SIMPNODE_rtype(k1) == MTYPE_F8 && SIMPNODE_rtype(k0) == MTYPE_F8)
       {
@@ -3167,7 +3207,7 @@ static simpnode  simp_div( OPCODE opc,
       }
    }
 #ifdef TARG_X8664
-   if (MTYPE_C8 == ty)
+   if (MTYPE_C8 == ty && Opt_Level != 0)
    {
       /* complex const converted to real const */
       if (k0const && SIMPNODE_rtype(k0) == ty)
@@ -5768,6 +5808,11 @@ static simpnode SIMPNODE_SimplifyExp2_h(OPCODE opc, simpnode k0, simpnode k1)
       }
    }
 
+   if (SIMPNODE_is_volatile(k0)
+       || SIMPNODE_is_volatile(k1)) {
+     return result;
+   }
+
    if (Simp_Canonicalize) {
       /* Simply canonicalization for constants. *******************************
 	 c1 op1 x		x op2 c2	     if op1 is one of the following:
@@ -6573,6 +6618,10 @@ simpnode SIMPNODE_SimplifyIload(OPCODE opc, WN_OFFSET offset,
    
 
    if (!SIMPNODE_enable || !WN_Simp_Fold_ILOAD) return (r);
+   if (TY_is_volatile(ty) 
+       || (TY_kind(load_addr_ty) == KIND_POINTER && TY_is_volatile(TY_pointed(load_addr_ty))))
+     return (r);
+
    if (!SIMPNODE_simp_initialized) SIMPNODE_Simplify_Initialize();
 #ifdef KEY
    /* Look for ILOAD(LDA) of constants in memory */

@@ -652,7 +652,10 @@ Allocate_Space(ST *base, ST *blk, INT32 lpad, INT32 rpad, INT64 maxsize)
   INT64 size;
   INITO_IDX ino_idx;
   // if blk is variable length struct, its size should be inito size.
-  if (TY_kind(ST_type(blk)) == KIND_STRUCT && (ino_idx = Find_INITO_For_Symbol(blk)) != 0 && INITV_kind(INITO_val(ino_idx)) == INITVKIND_BLOCK)
+  if ( ST_class(blk) == CLASS_VAR &&
+       TY_kind(ST_type(blk)) == KIND_STRUCT && 
+       (ino_idx = Find_INITO_For_Symbol(blk)) != 0 &&
+       INITV_kind(INITO_val(ino_idx)) == INITVKIND_BLOCK )
   {
     size = Get_INITO_Size(ino_idx);
     Is_True(size >= ST_size(blk),("%s's inito size smaller than ST_size",ST_name(blk)));
@@ -2490,6 +2493,14 @@ Process_Stack_Variable ( ST *st )
 	base = SP_Sym;
    else
 	base = FP_Sym;
+
+   if (ST_class (st) == CLASS_VAR) {
+     INT16 align = Adjusted_Alignment (st);
+     TY_IDX ty = ST_type(st);
+     Set_TY_align (ty, align); 
+     Set_ST_type (*st, ty);
+   }
+
    ST_Block_Merge (base, st, 0, 0, MAX_FRAME_OFFSET);
 }
 
@@ -2576,6 +2587,14 @@ INT64 Finalize_Stack_Frame (void)
 
   Set_Error_Phase("Data Layout");
   Clear_Vararg_Symbols();
+
+  if (Debug_Level > 0) {
+      FOREACH_SYMBOL (CURRENT_SYMTAB, st, i) {
+          if (ST_class(st) == CLASS_VAR) {
+              Allocate_Object(st);
+          }
+      }
+  }
 
   For_all (Inito_Table, CURRENT_SYMTAB, finalize_inito());
 
@@ -3359,7 +3378,7 @@ Allocate_Object ( ST *st )
       return;
   }
 
-  if (ST_is_not_used(st)) return;
+  if (ST_is_not_used(st)&& Debug_Level <= 0) return;
 
   if (ST_has_named_section(st)) {
     // bug fix for OSP_138

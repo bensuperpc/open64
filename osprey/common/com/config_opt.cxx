@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2009 Advanced Micro Devices, Inc.  All Rights Reserved.
+ * Copyright (C) 2008-2011 Advanced Micro Devices, Inc.  All Rights Reserved.
  */
 
 /*
@@ -228,6 +228,8 @@ BOOL OPT_Reorg_Common = FALSE;	/* Do common block reorganization (split)? */
 BOOL OPT_Reorg_Common_Set = FALSE;	/* ... option seen? */
 BOOL OPT_Unroll_Analysis = TRUE;	/* Enable unroll limitations? */
 BOOL OPT_Unroll_Analysis_Set = FALSE;	/* ... option seen? */
+BOOL OPT_Lower_Splitsinglecand = TRUE;
+BOOL OPT_Lower_Splitsinglecand_Set = FALSE;
 #if defined(TARG_NVISA)
 BOOL OPT_Lower_Speculate = TRUE;	/* speculate CAND/CIOR */
 #else
@@ -283,6 +285,8 @@ OPTION_LIST *Feedback_Option = NULL;
 BOOL Outlining_Enabled = FALSE;
 BOOL Instrumentation_Enabled_Before = FALSE;
 
+INT32  Optimize_exception_ranges = 1;
+BOOL   Optimize_exception_ranges_set = FALSE;
 #ifdef KEY
 INT32  OPT_Cyg_Instrument = 0;
 BOOL   Asm_Memory = FALSE;
@@ -334,6 +338,22 @@ BOOL Early_Goto_Conversion_Set = FALSE;
 
 BOOL OPT_Enable_WHIRL_SSA = FALSE;  // SSA on WHIRL, disabled by default
 BOOL OPT_Enable_BUILD_WHIRL_SSA = FALSE;  // SSA on WHIRL, disabled by default
+UINT32 OPT_Struct_Array_Copy = 1; 
+
+// alias analyzer triage value
+// all alias tag value less than AA_force_tag_alias_before_dim1 is 
+// aliased with all other alias tags.
+// all alias tag value less than AA_force_tag_alias_before_dim2 is 
+// aliased with tag[AA_force_tag_alias_before_dim1-1]
+// 
+// triage is find the first error alias tag pair.
+UINT32 AA_force_tag_alias_before_dim1 = 0;
+UINT32 AA_force_tag_alias_before_dim2 = UINT32_MAX;
+
+// enable control flow optimization for the program with EH regions
+// by default it is only enabled in mainopt
+BOOL  OPT_Enable_EH_CFG_OPT = FALSE;
+BOOL  OPT_Enable_EH_CFG_OPT_Set = FALSE;
 
 /***** Obsolete options *****/
 static BOOL Fprop_Limit_Set = FALSE;
@@ -703,6 +723,10 @@ static OPTION_DESC Options_OPT[] = {
     0, 0, 0,    &OPT_Space,	NULL,
     "Bias optimizations to minimize code space" },
 
+  { OVK_BOOL,	OV_INTERNAL,	TRUE, "split_single_cand",		"",
+    0, 0, 0,	&OPT_Lower_Splitsinglecand, &OPT_Lower_Splitsinglecand_Set,
+    "Allow splitting of single CAND for enabling if_conversion" },
+
   { OVK_BOOL,	OV_INTERNAL,	TRUE, "speculate",		"",
     0, 0, 0,	&OPT_Lower_Speculate, &OPT_Lower_Speculate_Set,
     "Allow speculation for CAND/COR operators" },
@@ -761,6 +785,11 @@ static OPTION_DESC Options_OPT[] = {
   { OVK_BOOL,	OV_INTERNAL,	TRUE, "wn_simplify",		"wn_simp",
     0, 0, 0,	&Enable_WN_Simp, &Enable_WN_Simp_Set,
     "Enable simplifier" },
+
+  { OVK_BOOL,	OV_VISIBLE,	TRUE, "lower_zdl",	"lower_zdl",
+    0, 0, 0,	&OPT_Lower_ZDL,  &OPT_Lower_ZDL_Set,
+    "Enable_Lower_ZDL" },
+
 #ifdef KEY
   { OVK_INT32,  OV_INTERNAL,    TRUE, "simp_limit",             "",
     INT32_MAX, 0, INT32_MAX,    &Enable_WN_Simp_Expr_Limit, NULL },
@@ -875,6 +904,10 @@ static OPTION_DESC Options_OPT[] = {
     0, 0, 0,  &LANG_Ansi_Setjmp_On,   &LANG_Ansi_Setjmp_Set,
     "C/C++: enable optimization of functions with calls to setjmp" },
 
+  { OVK_INT32, OV_VISIBLE,     1, "exception_range_opt",           "",
+    1, 0, 2,  &Optimize_exception_ranges,   &Optimize_exception_ranges_set,
+    "Enable control flow optimization for exception ranges" },
+
 #if defined(__linux__) || defined(BUILD_OS_DARWIN)
   { OVK_BOOL,	OV_INTERNAL,	TRUE, "wfe_dfe",	"wfe_dfe",
     0, 0, 0,	&Enable_WFE_DFE,	NULL,
@@ -888,6 +921,22 @@ static OPTION_DESC Options_OPT[] = {
   { OVK_BOOL,	OV_INTERNAL,	FALSE, "wssa_build",	NULL,
     0, 0, 0,	&OPT_Enable_BUILD_WHIRL_SSA,	NULL,
     "Enable building WHIRL SSA directly on WHIRL" },
+
+  { OVK_UINT32,  OV_INTERNAL,	TRUE, "aa_force_alias_dim1",		"",
+    0, 1, UINT32_MAX,	&AA_force_tag_alias_before_dim1, NULL,
+    "Triage option for alias analyzer" },
+
+  { OVK_UINT32,  OV_INTERNAL,	TRUE, "aa_force_alias_dim2",		"",
+    0, 0, UINT32_MAX,	&AA_force_tag_alias_before_dim2, NULL,
+    "Triage option for alias analyzer" },
+
+  { OVK_BOOL,   OV_INTERNAL,     TRUE, "eh_cfg_opt",        "",
+    0, 0, 0,    &OPT_Enable_EH_CFG_OPT, &OPT_Enable_EH_CFG_OPT_Set, 
+    "Enable CFO for EH regions"},
+
+  { OVK_UINT32,	OV_VISIBLE,	FALSE, "struct_array_copy",	"",
+    1, 0, UINT32_MAX,	&OPT_Struct_Array_Copy, NULL,
+    "Set the struct split level" },
 
   /* Obsolete options: */
 

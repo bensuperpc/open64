@@ -1,5 +1,7 @@
 # -*- Makefile -*-
 #
+#  Copyright (C) 2011 Advanced Micro Devices, Inc.  All Rights Reserved.
+#
 #  Copyright (C) 2000, 2001 Silicon Graphics, Inc.  All Rights Reserved.
 #
 #  This program is free software; you can redistribute it and/or modify it
@@ -73,9 +75,11 @@ ifeq ($(BUILD_GNU3), YES)
 LCDEFS += -DBUILD_GNU3
 endif
 
-LCDEFS += -DOPEN64_PRODNAME='"Compiler"'
+ifeq ($(BUILD_SKIP_IPA), YES)
+LCDEFS += -DBUILD_SKIP_IPA
+endif
 
-LCDEFS += -DKEY 
+LCDEFS += -DOPEN64_PRODNAME='"Compiler"'
 
 LCDEFS += -DGCC_CONFIGURE_TARG=\"${GCC_CONFIGURE_TARG}\" -DGCC_DIR=\"${GCC_DIR}\" -DBUILD_SRC=\"${BUILD_SRC}\"
 
