@@ -349,7 +349,7 @@ INSTALL_PHASE_SPECIFIC_ARCHIVES () {
         INSTALL_DATA_SUB ${LIB32AREA}/libmv/libmv.a           ${PHASEPATH}/32/libmv.a
     else
         # IA32 and x86_64
-        if [ "$TARG_HOST" = "x8664" ]; then
+        if [ "$BUILD_HOST" = "x8664" ]; then
 	    LIBAREA="osprey/targdir_lib"
 	    LIB32AREA="osprey/targdir_lib2"
         else
@@ -421,7 +421,7 @@ INSTALL_GENERAL_PURPOSE_NATIVE_ARCHIVES () {
 	LIBAREA="osprey/targdir_lib"
 	LIB32AREA="osprey/targdir_lib2"
     else
-        if [ "$TARG_HOST" = "x8664" ] ; then
+        if [ "$BUILD_HOST" = "x8664" ] ; then
 	    LIBAREA="osprey/targdir_lib"
             LIB32AREA="osprey/targdir_lib2"
         else

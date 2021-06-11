@@ -156,6 +156,14 @@ if test "${BUILD_TYPE}" = "NONSHARED"; then
   BUILD_SKIP_IPA=YES
 fi
 
+# Set whether to support multilib for IA32/x86-64
+AC_ARG_ENABLE([multilib],
+  AS_HELP_STRING([--disable-multilib], [Disable multilib support for IA32/x86-64]))
+
+AS_IF([test "x$enable_multilib" != "xno"], [
+  BUILD_MULTILIB=YES
+])
+
 # Specify the targ_info directory under osprey/common to use.  IA64 uses
 # ipfec_targ_info instead of targ_info.
 TARG_INFO_NAME=targ_info
