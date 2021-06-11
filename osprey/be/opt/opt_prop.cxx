@@ -1,3 +1,7 @@
+/*
+ *  Copyright (C) 2006, 2007. QLogic Corporation. All Rights Reserved.
+ */
+
 //-*-c++-*-
 
 /*
@@ -183,7 +187,7 @@ COPYPROP::Is_function_of_itself(STMTREP *stmt, OPT_STAB *sym)
 
   INT32 height = 0;
   INT32 weight = 0;
-  if (!Propagatable(rhs, FALSE, 0, FALSE, FALSE, &height, &weight, FALSE))
+  if (!Propagatable(rhs, FALSE, 0, FALSE, FALSE, &height, &weight, FALSE ,NULL))
     return FALSE;
 
   if (! rhs->Non_leaf()) {	// identity assignment
@@ -321,7 +325,8 @@ COPYPROP::Is_function_of_cur(CODEREP *var, CODEREP *cur_var)
 PROPAGATABILITY
 COPYPROP::Propagatable(CODEREP *x, BOOL chk_inverse,
 		       AUX_ID propagating_var, BOOL icopy_phase, 
-		       BOOL inside_cse, INT32 *height, INT32 *weight, BOOL in_array)
+		       BOOL inside_cse, INT32 *height, INT32 *weight,
+		       BOOL in_array, BB_NODE *curbb)
 {
   PROPAGATABILITY prop, prop0;
   INT32 height0 = 0;
@@ -382,7 +387,7 @@ COPYPROP::Propagatable(CODEREP *x, BOOL chk_inverse,
 
       CODEREP *base = x->Ilod_base();
       prop = Propagatable(base, chk_inverse, propagating_var, 
-                          icopy_phase, inside_cse, height, weight, in_array);
+                          icopy_phase, inside_cse, height, weight, in_array, curbb);
       // if base is PROP_WITH_INVERSE, make not propagatable because the new
       // ILOAD cannot be CSE'ed
       if (prop == NOT_PROPAGATABLE || prop == PROP_WITH_INVERSE)
@@ -391,10 +396,10 @@ COPYPROP::Propagatable(CODEREP *x, BOOL chk_inverse,
         return NOT_PROPAGATABLE;
       if (x->Opr() == OPR_ILOADX) {
         prop0 = Propagatable(x->Index(), chk_inverse, propagating_var, 
-                             icopy_phase, inside_cse, &height0, &weight0, in_array);
+                             icopy_phase, inside_cse, &height0, &weight0, in_array, curbb);
         prop = MIN(prop, prop0);
         *height = MAX(*height, height0);
-        *weight += weight0;
+	*weight += weight0;
         if (prop == NOT_PROPAGATABLE) return NOT_PROPAGATABLE;
       }
     
@@ -415,6 +420,11 @@ COPYPROP::Propagatable(CODEREP *x, BOOL chk_inverse,
     if (OPERATOR_is_volatile(x->Opr()))
       return NOT_PROPAGATABLE;
 
+#ifdef TARG_SL
+    // temporary hack
+    if (x->Opr() == OPR_INTRINSIC_OP && x->Is_C3_Intrinsic())
+      return NOT_PROPAGATABLE;
+#endif
     // intrinsic op may by lowered into a call, so propagating it past the
     // def of a return preg is wrong
     if (Past_ret_reg_def() && (x->Opr() == OPR_INTRINSIC_OP
@@ -424,10 +434,36 @@ COPYPROP::Propagatable(CODEREP *x, BOOL chk_inverse,
        ))
       return NOT_PROPAGATABLE;
 
+#ifdef VENDOR_PSC
+    // These code comes from Pathscale 3.2
+    // They may cause compilation time out in 403.gcc on IA-64 and 64-bit compiler on x86_64
+    // Too aggressive copy propagation may increase the compilation time in later phases
+    if (icopy_phase) {
+      if (x->Is_isop_flag_set(ISOP_ICOPY_VISITED)) {
+	*height = 1;	// don't really know the height, so return 1
+        return (PROPAGATABILITY) (0x3 & x->Propagatability()); // to prevent sign extension
+      }
+      else {
+	x->Set_isop_flag(ISOP_ICOPY_VISITED);
+        Add_visited_node(x);
+      }
+    }
+    else {
+      if (x->Is_isop_flag_set(ISOP_COPY_VISITED)) {
+	*height = 1;	// don't really know the height, so return 1
+        return (PROPAGATABILITY) (0x3 & x->Propagatability()); // to prevent sign extension
+      }
+      else {
+	x->Set_isop_flag(ISOP_COPY_VISITED);
+        Add_visited_node(x);
+      }
+    }
+#else
     if (icopy_phase && !x->Is_isop_flag_set(ISOP_ICOPY_VISITED)) {
       x->Set_isop_flag(ISOP_ICOPY_VISITED);
       Add_visited_node(x);
     }
+#endif
 
     // determine if there are ops that we are not allowed to propagate 
     // into an array subscript
@@ -444,7 +480,7 @@ COPYPROP::Propagatable(CODEREP *x, BOOL chk_inverse,
 
 #if defined(TARG_IA32) || defined(TARG_X8664)
     // do not allow SELECT to be propagated
-    if (x->Opr() == OPR_SELECT) {
+    if (x->Opr() == OPR_SELECT) { 
       x->Set_propagatability(NOT_PROPAGATABLE);
       return NOT_PROPAGATABLE;
     }
@@ -455,7 +491,8 @@ COPYPROP::Propagatable(CODEREP *x, BOOL chk_inverse,
     *weight = 0;
     for  (INT32 i = 0; i < x->Kid_count(); i++) {
       prop0 = Propagatable(x->Opnd(i), chk_inverse, propagating_var, 
-			   icopy_phase, inside_cse, &height0, &weight0, in_array);
+			   icopy_phase, inside_cse, &height0, &weight0,
+			   in_array, curbb);
       prop = MIN(prop, prop0);
       *height = MAX(*height, height0);
       *weight += weight0;
@@ -469,7 +506,8 @@ COPYPROP::Propagatable(CODEREP *x, BOOL chk_inverse,
       return NOT_PROPAGATABLE;
     }
 
-    if (*height >= WOPT_Enable_Prop_Limit || *weight >= 50000) { // exceeds prop limit
+    if (*height >= WOPT_Enable_Prop_Limit || 
+	*weight >= WOPT_Enable_Prop_Weight_Limit) { // exceeds prop limit
       x->Set_propagatability(NOT_PROPAGATABLE);
       return NOT_PROPAGATABLE;
     }
@@ -618,9 +656,10 @@ CODEREP::Convert_type(CODEMAP *htable, CODEREP *expr, BOOL icopy_phase)
   INT varsize;				// in bits
   if (Dsctyp() == MTYPE_BS) {
     if (Kind() == CK_VAR) {
-     if (expr->Kind() == CK_VAR && Aux_id() == expr->Aux_id() &&
-          MTYPE_signed(Dtyp()) == MTYPE_signed(expr->Dtyp()))
-        return expr;  // it's an identity assignment propagation (bug 11732)
+      if (expr->Kind() == CK_VAR && Aux_id() == expr->Aux_id() &&
+          (MTYPE_signed(Dtyp()) == MTYPE_signed(expr->Dtyp()) ||
+	   expr->Is_flag_set(CF_INCOMPLETE_USES)))
+	return expr;  // it's an identity assignment propagation (bug 11732)
       AUX_STAB_ENTRY *aux = htable->Sym()->Aux_stab_entry(Aux_id());
       varsize = aux->Bit_size();
     }
@@ -634,11 +673,11 @@ CODEREP::Convert_type(CODEMAP *htable, CODEREP *expr, BOOL icopy_phase)
   }
   else if (Kind() == CK_VAR && Bit_field_valid()) {
     if (expr->Kind() == CK_VAR && Aux_id() == expr->Aux_id() &&
-        MTYPE_signed(Dtyp()) == MTYPE_signed(expr->Dtyp()))
+        (MTYPE_signed(Dtyp()) == MTYPE_signed(expr->Dtyp()) ||
+	 expr->Is_flag_set(CF_INCOMPLETE_USES)))
       return expr;  // it's an identity assignment propagation (bug 11732)
     varsize = Bit_size();
   }
-
   else if (Kind() == CK_IVAR && Opr() == OPR_ILDBITS)
     varsize = I_bit_size();
   else return expr;
@@ -941,14 +980,18 @@ COPYPROP::Prop_const_init_scalar(CODEREP *x, AUX_ID var_aux_id)
   // is this variable a constant initialized scalar?
   BOOL const_initialized = 
     psym->Is_flag_const_init() &&
+#if defined(TARG_NVISA)
+    !psym->Is_volatile();
+#else
     !psym->Is_volatile() &&
     psym->St_ofst() == 0;  // a limitation for matching INITV or TCON
                            // should make it smarter to look into block of INITV.
+#endif
 
   if (const_initialized) {
     TCON init_tcon;
     ST *st = psym->St();
-    if (ST_is_const_initialized_scalar(st, init_tcon))
+    if (ST_is_const_initialized_scalar(st, psym->St_ofst(), init_tcon))
       {
 	// if the ST's initialized value can be represented with a TCON
 	// first convert the init value to the type of the variable
@@ -1142,8 +1185,8 @@ COPYPROP::Prop_var(CODEREP *x, BB_NODE *curbb, BOOL icopy_phase,
   }
   else {
     prop = Propagatable(expr, WOPT_Enable_Prop_Aggressive, 
-			x->Aux_id(), icopy_phase, inside_cse, &height, &weight,
-			in_array);
+			x->Aux_id(), icopy_phase, inside_cse, &height,
+			&weight, in_array, curbb);
     if ( WOPT_Enable_LNO_Copy_Propagate && expr->Non_leaf()) {
       MTYPE dtyp = expr->Dtyp();
       if (MTYPE_is_float(dtyp) || MTYPE_is_complex(dtyp) ||
@@ -1227,7 +1270,7 @@ COPYPROP::Prop_ivar(CODEREP *x, BB_NODE *curbb, BOOL icopy_phase,
   PROPAGATABILITY prop;
   INT32 height, weight;
   prop = Propagatable(expr, FALSE, 0, 
-		      icopy_phase, inside_cse, &height, &weight, in_array);
+		      icopy_phase, inside_cse, &height, &weight, in_array, curbb);
   if ( WOPT_Enable_LNO_Copy_Propagate && expr->Non_leaf()) {
     MTYPE dtyp = expr->Dtyp();
     if (MTYPE_is_float(dtyp) || MTYPE_is_complex(dtyp) ||
@@ -1327,7 +1370,6 @@ COPYPROP::Copy_propagate_cr(CODEREP *x, BB_NODE *curbb,
       id_cr = x->Convert_type(Htable(), id_cr, FALSE);
       return id_cr;
      }
-
      return Prop_var(x, curbb, FALSE, inside_cse, in_array, no_complex_preg);
     }
   case CK_IVAR: {
@@ -1354,7 +1396,8 @@ COPYPROP::Copy_propagate_cr(CODEREP *x, BB_NODE *curbb,
       CODEREP *ilod_base = (expr != NULL) ? expr : x->Ilod_base();
       if (ilod_base->Kind() == CK_LDA && x->Offset() == 0) {
 	CODEREP *retv = Prop_const_init_scalar(x, ilod_base->Lda_aux_id());
-	return retv;
+	if (retv)
+	  return retv;
       }
     }
     INT64 ofst = x->Offset();
@@ -1368,6 +1411,8 @@ COPYPROP::Copy_propagate_cr(CODEREP *x, BB_NODE *curbb,
     if (x->Opr() == OPR_MLOAD)
       expr2 = Copy_propagate_cr(x->Mload_size(), curbb, 
 				inside_cse, in_array);
+    else if (x->Opr() == OPR_ILOADX)
+      expr2 = Copy_propagate_cr(x->Index(), curbb, inside_cse, in_array);
     else
       expr2 = NULL;
     if (expr || expr2) { // need rehash
@@ -1382,7 +1427,7 @@ COPYPROP::Copy_propagate_cr(CODEREP *x, BB_NODE *curbb,
 	cr->Set_mload_size(expr2);
       cr->Set_ivar_occ(x->Ivar_occ());
       x->DecUsecnt();
-      if (x->Opr() == OPR_MLOAD) {
+      if (x->Opr() == OPR_MLOAD || x->Opr() == OPR_ILOADX) {
 	expr = Htable()->Rehash(cr);
       } else {
 	expr = ftmp.Fold_Expr(cr);     
@@ -1430,17 +1475,20 @@ COPYPROP::Copy_propagate_cr(CODEREP *x, BB_NODE *curbb,
 	  if ( i > 0 )
 	    in_array = TRUE;
 	}
-#ifdef KEY
+#if defined(KEY) && !defined(TARG_NVISA)
         if (opr != OPR_ASM_INPUT ||
             (x->Opnd(i)->Kind() != CK_VAR && x->Opnd(i)->Kind() != CK_IVAR) )
 	  expr = Copy_propagate_cr(x->Opnd(i), curbb, inside_cse, in_array);
         else {
-		  // OSP_384
-		  if(opr == OPR_ASM_INPUT)
-			x->Opnd(i)->Set_flag(CF_DONT_PROP);
+	  // OSP_384
+	  if(opr == OPR_ASM_INPUT)
+	    x->Opnd(i)->Set_flag(CF_DONT_PROP);
           expr = NULL;
-		}
+	}
 #else
+	// for NVISA, the usage of asm is an array of const val,
+	// then was passing arr[3] and was seeing the array node
+	// rather than the const val under the asm_input
 	expr = Copy_propagate_cr(x->Opnd(i), curbb, inside_cse, in_array);
 #endif
 	if (expr) {
@@ -1697,7 +1745,7 @@ COPYPROP::Propagatable_thru_phis(CODEREP *lexp, CODEREP *rexp,
   INT32 height, weight;
   if (lexp == rexp) {
     if (Propagatable(lexp, FALSE, 0, FALSE, FALSE, 
-		     &height, &weight, FALSE/*in_array*/) == PROPAGATABLE)
+		     &height, &weight, FALSE/*in_array*/, NULL) == PROPAGATABLE)
     {
       *ppref = EITHER_SIDE;
       return TRUE;
@@ -1802,8 +1850,6 @@ COPYPROP::Propagatable_thru_phis(CODEREP *lexp, CODEREP *rexp,
     PROP_THRU_PHI_PREFERENCE pref0;
     BOOL can_prop = TRUE;
     *ppref = EITHER_SIDE;
-    Is_True(lexp->Kid_count() == rexp->Kid_count(),
-            ("COPYPROP::Propagatable_thru_phis: lexp and rexp Kid_counts differ"));
     for (INT32 i = 0; i < lexp->Kid_count(); i++) {
       if (! Propagatable_thru_phis(lexp->Opnd(i), rexp->Opnd(i), bb, phi_simp_var, &pref0)) {
 	can_prop = FALSE;
@@ -1918,7 +1964,7 @@ COPYPROP::Strictly_identical_phi_opnd(PHI_NODE *phi, BB_NODE *bb)
     }
     if (popnd == NULL && 
         Propagatable(defstmt->Rhs(), FALSE, 0, FALSE, FALSE,
-		     &height, &weight, FALSE/*in_array*/) == PROPAGATABLE)
+		     &height, &weight, FALSE/*in_array*/, NULL) == PROPAGATABLE)
       popnd = defstmt->Rhs();
     if (popnd != defstmt->Rhs()) { popnd = NULL; break; }
   }
@@ -1961,7 +2007,7 @@ COPYPROP::Identical_phi_opnd(PHI_NODE *phi, BB_NODE *bb)
     return NULL;
   if (ldefstmt->Rhs() == rdefstmt->Rhs()) {
     if (Propagatable(ldefstmt->Rhs(), FALSE, 0, FALSE, FALSE,
-		     &height, &weight, FALSE/*in_array*/) == PROPAGATABLE)
+		     &height, &weight, FALSE/*in_array*/, NULL) == PROPAGATABLE)
       return ldefstmt->Rhs();	// trivial case (equivalent to above) 
     else return NULL;
   }
@@ -2085,8 +2131,8 @@ COPYPROP::Copy_propagate(BB_NODE *bb)
   // copy propagated and breaks the emitter.
   INT32 saved_prop_limit = WOPT_Enable_Prop_Limit;
   if (bb->Kind() == BB_DOEND) 
-#if 0 // bug 6097
-    WOPT_Enable_Prop_Limit = 17;
+#ifdef KEY // bug 6097, bug 11784, bug 13003
+    WOPT_Enable_Prop_Limit = WOPT_Enable_Doend_Prop_Limit;
 #else
     WOPT_Enable_Prop_Limit = 9999;
 #endif
@@ -2140,7 +2186,11 @@ COPYPROP::Copy_propagate(BB_NODE *bb)
       Set_past_ret_reg_def();
     else if (stmt->Opr() == OPR_RETURN || 
 	     stmt->Opr() == OPR_RETURN_VAL ||
-	     stmt->Opr() == OPR_REGION)
+	     stmt->Opr() == OPR_REGION
+#ifdef KEY
+  	     || stmt->Opr() == OPR_GOTO_OUTER_BLOCK
+#endif
+	    )
       Reset_past_ret_reg_def();
 
     if (stmt->Has_chi() || OPERATOR_is_store(stmt->Opr()))

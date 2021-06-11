@@ -1,4 +1,8 @@
 /*
+ *  Copyright (C) 2007, 2008.  Pathscale, LLC. All Rights Reserved.
+ */
+
+/*
  *  Copyright (C) 2006. QLogic Corporation. All Rights Reserved.
  */
 
@@ -56,11 +60,11 @@
  * Configuration specific to the target machine/system.
  *
  * NOTE:  There is an approximate distinction between -TARG option
- * group flags and their configuration (in config_TARG.c), and more
+ * group flags and their configuration (in config_targ_opt.c), and more
  * generic target configuration (in this file).  Note that the related
  * header file config_targ.h is included in config.h, and hence in most
- * source files, whereas config_TARG.h is only included directly, so
- * putting new -TARG option-related variables in config_TARG.c is to
+ * source files, whereas config_targ_opt.h is only included directly, so
+ * putting new -TARG option-related variables in config_targ_opt.c is to
  * be preferred to putting them here.
  *
  * ====================================================================
@@ -71,7 +75,7 @@
 #include "config.h"
 #include "config_asm.h"
 #include "config_debug.h"
-#include "config_TARG.h"
+#include "config_targ_opt.h"
 #include "config_opt.h"
 #include "erglob.h"
 #include "tracing.h"
@@ -134,8 +138,8 @@ CLASS_INDEX	Comparison_Result_Mtype;
 /* The assembler directive for emitting an address depends on the target
  * pointer size.  The following is declared in config_asm.h:
  */
-char *AS_ADDRESS;
-char *AS_ADDRESS_UNALIGNED;
+const char *AS_ADDRESS;
+const char *AS_ADDRESS_UNALIGNED;
 
 /* Is the "char" type signed? */
 BOOL Char_Type_Is_Signed = FALSE;
@@ -292,7 +296,7 @@ static struct bnm {
 static INT16 bnb_used = 0;
 
 #ifndef MONGOOSE_BE
-char *
+const char *
 Abi_Name ( TARGET_ABI b)
 {
   char *r;
@@ -323,7 +327,7 @@ Isa_Name ( TARGET_ISA b)
   }
 }
 
-char *
+const char *
 Targ_Name ( TARGET_PROCESSOR b)
 {
   char *r;
@@ -334,9 +338,11 @@ Targ_Name ( TARGET_PROCESSOR b)
     case TARGET_athlon: return "Athlon";
     case TARGET_em64t: return "EM64T"; 
     case TARGET_core: return "Core"; 
+    case TARGET_wolfdale: return "Wolfdale"; 
     case TARGET_pentium4: return "Pentium4";
     case TARGET_xeon: return "Xeon";
     case TARGET_anyx86: return "Anyx86";
+    case TARGET_barcelona: return "Barcelona";
     default:
       r = bnb[bnb_used].name;
       bnb_used = (bnb_used + 1) % 4;
@@ -469,6 +475,15 @@ Prepare_Target ( void )
     if ( strcasecmp ( Processor_Name, "opteron" ) == 0 ) {
       targ = TARGET_opteron;
     }
+    else if ( strcasecmp ( Processor_Name, "barcelona" ) == 0 ) {
+      if (!Target_SSE2_Set && !Target_SSE3_Set)
+        Target_SSE3 = TRUE;
+#if 0 //temporily disable setting default sse4a true for barcelona
+      if (!Target_SSE2_Set && !Target_SSE4a_Set)
+        Target_SSE4a = TRUE;
+#endif
+      targ = TARGET_barcelona;
+    }
     else if ( strcasecmp ( Processor_Name, "athlon64fx" ) == 0 ) {
       targ = TARGET_opteron;
     }
@@ -491,6 +506,11 @@ Prepare_Target ( void )
     }
     else if ( strcasecmp ( Processor_Name, "core" ) == 0 ) {
       targ = TARGET_core;
+      if (!Target_SSE2_Set && !Target_SSE3_Set)
+        Target_SSE3 = TRUE;
+    }
+    else if ( strcasecmp ( Processor_Name, "wolfdale" ) == 0 ) {
+      targ = TARGET_wolfdale;
       if (!Target_SSE2_Set && !Target_SSE3_Set)
         Target_SSE3 = TRUE;
     }
@@ -579,7 +599,7 @@ void
 Configure_Target ( void )
 {
 
-#if defined(linux)
+#if defined(linux) || defined(BUILD_OS_DARWIN)
   Target_Byte_Sex = LITTLE_ENDIAN;
 #else  
   Target_Byte_Sex = BIG_ENDIAN;
@@ -709,7 +729,7 @@ IPA_Configure_Target (void)
     Boolean_type2 = MTYPE_I4;
 
 #ifdef KEY // Tell IPA the target byte-order
-#if defined(linux)
+#if defined(linux) || defined(BUILD_OS_DARWIN)
   Target_Byte_Sex = LITTLE_ENDIAN;
 #else  
   Target_Byte_Sex = BIG_ENDIAN;

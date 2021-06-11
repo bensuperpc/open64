@@ -120,7 +120,7 @@ struct GVN : public NULL_TRANSFORM {
   COMP_UNIT *_cu;
   SUBSTITUE gvn_sub;
   mutable UPDATE_GVN_SUB  update_gvn_sub;    // 7.2 bug?  Why needs mutable?
-  char *Name() const { return "GVN"; }
+  const char *Name() const { return "GVN"; }
   
   CODEREP *Apply_cr(CODEREP *cr, bool is_mu, STMTREP *stmt, BB_NODE *bb, CODEMAP *htable) const 
   {
@@ -181,7 +181,7 @@ struct GVN : public NULL_TRANSFORM {
 
 struct AGGR_COPY : public NULL_TRANSFORM {
   TRACK_CUR_VERSION  *cur_ver;
-  char  *Name() const { return "AGGR_COPY"; }
+const  char  *Name() const { return "AGGR_COPY"; }
   
   CODEREP *Apply_cr(CODEREP *cr, bool is_mu, STMTREP *stmt, BB_NODE *, CODEMAP *htable) const
   {
@@ -219,6 +219,11 @@ Simplify_bool_expr(COMP_UNIT *cu)
     UPDATE<BOOL_SIMP, PER_BB_CACHE> 
       UPDATE_bool_simp(cu, &bool_simp, Get_Trace(TP_WOPT2, BOOL_SIMP_FLAG) );
     UPDATE_bool_simp.Process_PU();
+
+    if (Get_Trace (TP_WOPT2, BOOL_SIMP_FLAG)) {
+      fprintf (TFile, "%sDump after Boolean Simplification\n%s", DBar, DBar );
+      cu->Cfg()->Print (TFile);
+    }
   }
 
 #if 0

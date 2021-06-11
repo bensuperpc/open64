@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2006. QLogic Corporation. All Rights Reserved.
+ *  Copyright (C) 2006, 2007. QLogic Corporation. All Rights Reserved.
  */
 
 /*
@@ -277,9 +277,10 @@ typedef struct lno_flags {
 #ifdef KEY
   BOOL   Prefetch_stores;
   BOOL   Prefetch_stores_set;
+#endif
   BOOL   Prefetch_invariant_stride;
   UINT32 Prefetch_stride_ahead;
-#endif
+  BOOL   Run_stream_prefetch;   
   UINT32 Prefetch_ahead;
   UINT32 Prefetch_iters_ahead;
   UINT32 Prefetch_cache_factor;
@@ -317,6 +318,8 @@ typedef struct lno_flags {
   BOOL 	  Unswitch_Verbose;
   BOOL    Prefetch_Verbose;
   BOOL    Build_Scalar_Reductions;
+  BOOL    Invariant_Factorization;
+  BOOL    Invar_Factor_Verbose;
 #endif /* KEY */
   BOOL	Run_oinvar;
   UINT32 Run_doacross;
@@ -475,6 +478,7 @@ extern LNO_FLAGS Initial_LNO;
 #define LNO_Prefetch_Stores_Set		Current_LNO->Prefetch_stores_set
 #define LNO_Prefetch_Invariant_Stride   Current_LNO->Prefetch_invariant_stride
 #define LNO_Prefetch_Stride_Ahead       Current_LNO->Prefetch_stride_ahead
+#define LNO_Run_Stream_Prefetch         Current_LNO->Run_stream_prefetch
 #endif
 
 #define LNO_Prefetch_Ahead		Current_LNO->Prefetch_ahead
@@ -514,6 +518,8 @@ extern LNO_FLAGS Initial_LNO;
 #define LNO_Unswitch_Verbose		Current_LNO->Unswitch_Verbose
 #define LNO_Prefetch_Verbose            Current_LNO->Prefetch_Verbose
 #define LNO_Build_Scalar_Reductions     Current_LNO->Build_Scalar_Reductions
+#define LNO_Invariant_Factorization     Current_LNO->Invariant_Factorization
+#define LNO_Invar_Factor_Verbose        Current_LNO->Invar_Factor_Verbose
 #endif /* KEY */
 #define LNO_Run_Oinvar			Current_LNO->Run_oinvar
 #define LNO_Run_Doacross		Current_LNO->Run_doacross

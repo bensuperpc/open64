@@ -1,5 +1,9 @@
 /*
- * Copyright 2004 PathScale, Inc.  All Rights Reserved.
+ * Copyright (C) 2007. QLogic Corporation. All Rights Reserved.
+ */
+
+/*
+ * Copyright 2004, 2005, 2006 PathScale, Inc.  All Rights Reserved.
  */
 
 /*
@@ -37,7 +41,7 @@
 */
 
 
-static char *Version = "$Source: /proj/osprey/CVS/open64/osprey1.0/common/util/mstack.c,v $ $Revision: 1.1.1.1 $";
+static char *Version = "$Source: /home/bos/bk/kpro64-pending/common/util/SCCS/s.mstack.c $ $Revision: 1.5 $";
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -54,13 +58,13 @@ static void make_ftab ( void );
 #endif /* MONGOOSE_BE */
 static struct frec *search_in_ftab ( int adr );
 
-#if mips
+#if 0  // WAS:  #if mips
 static int ftab_problems = 0;
 /*--------------------------------------------------------------
  * extremely dependent on mips calling convention. returns sp
  * of the calling routine
  *------------------------------------------------------------*/
-static getsp(int a)
+static int getsp(int a)
 {
   return (int) &a;
 }
@@ -69,13 +73,13 @@ static getsp(int a)
  * return address in the caller of getra. Intent is to find 
  * current value of pc.
  *------------------------------------------------------------*/
-static fra(int a)
+static int fra(int a)
 {
   int *p = &a;
   return p[5];
 }
 
-static getra(void)
+static int getra(void)
 {
   return fra(3);
 }

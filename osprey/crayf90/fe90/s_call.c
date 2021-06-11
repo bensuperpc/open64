@@ -1,5 +1,8 @@
 /*
- *  Copyright (C) 2006. QLogic Corporation. All Rights Reserved.
+ * Copyright (C) 2007, 2008. PathScale, LLC. All Rights Reserved.
+ */
+/*
+ *  Copyright (C) 2006, 2007. QLogic Corporation. All Rights Reserved.
  */
 
 /*
@@ -169,7 +172,7 @@ static	void		check_expr_for_elementals(opnd_type *);
 static	boolean		check_arg_for_co_array(opnd_type *);
 static	void		update_components(opnd_type *);
 
-# if (defined(_TARGET_OS_IRIX) || defined(_TARGET_OS_LINUX))
+# if (defined(_TARGET_OS_IRIX) || defined(_TARGET_OS_LINUX) || defined(_TARGET_OS_DARWIN))
 static	void		set_inline_state(int, int);
 # endif
 #ifdef KEY
@@ -318,7 +321,7 @@ boolean call_list_semantics(opnd_type     *result_opnd,
    int                 spec_idx;
    int		       type_idx;
 
-# if (defined(_TARGET_OS_IRIX) || defined(_TARGET_OS_LINUX))
+# if (defined(_TARGET_OS_IRIX) || defined(_TARGET_OS_LINUX) || defined(_TARGET_OS_DARWIN))
    int		       false_list_idx 		= NULL_IDX;
 # endif
 #ifdef KEY /* Bug 572 */
@@ -357,7 +360,7 @@ boolean call_list_semantics(opnd_type     *result_opnd,
    locked_in              = AT_LOCKED_IN(attr_idx);
    AT_LOCKED_IN(attr_idx) = TRUE;
 
-# if (defined(_TARGET_OS_IRIX) || defined(_TARGET_OS_LINUX))
+# if (defined(_TARGET_OS_IRIX) || defined(_TARGET_OS_LINUX) || defined(_TARGET_OS_DARWIN))
    IR_INLINE_STATE(ir_idx) = Not_Specified_Sgi;
    set_inline_state(ir_idx, attr_idx);
 # endif
@@ -373,7 +376,7 @@ boolean call_list_semantics(opnd_type     *result_opnd,
       locked_in              = locked_in || AT_LOCKED_IN(attr_idx);
       AT_LOCKED_IN(attr_idx) = TRUE;
 
-# if (defined(_TARGET_OS_IRIX) || defined(_TARGET_OS_LINUX))
+# if (defined(_TARGET_OS_IRIX) || defined(_TARGET_OS_LINUX) || defined(_TARGET_OS_DARWIN))
       set_inline_state(ir_idx, attr_idx);
 # endif
 
@@ -385,7 +388,7 @@ boolean call_list_semantics(opnd_type     *result_opnd,
 
       attr_idx = ATP_DUMMY_PROC_LINK(attr_idx);
 
-# if (defined(_TARGET_OS_IRIX) || defined(_TARGET_OS_LINUX))
+# if (defined(_TARGET_OS_IRIX) || defined(_TARGET_OS_LINUX) || defined(_TARGET_OS_DARWIN))
       set_inline_state(ir_idx, attr_idx);
 # endif
 
@@ -1796,7 +1799,7 @@ CONTINUE:
                 (cmd_line_flags.runtime_argument ||
                  cmd_line_flags.runtime_arg_call)) {
 
-# if (defined(_TARGET_OS_IRIX) || defined(_TARGET_OS_LINUX))
+# if (defined(_TARGET_OS_IRIX) || defined(_TARGET_OS_LINUX) || defined(_TARGET_OS_DARWIN))
                list_idx = IR_IDX_R(ir_idx);
                list_idx2 = NULL_IDX;
 
@@ -1855,7 +1858,7 @@ CONTINUE:
                   (IR_LIST_CNT_R(ir_idx))++;
                }
 
-# if (defined(_TARGET_OS_IRIX) || defined(_TARGET_OS_LINUX))
+# if (defined(_TARGET_OS_IRIX) || defined(_TARGET_OS_LINUX) || defined(_TARGET_OS_DARWIN))
                if (false_list_idx) {
                   IL_NEXT_LIST_IDX(list_idx2) = false_list_idx;
                   list_idx = false_list_idx;
@@ -2821,8 +2824,12 @@ static int clear_pt_unique_mem(int dummy) {
 #endif /* KEY Bug 7424 */
 #ifdef KEY /* Bug 8117 */
 extern int create_tmp_asg_or_call(opnd_type *r_opnd, expr_arg_type *exp_desc,
- opnd_type *left_opnd, int intent, boolean stmt_tmp,
- boolean save_where_dealloc_stmt, boolean call);
+  opnd_type *left_opnd, int intent, boolean stmt_tmp,
+  boolean save_where_dealloc_stmt, int info_idx, dummy_arg_type a_type,
+  dummy_arg_type d_type);
+static int common_create_tmp_asg(opnd_type *r_opnd, expr_arg_type *exp_desc,
+  opnd_type *left_opnd, int intent, boolean stmt_tmp,
+  boolean save_where_dealloc_stmt, boolean call);
 
 /*
  * Wrap an Aloc_Opr around the specified operand, so as to pass it by
@@ -3064,6 +3071,20 @@ lower_bounds_match(int actual_il_idx, int dummy_idx) {
   return TRUE;
 }
 #endif /* KEY Bug 10157 */
+#ifdef KEY /* Bug 14150 */
+/*
+ * spec_idx	AT_Tbl_Idx for specific function
+ * info_idx	index into arg_info_list[] for actual argument
+ * dummy_idx	AT_Tbl_Idx for dummy argument
+ * return	true if we should pass the actual argument by value
+ */
+static int
+pass_by_value(int spec_idx, int info_idx, int dummy_idx) {
+  return ATP_VFUNCTION(spec_idx) ||
+    arg_info_list[info_idx].ed.percent_val_arg ||
+    (dummy_idx != NULL_IDX && ATD_VALUE_ATTR(dummy_idx));
+}
+#endif /* KEY Bug 14150 */
 
 /******************************************************************************\
 |*									      *|
@@ -3278,7 +3299,7 @@ boolean final_arg_work(opnd_type	*list_opnd,
 
          /* replace with zero */
        
-# if (defined(_TARGET_OS_IRIX) || defined(_TARGET_OS_LINUX))
+# if (defined(_TARGET_OS_IRIX) || defined(_TARGET_OS_LINUX) || defined(_TARGET_OS_DARWIN))
          if (explicit &&
              ! io_call &&
              (AT_OBJ_CLASS(dummy) == Data_Obj &&
@@ -3333,7 +3354,7 @@ boolean final_arg_work(opnd_type	*list_opnd,
 
          }
          else {
-#if (defined(_TARGET_OS_IRIX) || defined(_TARGET_OS_LINUX))
+#if (defined(_TARGET_OS_IRIX) || defined(_TARGET_OS_LINUX) || defined(_TARGET_OS_DARWIN))
            NTR_IR_TBL(fcd_idx);
            IR_OPR(fcd_idx) = Aloc_Opr;
            IR_TYPE_IDX(fcd_idx) = CRI_Ptr_8;
@@ -3439,7 +3460,7 @@ boolean final_arg_work(opnd_type	*list_opnd,
          }
 
 
-# if (defined(_TARGET_OS_IRIX) || defined(_TARGET_OS_LINUX))
+# if (defined(_TARGET_OS_IRIX) || defined(_TARGET_OS_LINUX) || defined(_TARGET_OS_DARWIN))
          NTR_IR_TBL(ir_idx);
          IR_OPR(ir_idx)      = Aloc_Opr;
          IR_TYPE_IDX(ir_idx) = CRI_Parcel_Ptr_8;
@@ -3503,8 +3524,14 @@ boolean final_arg_work(opnd_type	*list_opnd,
       if (explicit) {
          /* place checks here that need to be done after generic resolution */
 
-         if (ATD_POINTER(dummy)                    &&
-             ! arg_info_list[info_idx].ed.pointer) {
+         if (
+#ifdef KEY /* Bug 6845 */
+	    /* allocatable dummy requires allocatable actual */
+	    (ATD_ALLOCATABLE(dummy) &&
+	     ! arg_info_list[info_idx].ed.allocatable) ||
+#endif /* KEY Bug 6845 */
+	    (ATD_POINTER(dummy)                    &&
+             ! arg_info_list[info_idx].ed.pointer)) {
 
             /* pointer dummy requires pointer actual */
 
@@ -3587,6 +3614,37 @@ boolean final_arg_work(opnd_type	*list_opnd,
                }
             }
          }
+
+#ifdef KEY /* Bug 14110 */
+         if (ATD_VOLATILE(dummy)) {
+            boolean constraint_error = FALSE;
+            /* Mentioned in 12.1.4.2 */
+            if (arg_info_list[info_idx].ed.vector_subscript) {
+              constraint_error = TRUE;
+            }
+            /* Constraint C1233 */
+            else if (arg_info_list[info_idx].ed.pointer) {
+              if (!(BD_ARRAY_CLASS(ATD_ARRAY_IDX(dummy)) == Assumed_Shape ||
+                ATD_POINTER(dummy))) {
+                constraint_error = TRUE;
+              }
+            }
+            /* Constraint C1232 */
+            else if (arg_info_list[info_idx].ed.section  ||
+              arg_info_list[info_idx].ed.assumed_shape) {
+              if (!(ATD_ARRAY_IDX(dummy) &&
+                BD_ARRAY_CLASS(ATD_ARRAY_IDX(dummy)) == Assumed_Shape)) {
+                constraint_error = TRUE;
+              }
+            }
+            if (constraint_error) {
+               find_opnd_line_and_column((opnd_type *) &IL_OPND(list_idx),
+                 &opnd_line, &opnd_column);
+               PRINTMSG(opnd_line, 1688, Error, opnd_column,
+                 AT_OBJ_NAME_PTR(dummy));
+            }
+         }
+#endif /* KEY Bug 14110 */
 
          if (arg_info_list[info_idx].ed.type == Character &&
              ATP_PROC(spec_idx) != Intrin_Proc            &&
@@ -3827,6 +3885,12 @@ boolean final_arg_work(opnd_type	*list_opnd,
 
       if (dummy != NULL_IDX &&
           AT_OBJ_CLASS(dummy) == Data_Obj &&
+#ifdef KEY /* Bug 14150 */
+	  /* Prior to 14150, front end didn't allow ignore_tkr on a pointer,
+	   * so we can't break any existing code by passing the descriptor,
+	   * which is what we need for ISO_C_BINDING c_f_pointer. */
+          (!ATD_POINTER(dummy)) &&
+#endif /* KEY Bug 14150 */
           ATD_IGNORE_TKR(dummy)) {
 
           d_type = Unknown_Dummy;
@@ -4013,10 +4077,14 @@ boolean final_arg_work(opnd_type	*list_opnd,
        * intent(inout) can change it. It's harmless to do this for intent(in)
        * as well (the Fortran standard requires the user not to modify such
        * an argument, but does not require the compiler to pass it by value)
-       * and the optimizer works better without the copy.
+       * and the optimizer works better without the copy. Note that we need
+       * to set ERROR_ASSOC in case of error, because arg_assoc_tbl[][] (see
+       * above) doesn't take care of that.
        */
       else if (explicit && NULL_IDX != dummy && ATD_ALLOCATABLE(dummy)) {  
-	association = PASS_DV;
+	association = arg_info_list[info_idx].ed.allocatable ?
+	  PASS_DV :
+	  ERROR_ASSOC;
       }
 #endif /* KEY Bug 6845 */
 #ifdef KEY /* Bug 10157 */
@@ -4050,7 +4118,7 @@ boolean final_arg_work(opnd_type	*list_opnd,
          }
       }
 
-# if (defined(_TARGET_OS_IRIX) || defined(_TARGET_OS_LINUX))
+# if (defined(_TARGET_OS_IRIX) || defined(_TARGET_OS_LINUX) || defined(_TARGET_OS_DARWIN))
       if (association == CHECK_CONTIG_FLAG &&
           arg_info_list[info_idx].ed.type == Character) {
 
@@ -4129,7 +4197,7 @@ boolean final_arg_work(opnd_type	*list_opnd,
 	    pass_address_count += 1;
 #endif /* _DEBUG */
 
-# if (defined(_TARGET_OS_IRIX) || defined(_TARGET_OS_LINUX))
+# if (defined(_TARGET_OS_IRIX) || defined(_TARGET_OS_LINUX) || defined(_TARGET_OS_DARWIN))
 #ifdef KEY /* Bug 7424 */
             if (clear_pt_unique_mem(dummy)) {
 #endif /* KEY Bug 7424 */
@@ -4140,8 +4208,7 @@ boolean final_arg_work(opnd_type	*list_opnd,
 #endif /* KEY Bug 7424 */
 # endif
 
-            if (! ATP_VFUNCTION(spec_idx) &&
-                ! arg_info_list[info_idx].ed.percent_val_arg) {
+            if (!pass_by_value(spec_idx, info_idx, dummy)) {
 
                /* JBL - this is for array element change */
 
@@ -4246,7 +4313,7 @@ boolean final_arg_work(opnd_type	*list_opnd,
             pass_section_address_count += 1;
 #endif /* _DEBUG */
 
-# if (defined(_TARGET_OS_IRIX) || defined(_TARGET_OS_LINUX))
+# if (defined(_TARGET_OS_IRIX) || defined(_TARGET_OS_LINUX) || defined(_TARGET_OS_DARWIN))
 #ifdef KEY /* Bug 7424 */
             if (clear_pt_unique_mem(dummy)) {
 #endif /* KEY Bug 7424 */
@@ -4299,7 +4366,7 @@ boolean final_arg_work(opnd_type	*list_opnd,
             pass_address_from_dv_count += 1;
 #endif /* _DEBUG */
 
-# if (defined(_TARGET_OS_IRIX) || defined(_TARGET_OS_LINUX))
+# if (defined(_TARGET_OS_IRIX) || defined(_TARGET_OS_LINUX) || defined(_TARGET_OS_DARWIN))
 #ifdef KEY /* Bug 7424 */
             if (clear_pt_unique_mem(dummy)) {
 #endif /* KEY Bug 7424 */
@@ -4311,8 +4378,7 @@ boolean final_arg_work(opnd_type	*list_opnd,
 # endif
 
 
-            if (! ATP_VFUNCTION(spec_idx) &&
-                ! arg_info_list[info_idx].ed.percent_val_arg) {
+            if (!pass_by_value(spec_idx, info_idx, dummy)) {
 
                NTR_IR_TBL(ir_idx);
                IR_OPR(ir_idx)   = Dv_Access_Base_Addr;
@@ -4358,7 +4424,7 @@ boolean final_arg_work(opnd_type	*list_opnd,
             pass_dv_count += 1;
 #endif /* _DEBUG */
 
-# if (defined(_TARGET_OS_IRIX) || defined(_TARGET_OS_LINUX))
+# if (defined(_TARGET_OS_IRIX) || defined(_TARGET_OS_LINUX) || defined(_TARGET_OS_DARWIN))
 #ifdef KEY /* Bug 7424 */
             if (clear_pt_unique_mem(dummy)) {
 #endif /* KEY Bug 7424 */
@@ -4428,7 +4494,7 @@ boolean final_arg_work(opnd_type	*list_opnd,
 
                tmp_dv_idx = create_tmp_DV_asg(list_idx, info_idx);
 
-# if (defined(_TARGET_OS_IRIX) || defined(_TARGET_OS_LINUX))
+# if (defined(_TARGET_OS_IRIX) || defined(_TARGET_OS_LINUX) || defined(_TARGET_OS_DARWIN))
 #ifdef KEY /* Bug 10157 */
  /* Original dope vector is used only in caller, and copy of dope vector is
   * used only in called procedure, so leave "pointer to unique memory"
@@ -4503,7 +4569,7 @@ boolean final_arg_work(opnd_type	*list_opnd,
                tmp_dv_idx = create_tmp_DV_asg(list_idx, info_idx);
 
 
-# if (defined(_TARGET_OS_IRIX) || defined(_TARGET_OS_LINUX))
+# if (defined(_TARGET_OS_IRIX) || defined(_TARGET_OS_LINUX) || defined(_TARGET_OS_DARWIN))
 #ifdef KEY /* Bug 10157 */
  /* Original dope vector is used only in caller, and copy of dope vector is
   * used only in called procedure, so leave "pointer to unique memory"
@@ -4556,7 +4622,7 @@ boolean final_arg_work(opnd_type	*list_opnd,
                 (TYP_TYPE(CN_TYPE_IDX(IL_IDX(list_idx))) == Integer ||
                  TYP_TYPE(CN_TYPE_IDX(IL_IDX(list_idx))) == Logical ||
                  TYP_TYPE(CN_TYPE_IDX(IL_IDX(list_idx))) == Real    ||
-# if (defined(_TARGET_OS_IRIX) || defined(_TARGET_OS_LINUX))
+# if (defined(_TARGET_OS_IRIX) || defined(_TARGET_OS_LINUX) || defined(_TARGET_OS_DARWIN))
                  (TYP_TYPE(CN_TYPE_IDX(IL_IDX(list_idx))) == Character &&
                   ! on_off_flags.pad_char_literals)                 ||
 # endif
@@ -4565,8 +4631,7 @@ boolean final_arg_work(opnd_type	*list_opnd,
                /* just use Const_Tmp_Loc_Opr */
                /* if %val(), just leave the constant as is */
 
-               if (! ATP_VFUNCTION(spec_idx) &&
-                   ! arg_info_list[info_idx].ed.percent_val_arg) {
+	       if (!pass_by_value(spec_idx, info_idx, dummy)) {
                   NTR_IR_TBL(ir_idx);
                   IR_OPR(ir_idx) = Const_Tmp_Loc_Opr;
                   IR_TYPE_IDX(ir_idx) = CN_TYPE_IDX(IL_IDX(list_idx));
@@ -4584,7 +4649,7 @@ boolean final_arg_work(opnd_type	*list_opnd,
                 arg_info_list[info_idx].ed.type == Character &&
                 dummy == NULL_IDX                            &&
              compare_cn_and_value(TYP_IDX(arg_info_list[info_idx].ed.type_idx),
-# if (defined(_TARGET_OS_IRIX) || defined(_TARGET_OS_LINUX))
+# if (defined(_TARGET_OS_IRIX) || defined(_TARGET_OS_LINUX) || defined(_TARGET_OS_DARWIN))
                                   storage_bit_size_tbl[INTEGER_DEFAULT_TYPE]/8,
 # else
                                   TARGET_CHARS_PER_WORD,
@@ -4599,7 +4664,7 @@ boolean final_arg_work(opnd_type	*list_opnd,
                TYP_CHAR_CLASS(TYP_WORK_IDX) = Const_Len_Char;
                TYP_FLD(TYP_WORK_IDX)        = CN_Tbl_Idx;
 
-# if (defined(_TARGET_OS_IRIX) || defined(_TARGET_OS_LINUX))
+# if (defined(_TARGET_OS_IRIX) || defined(_TARGET_OS_LINUX) || defined(_TARGET_OS_DARWIN))
                the_constant = storage_bit_size_tbl[INTEGER_DEFAULT_TYPE]/8;
 # else
                the_constant = TARGET_CHARS_PER_WORD;
@@ -4632,12 +4697,22 @@ boolean final_arg_work(opnd_type	*list_opnd,
                   char_ptr2[k] = ' ';
                }
 
+#ifdef KEY /* Bug 8117 */
+               tmp_idx = create_tmp_asg_or_call(&opnd,
+                                        &exp_desc,
+                                        &l_opnd, 
+			       		Intent_In,
+                                        TRUE, 
+                                        FALSE,
+					info_idx, a_type, d_type);
+#else /* KEY Bug 8117 */
                tmp_idx = create_tmp_asg(&opnd,
                                         &exp_desc,
                                         &l_opnd, 
 			       		Intent_In,
                                         TRUE, 
                                         FALSE);
+#endif /* KEY Bug 8117 */
 
                NTR_IR_TBL(ir_idx);
                IR_OPR(ir_idx)    = Aloc_Opr;
@@ -4691,6 +4766,22 @@ boolean final_arg_work(opnd_type	*list_opnd,
                IR_FLD_L(ir_idx) = IR_Tbl_Idx;
                IR_IDX_L(ir_idx) = unused1;
             }
+#ifdef KEY /* Bug 10410 */
+            else if (IL_FLD(list_idx) == IR_Tbl_Idx &&
+	      IR_OPR(IL_IDX(list_idx)) == Percent_Val_Opr) {
+	       /* Ordinarily Percent_Val_Opr has been removed from the tree
+	        * long ago and arg_info_list.ed.percent_val_arg has been set
+		* in its place, so the code here doesn't expect to see that
+		* operator in the tree. But size_intrinsic() sometimes needs
+		* to indicate that it has already generated Aloc_Opr, so this
+		* special case lets it do so by putting the operator into the
+		* tree at the last minute. */
+	      int pvo = IL_IDX(list_idx);
+	      IL_FLD(list_idx) = IR_FLD_L(pvo);
+	      IL_IDX(list_idx) = IR_IDX_L(pvo);
+	    }
+#endif /* KEY Bug 10410 */
+
             else {
 
                if (! io_call &&
@@ -4710,8 +4801,7 @@ boolean final_arg_work(opnd_type	*list_opnd,
                                  FALSE);
               
 
-               if (ATP_VFUNCTION(spec_idx) ||
-                   arg_info_list[info_idx].ed.percent_val_arg ||
+	       if (pass_by_value(spec_idx, info_idx, dummy) ||
                    ATP_ELEMENTAL(spec_idx)) {
 
                   COPY_OPND(IL_OPND(list_idx), l_opnd);
@@ -4836,8 +4926,7 @@ boolean final_arg_work(opnd_type	*list_opnd,
                               TRUE, 
                               FALSE);
 
-            if (ATP_VFUNCTION(spec_idx) ||
-                arg_info_list[info_idx].ed.percent_val_arg) {
+	    if (pass_by_value(spec_idx, info_idx, dummy)) {
 
                COPY_OPND(IL_OPND(list_idx), l_opnd);
             }
@@ -4923,7 +5012,7 @@ boolean final_arg_work(opnd_type	*list_opnd,
 
                tmp_idx = gen_compiler_tmp(line, col, Priv, TRUE);
 
-# if (defined(_TARGET_OS_IRIX) || defined(_TARGET_OS_LINUX))
+# if (defined(_TARGET_OS_IRIX) || defined(_TARGET_OS_LINUX) || defined(_TARGET_OS_DARWIN))
                ATD_NOT_PT_UNIQUE_MEM(tmp_idx) = TRUE;
                ATD_NOT_PT_UNIQUE_MEM(
                      (find_left_attr(&IL_OPND(list_idx)))) = TRUE;
@@ -5011,7 +5100,7 @@ boolean final_arg_work(opnd_type	*list_opnd,
 
                tmp_idx = gen_compiler_tmp(line, col, Priv, TRUE);
 
-# if (defined(_TARGET_OS_IRIX) || defined(_TARGET_OS_LINUX))
+# if (defined(_TARGET_OS_IRIX) || defined(_TARGET_OS_LINUX) || defined(_TARGET_OS_DARWIN))
                ATD_NOT_PT_UNIQUE_MEM(tmp_idx) = TRUE;
                ATD_NOT_PT_UNIQUE_MEM(
                         (find_left_attr(&IL_OPND(list_idx)))) = TRUE;
@@ -5126,7 +5215,7 @@ boolean final_arg_work(opnd_type	*list_opnd,
 
             tmp_dv_idx = gen_compiler_tmp(line, col, Priv, TRUE);
 
-# if (defined(_TARGET_OS_IRIX) || defined(_TARGET_OS_LINUX))
+# if (defined(_TARGET_OS_IRIX) || defined(_TARGET_OS_LINUX) || defined(_TARGET_OS_DARWIN))
 #ifdef KEY /* Bug 7424 */
             if (clear_pt_unique_mem(dummy)) {
 #endif /* KEY Bug 7424 */
@@ -5214,7 +5303,7 @@ boolean final_arg_work(opnd_type	*list_opnd,
             /* generate address temp */
 
 # if 0
-# if (defined(_TARGET_OS_IRIX) || defined(_TARGET_OS_LINUX))
+# if (defined(_TARGET_OS_IRIX) || defined(_TARGET_OS_LINUX) || defined(_TARGET_OS_DARWIN))
             NTR_IR_LIST_TBL(false_list_idx);
             NTR_IR_TBL(false_parm_idx);
             IR_OPR(false_parm_idx) = False_Parm_Opr;
@@ -5244,7 +5333,7 @@ boolean final_arg_work(opnd_type	*list_opnd,
             ATD_STOR_BLK_IDX(addr_tmp_idx)  = SCP_SB_STACK_IDX(curr_scp_idx);
             AT_SEMANTICS_DONE(addr_tmp_idx) = TRUE;
 
-# if (defined(_TARGET_OS_IRIX) || defined(_TARGET_OS_LINUX))
+# if (defined(_TARGET_OS_IRIX) || defined(_TARGET_OS_LINUX) || defined(_TARGET_OS_DARWIN))
             ATD_NOT_PT_UNIQUE_MEM(addr_tmp_idx) = TRUE;
             ATD_NOT_PT_UNIQUE_MEM(find_left_attr(&IL_OPND(list_idx))) = TRUE;
 # endif
@@ -5389,34 +5478,13 @@ boolean final_arg_work(opnd_type	*list_opnd,
             COPY_OPND(opnd, IL_OPND(list_idx));
             exp_desc = arg_info_list[info_idx].ed;
 #ifdef KEY /* Bug 8117 */
-	   /*
-	    * To reduce code size, call a runtime function to copy a
-	    * noncontiguous array to a contiguous array temporary, instead of
-	    * performing the operation in line.
-	    *
-	    * For safety, this test limits the change to the case where an
-	    * entire assumed-shape array is passed to an F77-style dummy,
-	    * because I am not certain that the runtime function satisfies all
-	    * the other cases which lead to CHECK_CONTIG_FLAG (see global
-	    * arg_assoc_tbl.) In the future, for additional reduction in code
-	    * size, one could relax this test, assuming the runtime function
-	    * works correctly for those cases.
-	    */
-	    boolean call = arg_info_list[info_idx].ed.rank &&
-	      (!arg_info_list[info_idx].ed.section) &&
-	      arg_info_list[info_idx].ed.type != Structure &&
-	      (a_type == Whole_Ass_Shape || a_type == Array_Ptr) &&
-	      (d_type == Unknown_Dummy || d_type == Sequence_Array_Dummy);
-#ifdef _DEBUG
-            runtime_copyinout_count += !!call;
-#endif /* _DEBUG */
-            tmp_idx = create_tmp_asg_or_call(&opnd,
+            tmp_idx = create_tmp_asg_or_call(&opnd, 
                                      &exp_desc, 
                                      &r_opnd, 
                                      intent,
                                      TRUE, 
                                      FALSE,
-				     call);
+				     info_idx, a_type, d_type);
 #else /* KEY Bug 8117 */
             tmp_idx = create_tmp_asg(&opnd, 
                                      &exp_desc, 
@@ -5425,7 +5493,7 @@ boolean final_arg_work(opnd_type	*list_opnd,
                                      TRUE, 
                                      FALSE);
 #endif /* KEY Bug 8117 */
-# if (defined(_TARGET_OS_IRIX) || defined(_TARGET_OS_LINUX))
+# if (defined(_TARGET_OS_IRIX) || defined(_TARGET_OS_LINUX) || defined(_TARGET_OS_DARWIN))
             ATD_NOT_PT_UNIQUE_MEM(tmp_idx) = TRUE;
 
             if (ATD_AUTOMATIC(tmp_idx) &&
@@ -5886,16 +5954,50 @@ int	create_tmp_asg(opnd_type     *r_opnd,
 		       boolean        save_where_dealloc_stmt)
 #if KEY /* Bug 8117 */
 {
-  return create_tmp_asg_or_call(r_opnd, exp_desc, left_opnd, intent,
+  return common_create_tmp_asg(r_opnd, exp_desc, left_opnd, intent,
     stmt_tmp, save_where_dealloc_stmt, FALSE);
 }
 
-/* Like create_tmp_asg(), but also takes a "call" parameter which, if true,
- * causes us to generate a call to a library function instead of an inline
- * assignment.
+/* Like create_tmp_asg(), but (usually) generates a call to a library function
+ * instead of an inline assignment.
  */
 int
 create_tmp_asg_or_call(opnd_type *r_opnd, expr_arg_type *exp_desc,
+  opnd_type *left_opnd, int intent, boolean stmt_tmp,
+  boolean save_where_dealloc_stmt, int info_idx, dummy_arg_type a_type,
+  dummy_arg_type d_type) {
+  /*
+   * To reduce code size, call a runtime function to copy a
+   * noncontiguous array to a contiguous array temporary, instead of
+   * performing the operation in line.
+   *
+   * For safety, this test limits the change to the case where an
+   * entire assumed-shape array is passed to an F77-style dummy,
+   * because I am not certain that the runtime function satisfies all
+   * the other cases which lead to CHECK_CONTIG_FLAG (see global
+   * arg_assoc_tbl.) In the future, for additional reduction in code
+   * size, one could relax this test, assuming the runtime function
+   * works correctly for those cases.
+   */
+  boolean call = arg_info_list[info_idx].ed.rank &&
+    (!arg_info_list[info_idx].ed.section) &&
+    arg_info_list[info_idx].ed.type != Structure &&
+    (a_type == Whole_Ass_Shape || a_type == Array_Ptr) &&
+    (d_type == Unknown_Dummy || d_type == Sequence_Array_Dummy);
+
+#ifdef _DEBUG
+  runtime_copyinout_count += !!call;
+#endif /* _DEBUG */
+
+  return common_create_tmp_asg(r_opnd, exp_desc, left_opnd, intent,
+    stmt_tmp, save_where_dealloc_stmt, call);
+}
+
+/*
+ * Perform the work common to create_tmp_asg() and create_tmp_asg_or_call()
+ */
+static int
+common_create_tmp_asg(opnd_type *r_opnd, expr_arg_type *exp_desc,
  opnd_type *left_opnd, int intent, boolean stmt_tmp,
  boolean save_where_dealloc_stmt, boolean call)
 #endif /* KEY Bug 8117 */
@@ -5922,7 +6024,7 @@ create_tmp_asg_or_call(opnd_type *r_opnd, expr_arg_type *exp_desc,
    int			true_end_sh_idx;
 
 
-   TRACE (Func_Entry, "create_tmp_asg", NULL);
+   TRACE (Func_Entry, "common_create_tmp_asg", NULL);
 
    find_opnd_line_and_column(r_opnd, &line, &col);
 
@@ -6310,7 +6412,7 @@ create_tmp_asg_or_call(opnd_type *r_opnd, expr_arg_type *exp_desc,
    defer_stmt_expansion = save_defer_stmt_expansion;
    stmt_expansion_control_end(left_opnd);
 
-   TRACE (Func_Exit, "create_tmp_asg", NULL);
+   TRACE (Func_Exit, "common_create_tmp_asg", NULL);
 
    return(tmp_idx);
 
@@ -7825,7 +7927,7 @@ void flatten_function_call(opnd_type     *result)
          AT_SEMANTICS_DONE(tmp_idx)= TRUE;
       }
 
-# if (defined(_TARGET_OS_IRIX) || defined(_TARGET_OS_LINUX))
+# if (defined(_TARGET_OS_IRIX) || defined(_TARGET_OS_LINUX) || defined(_TARGET_OS_DARWIN))
       ATD_NOT_PT_UNIQUE_MEM(tmp_idx) = TRUE;
 # endif
 
@@ -7846,7 +7948,7 @@ void flatten_function_call(opnd_type     *result)
                               Priv);
 
          ATD_AUTO_BASE_IDX(tmp_idx)	= base_tmp_idx;
-# if (defined(_TARGET_OS_IRIX) || defined(_TARGET_OS_LINUX))
+# if (defined(_TARGET_OS_IRIX) || defined(_TARGET_OS_LINUX) || defined(_TARGET_OS_DARWIN))
          ATD_NOT_PT_UNIQUE_MEM(base_tmp_idx) = TRUE;
 # endif
 
@@ -7946,7 +8048,7 @@ void flatten_function_call(opnd_type     *result)
             IL_FLD(list_idx) = CN_Tbl_Idx;
             the_constant     = 2L;
 
-# if (defined(_TARGET_OS_IRIX) || defined(_TARGET_OS_LINUX))
+# if (defined(_TARGET_OS_IRIX) || defined(_TARGET_OS_LINUX) || defined(_TARGET_OS_DARWIN))
             if (TYP_LINEAR(ATD_TYPE_IDX(tmp_array_idx)) == Integer_4) {
                the_constant++;
             }
@@ -8236,6 +8338,19 @@ void flatten_function_call(opnd_type     *result)
                IR_CONTIG_ARRAY(OPND_IDX((*result))) = TRUE;
             }
          }
+#ifdef KEY /* Bug 11986, 6845 */
+	 /* If we are passing a temp by reference because the function
+	  * result is allocatable, we need to deallocate it after the
+	  * reference to it. */
+         if (ATD_ALLOCATABLE(attr_idx)) {
+	   int save_curr_stmt_sh_idx = curr_stmt_sh_idx;
+	   /* This is the statment containing the reference to the temp */
+	   curr_stmt_sh_idx = SH_NEXT_IDX(curr_stmt_sh_idx);
+	   help_dealloc(line, col, AT_Tbl_Idx, tmp_idx, FALSE,
+	     TRUE, FALSE);
+	   curr_stmt_sh_idx = save_curr_stmt_sh_idx;
+	 }
+#endif /* KEY Bug 11986, 6845 */
       }
       else {
 
@@ -9227,7 +9342,7 @@ int	get_stmt_tmp(int	type_idx,
       goto EXIT;
    }
 
-# if (defined(_TARGET_OS_IRIX) || defined(_TARGET_OS_LINUX))
+# if (defined(_TARGET_OS_IRIX) || defined(_TARGET_OS_LINUX) || defined(_TARGET_OS_DARWIN))
    if (dump_flags.mp) {
       goto EXIT;
    }
@@ -10221,7 +10336,7 @@ int create_argchck_descriptor(opnd_type		*call_opnd)
    SH_P2_SKIP_ME(SH_PREV_IDX(curr_stmt_sh_idx)) = TRUE;
 
 
-# if defined(_INIT_RELOC_BASE_OFFSET) || (defined(_TARGET_OS_IRIX) || defined(_TARGET_OS_LINUX))
+# if defined(_INIT_RELOC_BASE_OFFSET) || (defined(_TARGET_OS_IRIX) || defined(_TARGET_OS_LINUX) || defined(_TARGET_OS_DARWIN))
    /* Check to make sure that SB_FIRST_ATTR_IDX has a value.*/
    /* Create a temp as an overlay for the first object if   */
    /* there is no FIRST attr.                               */
@@ -12927,7 +13042,7 @@ static boolean check_elemental_conformance(int			start_il_idx,
 |*									      *|
 \******************************************************************************/
 
-# if (defined(_TARGET_OS_IRIX) || defined(_TARGET_OS_LINUX))
+# if (defined(_TARGET_OS_IRIX) || defined(_TARGET_OS_LINUX) || defined(_TARGET_OS_DARWIN))
 static void set_inline_state(int	ir_idx,
 			     int	attr_idx)
 
@@ -13151,10 +13266,11 @@ static boolean compare_darg_to_actual_arg(int		gen_idx,
    switch (AT_OBJ_CLASS(arg_attr)) {
    case Data_Obj:
 #ifdef KEY
-      if (pgm_unit && strcmp(AT_OBJ_NAME_PTR(gen_idx), "SIGNAL") != 0) {
+      if (pgm_unit && strcmp(AT_OBJ_NAME_PTR(gen_idx), "SIGNAL") != 0)
 #else
-      if (pgm_unit) {
+      if (pgm_unit)
 #endif
+      {
          same = FALSE;
          
          if (spec_count == 0) { /* error .. expecting data obj */
@@ -13182,11 +13298,12 @@ static boolean compare_darg_to_actual_arg(int		gen_idx,
 #ifdef KEY
       else if (!((strcmp(AT_OBJ_NAME_PTR(gen_idx), "EOSHIFT") == 0) &&
                (strcmp(AT_OBJ_NAME_PTR(arg_attr), "BOUNDARY") == 0)) && 
-                strcmp(AT_OBJ_NAME_PTR(gen_idx), "SIGNAL") != 0) {
+                strcmp(AT_OBJ_NAME_PTR(gen_idx), "SIGNAL") != 0)
 #else
       else if (!((strcmp(AT_OBJ_NAME_PTR(gen_idx), "EOSHIFT") == 0) &&
-               (strcmp(AT_OBJ_NAME_PTR(arg_attr), "BOUNDARY") == 0))) {
+               (strcmp(AT_OBJ_NAME_PTR(arg_attr), "BOUNDARY") == 0)))
 #endif
+      {
 
          if (!(strcmp(AT_OBJ_NAME_PTR(gen_idx), "RESHAPE") == 0) ||
                ((strcmp(AT_OBJ_NAME_PTR(arg_attr), "PAD") != 0) &&
@@ -13260,17 +13377,6 @@ static boolean compare_darg_to_actual_arg(int		gen_idx,
                   }
                }
             }
-#ifdef KEY /* Bug 6845 */
-	    /* If dummy is allocatable but actual is not, this is an error,
-	     * not just wrong specific procedure */
-	    else if (da_rank != 0 && ATD_ALLOCATABLE(arg_attr) &&
-	      !arg_info_list[info_idx].ed.allocatable) {
-		  PRINTMSG(opnd_line, 256, Error, opnd_column,
-			   AT_OBJ_NAME_PTR(arg_attr));
-                  same = FALSE;
-		  break;
-	    }
-#endif /* KEY Bug 6845 */
          }
       }
 
@@ -13421,6 +13527,11 @@ static boolean compare_darg_to_actual_arg(int		gen_idx,
          }
          break;
       }
+#ifdef KEY /* Bug 14150 */
+      else if (ATD_IGNORE_TKR(arg_attr)) {
+        /* As long as both actual and dummy are procedures, accept this */
+      }
+#endif /* KEY Bug 14150 */
       else if (ATP_EXPL_ITRFC(attr_idx) && ATP_EXPL_ITRFC(arg_attr)) {
 
          /* If a darg and an actual arg are both procedures and they */

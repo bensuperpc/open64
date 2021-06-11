@@ -41,10 +41,10 @@
  * ====================================================================
  *
  * Module: calls.cxx
- * $Revision: 1.1.1.1 $
- * $Date: 2005/10/21 19:00:00 $
- * $Author: marcel $
- * $Source: /proj/osprey/CVS/open64/osprey1.0/be/cg/calls.cxx,v $
+ * $Revision: 1.66 $
+ * $Date: 05/12/05 08:59:02-08:00 $
+ * $Author: bos@eng-24.pathscale.com $
+ * $Source: /scratch/mee/2.4-65/kpro64-pending/be/cg/SCCS/s.calls.cxx $
  *
  * Revision history:
  *  04-Oct-91 - Original Version
@@ -97,8 +97,16 @@
 #include "cgtarget.h"
 #include "entry_exit_targ.h"
 #include "targ_abi_properties.h"
-#include "cxx_template.h" 
+#include "cxx_template.h"
 #include "targ_isa_registers.h"
+#if defined(TARG_PR)
+#include "cgexp_Internals.h"  // Expand_SR_Adj
+#endif
+#ifdef KEY
+#include "gtn_universe.h"
+#include "gtn_set.h"
+#endif
+
 
 INT64 Frame_Len;
 extern BOOL IPFEC_Enable_Edge_Profile;
@@ -137,19 +145,21 @@ static enum {
 BOOL LC_Used_In_PU;
 
 /* TNs to save the callers GP and FP if needed */
-#if 0 // these tn are exported to gra_live.cxx::live_init for eh usage
-static TN *Caller_GP_TN;
-static TN *Caller_FP_TN;
-static TN *Caller_Pfs_TN;
-static TN *ra_intsave_tn;
-#else
+#ifdef TARG_IA64
 TN *Caller_GP_TN;
 TN *Caller_FP_TN;
 TN *Caller_Pfs_TN;
 TN *ra_intsave_tn;
+#else
+#ifdef TARG_MIPS
+TN *Caller_GP_TN;
+#else
+static TN *Caller_GP_TN;
 #endif
-
-
+static TN *Caller_FP_TN;
+static TN *Caller_Pfs_TN;
+static TN *ra_intsave_tn;
+#endif  // TARG_IA64
 
 /* Keep track of a TN with the value of the current PU's stack pointer
  * adjustment (i.e. the frame length):
@@ -157,13 +167,16 @@ TN *ra_intsave_tn;
 static TN *Frame_Len_TN;
 static TN *Neg_Frame_Len_TN;
 
-static BOOL Gen_Frame_Pointer;
+BOOL Gen_Frame_Pointer;
 
 void Split_BB_For_br(BB *bb);
 
 /* Trace flags: */
 static BOOL Trace_EE = FALSE;	/* Trace entry/exit processing */
 
+#if defined(TARG_SL)
+static BOOL Trace_Stack_Allocation = FALSE; /* Trace stack frame allocation */ 
+#endif 
 /* macro to test if we will use a scratch register to hold gp for
  * the pu.  we do this in leaf routines if there are no regions
  * and gra will be run.
@@ -208,6 +221,7 @@ Init_Pregs ( void )
  *
  * =======================================================================
  */
+#ifndef TARG_X8664
 static void
 Setup_GP_TN_For_PU( ST *pu)
 {
@@ -260,6 +274,9 @@ Setup_GP_TN_For_PU( ST *pu)
    * have enough information to perform this optimization if regions
    * are present.
    */
+#ifdef TARG_MIPS
+  reg = REGISTER_gp;
+#else
   if ( Use_Scratch_GP(GP_Setup_Code == need_code) ) {
     REGISTER_SET caller_saves;
     REGISTER_SET func_val;
@@ -287,9 +304,11 @@ Setup_GP_TN_For_PU( ST *pu)
     /* use gp */
     reg = REGISTER_gp;
   }
+#endif
   REGISTER_Set_Allocatable(REGISTER_CLASS_gp, reg, FALSE);
   Set_TN_register(GP_TN, reg);
 }
+#endif
 
 /* =======================================================================
  *
@@ -306,7 +325,7 @@ Init_Callee_Saved_Regs_for_REGION ( ST *pu, BOOL is_region )
   ISA_REGISTER_CLASS cl;
   TN *stn;
 
-#ifndef TARG_X8664  // x86_64 does not use GP
+#ifdef ABI_PROPERTY_global_ptr
   Setup_GP_TN_For_PU( pu );
 #endif
 
@@ -315,8 +334,15 @@ Init_Callee_Saved_Regs_for_REGION ( ST *pu, BOOL is_region )
     if ( stn = PREG_To_TN_Array[ Return_Preg ] )
       SAVE_tn(Return_Address_Reg) = stn;
     else {
+#if 1 // this is left here for reference in case RA is a special register - SC
+      // we assume even if RA_TN is not integer, 
+      // there must be a way to save RA to regular int regs
+      SAVE_tn(Return_Address_Reg) = Build_RCLASS_TN(ISA_REGISTER_CLASS_integer);
+      Set_TN_save_creg (SAVE_tn(Return_Address_Reg), TN_class_reg(RA_TN));
+#else
       SAVE_tn(Return_Address_Reg) = Build_TN_Like(RA_TN);
       Set_TN_save_creg (SAVE_tn(Return_Address_Reg), TN_class_reg(RA_TN));
+#endif
       TN_MAP_Set( TN_To_PREG_Map, SAVE_tn(Return_Address_Reg),
 		  (void *)(INTPTR)Return_Preg );
       PREG_To_TN_Array[ Return_Preg ] = SAVE_tn(Return_Address_Reg);
@@ -404,6 +430,7 @@ Init_Callee_Saved_Regs_for_REGION ( ST *pu, BOOL is_region )
   Callee_Saved_Regs_Count = i;
 }
 
+
 /* ===================================================================
  *
  * vararg_st8_2_st8_spill 
@@ -446,7 +473,7 @@ vararg_st8_2_st8_spill (BB * bb) {
 }
 #endif
 
-#ifdef KEY
+#if defined(KEY) && !defined(TARG_NVISA)
 struct Save_user_allocated_saved_regs
 {
   OPS *ops;
@@ -536,10 +563,13 @@ Generate_Entry (BB *bb, BOOL gra_run )
 
     EETARG_Save_Pfs (Caller_Pfs_TN, &ops);	// alloc
 
+#ifdef ABI_PROPERTY_stack_ptr
 #ifdef TARG_X8664
     /* Initialize the frame pointer if required: */
     if ( Gen_Frame_Pointer && PUSH_FRAME_POINTER_ON_STACK ) {
-      Build_OP( Is_Target_64bit() ? TOP_pushq : TOP_pushl, SP_TN, FP_TN, &ops );
+      Build_OP( Is_Target_64bit() ? TOP_pushq : TOP_pushl, SP_TN, FP_TN, SP_TN,
+      		&ops );
+
       Exp_COPY( FP_TN, SP_TN, &ops );
     }
 #endif
@@ -564,8 +594,9 @@ Generate_Entry (BB *bb, BOOL gra_run )
         	if ( stn = PREG_To_TN_Array[ Caller_FP_Preg ] )
   			Caller_FP_TN = stn;
         	else {
+			// Bug 13316: FP can hold 64 bit (non pointer) value
   			Caller_FP_TN = Gen_Register_TN ( 
-				ISA_REGISTER_CLASS_integer, Pointer_Size);
+			  ISA_REGISTER_CLASS_integer, TY_size(Spill_Int_Type));
   			Set_TN_save_creg (Caller_FP_TN, TN_class_reg(FP_TN));
   			TN_MAP_Set( TN_To_PREG_Map, Caller_FP_TN, 
 				(void *)(INTPTR)Caller_FP_Preg );
@@ -582,13 +613,18 @@ Generate_Entry (BB *bb, BOOL gra_run )
       Exp_Spadjust (FP_TN, Frame_Len_TN, V_NONE, &ops);
     }
     ENTRYINFO_sp_adj(ent_info) = OPS_last(&ops);
+#endif //ABI_PROPERTY_stack_ptr
 
-#ifdef KEY
+#if defined(KEY) && !defined(TARG_NVISA)
     // bug 4583: save callee-saved registers that may get clobbered 
     // by inline asm
     for (INT i = 0; i < Saved_Callee_Saved_Regs.Elements(); i++) {
       SAVE_REG_LOC sr = Saved_Callee_Saved_Regs.Top_nth(i);
 
+#ifdef TARG_X8664
+      if (sr.temp == NULL)
+	continue; // handled by push/pop under CG_push_pop_int_saved_regs
+#endif
       CGSPILL_Store_To_Memory (sr.ded_tn, sr.temp, &ops, CGSPILL_LCL, bb);
       Set_OP_no_move_before_gra(OPS_last(&ops));
     }
@@ -637,6 +673,7 @@ Generate_Entry (BB *bb, BOOL gra_run )
    */
   if (NULL != RA_TN) {
     if ( PU_has_return_address(Get_Current_PU()) ) {
+#ifndef TARG_NVISA
       // This is broken for IA-32.  On IA-32, the return address is always
       // at a constant offset from the frame pointer, specifically it is
       // accessible as 4(%ebp), but it is never in a register.  Nor
@@ -650,21 +687,22 @@ Generate_Entry (BB *bb, BOOL gra_run )
       // If it fails, then branch_reg would be spilled, and this instruction will be deleted
       // However, LRA does not honor this and we prefer to directly spill this branch register
       if ( gra_run ) {
-          TN *ra_sv_tn = Build_TN_Like(RA_TN);
-          Set_TN_save_creg (ra_sv_tn, TN_class_reg(RA_TN));
-          Set_TN_spill(ra_sv_tn, ra_sv_sym);
-          Exp_COPY (ra_sv_tn, RA_TN, &ops);
-          if (MTYPE_byte_size(Pointer_Mtype) < MTYPE_byte_size(Spill_Int_Mtype) ) {
-	    /* In n32 the __return_address is 4 bytes (pointer),
-	     * but we need 8-byte save/restore to make kernel and dbx happy.
-	     * So use dummy 8-byte base that was created. */
-	    ra_sv_sym = ST_base(ra_sv_sym);		/* use 8-byte block */
-	    Set_TN_spill(ra_sv_tn, ra_sv_sym);	/* so dwarf uses new addr */
-          }
-          CGSPILL_Store_To_Memory (ra_sv_tn, ra_sv_sym, &ops, CGSPILL_LCL, bb);
+	TN *ra_sv_tn = Build_TN_Like(RA_TN);
+	Set_TN_save_creg (ra_sv_tn, TN_class_reg(RA_TN));
+	Set_TN_spill(ra_sv_tn, ra_sv_sym);
+	Exp_COPY (ra_sv_tn, RA_TN, &ops);
+	if (MTYPE_byte_size(Pointer_Mtype) < MTYPE_byte_size(Spill_Int_Mtype) ) {
+	  /* In n32 the __return_address is 4 bytes (pointer),
+	   * but we need 8-byte save/restore to make kernel and dbx happy.
+	   * So use dummy 8-byte base that was created. */
+	  ra_sv_sym = ST_base(ra_sv_sym);		/* use 8-byte block */
+	  Set_TN_spill(ra_sv_tn, ra_sv_sym);	/* so dwarf uses new addr */
+	}
+	CGSPILL_Store_To_Memory (ra_sv_tn, ra_sv_sym, &ops, CGSPILL_LCL, bb);
       } else {
-          CGSPILL_Store_To_Memory ( RA_TN, ra_sv_sym, &ops, CGSPILL_LCL, bb );
+	CGSPILL_Store_To_Memory (RA_TN, ra_sv_sym, &ops, CGSPILL_LCL, bb);
       }
+#endif // ! TARG_NVISA
     }
 #ifdef TARG_IA64
     else if (PU_Has_Calls || IPFEC_Enable_Edge_Profile){
@@ -690,10 +728,10 @@ Generate_Entry (BB *bb, BOOL gra_run )
       // is a simulated OP, cgdwarf_targ.cxx will make an assertion that no simulated OP appears.
       // I think this should be a bug. This solution is just to work around it.
       if ( TN_register_class(RA_TN) != ISA_REGISTER_CLASS_integer)
-#elif TARG_X8664
+#else
     else {
-      if (gra_run && PU_Has_Calls
-	  && TN_register_class(RA_TN) != ISA_REGISTER_CLASS_integer)
+      if (gra_run && PU_Has_Calls 
+	&& TN_register_class(RA_TN) != ISA_REGISTER_CLASS_integer)
 #endif
       {
 	// because has calls, gra will need to spill this.
@@ -707,7 +745,12 @@ Generate_Entry (BB *bb, BOOL gra_run )
 		Set_TN_save_creg (ra_intsave_tn, TN_class_reg(RA_TN));
 	}
 	Exp_COPY (ra_intsave_tn, RA_TN, &ops );
-      } else {
+      }
+#if defined(TARG_SL) 
+      else if (CG_opt_level <= 1) {
+#else
+      else {
+#endif
         Exp_COPY (SAVE_tn(Return_Address_Reg), RA_TN, &ops );
       }
       Set_OP_no_move_before_gra(OPS_last(&ops));
@@ -717,7 +760,7 @@ Generate_Entry (BB *bb, BOOL gra_run )
   if ( gra_run ) 
     EETARG_Save_Extra_Callee_Tns (&ops);
 
-#ifndef TARG_X8664  // x86_64 does not use GP
+#ifdef ABI_PROPERTY_global_ptr  // x86_64 does not use GP
   /* Save the old GP and setup a new GP if required */
   if (GP_Setup_Code == need_code) {
 
@@ -794,12 +837,13 @@ Generate_Entry (BB *bb, BOOL gra_run )
 #ifdef TARG_X8664
   if( Is_Target_32bit() && Gen_PIC_Shared ){
     EETARG_Generate_PIC_Entry_Code( bb, &ops );
+  }
 #endif
 #ifdef TARG_IA64
   if (TY_is_varargs(Ty_Table[PU_prototype(Get_Current_PU())])) {
     vararg_st8_2_st8_spill (bb);
-#endif
   }
+#endif
 
   /* Merge the new operations into the beginning of the entry BB: */
   BB_Prepend_Ops(bb, &ops);
@@ -897,6 +941,11 @@ Can_Be_Tail_Call(ST *pu_st, BB *exit_bb)
   pred = BB_Unique_Predecessor(exit_bb);
   if (!pred || !BB_call(pred)) return NULL;
 
+  /* Bug 13846: The tail-call transformation discards the exit block's
+   * labels.  Make sure a label is not marked addr_saved.
+   */
+  if (BB_Has_Addr_Taken_Label(exit_bb)) return NULL;
+
   /* Get some info about the call and the callee.
    */
   ant = ANNOT_Get(BB_annotations(pred), ANNOT_CALLINFO);
@@ -968,6 +1017,13 @@ Can_Be_Tail_Call(ST *pu_st, BB *exit_bb)
 #endif
     }
   }
+
+#ifdef KEY
+  /* Bug 12718: If the callee uses __builtin_return_address, we need
+   * to preserve the call. */
+  if (call_st && PU_has_return_address(Pu_Table[ST_pu(call_st)]))
+    return NULL;
+#endif
 
   /* If any stack variables have had their address taken, it is
    * possible they might be used by the called PU, but if we do the
@@ -1282,6 +1338,17 @@ Target_Unique_Exit (
 	       TN_size measures a TN size in bytes.
 	     */
 	    INT tn_size = OP_result_size(op,i) / 8;
+#ifdef KEY
+	    // When storing a value into a function return register where the
+	    // size of the value is smaller than the size of the return
+	    // register, Handle_STID will store the value into a temp TN and
+	    // copy the TN to the return register.  Get the size from this TN
+	    // since it has the correct size.  The correct size is needed to
+	    // select the correct move OP code when copying from the temp TN to
+	    // the return register in the exit BB.  Bug 14259.
+	    if (OP_copy(op))
+	      tn_size = TN_size(OP_opnd(op, OP_COPY_OPND));
+#endif
 	    Set_TN_size(new_tn, tn_size);
 	  }
 	}
@@ -1379,7 +1446,7 @@ Generate_Unique_Exit(void)
 
   /* Generate the unique exits.
    */
-  bzero(rtn_tns, sizeof(rtn_tns));
+  BZERO(rtn_tns, sizeof(rtn_tns));
   unique_exit_bb = NULL;
   for ( elist = Exit_BB_Head; elist; elist = BB_LIST_rest(elist) ) {
     BB *bb = BB_LIST_first(elist);
@@ -1410,7 +1477,7 @@ Generate_Unique_Exit(void)
   }
 }
 
-#ifdef TARG_X8664
+#ifdef TARG_X8664 // do we need this for other processors? - SC
 void Adjust_SP_After_Call( BB* bb )
 {
   OP* op = BB_last_op(bb);
@@ -1554,6 +1621,7 @@ Generate_Exit (
 
   if (NULL != RA_TN) {
     if ( PU_has_return_address(Get_Current_PU()) ) {
+#ifndef TARG_NVISA
       /* If the return address builtin is required, restore RA_TN from the 
        * memory location for __return_address. 
        */
@@ -1569,15 +1637,16 @@ Generate_Exit (
       }
       CGSPILL_Load_From_Memory (ra_sv_tn, ra_sv_sym, &ops, CGSPILL_LCL, bb_epi);
       Exp_COPY (RA_TN, ra_sv_tn, &ops);
+#endif
     }
 #ifdef TARG_IA64
     else if( PU_Has_Calls || IPFEC_Enable_Edge_Profile) {
-      //Please see comment in similar place in "Generate_Entry" PU.
+      // Please see comment in similar place in "Generate_Entry" PU.
       if ( TN_register_class(RA_TN) != ISA_REGISTER_CLASS_integer)
 #else
     else {
-      if (gra_run && PU_Has_Calls
-	  && TN_register_class(RA_TN) != ISA_REGISTER_CLASS_integer)
+      if (gra_run && PU_Has_Calls 
+	&& TN_register_class(RA_TN) != ISA_REGISTER_CLASS_integer)
 #endif
       {
 	// because has calls, gra will need to spill this.
@@ -1587,11 +1656,17 @@ Generate_Exit (
 	// this, but it doesn't and is easy to just copy to int reg
 	// by hand and then let gra use stacked reg.
 	Exp_COPY (RA_TN, ra_intsave_tn, &ops );
-      } else {
+	Set_OP_no_move_before_gra(OPS_last(&ops));
+      }
+#if defined(TARG_SL) 
+      else if (CG_opt_level <= 1) {
+#else
+      else {
+#endif
         /* Copy back the return address register from the save_tn. */
       	Exp_COPY ( RA_TN, SAVE_tn(Return_Address_Reg), &ops );
+	Set_OP_no_move_before_gra(OPS_last(&ops));
       }
-      Set_OP_no_move_before_gra(OPS_last(&ops));
     }
   }
 
@@ -1608,11 +1683,14 @@ Generate_Exit (
     }
   }
 
-#ifdef TARG_X8664
-  /* not sure whether it is architecture independent. */
+#if defined(KEY) && !defined(TARG_NVISA)
   /* restore callee-saved registers allocated to local user variables */
   for (INT i = 0; i < Saved_Callee_Saved_Regs.Elements(); i++) {
     SAVE_REG_LOC sr = Saved_Callee_Saved_Regs.Top_nth(i);
+#ifdef TARG_X8664
+    if (sr.temp == NULL)
+      continue; // handled by push/pop under CG_push_pop_int_saved_regs
+#endif
     if (! sr.user_allocated)
       continue;
     /* generate the reload ops */
@@ -1625,6 +1703,7 @@ Generate_Exit (
   	EETARG_Restore_Pfs (Caller_Pfs_TN, &ops);
   }
 
+#ifdef ABI_PROPERTY_stack_ptr
   /* Restore the stack pointer.
    */
   if ( Gen_Frame_Pointer && !PUSH_FRAME_POINTER_ON_STACK ) {
@@ -1650,8 +1729,9 @@ Generate_Exit (
       if ( stn = PREG_To_TN_Array[ Caller_FP_Preg ] )
 	Caller_FP_TN = stn;
       else {
+	// Bug 13316: FP can hold 64 bit (non pointer) value
 	Caller_FP_TN = Gen_Register_TN (
-		ISA_REGISTER_CLASS_integer, Pointer_Size);
+	  ISA_REGISTER_CLASS_integer,  TY_size(Spill_Int_Type));
 	TN_MAP_Set( TN_To_PREG_Map, Caller_FP_TN, (void *)(INTPTR)Caller_FP_Preg );
 	PREG_To_TN_Array[ Caller_FP_Preg ] = Caller_FP_TN;
   	PREG_To_TN_Mtype[ Caller_FP_Preg ] = TY_mtype(Spill_Int_Type);
@@ -1660,6 +1740,7 @@ Generate_Exit (
     Exp_COPY (FP_TN, Caller_FP_TN, &ops);
     Set_OP_no_move_before_gra(OPS_last(&ops));
   }
+#endif
 
   /* Generate the return instruction, unless is this a tail call
    * block, in which case the xfer instruction is already there.
@@ -1735,6 +1816,11 @@ Init_Entry_Exit_Code (WN *pu_wn)
 {
   Trace_EE = Get_Trace ( TP_CGEXP, 64 );
 
+#if defined(TARG_SL)
+  Trace_Stack_Allocation = Get_Trace(TP_CGEXP, 2048); 
+#endif 
+
+
   GP_Setup_Code = undefined_code;
   Caller_GP_TN = NULL;
   Caller_FP_TN	= NULL;
@@ -1806,6 +1892,10 @@ Adjust_GP_Entry(BB *bb)
 	 * so now need to add in gp setup. */
   	/* Save the old GP and setup a new GP */
 	/* Create a symbolic expression for ep-gp */
+#ifdef TARG_NVISA
+	FmtAssert(FALSE, ("NYI"));
+	return;
+#endif
 	ST *st = ENTRYINFO_name(	/* The entry's symtab entry */
 		ANNOT_entryinfo(ANNOT_Get(BB_annotations(bb),ANNOT_ENTRYINFO)));
 	TN *got_disp_tn = Gen_Register_TN (
@@ -1845,6 +1935,10 @@ Adjust_GP_Exit (BB *bb)
   if (GP_Setup_Code == need_code) {
 	/* added gp reference after usual gp setup time,
 	 * so now need to add in gp setup. */
+#ifdef TARG_NVISA
+	FmtAssert(FALSE, ("NYI"));
+	return;
+#endif
 	ST *mem_loc = CGSPILL_Get_TN_Spill_Location (GP_TN, CGSPILL_LCL);
 	OPS ops = OPS_EMPTY;
 
@@ -2057,14 +2151,31 @@ Adjust_Entry(BB *bb)
   TN *fp_incr;
 
   if (BB_handler(bb)) return;
-
+#if defined(TARG_SL)
+  if (Trace_EE || Trace_Stack_Allocation) {
+#else 
   if (Trace_EE) {
+#endif 
     #pragma mips_frequency_hint NEVER
     fprintf(TFile,
 	    "\n%s<calls> Adjusting entry for %s (BB:%d)\n",
 	    DBar, ST_name(ENTRYINFO_name(ent_info)), BB_id(bb));
     fprintf(TFile, "\nFinal frame size: %llu (0x%llx)\n", frame_len, frame_len);
   }
+
+#ifdef TARG_X8664
+  if (CG_push_pop_int_saved_regs && ! Gen_Frame_Pointer) {
+    OPS ops = OPS_EMPTY;
+    for (INT i = 0; i < Saved_Callee_Saved_Regs.Elements(); i++) {
+      SAVE_REG_LOC sr = Saved_Callee_Saved_Regs.Top_nth(i);
+      if (sr.temp != NULL)
+	continue;
+      Build_OP(Is_Target_64bit() ? TOP_pushq : TOP_pushl, SP_TN, sr.ded_tn, 
+      	       SP_TN, &ops);
+    }
+    BB_Insert_Ops_Before(bb, ent_adj, &ops);
+  }
+#endif
 
   /* The ENTRYINFO annotation identifies the last instruction of the
    * stack frame allocation sequence. Therefore the instruction could
@@ -2195,7 +2306,14 @@ Adjust_Entry(BB *bb)
 
     /* Replace the SP adjust placeholder with the new adjustment OP
      */
+    /* Replace the SP adjust placeholder with the new adjustment OP
+     */
+#if defined(TARG_PR)
+    BOOL isAdd = TRUE;
+    Expand_SR_Adj(isAdd, SP_TN, incr, &ops);
+#else
     Exp_SUB (Pointer_Mtype, SP_TN, SP_TN, incr, &ops);
+#endif
     FOR_ALL_OPS_OPs_FWD(&ops, op) OP_srcpos(op) = OP_srcpos(sp_adj);
     ent_adj = OPS_last(&ops);
     BB_Insert_Ops_Before(bb, sp_adj, &ops);
@@ -2289,6 +2407,19 @@ Adjust_Exit(ST *pu_st, BB *bb)
 	      ("Unexpected form of exit SP-adjust OP"));
   }
 
+#ifdef TARG_X8664
+  if (CG_push_pop_int_saved_regs && ! Gen_Frame_Pointer) {
+    OPS popops = OPS_EMPTY;
+    for (INT i = Saved_Callee_Saved_Regs.Elements()-1; i >= 0; i--) {
+      SAVE_REG_LOC sr = Saved_Callee_Saved_Regs.Top_nth(i);
+      if (sr.temp != NULL)
+	continue;
+      Build_OP(Is_Target_64bit() ? TOP_popq : TOP_popl, sr.ded_tn, SP_TN, SP_TN, &popops);
+    }
+    BB_Insert_Ops_After(bb, sp_adj, &popops);
+  }
+#endif
+
   /* Perform any adjustments. We will either remove the adjustment
    * or leave it unchanged.
    */
@@ -2325,7 +2456,12 @@ Adjust_Exit(ST *pu_st, BB *bb)
 
     /* Replace the SP adjust placeholder with the new adjustment OP
      */
+#if defined(TARG_PR)
+    BOOL isAdd = FALSE;
+    Expand_SR_Adj(isAdd, SP_TN, incr, &ops);
+#else
     Exp_ADD (Pointer_Mtype, SP_TN, SP_TN, incr, &ops);
+#endif
     BB_Insert_Ops_Before(bb, sp_adj, &ops);
     BB_Remove_Op(bb, sp_adj);
     FOR_ALL_OPS_OPs_FWD(&ops, op) OP_srcpos(op) = OP_srcpos(sp_adj);
@@ -2363,7 +2499,7 @@ Adjust_Alloca_Code (void)
 			continue;
 		}
   		OPS_Init(&ops);
-#ifdef TARG_IA64
+#if defined(TARG_IA64)
 		if (OP_spadjust_plus(op)) {
 #else
 		if (OP_variant(op) == V_ADJUST_PLUS) {
@@ -2374,7 +2510,7 @@ Adjust_Alloca_Code (void)
 			  	OP_opnd(op, OP_find_opnd_use(op, OU_opnd2)),
 			  	&ops);
 		}
-#ifdef TARG_IA64
+#if defined(TARG_IA64)
 		else if (OP_spadjust_minus(op)) {
 #else
                 else if (OP_variant(op) == V_ADJUST_MINUS) {
@@ -2399,29 +2535,13 @@ Adjust_Alloca_Code (void)
 		BB_Insert_Ops_Before(bb, op, &ops);
     		BB_Remove_Op(bb, op);
 		op = OPS_last(&ops);
+#if defined(TARG_IA64)
 		Reset_BB_scheduled(bb);
+#endif
 	}
   }
 }
 
-
-/*
- * ====================================================================
-	Instrument code at the pu head to call mcount so that the target binary can
-	generate data for gprof.
- * ====================================================================
- */
-#ifdef TARG_IA64
-void
-Instru_Call_Mcount(void)
-{
-  BB_LIST *elist;
-
-  for (elist = Entry_BB_Head; elist; elist = BB_LIST_rest(elist)) {
-    EETARG_Call_Mcount(BB_LIST_first(elist));
-  }
-}
-#endif
 
 /* ====================================================================
  *
@@ -2484,6 +2604,22 @@ ST* Cgdwarf_Nth_Callee_Saved_Reg_Location (INT n)
 }
 #endif
 
+#ifdef TARG_X8664
+INT Push_Pop_Int_Saved_Regs(void)
+{
+  INT size = 0;
+  if (CG_push_pop_int_saved_regs && ! Gen_Frame_Pointer) {
+    for (INT i=0; i<Saved_Callee_Saved_Regs.Elements(); i++) {
+      SAVE_REG_LOC sr = Saved_Callee_Saved_Regs.Top_nth(i);
+      if (sr.temp == NULL)
+	size++;
+    }
+  }
+  return size;
+}
+#endif
+
+
 #ifdef TARG_IA64
 /*
  *==============================================================
@@ -2491,6 +2627,27 @@ ST* Cgdwarf_Nth_Callee_Saved_Reg_Location (INT n)
  *		cycle counting
  *==============================================================
  */
+
+
+/*
+ * ====================================================================
+	Instrument code at the pu head to call mcount so that the target binary can
+	generate data for gprof.
+ * ====================================================================
+ */
+#ifdef TARG_IA64
+void
+Instru_Call_Mcount(void)
+{
+  BB_LIST *elist;
+
+  for (elist = Entry_BB_Head; elist; elist = BB_LIST_rest(elist)) {
+    EETARG_Call_Mcount(BB_LIST_first(elist));
+  }
+}
+#endif
+
+
 extern void Handle_All_Hazards(BB *bb);
 INT R32;		/* first stack register */
 REGISTER	reg_value_alloc1;

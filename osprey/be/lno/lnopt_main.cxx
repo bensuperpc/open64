@@ -1,12 +1,4 @@
 /*
- *  Copyright (C) 2006. QLogic Corporation. All Rights Reserved.
- */
-
-/*
- * Copyright 2003, 2004, 2005, 2006 PathScale, Inc.  All Rights Reserved.
- */
-
-/*
 
   Copyright (C) 2000, 2001 Silicon Graphics, Inc.  All Rights Reserved.
 
@@ -144,7 +136,9 @@
 #include "ipa_lno_read.h"
 
 #pragma weak Prompf_Emit_Whirl_to_Source__GP7pu_infoP2WN
+#if ! defined(BUILD_OS_DARWIN)
 #pragma weak Anl_File_Path  
+#endif /* ! defined(BUILD_OS_DARWIN) */
 #pragma weak Print_file__16PROJECTED_REGIONGP8__file_s
 #pragma weak Print_file__14PROJECTED_NODEGP8__file_s
  
@@ -421,8 +415,29 @@ INT64 Loop_Size(WN* wn)
   return count;
   
 }
+
+static BOOL Has_Negative_Offset_Preg(WN *tree)
+{
+ if(WN_operator(tree)==OPR_BLOCK){
+  for(WN *stmt = WN_first(tree); stmt; stmt=WN_next(stmt)){
+     if(Has_Negative_Offset_Preg(stmt))
+       return TRUE;
+  }
+  return FALSE;
+ }
+ if(WN_operator(tree)==OPR_LDID || WN_operator(tree)==OPR_STID){
+   if (ST_class(WN_st(tree)) == CLASS_PREG &&
+       WN_offset(tree) < 0) return TRUE;
+ }
+ for(INT kidno=0; kidno<WN_kid_count(tree); kidno++){
+   if(Has_Negative_Offset_Preg(WN_kid(tree,kidno)))
+    return TRUE;
+ }
+ return FALSE;
+} 
 #endif
-static void
+
+void
 Fully_Unroll_Short_Loops(WN* wn)
 {
   WN* first;
@@ -440,15 +455,27 @@ Fully_Unroll_Short_Loops(WN* wn)
   }
   else if (oper == OPR_DO_LOOP    &&
            !Do_Loop_Has_Calls(wn) &&
-           (!Do_Loop_Has_Exits(wn) || Do_Loop_Is_Regular(wn)) &&
 #ifndef KEY
+           (!Do_Loop_Has_Exits(wn) || Do_Loop_Is_Regular(wn)) &&
 	   !Do_Loop_Has_Conditional(wn) &&
+#else 
+           !Do_Loop_Has_Exits(wn) &&
+           !Do_Loop_Has_Gotos(wn) &&
 #endif
            !Do_Loop_Has_Gotos(wn) &&
            !Do_Loop_Is_Mp(wn)     &&
            !Is_Nested_Doacross(wn) &&
 #ifdef KEY
            Num_Inner_Loops(wn) <= MAX_INNER_LOOPS) {
+          //bug 10644
+          if(Num_Inner_Loops(wn) == MAX_INNER_LOOPS &&
+             Is_Invariant_Factorization_Beneficial(wn)) {
+             DO_LOOP_INFO *dli = Get_Do_Loop_Info(wn);
+            if(dli && dli->Delay_Full_Unroll==FALSE){
+               dli->Delay_Full_Unroll = TRUE;
+              return;              
+           }
+          }
 #else
            Num_Inner_Loops(wn) < MAX_INNER_LOOPS) {
 #endif
@@ -470,12 +497,14 @@ Fully_Unroll_Short_Loops(WN* wn)
         //bug 11954, 11958: Regression caused by not multiplying trip_count, because
         //we need new LNO_Full_Unrolling_Loop_Size_Limit default.
         //TODO: re-investigate here after work bug 10644
-        if (Loop_Size(wn)*trip_count > LNO_Full_Unrolling_Loop_Size_Limit) {
+	if (Loop_Size(wn)*trip_count > LNO_Full_Unrolling_Loop_Size_Limit ||
+            //bug 5159:  Loops having PREG with -ve offsets can not be unrolled since they are
+            //ASM output values and duplicating them will break CG assumption.
+            Has_Negative_Offset_Preg(WN_do_body(wn))){
 //       if (Loop_Size(wn) > LNO_Full_Unrolling_Loop_Size_Limit) {
-          Fully_Unroll_Short_Loops(WN_do_body(wn));
-          return;
-        }
-
+	  Fully_Unroll_Short_Loops(WN_do_body(wn));
+	  return;
+	}
 	static INT count = 0;
 	count ++;
 	if (LNO_Full_Unroll_Skip_Before > count - 1 ||
@@ -855,7 +884,6 @@ extern WN * Lnoptimizer(PU_Info* current_pu,
       DevWarn("Both Liberal_Ivdep and Cray_Ivdep set, Liberal_Ivdep ignored");
     }
     
-#ifdef PATHSCALE_MERGE
     BOOL LNO_skip=FALSE;
   
     // skip_it, skip_before, skip_after function count specified
@@ -866,13 +894,8 @@ extern WN * Lnoptimizer(PU_Info* current_pu,
       }
       LNO_skip=TRUE;
     }
-#endif  
 
-#ifdef PATHSCALE_MERGE
-    if ((LNO_Opt == 0 || LNO_skip) && !(Run_autopar && LNO_Run_AP > 0)) {
-#else
-    if ((LNO_Opt == 0 || !LNO_enabled) && !(Run_autopar && LNO_Run_AP > 0)) {
-#endif
+    if ((LNO_Opt == 0 || LNO_skip || !LNO_enabled) && !(Run_autopar && LNO_Run_AP > 0)) {
       GRAPH16_CAPACITY = save_graph_capacity; 
       Build_CG_Dependence_Graph (func_nd);
       Stop_Timer ( T_LNOBuildDep_CU );
@@ -1059,6 +1082,14 @@ extern WN * Lnoptimizer(PU_Info* current_pu,
       Inter_Iteration_Cses(func_nd);
     }
   
+#ifdef KEY // bug 10644
+    //perform factorization only when the any loop is guarenteed to be executed
+    //at least once
+    if(!Get_Trace(TP_LNOPT, TT_LNO_GUARD) && LNO_Invariant_Factorization 
+      && Roundoff_Level >= ROUNDOFF_ASSOC){
+      Invariant_Factorization(func_nd);
+    }
+#endif
     if (Get_Trace(TP_LNOPT,TT_LNO_DEP2) || 
         Get_Trace(TP_LNOPT,TT_LNO_DEP)) {
       fprintf(TFile, "%sLNO dep graph for CG, after LNO\n%s", DBar, DBar);
@@ -1256,6 +1287,9 @@ void DO_LOOP_INFO::Print(FILE *fp, INT indentation)
   buf[i] = '\0';
 
   if (Has_Calls) fprintf(fp,"%sIt has calls \n", buf);
+#ifdef KEY //bug 14284
+  if (Has_Nested_Calls) fprintf(fp,"%sIt has calls to nested functions \n", buf);
+#endif
   if (Has_Unsummarized_Calls) fprintf(fp,"%sIt has unsummarized calls \n", buf);
   if (Has_Unsummarized_Call_Cost) 
 	fprintf(fp,"%sIt has unsummarized call cost \n", buf);
@@ -1602,6 +1636,20 @@ extern BOOL Phase_123(PU_Info* current_pu, WN* func_nd,
   if (LNO_Run_hoistif==TRUE && !Skip_HoistIf)
     HoistIf_Phase(func_nd);
 #endif /* KEY */
+//Sicortex bug 5073: Do an additional pass of array substutution. We need
+//to rebuild reduction manager because reduction arrays may be replaced.
+#ifdef KEY
+#ifdef TARG_MIPS
+Array_Substitution(func_nd);
+if(red_manager){
+  red_manager->Erase(func_nd);
+  red_manager->Build(func_nd, TRUE, FALSE);//scalar
+  if (Roundoff_Level >= ROUNDOFF_ASSOC) //array
+   red_manager->Build(func_nd,FALSE,TRUE,Array_Dependence_Graph);
+ }
+#endif
+#endif
+
   void Vintrinsic_Fission_Phase(WN* func_nd);
 #ifndef KEY
   if (LNO_Run_Vintr==TRUE)
@@ -1641,7 +1689,7 @@ DO_LOOP_INFO::DO_LOOP_INFO(MEM_POOL *pool, ACCESS_ARRAY *lb, ACCESS_ARRAY *ub,
     Has_Unsummarized_Call_Cost = has_unsummarized_call_cost;
     Has_Threadprivate = FALSE; 
     Has_Gotos = has_gotos;
-#ifdef PATHSCALE_MERGE
+#ifndef KEY
     Has_Conditional = FALSE;
 #endif
     Has_Gotos_This_Level = has_gotos_this_level;
@@ -1688,6 +1736,7 @@ DO_LOOP_INFO::DO_LOOP_INFO(MEM_POOL *pool, ACCESS_ARRAY *lb, ACCESS_ARRAY *ub,
     Parallelizable = FALSE; 
 #ifdef KEY
     Vectorizable = FALSE; 
+    Delay_Full_Unroll = FALSE;
 #endif
     Last_Value_Peeled = FALSE; 
     Not_Enough_Parallel_Work = FALSE; 
@@ -1731,6 +1780,9 @@ DO_LOOP_INFO::DO_LOOP_INFO(DO_LOOP_INFO *dli, MEM_POOL *pool) {
     if (dli->UB) UB = CXX_NEW(ACCESS_ARRAY(dli->UB,pool),pool);
     if (dli->Step) Step = CXX_NEW(ACCESS_VECTOR(dli->Step,pool),pool);
     Has_Calls = dli->Has_Calls;
+#ifdef KEY //bug 14284
+    Has_Nested_Calls = dli->Has_Nested_Calls;
+#endif    
     Has_Unsummarized_Calls = dli->Has_Unsummarized_Calls;
     Has_Unsummarized_Call_Cost = dli->Has_Unsummarized_Call_Cost;
     Has_Threadprivate = dli->Has_Threadprivate; 
@@ -1787,6 +1839,7 @@ DO_LOOP_INFO::DO_LOOP_INFO(DO_LOOP_INFO *dli, MEM_POOL *pool) {
     Parallelizable = dli->Parallelizable; 
 #ifdef KEY
     Vectorizable = dli->Vectorizable; 
+    Delay_Full_Unroll = dli->Delay_Full_Unroll; 
 #endif
     Last_Value_Peeled = dli->Last_Value_Peeled; 
     Not_Enough_Parallel_Work = dli->Not_Enough_Parallel_Work; 

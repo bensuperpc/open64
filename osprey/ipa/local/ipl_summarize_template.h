@@ -567,7 +567,7 @@ hash_of_full_path_name (int index)
     if (cwd == NULL)
     {
       // can't get path, we will see if it fails because of this. 
-      cwd = ".";
+      cwd = const_cast<char*>(".");
     }
   }
   else malloced = true;
@@ -953,10 +953,11 @@ void
 SUMMARIZE<program>::Process_eh_globals (void)
 {
     if (!(PU_src_lang (Get_Current_PU()) & PU_CXX_LANG) || 
-    	!Get_Current_PU().eh_info)
+    	!PU_misc_info (Get_Current_PU()))
     	return;
 
-    INITV_IDX i = INITV_next (INITV_next (INITO_val (Get_Current_PU().eh_info)));
+    INITV_IDX i = INITV_next (INITV_next (INITO_val (PU_misc_info (Get_Current_PU()))));
+
     INITO_IDX idx = TCON_uval (INITV_tc_val(i));
     if (idx)	// typeinfo
     {
@@ -1242,7 +1243,7 @@ struct eq_oper
 // Map from label number to label usage information
 typedef hash_map<INT, label_wn, __gnu_cxx::hash<INT>, eq_oper> LABEL_WN_MAP;
 #endif
-
+  
 //-----------------------------------------------------------
 // summary procedure node
 // create call site entries
@@ -1269,9 +1270,11 @@ SUMMARIZE<program>::Process_procedure (WN* w)
     BOOL Has_local_pragma = FALSE;
 #ifdef KEY
     BOOL Do_reorder=!Do_Altentry && Cur_PU_Feedback;
+#if defined(VENDOR_PSC)
+    Do_reorder = FALSE;
+#endif
     LABEL_WN_MAP label_use_map;     
-    INT icall_site[100];
-    INT icall_cnt = 0;
+    UINT64 PU_invoke_count = 0;
 #else
     BOOL Do_reorder=!Do_Altentry && Cur_PU_Feedback&& IPA_Enable_Reorder;//and other things, such as Feedback_Enabled[PROFILE_PHASE_BEFORE_LNO]
 #endif // KEY
@@ -1337,12 +1340,13 @@ SUMMARIZE<program>::Process_procedure (WN* w)
 
 	if (freq.Known()) {
 	    proc->Set_has_PU_freq ();
-#ifndef KEY
+#ifdef KEY
+	    PU_invoke_count = (UINT64) freq.Value();
+#else
 	    SUMMARY_FEEDBACK *fb = New_feedback ();
 	    proc->Set_feedback_index (Get_feedback_idx ());
 #endif
 	    fb->Set_frequency_count (freq);
-//		printf("&&&&&&&&&&&&& %s -> %f\n",ST_name(WN_st(w)), fb->Get_frequency_count()._value);
 	}
 	else {
 	  // FB_PU_Has_Feedback = FALSE;
@@ -1550,7 +1554,6 @@ SUMMARIZE<program>::Process_procedure (WN* w)
                 (WN_Fake_Call_EH_Region(w2, Parent_Map)))
               break;
 
-            proc->Incr_call_count ();
 #ifdef KEY
 	    float probability = -1;
 	    // Remove the use of this flag in future
@@ -1575,10 +1578,11 @@ SUMMARIZE<program>::Process_procedure (WN* w)
 #if defined(KEY) && !defined(_STANDALONE_INLINER) && !defined(_LIGHTWEIGHT_INLINER)
             // This ifdef is redundant, but just for clarity.
             if (Cur_PU_Feedback && WN_operator(w2) == OPR_ICALL)
-              Process_icall (proc, w2, loopnest, probability);
+	      Process_icall (proc, w2, loopnest, probability);
 #endif
 #endif // KEY
 
+            proc->Incr_call_count ();
 #ifdef KEY
             Process_callsite (w2, proc->Get_callsite_count (), loopnest, probability);
 #else
@@ -1586,18 +1590,7 @@ SUMMARIZE<program>::Process_procedure (WN* w)
             Direct_Mod_Ref = TRUE;
 #endif
             proc->Incr_callsite_count ();
-            Direct_Mod_Ref = TRUE;
 
-#ifdef KEY
-	    if( Cur_PU_Feedback != NULL &&
-		WN_operator(w2) == OPR_ICALL ){
-	      FB_FREQ freq = Cur_PU_Feedback->Query(w2, FB_EDGE_CALL_INCOMING);
-	      if( freq.Known() ){
-		icall_site[icall_cnt] =  Get_callsite_idx();
-		icall_cnt++;
-	      }
-	    }
-#endif	      
             // update actual parameter count
             if (Do_common_const && 
                 !Process_control_dependence (w2, Get_callsite_idx())) {
@@ -1649,10 +1642,20 @@ SUMMARIZE<program>::Process_procedure (WN* w)
 	    Direct_Mod_Ref = TRUE;
 #endif
 	    Record_ref (w2);
+#ifdef KEY
+	    if (Do_reorder) {
+	      loop_count = PU_invoke_count;
+	      if (!loop_count_stack->Is_Empty())
+	        loop_count *= loop_count_stack->Top();
+	      if (loop_count)
+	        Record_struct_access(w2,loop_count);
+	    }
+#else
 	    if(Do_reorder && !loop_count_stack->Is_Empty() ){
 		loop_count=loop_count_stack->Top();
 	        Record_struct_access(w2,loop_count);
 	    }
+#endif
 	    break;
 	  
 	case OPR_STID:
@@ -1668,11 +1671,21 @@ SUMMARIZE<program>::Process_procedure (WN* w)
 	case OPR_MSTORE:
 	    Direct_Mod_Ref = TRUE;
 	    Record_mod (w2);
+#ifdef KEY
+	    if (Do_reorder) {
+	      loop_count = PU_invoke_count;
+	      if (!loop_count_stack->Is_Empty())
+	        loop_count *= loop_count_stack->Top();
+	      if (loop_count)
+	        Record_struct_access(w2,loop_count);
+	    }
+#else
             if(Do_reorder && !loop_count_stack->Is_Empty() ) {
 	        loop_count=loop_count_stack->Top();
 	         Record_struct_access(w2,loop_count);
             }
-	    break;
+#endif
+ 	    break;
 
 	case OPR_IO:
 #ifdef KEY
@@ -1685,10 +1698,20 @@ SUMMARIZE<program>::Process_procedure (WN* w)
 	    break;
 	case OPR_ILDA:
 	case OPR_MLOAD:
-	     if(Do_reorder && !loop_count_stack->Is_Empty() ) {
+#ifdef KEY
+	    if (Do_reorder) {
+	      loop_count = PU_invoke_count;
+	      if (!loop_count_stack->Is_Empty())
+	        loop_count *= loop_count_stack->Top();
+	      if (loop_count)
+	        Record_struct_access(w2,loop_count);
+	    }
+#else
+	    if(Do_reorder && !loop_count_stack->Is_Empty() ) {
 		    loop_count=loop_count_stack->Top();
 		    Record_struct_access(w2,loop_count);
-               }
+            }
+#endif
 		break;
 
 	    // Exceptions now come as REGIONS (not as EXC_SCOPE_BEGINS)
@@ -1870,15 +1893,28 @@ SUMMARIZE<program>::Process_procedure (WN* w)
 	      label_wn &label = label_use_map [WN_label_number (w2)];
 	      Is_True (label.wn == NULL, ("Process_procedure: Duplicate labels?"));
 	      label.wn = w2;
+	      Is_True (label.wn != NULL, ("Process_procedure: Undefined label?"));
 	      break;
 	    }
 
 	// label use
 	case OPR_GOTO_OUTER_BLOCK:
 	    Is_True (FALSE, ("Did not expect GOTO_OUTER_BLOCK"));
+	case OPR_REGION_EXIT:
+	{
+	  WN *region_exits = LWN_Get_Parent(w2);
+	  if(region_exits != NULL && WN_operator(region_exits) == OPR_BLOCK) {
+	    WN *region = LWN_Get_Parent(region_exits);
+	    if(region != NULL && WN_operator(region) == OPR_REGION
+	       && WN_kid0(region) == region_exits) {
+	      // skip the duplicate REGION_EXIT in REGION EXITS pragma
+	      break;
+	    }
+	  }
+	}
+	// fall through
         case OPR_TRUEBR:
         case OPR_FALSEBR:
-        case OPR_REGION_EXIT:
 	case OPR_GOTO:
 	case OPR_CASEGOTO:
 	    label_use_map [WN_label_number (w2)].seen = TRUE;
@@ -1931,7 +1967,7 @@ SUMMARIZE<program>::Process_procedure (WN* w)
 	}
 
     }
-
+    
 #ifdef KEY
     {
       // Update bb and stmt count
@@ -1962,42 +1998,9 @@ SUMMARIZE<program>::Process_procedure (WN* w)
                  ("Expected all labels to be included in bb count"));
         proc->Set_bb_count (bbs - unused_labels);
       }
-
-      if_map.clear ();
     }
-#endif // KEY
-
-
-{
-#ifdef KEY
     if_map.clear ();
-    /* Append a list of free slots to the currnet callsite_array for
-       the future use by IPA_Convert_Icalls.
-    */
-    FmtAssert( icall_cnt < sizeof(icall_site) / sizeof(icall_site[0]),
-	       ("icall array is too small.") );
-    for( int i = 0; i < icall_cnt; i++ ){
-      SUMMARY_CALLSITE* icall_info = Get_callsite (icall_site[i]);
-      SUMMARY_CALLSITE* callsite = New_callsite ();
-
-      callsite->Set_callsite_id( proc->Get_callsite_count()  );
-      callsite->Set_icall_slot();
-
-      callsite->Set_param_count( icall_info->Get_param_count() );
-      callsite->Set_return_type( icall_info->Get_return_type() );
-      callsite->Set_map_id( icall_info->Get_map_id() );
-      callsite->Set_loopnest( icall_info->Get_loopnest() );
-      callsite->Set_probability( icall_info->Get_probability() );
-
-      if( callsite->Get_param_count() > 0 ){
-	callsite->Set_actual_index( icall_info->Get_actual_index() );
-      }
-
-      proc->Incr_callsite_count();
-    }
-#endif // KEY 
-}
-
+#endif // KEY
 
     /*loop_count_stack may not be empty! and loopnest may not be empty!!*/
     if (proc->Get_callsite_count () > 0)
@@ -2326,44 +2329,45 @@ SUMMARIZE<program>::Process_callsite (WN *w, INT id, INT loopnest, float probabi
 	    WN_MAP_Set_ID(Current_Map_Tab, w);
 	    callsite->Set_map_id (WN_map_id(w));
 
-        // if it is a virtual function calll, set its base class and offset
-        if (WN_Call_Is_Virtual(w)) {
-            callsite->Set_is_virtual_call();
-            WN *last = WN_kid(w, WN_kid_count(w)-1);
-#ifdef TARG_IA64
-            if (WN_operator_is(last, OPR_ADD)) {
-                FmtAssert(WN_kid_count(last) == 2, ("Incorrect virtual call site."));
-                WN *addr = WN_kid0(last);
-                WN *ofst = WN_kid1(last);
-                FmtAssert(WN_operator_is(addr, OPR_ILOAD) || WN_operator_is(addr, OPR_LDID),
-                          ("Virtual function call does not use ILOAD or LDID."));
-                FmtAssert(WN_operator_is(ofst, OPR_INTCONST),
-                          ("Virtual table offset is not INTCONST."));
-                callsite->Set_virtual_class(WN_ty(addr));
-                callsite->Set_vtable_offset(WN_const_val(ofst));
-                callsite->Set_vptr_offset(WN_load_offset(addr));
-            }
-            else {
-                // Original WN generated by front end must be OPR_ILOAD.
-                // The OPR_ILOAD may be optimized to OPR_LDID by WOPT.
-                FmtAssert(WN_operator_is(last, OPR_ILOAD) || WN_operator_is(last, OPR_LDID),
-                          ("Virtual function call does not use ILOAD or LDID."));
-	            callsite->Set_vptr_offset(WN_load_offset(last));
-                callsite->Set_virtual_class(WN_ty(last));
-                callsite->Set_vtable_offset(0);
-            }
-#endif
-#ifdef TARG_X8664
-           FmtAssert(WN_operator_is(last, OPR_ILOAD), ("Virtual function call does node use ILOAD."));
-           callsite->Set_vtable_offset(WN_load_offset(last));
-           WN *vptr = WN_kid0(last);
-           FmtAssert(WN_operator_is(vptr, OPR_ILOAD) || WN_operator_is(vptr, OPR_LDID), 
-                     ("Virtual function call does not use ILOAD or LDID."));
-           callsite->Set_virtual_class(WN_ty(vptr)); 
-           callsite->Set_vptr_offset(WN_load_offset(vptr));
-#endif
-        }
-		
+            // if it is a virtual function calll, set its base class and offset 
+            if (WN_Call_Is_Virtual(w)) { 
+                callsite->Set_is_virtual_call(); 
+                WN *last = WN_kid(w, WN_kid_count(w)-1); 
+#ifdef TARG_IA64 
+                if (WN_operator_is(last, OPR_ADD)) { 
+                    FmtAssert(WN_kid_count(last) == 2, ("Incorrect virtual call site.")); 
+                    WN *addr = WN_kid0(last); 
+                    WN *ofst = WN_kid1(last); 
+                    FmtAssert(WN_operator_is(addr, OPR_ILOAD) || WN_operator_is(addr, OPR_LDID), 
+                              ("Virtual function call does not use ILOAD or LDID.")); 
+                    FmtAssert(WN_operator_is(ofst, OPR_INTCONST), 
+                              ("Virtual table offset is not INTCONST.")); 
+                    callsite->Set_virtual_class(WN_ty(addr)); 
+                    callsite->Set_vtable_offset(WN_const_val(ofst)); 
+                    callsite->Set_vptr_offset(WN_load_offset(addr)); 
+                } 
+                else { 
+                    // Original WN generated by front end must be OPR_ILOAD. 
+                    // The OPR_ILOAD may be optimized to OPR_LDID by WOPT. 
+                    FmtAssert(WN_operator_is(last, OPR_ILOAD) || WN_operator_is(last, OPR_LDID), 
+                              ("Virtual function call does not use ILOAD or LDID.")); 
+                    callsite->Set_vptr_offset(WN_load_offset(last)); 
+                    callsite->Set_virtual_class(WN_ty(last)); 
+                    callsite->Set_vtable_offset(0); 
+                } 
+#endif 
+#ifdef TARG_X8664 
+                FmtAssert(WN_operator_is(last, OPR_ILOAD), 
+                          ("Virtual function call does node use ILOAD.")); 
+                callsite->Set_vtable_offset(WN_load_offset(last)); 
+                WN *vptr = WN_kid0(last); 
+                FmtAssert(WN_operator_is(vptr, OPR_ILOAD) || WN_operator_is(vptr, OPR_LDID), 
+                          ("Virtual function call does not use ILOAD or LDID.")); 
+                callsite->Set_virtual_class(WN_ty(vptr)); 
+                callsite->Set_vptr_offset(WN_load_offset(vptr)); 
+#endif 
+            } 
+
 	    break;
 
 	case OPR_CALL:
@@ -2455,7 +2459,7 @@ SUMMARIZE<program>::Process_formal (WN *w, INT num_formals, SUMMARY_PROCEDURE *p
 {
     for (INT i = 0; i < num_formals; i++) {
 	SUMMARY_FORMAL *formal = New_formal ();
-	bzero (formal, sizeof(SUMMARY_FORMAL));
+	BZERO (formal, sizeof(SUMMARY_FORMAL));
 	const ST* formal_st = WN_st (WN_formal (w, i));
 	INT sym_idx = Get_symbol_index (formal_st);
 	formal->Set_symbol_index (sym_idx);
@@ -2484,7 +2488,7 @@ SUMMARIZE<program>::Process_formal_alt (WN *w, INT kid_count)
 {
     for (INT i = 0; i < kid_count; i++) {
 	SUMMARY_FORMAL *formal = New_formal ();
-	bzero (formal, sizeof(SUMMARY_FORMAL));
+	BZERO (formal, sizeof(SUMMARY_FORMAL));
 	const ST* formal_st = WN_st(WN_kid(w, i));
 	INT sym_idx = Get_symbol_index (formal_st);
 	formal->Set_symbol_index (sym_idx);
@@ -2589,14 +2593,6 @@ SUMMARIZE<program>::Process_actual (WN* w)
           actual->Set_ty(parm_ty);
           if (OPERATOR_has_sym(opr)) {
             actual->Set_symbol_index(Get_symbol_index(WN_st(kid))); 
-#ifdef KEY
-          // bug 6229: Process any constant string instead of 
-          // treating it as an indirect ref.
-          ST * actual_st = WN_st (kid);
-          if (opr == OPR_LDA && ST_class (actual_st) == CLASS_CONST &&
-              TY_kind (ST_type (actual_st)) == KIND_ARRAY)
-            w = WN_kid0(w);
-#endif
           }
         }
       }
@@ -2829,13 +2825,16 @@ SUMMARIZE<program>::Get_symbol_index (const ST *st)
     sym->Set_btype(TY_mtype(ST_type(st)));
   } 
 
-  if (TY_kind(ST_type(st)) == KIND_POINTER) { 
-    if (TY_kind(TY_pointed(ST_type(st))) == KIND_ARRAY)
-      sym->Set_array();
-  } else { 
-    if (TY_kind(ST_type(st)) == KIND_ARRAY)
-      sym->Set_array();
-  } 
+  if (ST_class(st) != CLASS_FUNC) { 
+  // It is invalid to take ST_type of a class_function.
+    if (TY_kind(ST_type(st)) == KIND_POINTER) { 
+      if (TY_kind(TY_pointed(ST_type(st))) == KIND_ARRAY)
+        sym->Set_array();
+    } else { 
+      if (TY_kind(ST_type(st)) == KIND_ARRAY)
+        sym->Set_array();
+    } 
+  }
 
   if (ST_is_f90_target (st))
       sym->Set_addr_f90_target ();
@@ -2991,6 +2990,10 @@ SUMMARIZE<program>::Trace(FILE* fp)
     Get_common_shape(0)->Print_array(fp, Get_common_shape_idx()+1);
   if (Has_struct_access_entry()) //reorder
   	Get_struct_access(0)->Print_array(fp, Get_struct_access_idx()+1);
+#ifdef KEY
+  if (Has_ty_info_entry())
+  	Get_ty_info(0)->Print_array(fp, Get_ty_info_idx()+1);
+#endif
 }
 
 template <PROGRAM program>
@@ -3006,6 +3009,7 @@ SUMMARIZE<program>:: Record_struct_access(WN *wn, mUINT64 loop_count)
     TY_TO_FLDNUM_MAP::const_iterator iter;
     TY_TO_ACCESS_MAP::const_iterator iter1;
     PTR_TO_TY_VECTOR::iterator ptr_iter;
+    mUINT32 cur_summary_idx = UINT32_MAX;
     SUMMARY_STRUCT_ACCESS * cur_summary;
     BOOL is_pointer=FALSE;
     fld_id=WN_field_id(wn);//inc field access count
@@ -3026,7 +3030,7 @@ SUMMARIZE<program>:: Record_struct_access(WN *wn, mUINT64 loop_count)
     //    return;
     iter1=Ty_to_access_map->find(struct_index);
     if (iter1!=Ty_to_access_map->end ()){// found summary
-        cur_summary=iter1->second;
+        cur_summary_idx=iter1->second;
     }
     else {
         iter=local_cands->find(struct_index);
@@ -3044,26 +3048,32 @@ SUMMARIZE<program>:: Record_struct_access(WN *wn, mUINT64 loop_count)
             ("the wn's ty_idx operated must be STRUCT"));
         iter1=Ty_to_access_map->find(struct_index);
         if (iter1!=Ty_to_access_map->end ())
-            cur_summary=iter1->second;
+            cur_summary_idx=iter1->second;
         else{//not found summary
-            cur_summary=New_struct_access(struct_index,flatten_flds);
+            cur_summary_idx=New_struct_access(struct_index,flatten_flds);
 #ifdef KEY
-            Ty_to_access_map->insert(std::make_pair(struct_index,cur_summary));
+            Ty_to_access_map->insert(std::make_pair(struct_index,cur_summary_idx));
 #else
-            Ty_to_access_map->insert(make_pair(struct_index,cur_summary));
+            Ty_to_access_map->insert(make_pair(struct_index,cur_summary_idx));
 #endif // KEY
             for(ptr_iter=Ptr_to_ty_vector->begin();
                 ptr_iter!=Ptr_to_ty_vector->end();
                 ptr_iter++){
                 if(ptr_iter->pt_index==struct_index)
 #ifdef KEY
-                    Ty_to_access_map->insert(std::make_pair(ptr_iter->ty_index,cur_summary));
+                    Ty_to_access_map->insert(std::make_pair(ptr_iter->ty_index,cur_summary_idx));
 #else
-                    Ty_to_access_map->insert(make_pair(ptr_iter->ty_index,cur_summary));
+                    Ty_to_access_map->insert(make_pair(ptr_iter->ty_index,cur_summary_idx));
 #endif // KEY
             }// fill in all such pointer_tys
         }
     }
+
+    Is_True(cur_summary_idx != UINT32_MAX,
+            ("cur_summary_idx is not initialized."));
+    cur_summary = Get_struct_access(cur_summary_idx);
+    Is_True(cur_summary != NULL,
+            ("cur_summary is NULL"));
 
 #ifdef KEY
     Is_True(fld_id <= cur_summary->Get_flatten_flds(),
@@ -3074,6 +3084,33 @@ SUMMARIZE<program>:: Record_struct_access(WN *wn, mUINT64 loop_count)
     cur_summary->Inc_fld_count(fld_id, loop_count);
     return;
 }
+
+#ifdef KEY
+template <PROGRAM program>
+void
+SUMMARIZE<program>::Record_ty_info_for_type (TY_IDX ty, TY_FLAGS flags)
+{
+  SUMMARY_TY_INFO * ty_info;
+  UINT32 ty_index = TY_IDX_index(ty);
+
+  Is_True (TY_kind(ty) == KIND_STRUCT,
+           ("Record_ty_info_for_type expects STRUCT ty"));
+
+  INT index = Ty_info_hash_table->Find(ty_index);
+
+  if (index == 0)
+  {
+    ty_info = New_ty_info();
+    ty_info->Set_ty(ty);
+    Ty_info_hash_table->Enter(ty_index, Get_ty_info_idx() + 1);
+  }
+  else
+    ty_info = Get_ty_info(index - 1);
+
+  if (flags & TY_NO_SPLIT)
+    ty_info->Set_ty_no_split();
+}
+#endif
 
 #endif // ipl_summarize_template_INCLUDED
 

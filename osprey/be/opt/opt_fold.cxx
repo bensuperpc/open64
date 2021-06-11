@@ -643,6 +643,8 @@ CODEREP *Combine_bits_any_nzero_test(CODEREP *cr)
   }
   if (lvar != rvar)
     return NOHASH;
+  if (lvar->Kind() != CK_VAR && lvar->Kind() != CK_IVAR)
+    return NOHASH;
   // succeeded in matching pattern
   CODEREP *newcr;
   INT nbits = MTYPE_bit_size(lvar->Dsctyp()); 
@@ -725,6 +727,8 @@ CODEREP *Combine_bits_all_zero_test(CODEREP *cr)
     rbitmask = -1;
   }
   if (lvar != rvar)
+    return NOHASH;
+  if (lvar->Kind() != CK_VAR && lvar->Kind() != CK_IVAR)
     return NOHASH;
   // succeeded in matching pattern
   CODEREP *newcr;
@@ -907,6 +911,12 @@ CR_opcode(CODEREP *cr)
       // cr->Dsctyp() is meaningless for FP constants
       return OPCODE_make_op(OPR_CONST, cr->Dtyp(), MTYPE_V);
     case CK_VAR:
+#ifdef TARG_SL
+      if ( cr->Dtyp() == MTYPE_I2 &&  cr->Dsctyp() == MTYPE_I2) {
+        return OPCODE_make_op(cr->Bit_field_valid() ? OPR_LDBITS : OPR_LDID,
+			      MTYPE_I4, cr->Dsctyp());
+      } else
+#endif
       return OPCODE_make_op(cr->Bit_field_valid() ? OPR_LDBITS : OPR_LDID,
 			    cr->Dtyp(), cr->Dsctyp());
     default:

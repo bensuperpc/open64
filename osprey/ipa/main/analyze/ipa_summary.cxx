@@ -107,6 +107,19 @@ IPA_get_struct_access_file_array (const IP_FILE_HDR& hdr, INT32& size)
   return NULL;
 }
 
+#ifdef KEY
+SUMMARY_TY_INFO*
+IPA_get_ty_info_file_array (const IP_FILE_HDR& hdr, INT32& size)
+{
+  const SUMMARY_FILE_HEADER *summary_header = IP_FILE_HDR_file_header (hdr);
+  if (size = summary_header->Get_ty_info_size()) {
+    return (SUMMARY_TY_INFO *)
+      (IP_FILE_HDR_summary (hdr) + summary_header->Get_ty_info_offset ());
+  } 
+  return NULL;
+}
+#endif
+
 static SUMMARY_GLOBAL*
 get_global_array (const IPA_NODE* node)
 {
@@ -246,18 +259,18 @@ IPA_get_actual_file_array (const IP_FILE_HDR& hdr, INT32& size)
   return NULL;
 }
 
-SUMMARY_CALLSITE*
-IPA_get_callsite_file_array (const IP_FILE_HDR& hdr, INT32& size)
-{
-  Is_True(! IPA_Call_Graph_Built,
-           ("IPA_get_actual_file_array must use IPA_NODE after call graph is built"));
-  const SUMMARY_FILE_HEADER *summary_header = IP_FILE_HDR_file_header (hdr);
-  if (size = summary_header->Get_callsite_size ()) {
-    return (SUMMARY_CALLSITE *)
-           (IP_FILE_HDR_summary (hdr) + summary_header->Get_callsite_offset());
-  }
-  return NULL;
-}
+SUMMARY_CALLSITE* 
+IPA_get_callsite_file_array (const IP_FILE_HDR& hdr, INT32& size) 
+{ 
+  Is_True(! IPA_Call_Graph_Built, 
+          ("IPA_get_actual_file_array must use IPA_NODE after call graph is built")); 
+  const SUMMARY_FILE_HEADER *summary_header = IP_FILE_HDR_file_header (hdr); 
+  if (size = summary_header->Get_callsite_size ()) { 
+    return (SUMMARY_CALLSITE *) 
+      (IP_FILE_HDR_summary (hdr) + summary_header->Get_callsite_offset()); 
+  } 
+  return NULL; 
+} 
 
 IVAR* 
 IPA_get_ivar_file_array (const IP_FILE_HDR& hdr, INT32& size)

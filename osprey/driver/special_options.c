@@ -1,5 +1,9 @@
 /*
- *  Copyright (C) 2006. QLogic Corporation. All Rights Reserved.
+ *  Copyright (C) 2007 PathScale, LLC.  All Rights Reserved.
+ */
+
+/*
+ *  Copyright (C) 2006, 2007. QLogic Corporation. All Rights Reserved.
  */
 
 /*
@@ -60,6 +64,7 @@
 #include "get_options.h"
 #include "phases.h"
 #include "run.h"
+#include "version.h"
 
 int endian = UNDEFINED;
 
@@ -153,9 +158,36 @@ set_defaults (void)
 
 	// Use the system's GCC version to select -gnu3/-gnu4 as the default.
 	// Bug 11426.
-	if (!is_toggled(gnu_version)) {
-	  toggle(&gnu_version, get_gcc_major_version());
+	if (!is_toggled(gnu_major_version)) {
+	  toggle(&gnu_major_version, get_gcc_major_version());
+	  switch (gnu_major_version) {
+	    case 3:	// default to GCC 3.3
+	      toggle(&gnu_minor_version, 3);
+	      break;
+	    case 4:	// default to GCC 4.2
+	      toggle(&gnu_minor_version, 2);
+	      break;
+	    default:
+	      error("no support for GCC version %d", gnu_major_version);
+	  }
 	}
+#endif
+#if defined(TARG_NVISA)
+	/* stop after assembly */
+	if (option_was_seen(O_multicore))
+	  last_phase=earliest_phase(P_bec,last_phase);
+	else
+	  last_phase=earliest_phase(P_be,last_phase);
+
+	/* no calling convention for now, so must inline everything */
+	flag = add_string_option(O_INLINE_, "all");
+	prepend_option_seen (flag);
+	toggle_inline_on();
+
+	/* add build_date */
+	flag = add_string_option(O_LIST_, 
+		concat_strings("build_date=", build_date));
+	add_option_seen (flag);
 #endif
 }
 
@@ -262,6 +294,20 @@ add_special_options (void)
 	prepend_option_seen (flag);
 #endif
 
+#ifdef KEY
+	// Pass -fopenmp instead of -mp to GNU 4.2 or later C/C++ front-end.
+	// Bug 12824.
+	if (mpkind == NORMAL_MP &&
+	    gnu_major_version == 4 &&
+	    gnu_minor_version >= 2 &&
+	    (invoked_lang == L_cc ||
+	     invoked_lang == L_CC)) {
+	  set_option_unseen(O_mp);
+	  set_option_unseen(O_openmp);
+	  add_option_seen(O_fopenmp);
+	}
+#endif
+
 #ifndef KEY	// Bug 4406.
 	if (mpkind == CRAY_MP) {
 		Process_Cray_Mp();
@@ -329,6 +375,7 @@ add_special_options (void)
 	 * We leave ipa alone because mixing -ipa with -g is illegal
 	 * and generates a separate error later on.
 	 */
+	/* leave -O with -g unless no -O specified */
 	if (undefined_olevel_flag == TRUE && glevel > 1 && ipa != TRUE) {
 		turn_down_opt_level(0, "-g changes optimization to -O0 since no optimization level is specified");
 	}
@@ -417,7 +464,12 @@ add_special_options (void)
 	    else if (olevel == 2 || source_kind == S_N)
 		flag = add_string_option(O_PHASE_, "w:c");
 	    else 
+#ifdef TARG_NVISA
+		/* only add preopt for now */
+		flag = add_string_option(O_PHASE_, "p:w:c");
+#else
 		flag = add_string_option(O_PHASE_, "l:w:c");
+#endif
 	}
 	prepend_option_seen (flag);
 

@@ -783,6 +783,9 @@ CODEREP::Propagatable_into_loop(const BB_LOOP *loop) const
 #ifdef KEY
 	|| Opr() == OPR_PURE_CALL_OP
 #endif
+#if defined(TARG_IA32) || defined(TARG_X8664)
+	|| Opr() == OPR_SELECT
+#endif
        )
       return FALSE;
     return TRUE;
@@ -1815,6 +1818,13 @@ IVR::Compute_trip_count(const OPCODE cmp_opc,
   //  The trip count is (bound - init + step + adjustmen) / step.
   //     
   CODEREP *trip_count = NO_TRIP_COUNT;
+#if defined(TARG_SL)
+  if (!diff_divisable_by_step) {
+    if (step->Kind() == CK_CONST && step->Const_val() < 0) {
+      return NO_TRIP_COUNT;
+    }
+  }
+#endif
 
   // Always compute trip expr in signed integer.  This prevents a
   // problem if the step is unsigned (-1).  In the subsequent code,
@@ -1899,6 +1909,10 @@ IVR::Compute_trip_count(const OPCODE cmp_opc,
 	else if (adjustment == -1)
 	  tmp_cr = Htable()->Add_bin_node_and_fold(subop, tmp_cr, one);
 		   
+#ifdef TARG_SL
+        //step > 0, if tmp_cr is unsigned, set tripcount_type unsigned
+        tripcount_type = (tmp_cr->Dtyp() == MTYPE_U4) ? MTYPE_U4 : tripcount_type;
+#endif		   
 	OPCODE divop = OPCODE_make_op(OPR_DIV, tripcount_type, MTYPE_V);
 	trip_count =
           Htable()->Add_bin_node_and_fold(divop,
@@ -2347,6 +2361,30 @@ IVR::Determine_trip_IV_and_exit_count(BB_LOOP *loopinfo,
 
   if (trip_init == NULL || trip_step == NULL || trip_bound == NULL)
     return;
+
+#ifdef KEY // bug 13728: if there is wraparound, do not continue
+  if (trip_init->Kind() == CK_CONST && trip_step->Kind() == CK_CONST &&
+      trip_bound->Kind() == CK_CONST) {
+    if (MTYPE_signed(trip_cand->Var()->Dtyp()))
+      if (trip_step->Const_val() > 0) {
+	if (trip_init->Const_val() > trip_bound->Const_val())
+	  return;
+      }
+      else {
+	if (trip_init->Const_val() < trip_bound->Const_val())
+	  return;
+      }
+    else
+      if (trip_step->Const_val() > 0) {
+	if ((UINT64)trip_init->Const_val() > (UINT64)trip_bound->Const_val())
+	  return;
+      }
+      else {
+	if ((UINT64)trip_init->Const_val() < (UINT64)trip_bound->Const_val())
+	  return;
+      }
+  }
+#endif
 
   if (loopinfo->Test_at_entry()) {
     // the following trip equations only applies to DO_LOOP in preopt

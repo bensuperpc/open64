@@ -1,4 +1,8 @@
 /*
+ * Copyright (C) 2007. QLogic Corporation. All Rights Reserved.
+ */
+
+/*
  * Copyright 2003, 2004, 2005, 2006 PathScale, Inc.  All Rights Reserved.
  */
 
@@ -135,7 +139,9 @@ extern BOOL IPA_Enable_Pure_Call_Opt;	// optimizes callsites w/o side-effects
 extern INT32 IPA_Pure_Call_skip_before;
 extern BOOL IPA_Consult_Inliner_For_Icall_Opt; // Consult inliner for icallopt?
 extern UINT32 IPA_Icall_Min_Freq;	// Min icall freq for icall opt
-extern BOOL IPA_Enable_Source_PU_Order; 
+extern BOOL IPA_Enable_Source_PU_Order;
+extern UINT32 IPA_Enable_Struct_Opt;
+extern UINT32 IPA_Update_Struct;
 #endif
 
 /* ===== Inlining heuristics: ===== */
@@ -253,7 +259,8 @@ typedef enum
 {
   REORDER_DISABLE = 0,
   REORDER_BY_NODE_FREQ = 1,
-  REORDER_BY_EDGE_FREQ = 2
+  REORDER_BY_EDGE_FREQ = 2,
+  REORDER_BY_BFS = 3
 } PU_REORDER_SCHEME;
 
 extern PU_REORDER_SCHEME IPA_Enable_PU_Reorder; /* Procedure reordering */
@@ -335,8 +342,7 @@ extern BOOL   INLINE_Enable_Script;
 
 extern UINT32  IPA_Max_Density;
 
-/* This flag is to use the old type merge phase. It should be removed when the old type merge is removed. */
-extern BOOL IPA_Enable_Old_Type_Merge;	
+extern BOOL IPA_Enable_Old_Type_Merge;
 
 extern BOOL IPA_Enable_Devirtualization;
 

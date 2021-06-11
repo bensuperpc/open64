@@ -1,4 +1,8 @@
 /*
+ * Copyright (C) 2007 PathScale, LLC.  All Rights Reserved.
+ */
+
+/*
  * Copyright (C) 2006, 2007. QLogic Corporation. All Rights Reserved.
  */
 
@@ -224,7 +228,7 @@ static vector<ST_IDX>		eh_spec_vector;
 // eh_spec_vector is stored into eh_spec_func_end for function-end processing
 static vector<ST_IDX>		eh_spec_func_end;
 static int current_eh_spec_ofst=1;
-static void Do_Cleanups_For_EH (void);
+static void Do_Cleanups_For_EH (INT =0);
 static INITV_IDX lookup_handlers (vector<gs_t> * =0);
 static void Generate_unwind_resume (void);
 
@@ -469,13 +473,19 @@ static void WGEN_Expand_Handlers_Or_Cleanup (const HANDLER_INFO&);
 
 // Called from WGEN_Finish_Function ().
 void
-Do_Handlers (void)
+Do_Handlers (INT cleanups)
 {
 #ifdef KEY
   int saved_make_symbols_weak = make_symbols_weak;
   make_symbols_weak = TRUE;
 
-  if (key_exceptions) processing_handler = true;
+  // enable_cxx_openmp ensures that we do not need any special processing
+  // while inside a C++ exception handler.
+  if (key_exceptions
+#ifdef FE_GNU_4_2_0
+      && !enable_cxx_openmp
+#endif
+     ) processing_handler = true;
 #endif
   while (handler_info_i != -1) {
 #ifndef KEY
@@ -510,9 +520,10 @@ Do_Handlers (void)
   }
 #ifdef KEY
   processing_handler = false;
-  Do_Cleanups_For_EH();
+  Do_Cleanups_For_EH(cleanups);
   if (key_exceptions) 
-    FmtAssert (cleanup_list_for_eh.empty(), ("EH Cleanup list not completely processed"));
+    FmtAssert (cleanup_list_for_eh.size() == cleanups,
+               ("EH Cleanup list not completely processed"));
 
   make_symbols_weak = saved_make_symbols_weak;
 #endif
@@ -579,6 +590,29 @@ Get_typeinfo_ST (void)
         return etable;
 }
 
+// Return the st_idx of the exception-pointer variable. Mark it 'private'
+// in enclosing openmp regions.
+ST_IDX
+Get_exception_pointer_symbol (void)
+{
+  ST_IDX st = TCON_uval (INITV_tc_val (INITO_val (PU_misc_info(Get_Current_PU()))));
+#ifdef FE_GNU_4_2_0
+  WGEN_add_pragma_to_enclosing_regions (WN_PRAGMA_LOCAL, &St_Table[st], TRUE);
+#endif
+  return st;
+}
+
+// Return the st_idx of the exception filter variable. Mark it 'private'
+// in enclosing openmp regions.
+ST_IDX
+Get_exception_filter_symbol (void)
+{
+  ST_IDX st = TCON_uval (INITV_tc_val (INITV_next (INITO_val (PU_misc_info(Get_Current_PU())))));
+#ifdef FE_GNU_4_2_0
+  WGEN_add_pragma_to_enclosing_regions (WN_PRAGMA_LOCAL, &St_Table[st], TRUE);
+#endif
+  return st;
+}
 
 void
 Do_EH_Tables (void)
@@ -625,7 +659,7 @@ Do_EH_Tables (void)
 			// Store the inito_idx in the PU
 			// 1. exc_ptr 2. filter : Set 3rd entry with inito_idx
 			INITV_IDX index = INITV_next (INITV_next (INITO_val (
-			               (INITO_IDX) Get_Current_PU().eh_info)));
+			               PU_misc_info (Get_Current_PU()))));
 			// INITV_Set_VAL resets the next field, so back it up
 			// and set it again.
 			INITV_IDX bkup = INITV_next (index);
@@ -661,7 +695,7 @@ Do_EH_Tables (void)
 		ST * eh_spec = Get_eh_spec_ST ();
 		id = New_INITO (ST_st_idx(eh_spec), start);
 		INITV_IDX index = INITV_next (INITV_next (INITV_next (
-			INITO_val ((INITO_IDX) Get_Current_PU().eh_info))));
+			INITO_val (PU_misc_info(Get_Current_PU())))));
 		// INITV_Set_VAL resets the next field, so back it up
 		// and set it again.
 		INITV_IDX bkup = INITV_next (index);
@@ -674,10 +708,21 @@ Do_EH_Tables (void)
 }
 
 // Emit all cleanups, and emit a goto after each set of cleanups to the handler.
+// FROM == 0, implies, process the entire list. Else, skip FROM cleanups
+// from the start of the list.
 static void
-Do_Cleanups_For_EH (void)
+Do_Cleanups_For_EH (INT from)
 {
-  for (std::list<EH_CLEANUP_ENTRY>::iterator i = cleanup_list_for_eh.begin();
+  std::list<EH_CLEANUP_ENTRY>::iterator start = cleanup_list_for_eh.begin();
+
+#ifdef FE_GNU_4_2_0
+  if (enable_cxx_openmp) {
+    for (INT i=0; i<from; i++)
+      start++;
+  }
+#endif
+
+  for (std::list<EH_CLEANUP_ENTRY>::iterator i = start;
 		i != cleanup_list_for_eh.end(); ++i) {
     EH_CLEANUP_ENTRY e = *i;
 
@@ -699,8 +744,33 @@ Do_Cleanups_For_EH (void)
     else
 	Generate_unwind_resume();
   }
+
+#ifdef FE_GNU_4_2_0
+  if (enable_cxx_openmp && from)
+    cleanup_list_for_eh.erase (start, cleanup_list_for_eh.end());
+  else
+#endif
   cleanup_list_for_eh.clear();
 }
+
+#ifdef FE_GNU_4_2_0
+// Called at the end of processing an MP parallel region, to output any
+// cleanups that would need to be called if a function within the region
+// throws an exception.
+void
+WGEN_maybe_do_eh_cleanups (void)
+{
+  if (cleanup_list_for_eh.size()) {
+    LABEL_IDX label_idx;
+    New_LABEL (CURRENT_SYMTAB, label_idx);
+    WGEN_Stmt_Append (WN_CreateGoto ((ST_IDX) 0, label_idx), Get_Srcpos());
+    // TODO: Probably need to pass the cleanups to process
+    Do_Cleanups_For_EH ();
+    WGEN_Stmt_Append (WN_CreateLabel ((ST_IDX) 0, label_idx, 0, NULL),
+                      Get_Srcpos());
+  }
+}
+#endif
 
 static void
 Pop_Scope_And_Do_Cleanups (void)
@@ -770,6 +840,8 @@ Push_Temp_Cleanup (gs_t t, bool is_cleanup
 #endif
 )
 {
+  if (!lang_cplus) return;
+
   // If a guard var is required, conditionalize the cleanup.
   gs_t guard_var = WGEN_Get_Guard_Var();
   if (guard_var != NULL) {
@@ -812,6 +884,8 @@ cleanup_matches (gs_t candidate, gs_t target)
 void
 Do_Temp_Cleanups (gs_t t)
 {
+  if (!lang_cplus) return;
+
   Is_True(temp_cleanup_i != -1, ("Do_Temp_Cleanups: stack empty"));
   while (!cleanup_matches(temp_cleanup_stack[temp_cleanup_i].expr, t))
   {
@@ -874,6 +948,16 @@ WGEN_Record_Loop_Switch (gs_code_t tree_code)
     for (i = scope_cleanup_i;
 	 gs_tree_code(scope_cleanup_stack[i].stmt) == GS_CLEANUP_STMT;
 	 --i);
+#ifdef FE_GNU_4_2_0
+    Is_True (i != -1 && 
+	     (gs_tree_code(scope_cleanup_stack[i].stmt) == GS_BIND_EXPR ||
+	      gs_tree_code(scope_cleanup_stack[i].stmt) == GS_HANDLER ||
+	      gs_tree_code(scope_cleanup_stack[i].stmt) == GS_TRY_CATCH_EXPR ||
+	      gs_tree_code(scope_cleanup_stack[i].stmt) == GS_TRY_FINALLY_EXPR ||
+	      gs_tree_code(scope_cleanup_stack[i].stmt) == GS_EH_SPEC_BLOCK ||
+	      gs_tree_code(scope_cleanup_stack[i].stmt) == GS_TRY_BLOCK),
+	    ("WGEN_Record_Loop_Switch: no scope_stmt on stack"));
+#else
     Is_True (i != -1 && 
 	     (gs_tree_code(scope_cleanup_stack[i].stmt) == GS_BIND_EXPR ||
 	      gs_tree_code(scope_cleanup_stack[i].stmt) == GS_HANDLER ||
@@ -881,6 +965,7 @@ WGEN_Record_Loop_Switch (gs_code_t tree_code)
 	      gs_tree_code(scope_cleanup_stack[i].stmt) == GS_TRY_FINALLY_EXPR ||
 	      gs_tree_code(scope_cleanup_stack[i].stmt) == GS_TRY_BLOCK),
 	    ("WGEN_Record_Loop_Switch: no scope_stmt on stack"));
+#endif
     break_continue_info_stack
       [break_continue_info_i].scope = scope_cleanup_stack[i].stmt;
   }
@@ -962,7 +1047,7 @@ static void
 WGEN_Declare_Nonlocal_Label (gs_t label)
 {
   WGEN_Get_LABEL (label, FALSE);
-} /* WGEN_Expand_Label */
+} /* WGEN_Declare_Nonlocal_Label */
 
 
 /* Generate WHIRL for an asm statement with arguments.
@@ -1608,7 +1693,7 @@ WGEN_Check_Undefined_Labels (void)
     LABEL_IDX  label_idx  = undefined_labels_stack [undefined_labels_i].label_idx;
     SYMTAB_IDX symtab_idx = undefined_labels_stack [undefined_labels_i].symtab_idx;
 //  fprintf (stderr, "WGEN_Check_Undefined_Labels: %d idx = %8x [%d]\n", i, label_idx, symtab_idx);
-    if (symtab_idx < CURRENT_SYMTAB)
+    if (LABEL_IDX_level(label_idx) < CURRENT_SYMTAB)
       break;
     FmtAssert (undefined_labels_stack [undefined_labels_i].defined,
                ("label not defined within current function scope"));
@@ -1991,8 +2076,13 @@ WGEN_Expand_Goto (gs_t label)	// KEY VERSION
   vector<gs_t>::reverse_iterator ci, li;
   LABEL_IDX label_idx = WGEN_Get_LABEL (label, FALSE);
   if ((CURRENT_SYMTAB > GLOBAL_SYMTAB + 1) &&
-      (DECL_SYMTAB_IDX(label) < CURRENT_SYMTAB))
-    wn = WN_CreateGotoOuterBlock (label_idx, DECL_SYMTAB_IDX(label));
+      (LABEL_IDX_level(label_idx) < CURRENT_SYMTAB)) {
+    wn = WN_CreateGotoOuterBlock (label_idx, LABEL_IDX_level(label_idx));
+    Set_LABEL_target_of_goto_outer_block(label_idx);
+    PU &target_pu = Get_Scope_PU(LABEL_IDX_level(label_idx));
+    Set_PU_has_nonlocal_goto_label(target_pu);
+    Set_PU_has_goto_outer_block (Get_Current_PU ());
+  }
   else {
     gs_t scope = LABEL_SCOPE(label);
     if (scope != NULL && scope_cleanup_i != -1) {
@@ -2033,7 +2123,13 @@ WGEN_Expand_Goto (gs_t label)	// KEY VERSION
     	   --i;
         }
         if (i == -1)
+        {
+#ifdef FE_GNU_4_2_0
+          FmtAssert (!enable_cxx_openmp,
+               ("Scopes should have resolved with enable_cxx_openmp==on"));
+#endif
           in_handler = true;
+        }
       }
     }
 
@@ -2067,6 +2163,13 @@ WGEN_Expand_Computed_Goto (gs_t exp)
   DevWarn ("encountered indirect jump");
   Set_PU_no_inline (Get_Current_PU ());
   WN *addr = WGEN_Expand_Expr (exp);
+#ifdef KEY // bug 12839
+  if (WN_operator(addr) == OPR_LDA) {
+    WN_set_operator(addr, OPR_LDID);
+    WN_set_desc(addr, WN_rtype(addr));
+    WN_set_ty(addr, TY_pointed(WN_ty(addr)));
+  }
+#endif
   WN *wn   = WN_CreateAgoto (addr);
   WGEN_Stmt_Append (wn, Get_Srcpos());
 } /* WGEN_Expand_Computed_Goto */
@@ -2137,9 +2240,37 @@ comma_is_not_needed (WN * comma_block, WN * wn)
 
   return TRUE;
 }
-#endif
 
-extern void WGEN_add_pragma_to_enclosing_regions (WN_PRAGMA_ID, ST *);
+#if 0
+// This code should no longer be necessary after the fix to bug 12698.
+// GNU 4.2.0 bug 12670: Try to decipher retval to find out what is being
+// returned from a function.
+WN *
+WGEN_Compute_Retval (gs_t retval)
+{
+  while (gs_tree_code(retval) == GS_NOP_EXPR)
+    retval = gs_tree_operand(retval, 0);
+
+  Is_True (retval, ("WGEN_Compute_Retval: NULL kid of NOP_EXPR"));
+  if (gs_tree_code(retval) == GS_BIND_EXPR &&
+      gs_tree_code(gs_bind_expr_body(retval)) == GS_STATEMENT_LIST)
+    retval = gs_bind_expr_body(retval);
+
+  if (gs_tree_code(retval) == GS_STATEMENT_LIST)
+  {
+    // Obtain the last statement and see if it helps in determining what
+    // is being returned.
+    INT num_stmts = gs_length(gs_statement_list_elts(retval));
+    gs_t decl = gs_index(gs_statement_list_elts(retval), num_stmts - 1);
+    if (gs_tree_code(decl) == GS_VAR_DECL ||
+        gs_tree_code(decl) == GS_PARM_DECL)
+      return WGEN_Expand_Expr (decl);
+  }
+
+  return NULL;
+}
+#endif
+#endif
 
 void
 WGEN_Expand_Return (gs_t stmt, gs_t retval)
@@ -2192,6 +2323,8 @@ WGEN_Expand_Return (gs_t stmt, gs_t retval)
 
 #ifdef KEY
     bool copied_return_value = FALSE;
+    bool need_iload_via_fake_parm = FALSE;
+    WN *target_wn = NULL;
 
     // If the return object must be passed through memory and the return
     // object is created by a TARGET_EXPR, have the TARGET_EXPR write directly
@@ -2207,8 +2340,16 @@ WGEN_Expand_Return (gs_t stmt, gs_t retval)
       if (gs_tree_code(t) == GS_TARGET_EXPR) {
 	WGEN_fixup_target_expr(t);
 	copied_return_value = TRUE;
-      }
-      else if (gs_tree_code(t) == GS_RESULT_DECL ||
+      } else if (gs_tree_code(t) == GS_CALL_EXPR) {
+	// Pass the first fake parm to the called function, so that the called
+	// function can write the result directly to the return area.
+	// Bug 12837.
+	WN *first_formal = WN_formal(Current_Entry_WN(), 0);
+	ST *st = WN_st(first_formal);
+	target_wn = WN_Ldid(Pointer_Mtype, 0, st, ST_type(st));
+	copied_return_value = TRUE;
+	need_iload_via_fake_parm = TRUE;
+      } else if (gs_tree_code(t) == GS_RESULT_DECL ||
                (gs_tree_code(t) == GS_INDIRECT_REF &&
                 gs_tree_code(gs_tree_operand(t,0)) == GS_RESULT_DECL)) {
         // Check if we have a result_decl or if wgen converted a result_decl
@@ -2222,7 +2363,37 @@ WGEN_Expand_Return (gs_t stmt, gs_t retval)
 
     rhs_wn = WGEN_Expand_Expr_With_Sequence_Point (
 		retval,
-		TY_mtype (ret_ty_idx));
+		TY_mtype (ret_ty_idx)
+#ifdef KEY
+		, target_wn
+#endif
+		);
+
+#ifdef KEY
+    // rhs_wn is NULL if retval is a call_expr which writes the result directly
+    // into the return area.  Manufacture a rhs_wn which is an iload of the
+    // fake first parm.  Bug 12837.
+    if (rhs_wn == NULL) {
+      Is_True(need_iload_via_fake_parm == TRUE,
+	      ("WGEN_Expand_Return: unexpected rhs_wn NULL"));
+      WN *first_formal = WN_formal(Current_Entry_WN(), 0);
+      ST *st = WN_st(first_formal);
+      TY_IDX ty_idx = Get_TY(gs_tree_type(retval));
+      WN *ldid_wn = WN_Ldid(Pointer_Mtype, 0, st, ST_type(st));
+      rhs_wn = WN_Iload(TY_mtype(ty_idx), 0, ty_idx, ldid_wn);
+    }
+#endif
+
+#if 0
+    // This code should no longer be necessary after fix to bug 12698.
+    // bug 12670: In GNU 4.2.0, the retval inside a RETURN_EXPR may not
+    // have a TARGET_EXPR, but may have a list of statements computing
+    // the return value. In this case, make another effort to determine
+    // the return value. This should not harm GNU 4.0.
+    if (!rhs_wn) {
+      rhs_wn = WGEN_Compute_Retval (retval);
+    }
+#endif
 
     WN * cleanup_block = WN_CreateBlock ();
     WGEN_Stmt_Push (cleanup_block, wgen_stmk_temp_cleanup, Get_Srcpos ());
@@ -2287,7 +2458,7 @@ WGEN_Expand_Return (gs_t stmt, gs_t retval)
 	  DevWarn ("WGEN_Expand_Return: cleanup block and expressson has side effects");
 #endif
 	  ST *ret_st = Gen_Temp_Symbol (ret_ty_idx, "__return_val");
-#if 0 // wgen TODO
+#ifdef FE_GNU_4_2_0
 	  WGEN_add_pragma_to_enclosing_regions (WN_PRAGMA_LOCAL, ret_st);
 #endif
 	  TYPE_ID ret_mtype = TY_mtype (ret_ty_idx);
@@ -2365,8 +2536,9 @@ WGEN_Expand_Return (gs_t stmt, gs_t retval)
       wn = WN_CreateReturn_Val(OPR_RETURN_VAL, WN_rtype(rhs_wn), MTYPE_V, rhs_wn);
     }
   }
-  if (wn)
+  if (wn) {
     WGEN_Stmt_Append(wn, Get_Srcpos());
+  }
 } /* WGEN_Expand_Return */
 
 void
@@ -2378,7 +2550,6 @@ Mark_Scopes_And_Labels (gs_t stmt)
 #ifdef KEY
     case GS_STATEMENT_LIST: {
 	gs_t stmt_list = gs_statement_list_elts(stmt);
-	gs_t list;
 	BOOL new_scope = FALSE;
 	// bug 11869: This example shows there may be a label statement
 	// without an explicit scope. In such a scenario, a jump to such
@@ -2392,10 +2563,14 @@ Mark_Scopes_And_Labels (gs_t stmt)
 	  Push_Scope(stmt);
 	  new_scope = TRUE;
 	}
-
+#ifdef FE_GNU_4_2_0
+        for (int i=0; i < gs_length(stmt_list); i++)
+          Mark_Scopes_And_Labels(gs_index(stmt_list, i));
+#else
+        gs_t list;
 	for (list = stmt_list; gs_code(list)!=EMPTY; list = gs_operand(list,1))
 	  Mark_Scopes_And_Labels(gs_operand(list,0));
-
+#endif
 	if (new_scope) // End scope
 	  --scope_i;
       }
@@ -2546,6 +2721,17 @@ WGEN_Expand_Start_Case (gs_t selector)
   WN *switch_block = WN_CreateBlock ();
   WN *index;
   index = WGEN_Expand_Expr_With_Sequence_Point (selector, index_mtype);
+
+#ifdef KEY
+  // The switch index may be needed more than once if it contains case
+  // range. As it may have side-effects like a function call, save the
+  // index into a temporary, and used the saved value.
+  ST *save_expr_st = Gen_Temp_Symbol (MTYPE_TO_TY_array[index_mtype], "_switch_index");
+  WN *stid = WN_Stid (index_mtype, 0, save_expr_st, MTYPE_TO_TY_array[index_mtype], index);
+  WGEN_Stmt_Append(stid, Get_Srcpos());
+  index = WN_Ldid(index_mtype, 0, save_expr_st, MTYPE_TO_TY_array[index_mtype]);
+#endif
+
   WGEN_Stmt_Push (switch_block, wgen_stmk_switch, Get_Srcpos());
   if (++switch_info_i == switch_info_max) {
     switch_info_max   = ENLARGE(switch_info_max);
@@ -2558,6 +2744,42 @@ WGEN_Expand_Start_Case (gs_t selector)
   WGEN_Record_Loop_Switch (GS_SWITCH_STMT);
 } /* WGEN_Expand_Start_Case */
 
+#ifdef KEY
+// Bug 14138: case ranges can be very long, so individual case statements
+// should not be generated for each value in the range, neither should
+// jump tables be generated in the back-end.
+//
+// switch (index)
+//   case low ... high: goto L;
+//
+// Generate:
+// if (index >= low && index <= high)
+//   goto L
+//
+// Return the IF statement.
+static WN *
+WGEN_Expand_Case_Range (WN * index, INT64 low, INT64 high, LABEL_IDX label)
+{
+  const TYPE_ID mtype = WN_rtype (index);
+  WN * wn_ldid1 = WN_COPY_Tree (index);
+  WN * wn_ldid2 = WN_COPY_Tree (index);
+  WN * goto_wn = WN_CreateGoto (label);
+  WN_next (goto_wn) = WN_prev (goto_wn) = NULL;
+                                                                                
+  WN * if_then = WN_CreateBlock ();
+  WN_first (if_then) = WN_last (if_then) = goto_wn;
+                                                                                
+  WN * if_else = WN_CreateBlock ();
+  WN * cond = WN_CAND (WN_GE (mtype,
+                              wn_ldid1,
+                              WN_Intconst (mtype, low)),
+                       WN_LE (mtype,
+                              wn_ldid2,
+                              WN_Intconst (mtype, high)));
+  return WN_CreateIf (cond, if_then, if_else);
+}
+#endif
+
 static void
 WGEN_Expand_End_Case (void)
 {
@@ -2569,6 +2791,9 @@ WGEN_Expand_End_Case (void)
   WN    *case_entry;
   WN    *def_goto;
   WN    *wn;
+#ifdef KEY
+  WN    *case_range;
+#endif
   LABEL_IDX exit_label_idx;
 
   n = case_info_i - switch_info_stack [switch_info_i].start_case_index + 1;
@@ -2581,11 +2806,30 @@ WGEN_Expand_End_Case (void)
   else
     def_goto = WN_CreateGoto (exit_label_idx);
   case_block = WN_CreateBlock ();
+#ifdef KEY
+  case_range = WN_CreateBlock ();
+#endif
   for (i = switch_info_stack [switch_info_i].start_case_index;
        i <= case_info_i;
        i++) {
     INT64     case_value;
     LABEL_IDX case_label_idx = case_info_stack [i].case_label_idx;
+#ifdef KEY
+    INT64 low = case_info_stack[i].case_lower_bound_value;
+    INT64 high = case_info_stack[i].case_upper_bound_value;
+    if (low < high) {
+      WN * case_range_cond = 
+          WGEN_Expand_Case_Range (switch_info_stack[switch_info_i].index,
+                                  low,
+                                  high,
+                                  case_label_idx);
+      WN_INSERT_BlockLast (case_range, case_range_cond);
+    }
+    else {
+      case_entry = WN_CreateCasegoto (low, case_label_idx);
+      WN_INSERT_BlockLast (case_block, case_entry);
+    }
+#else
     for (case_value  = case_info_stack [i].case_lower_bound_value;
          case_value <= case_info_stack [i].case_upper_bound_value;
          case_value++) {
@@ -2596,6 +2840,7 @@ WGEN_Expand_End_Case (void)
 	break;
 #endif
     }
+#endif
   }
   switch_wn = WN_CreateSwitch (n,
                                switch_info_stack [switch_info_i].index,
@@ -2603,10 +2848,19 @@ WGEN_Expand_End_Case (void)
                                def_goto,
                                exit_label_idx);
   switch_block = WGEN_Stmt_Pop (wgen_stmk_switch);
+#ifdef KEY
+  // Append any IF statements for case range in switch.
+  WGEN_Stmt_Append (case_range, Get_Srcpos());
+  WN_INSERT_BlockFirst (switch_block, switch_wn);
+  wn = WN_CreateLabel ((ST_IDX) 0, exit_label_idx, 0, NULL);
+  WN_INSERT_BlockLast (switch_block, wn);
+  WGEN_Stmt_Append (switch_block, Get_Srcpos());
+#else
   WGEN_Stmt_Append (switch_wn, Get_Srcpos ());
   WGEN_Stmt_Append (switch_block, Get_Srcpos ());
   wn = WN_CreateLabel ((ST_IDX) 0, exit_label_idx, 0, NULL);
   WGEN_Stmt_Append (wn, Get_Srcpos ());
+#endif
   case_info_i = switch_info_stack [switch_info_i].start_case_index - 1;
   --switch_info_i;
 } /* WGEN_Expand_End_Case */
@@ -3337,6 +3591,15 @@ WGEN_Expand_Try (gs_t stmt)
     WN * region_pragmas = WN_CreateBlock();
     FmtAssert (cleanup_list_for_eh.size() >= handler_count, ("Cleanups cannot be removed here"));
     LABEL_IDX cmp_idx = scope_cleanup_stack[scope_cleanup_i+1].cmp_idx;
+    // We want to process any EH cleanups that have been introduced by
+    // the statements above, and not by any nested TRY block.
+    // When enabled by enable_cxx_openmp,
+    //   cleanups generated while processing a TRY block are handled at
+    //   that point, and any cleanups generated by an enclosing TRY block
+    //   will be handled during the enclosing TRY block.
+    //
+    //   cleanup_list_for_eh is updated to not contain any entries generated
+    //   by a nested TRY block.
     if (cleanup_list_for_eh.size() > handler_count)
     {
 	std::list<EH_CLEANUP_ENTRY>::iterator iter = cleanup_list_for_eh.begin();
@@ -3396,6 +3659,14 @@ WGEN_Expand_Try (gs_t stmt)
 
   New_LABEL (CURRENT_SYMTAB, end_label_idx);
 
+#ifdef FE_GNU_4_2_0
+  if (enable_cxx_openmp)
+  {
+    /* Jump to code after the try block, in case no exception was thrown. */
+    WGEN_Stmt_Append (WN_CreateGoto ((ST_IDX) NULL, end_label_idx), Get_Srcpos());
+  }
+#endif
+
   /* Handler code will be generated later, at end of function. */
 
 #ifdef KEY
@@ -3405,6 +3676,11 @@ WGEN_Expand_Try (gs_t stmt)
 #else
   Push_Handler_Info (gs_try_handlers(stmt), end_label_idx);
 #endif // KEY
+
+#ifdef FE_GNU_4_2_0
+  if (enable_cxx_openmp)
+    Do_Handlers(handler_count); // pass the # of cleanups to skip from start
+#endif
 
   /* Emit label after handlers. */
 
@@ -3528,7 +3804,8 @@ Call_Rethrow (void)
 #endif
 }
 
-void Call_Terminate (void)
+void
+Call_Terminate (void)
 {
   static ST * st = NULL;
   if (st == NULL) {
@@ -3542,7 +3819,7 @@ static void Generate_filter_cmp (int filter, LABEL_IDX goto_idx);
 static WN *
 Generate_cxa_call_unexpected (void)
 {
-  ST_IDX exc_ptr_param = TCON_uval (INITV_tc_val (INITO_val (Get_Current_PU().eh_info)));
+  ST_IDX exc_ptr_param = Get_exception_pointer_symbol ();
   ST exc_st = St_Table[exc_ptr_param];
   WN* parm_node = WN_Ldid (Pointer_Mtype, 0, &exc_st, ST_type (exc_st));
 
@@ -3565,7 +3842,7 @@ Generate_cxa_call_unexpected (void)
 static void
 Generate_unwind_resume (void)
 {
-  ST_IDX exc_ptr_param = TCON_uval (INITV_tc_val (INITO_val (Get_Current_PU().eh_info)));
+  ST_IDX exc_ptr_param = Get_exception_pointer_symbol ();
   ST exc_st = St_Table[exc_ptr_param];
   WN* parm_node = WN_Ldid (Pointer_Mtype, 0, &exc_st, ST_type (exc_st));
 
@@ -3619,7 +3896,7 @@ Generate_unwind_resume (void)
 static void
 Generate_filter_cmp (int filter, LABEL_IDX goto_idx)
 {
-  ST_IDX filter_param = TCON_uval (INITV_tc_val (INITV_next (INITO_val (Get_Current_PU().eh_info))));
+  ST_IDX filter_param = Get_exception_filter_symbol ();
   const TYPE_ID mtype = TARGET_64BIT ? MTYPE_U8 : MTYPE_U4;
   
   WN * wn_ldid = WN_Ldid (mtype, 0, &St_Table[filter_param],
@@ -3641,6 +3918,7 @@ Generate_filter_cmp (int filter, LABEL_IDX goto_idx)
   WGEN_Stmt_Append (if_blk, Get_Srcpos());
 }
 #endif // KEY
+
 
 // for a catch-all clause, pass a typeinfo of ZERO. This typeinfo needs
 // to be handled specially. Moreover, we must not pass 0 for any other
@@ -3758,92 +4036,50 @@ WGEN_Expand_Handlers_Or_Cleanup (const HANDLER_INFO &handler_info)
   }    
 }
 
-#if 0 // wgen TODO
+#ifdef FE_GNU_4_2_0
+#include "omp_types.h"
 #include "omp_directive.h"
 static void
 WGEN_Expand_Omp (gs_t stmt)
 {
-  switch (stmt->omp.choice)
+  switch (gs_tree_code(stmt))
   {
-    case parallel_dir_b:
-      expand_start_parallel ((struct parallel_clause_list *) stmt->omp.omp_clause_list);
+    case GS_OMP_PARALLEL:
+      expand_start_parallel_or_combined_parallel (stmt);
       break;
-    case parallel_dir_e:
-      expand_end_parallel ();
+
+    case GS_OMP_CRITICAL:
+      expand_start_critical (stmt);
       break;
-    case for_dir_b:
-      expand_start_for ((struct for_clause_list *) stmt->omp.omp_clause_list);
+
+    case GS_OMP_SECTIONS:
+      expand_start_sections (stmt);
       break;
-    case for_dir_e:
-      expand_end_for ();
+
+    case GS_OMP_SECTION:
+      expand_start_section (stmt);
       break;
-    case sections_cons_b:
-      expand_start_sections ((struct sections_clause_list *) stmt->omp.omp_clause_list);
+
+    case GS_OMP_SINGLE:
+      expand_start_single (stmt);
       break;
-    case sections_cons_e:
-      expand_end_sections ();
+
+    case GS_OMP_FOR:
+      expand_start_for (stmt);
       break;
-    case section_cons_b:
-      expand_start_section ();
+
+    case GS_OMP_MASTER:
+      expand_start_master (stmt);
       break;
-    case section_cons_e:
-      expand_end_section ();
+
+    case GS_OMP_ORDERED:
+      expand_start_ordered (stmt);
       break;
-    case single_cons_b:
-      expand_start_single ((struct single_clause_list *) stmt->omp.omp_clause_list);      break;
-    case single_cons_e:
-      expand_end_single ();
+
+    case GS_OMP_ATOMIC:
+      expand_start_atomic (stmt);
       break;
-    case par_for_cons_b:
-      expand_start_parallel_for ((struct parallel_for_clause_list *) stmt->omp.omp_clause_list);
-      break;
-    case par_for_cons_e:
-      expand_end_parallel_for ();
-      break;
-    case par_sctn_cons_b:
-      expand_start_parallel_sections ((struct parallel_sections_clause_list *) stmt->omp.omp_clause_list);
-      break;
-    case par_sctn_cons_e:
-      expand_end_parallel_sections ();
-      break;
-    case master_cons_b:
-      expand_start_master ();
-      break;
-    case master_cons_e:
-      expand_end_master ();
-      break;
-    case critical_cons_b:
-      expand_start_critical ((gs_t) stmt->omp.omp_clause_list);
-      break;
-    case critical_cons_e:
-      expand_end_critical ();
-      break;
-   case barrier_dir:
-      expand_barrier ();
-      break;
-    case flush_dir:
-      expand_flush ((gs_t) stmt->omp.omp_clause_list);
-      break;
-    case atomic_cons_b:
-      expand_start_atomic ();
-      break;
-    case atomic_cons_e:
-      expand_end_atomic ();
-      break;
-    case ordered_cons_b:
-      expand_start_ordered ();
-      break;
-    case ordered_cons_e:
-      expand_end_ordered ();
-      break;
-    case thdprv_dir:
-      expand_threadprivate ((gs_t) stmt->omp.omp_clause_list);
-      break;
-    case options_dir:
-    case exec_freq_dir:
-      WGEN_Expand_Pragma (stmt);
-      break;
-                                                                                
+
     default:
       Fail_FmtAssertion ("Unexpected stmt node");
   }
@@ -3852,14 +4088,15 @@ WGEN_Expand_Omp (gs_t stmt)
 void
 WGEN_Expand_DO (gs_t stmt)
 {
+  Is_True (gs_tree_code(stmt) == GS_OMP_FOR, ("Unexpected tree code"));
   gs_t init, incr, cond, body;
 
-  WGEN_Record_Loop_Switch  (gs_tree_code (stmt));
+  WGEN_Record_Loop_Switch  (GS_DO_STMT);
 
-  init = FOR_INIT_STMT (stmt);
-  incr = FOR_EXPR(stmt);
-  cond = FOR_COND(stmt);
-  body = FOR_BODY(stmt);
+  init = gs_omp_for_init (stmt);
+  incr = gs_omp_for_incr (stmt);
+  cond = gs_omp_for_cond (stmt);
+  body = gs_omp_for_body (stmt);
 #if 0
   for (init = FOR_INIT_STMT(stmt); init; init = TREE_CHAIN(init))
 	WFE_Expand_Stmt(init);
@@ -3897,7 +4134,7 @@ WGEN_Expand_DO (gs_t stmt)
   }
   --break_continue_info_i;
 }
-#endif // wgen TODO
+#endif
 
 
 //*************************************************************************
@@ -3911,11 +4148,11 @@ WGEN_Expand_Stmt(gs_t stmt, WN* target_wn)
       lineno = gs_decl_source_line(stmt);
     else
     if (gs_tree_code(stmt) != GS_CASE_LABEL_EXPR) {
-      if (gs_expr_has_location(stmt) == gs_true) // it would otherwise be -1
+      if (gs_tree_has_location(stmt) == gs_true) // it would otherwise be -1
 	lineno = gs_expr_lineno(stmt);
     }
     //bug 8895, 10632: update current file
-    if(gs_expr_has_location(stmt) == gs_true)
+    if(gs_tree_has_location(stmt) == gs_true)
      WGEN_Set_Line_And_File (lineno, gs_expr_filename(stmt), TRUE);
 
     if (lang_cplus) 
@@ -4075,23 +4312,44 @@ WGEN_Expand_Stmt(gs_t stmt, WN* target_wn)
 #endif
 
     case GS_EH_SPEC_BLOCK:
+#ifdef FE_GNU_4_2_0
+      // Bug 12603: GNU 4.2.0 does not enclose the statments in EH_SPEC_BLOCK
+      // with a BIND_EXPR, so we need to enclose them within a scope here.
+      Push_Scope_Cleanup (stmt);
+#endif
       WGEN_Expand_EH_Spec (stmt);
+#ifdef FE_GNU_4_2_0
+      Pop_Scope_And_Do_Cleanups (); // bug 12603
+#endif
       break;
 
     case GS_USING_STMT:
       break;
 
-#if 0 // wgen TODO
-    case GS_OMP_MARKER_STMT:
+#ifdef FE_GNU_4_2_0
+    case GS_OMP_PARALLEL:
+    case GS_OMP_CRITICAL:
+    case GS_OMP_SECTION:
+    case GS_OMP_SECTIONS:
+    case GS_OMP_SINGLE:
+    case GS_OMP_FOR:
+    case GS_OMP_MASTER:
+    case GS_OMP_ORDERED:
+    case GS_OMP_ATOMIC:
       WGEN_Expand_Omp (stmt);
       break;
 #endif
 
     case GS_STATEMENT_LIST: {
 	gs_t stmt_list = gs_statement_list_elts(stmt);
+#ifdef FE_GNU_4_2_0
+        for (int i=0; i < gs_length(stmt_list); i++)
+          WGEN_Expand_Stmt(gs_index(stmt_list, i), target_wn);
+#else
 	gs_t list;
 	for (list = stmt_list; gs_code(list)!=EMPTY; list = gs_operand(list,1))
 	  WGEN_Expand_Stmt(gs_operand(list,0), target_wn);
+#endif
       }
       break;
 

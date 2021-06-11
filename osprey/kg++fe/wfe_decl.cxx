@@ -56,7 +56,9 @@
 #include <elf.h>
 #include "defs.h"
 #include "errors.h"
+extern "C" {
 #include "gnu_config.h"
+}
 #ifdef KEY	// get HW_WIDE_INT for flags.h
 #include "gnu/hwint.h"
 #endif	/* KEY */
@@ -90,6 +92,7 @@ extern "C" {
 #ifdef KEY
 #include "wfe_dst.h" // DST_enter_member_function
 #endif
+#include "targ_sim.h" // PUSH_RETURN_ADDRESS_ON_STACK
 
 extern "C" void check_gnu_errors (int *, int *);
 #ifdef KEY
@@ -107,6 +110,9 @@ static void WFE_Handle_Named_Return_Value(tree fn);
 // IMPORTANT:  Doesn't work for nested functions.
 tree named_ret_obj_initializer;
 extern "C" BOOL pragma_implementation_seen, pragma_interface_seen;
+
+/* ST to represent EXC_PTR_EXPR if C++ exceptions are disabled */
+ST * Dummy_Exc_Ptr_Expr = NULL;
 #endif /* KEY */
 
 static tree *deferred_function_stack;
@@ -845,7 +851,7 @@ Setup_Entry_For_EH (void)
                                 0)), 1);
     Set_INITV_next (tinfo, eh_spec);
 
-    Get_Current_PU().eh_info = New_INITO (ST_st_idx (etable), exc_ptr_iv);
+    Set_PU_misc_info (Get_Current_PU(), New_INITO (ST_st_idx (etable), exc_ptr_iv));
 }
 
 // Generate WHIRL representing an asm at file scope (between functions).
@@ -1078,17 +1084,14 @@ WFE_Start_Function (tree fndecl)
           DECL_IMPLICIT_INSTANTIATION (fndecl) &&
           DECL_NAMESPACE_SCOPE_P (fndecl))))
       eclass = EXPORT_INTERNAL; // bug 7550
-    else if (TREE_PUBLIC(fndecl) || DECL_WEAK(fndecl)) {
-#ifdef TARG_IA64
-      if (Gp_Save_Restore_Opt && Use_Call_Shared_Link &&
-          (DECL_INLINE(fndecl) || !DECL_WEAK(fndecl)))
-#else
-      if (DECL_INLINE(fndecl) || !DECL_WEAK(fndecl))
-#endif
-	eclass = EXPORT_PROTECTED;
-      else eclass = EXPORT_PREEMPTIBLE;
-    }
-    else eclass = EXPORT_LOCAL;
+    else if (DECL_WEAK(fndecl)) 
+      eclass = EXPORT_PREEMPTIBLE;
+    else if (!TREE_PUBLIC(fndecl))
+      eclass = EXPORT_LOCAL;
+    else if (DECL_INLINE(fndecl))
+      eclass = EXPORT_PROTECTED;
+    else 
+      eclass = EXPORT_PREEMPTIBLE;
 #else
     ST_EXPORT  eclass = TREE_PUBLIC(fndecl) && !DECL_INLINE(fndecl)
 			 || DECL_WEAK(fndecl) ?
@@ -1120,6 +1123,11 @@ WFE_Start_Function (tree fndecl)
     Set_PU_cxx_lang (Pu_Table [ST_pu (func_st)]);
 
 #ifdef KEY
+    if (lookup_attribute("used", DECL_ATTRIBUTES (fndecl)))  // bug 3697
+      Set_PU_no_delete (Pu_Table [ST_pu (func_st)]);
+
+    if (DECL_NO_INSTRUMENT_FUNCTION_ENTRY_EXIT (fndecl))
+      Set_PU_no_instrument (Pu_Table [ST_pu (func_st)]);  // Bug 750
     if (DECL_DECLARED_INLINE_P(fndecl))
       Set_PU_is_marked_inline (Pu_Table [ST_pu (func_st)]);
 #endif
@@ -1141,6 +1149,8 @@ WFE_Start_Function (tree fndecl)
 // inliner/ipa, and back-end.
     if (key_exceptions)
 	Setup_Entry_For_EH ();
+    else
+        Dummy_Exc_Ptr_Expr = NULL;
 
     if (func_PU_uplevel(fndecl))
       Set_PU_uplevel (Get_Current_PU ());
@@ -1458,8 +1468,9 @@ WFE_Finish_Function (void)
     // Insert a RETURN if it does not exist
     WN * wn = WN_last (WFE_Stmt_Top ());
     if (wn == NULL || WN_operator (wn) != OPR_RETURN &&
-		      WN_operator (wn) != OPR_RETURN_VAL)
+	WN_operator (wn) != OPR_RETURN_VAL) {
       WFE_Stmt_Append (WN_CreateReturn (), Get_Srcpos ());
+    }
 
     // Add any handler code
     Do_Handlers ();
@@ -1489,6 +1500,14 @@ WFE_Finish_Function (void)
     if (Return_Address_ST [CURRENT_SYMTAB]) {
       Set_PU_has_return_address (Get_Current_PU ());
       Set_PU_no_inline (Get_Current_PU ());
+#ifdef KEY
+      if (PU_must_inline(Get_Current_PU())) {
+	DevWarn("Disabling must_inline for PU %s",
+		ST_name(Get_Current_PU_ST()));
+	Clear_PU_must_inline(Get_Current_PU());
+      }
+#endif
+
       Return_Address_ST [CURRENT_SYMTAB] = NULL;
     }
 
@@ -1667,6 +1686,7 @@ WFE_Add_Aggregate_Init_Real (REAL_VALUE_TYPE real, INT size)
 // KEY is already defined above, but this is just to keep what we had earlier
   int     buffer [4];
 #endif // KEY
+  INT32    rbuf_w[4]; // this is needed when long is 64-bit
   switch (size) {
     case 4:
       REAL_VALUE_TO_TARGET_SINGLE (real, t1);
@@ -1675,14 +1695,26 @@ WFE_Add_Aggregate_Init_Real (REAL_VALUE_TYPE real, INT size)
     case 8:
       REAL_VALUE_TO_TARGET_DOUBLE (real, buffer);
       WFE_Convert_To_Host_Order(buffer);
-      tc = Host_To_Targ_Float (MTYPE_F8, *(double *) &buffer);
+#if (SIZEOF_LONG != 4)
+      for (int i = 0; i < 4; i++)
+	rbuf_w[i] = buffer[i];
+      tc = Host_To_Targ_Float (MTYPE_F8, *(double *) rbuf_w);
+#else
+      tc = Host_To_Targ_Float (MTYPE_F8, *(double *) buffer);
+#endif
       break;
 #ifdef KEY
     case 12:
     case 16:
       REAL_VALUE_TO_TARGET_LONG_DOUBLE (real, buffer);
       WFE_Convert_To_Host_Order(buffer);
-      tc = Host_To_Targ_Quad (*(long double *) &buffer);
+#if (SIZEOF_LONG != 4)
+      for (int i = 0; i < 4; i++)
+	rbuf_w[i] = buffer[i];
+      tc = Host_To_Targ_Quad (*(long double *) rbuf_w);
+#else
+      tc = Host_To_Targ_Quad (*(long double *) buffer);
+#endif
       break;
 #endif
     default:
@@ -2296,10 +2328,16 @@ Gen_Assign_Of_Init_Val (
 	// rather than directy copy assignment,
 	// so need special code.
 	UINT size = TY_size(ty);
+	// OSP, string size > ty_size, only init ty_size
+	// Replace TREE_STRING_LENGTH with load_size
+	// Althrough C++ prohibit str_lenth longer than ty_size,
+	// we still change the code here. ( consistent with C part )
+	UINT load_size = ( size > TREE_STRING_LENGTH(init) ) ?
+					TREE_STRING_LENGTH(init) : size;
 	TY_IDX ptr_ty = Make_Pointer_Type(ty);
 	WN *load_wn = WN_CreateMload (0, ptr_ty, init_wn,
 #ifdef KEY // bug 3188
-			      WN_Intconst(MTYPE_I4, TREE_STRING_LENGTH(init)));
+			      WN_Intconst(MTYPE_I4, load_size));
 #else
 				      WN_Intconst(MTYPE_I4, size));
 #endif
@@ -2313,13 +2351,13 @@ Gen_Assign_Of_Init_Val (
 				 load_wn,
 				 addr_wn,
 #ifdef KEY // bug 3188
-                              WN_Intconst(MTYPE_I4, TREE_STRING_LENGTH(init))),
+                              WN_Intconst(MTYPE_I4, load_size)),
 #else
 				 WN_Intconst(MTYPE_I4,size)),
 #endif
 		Get_Srcpos());
 #ifdef KEY // bug 3247
-	if (size - TREE_STRING_LENGTH(init)) {
+	if (size - load_size > 0) {
 	  load_wn = WN_Intconst(MTYPE_U4, 0);
 #ifdef NEW_INITIALIZER
           addr_wn = target;
@@ -2327,10 +2365,10 @@ Gen_Assign_Of_Init_Val (
 	  addr_wn = WN_Lda(Pointer_Mtype, 0, st);
 #endif
 	  WFE_Stmt_Append(
-		  WN_CreateMstore (offset+TREE_STRING_LENGTH(init), ptr_ty,
+		  WN_CreateMstore (offset+load_size, ptr_ty,
 				   load_wn,
 				   addr_wn,
-			   WN_Intconst(MTYPE_I4,size-TREE_STRING_LENGTH(init))),
+			   WN_Intconst(MTYPE_I4,size-load_size)),
 		  Get_Srcpos());
 	}
 #endif
@@ -2889,7 +2927,12 @@ Add_Inito_For_Tree (tree init, ST *st)
   case INTEGER_CST:
 	UINT64 val;
 	val = Get_Integer_Value (init);
-	if (val == 0) {
+#ifdef TARG_SL
+// we don't put vbuf variable, which is initialized with zero, into bss section
+	if (val == 0 && !ST_in_vbuf(st) && !ST_in_sbuf(st)) {
+#else 	
+	if (val == 0 ) {
+#endif 		
 		Set_ST_init_value_zero(st);
 		if (ST_sclass(st) == SCLASS_DGLOBAL)
 			Set_ST_sclass(st, SCLASS_UGLOBAL);
@@ -3452,8 +3495,8 @@ WFE_Get_Return_Address_ST (int level)
   if (return_address_st == NULL) {
     return_address_st = New_ST (CURRENT_SYMTAB - level);
     ST_Init (return_address_st, Save_Str ("__return_address"), CLASS_VAR,
-             SCLASS_AUTO, EXPORT_LOCAL, 
-             Make_Pointer_Type (Be_Type_Tbl (MTYPE_V), FALSE));
+	     (PUSH_RETURN_ADDRESS_ON_STACK ? SCLASS_FORMAL : SCLASS_AUTO),
+	     EXPORT_LOCAL, Make_Pointer_Type (Be_Type_Tbl (MTYPE_V), FALSE));
     Set_ST_is_return_var (return_address_st);
     Return_Address_ST [CURRENT_SYMTAB - level] = return_address_st;
   }

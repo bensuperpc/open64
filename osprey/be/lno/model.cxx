@@ -1,12 +1,4 @@
 /*
- *  Copyright (C) 2006. QLogic Corporation. All Rights Reserved.
- */
-
-/*
- * Copyright 2002, 2003, 2004, 2005, 2006 PathScale, Inc.  All Rights Reserved.
- */
-
-/*
 
   Copyright (C) 2000, 2001 Silicon Graphics, Inc.  All Rights Reserved.
 
@@ -334,8 +326,8 @@
 #endif // USE_PCH
 #pragma hdrstop
 
-static char *source_file = __FILE__;
-static char *rcs_id = "$Source: ../../be/lno/SCCS/s.model.cxx $ $Revision: 1.21 $";
+const static char *source_file = __FILE__;
+const static char *rcs_id = "$Source: ../../be/lno/SCCS/s.model.cxx $ $Revision: 1.21 $";
 
 #include <sys/types.h>
 #include <alloca.h>
@@ -351,7 +343,7 @@ static char *rcs_id = "$Source: ../../be/lno/SCCS/s.model.cxx $ $Revision: 1.21 
 #include "cache_model.h"
 #include "reduc.h"
 #include "config.h"
-#include "config_TARG.h"
+#include "config_targ_opt.h"
 #include "config_cache.h"
 #include "config_lno.h"
 #include "config_opt.h"
@@ -526,6 +518,7 @@ LOOP_MODEL::Model(WN* wn,
   i = wndepth;
   WN *tmp = wn;
   _blocking_disabled = LNO_Blocking == 0;
+
 #if 0
   //bug 11567 comments out this. This is because blocking is not the direct
   //reason that prevents vectorizing an innermost loop except that the block
@@ -538,8 +531,8 @@ LOOP_MODEL::Model(WN* wn,
   // vectorization and cache-blocking. For now, we may shut this off 
   // by preventing cache-blocking only under -LNO:simd=2. Need to come across
   // a case yet. (That case is bug 4672.)
-  if (Is_Vectorizable_Loop(wn) && Is_Vectorization_Beneficial(WN_do_body(wn)))
-    _blocking_disabled = TRUE;
+  //  if (Is_Vectorizable_Loop(wn) && Is_Vectorization_Beneficial(WN_do_body(wn)))
+  //    _blocking_disabled = TRUE;
 #endif
 #endif
 
@@ -1637,7 +1630,14 @@ LOOP_MODEL::OP_Resources_R(WN* wn,
   
   if (OPERATOR_is_leaf(oper)) {
     return (1);
-  } 
+  }
+
+//bug 12184: Don't know yet how to model the resource for vector type.
+//           Skip for now. Note those must be GNU vectors at this point. 
+#ifdef TARG_X8664
+  if(MTYPE_is_vector(rtype) || MTYPE_is_vector(desc))
+   return -1;
+#endif 
 
   if (oper == OPR_BLOCK) {
     WN *kid = WN_first (wn);
@@ -1698,13 +1698,11 @@ LOOP_MODEL::OP_Resources_R(WN* wn,
     // regular floating point
     else if (desc  == MTYPE_F4 || 
              desc  == MTYPE_F8 ||
-#ifdef PATHSCALE_MERGE
+#if defined(TARG_IA64)
              desc  == MTYPE_F10 ||
-#endif
-             rtype == MTYPE_F4 ||
-#ifdef PATHSCALE_MERGE
              rtype  == MTYPE_F10 ||
 #endif
+             rtype == MTYPE_F4 ||
              rtype == MTYPE_F8) {
       // multiply-adds
       if (Target_ISA_Has_Madd() && 
@@ -1753,13 +1751,11 @@ LOOP_MODEL::OP_Resources_R(WN* wn,
     } 
     else if (desc  == MTYPE_C4 || 
              desc  == MTYPE_C8 ||
-#ifdef PATHSCALE_MERGE
+#if defined(TARG_IA64)
              desc  == MTYPE_C10 ||
-#endif
-             rtype == MTYPE_C4 ||
-#ifdef PATHSCALE_MERGE
              rtype  == MTYPE_C10 ||
 #endif
+             rtype == MTYPE_C4 ||
              rtype == MTYPE_C8) {
       if (oper == OPR_ADD || oper== OPR_SUB) {
         *num_instr += LNOTARGET_Complex_Add_Res(resource_count, rtype);
@@ -3388,13 +3384,11 @@ LAT_DIRECTED_GRAPH16::Add_Vertices_Op_Edges_Rec(VINDEX16 store,
     // regular floating point
     else if (desc  == MTYPE_F4 || 
              desc  == MTYPE_F8 ||
-#ifdef PATHSCALE_MERGE
+#if defined(TARG_IA64)
              desc  == MTYPE_F10 ||
-#endif
-             rtype == MTYPE_F4 ||
-#ifdef PATHSCALE_MERGE
              rtype  == MTYPE_F10 ||
 #endif
+             rtype == MTYPE_F4 ||
              rtype == MTYPE_F8) {
       // multiply-adds
       if (Target_ISA_Has_Madd() && 
@@ -3441,14 +3435,12 @@ LAT_DIRECTED_GRAPH16::Add_Vertices_Op_Edges_Rec(VINDEX16 store,
       }
     }
     else if (desc  == MTYPE_C4 || 
-#ifdef PATHSCALE_MERGE
+#if defined(TARG_IA64)
              desc  == MTYPE_C10 ||
+             rtype  == MTYPE_C10 ||
 #endif
              desc  == MTYPE_C8 ||
              rtype == MTYPE_C4 ||
-#ifdef PATHSCALE_MERGE
-             rtype  == MTYPE_C10 ||
-#endif
              rtype == MTYPE_C8) {
       if (oper == OPR_ADD || oper == OPR_SUB) {
         op_latency = LNOTARGET_Complex_Add_Lat(rtype);
@@ -4115,18 +4107,18 @@ WN2INT *se_needed, ARRAY_REF *ar)
           (*num_scalar_refs)++;
           Enter(&symb, is_store, 1);
         } else if ((type == MTYPE_C4) || (type==MTYPE_C8) ||
-#ifdef PATHSCALE_MERGE
-									 (type == MTYPE_F10) ||
+#if defined(TARG_IA64)
+		   (type == MTYPE_F10) ||
 #endif
                    (type == MTYPE_FQ)) {
           SYMBOL symb(wn);
           (*num_scalar_refs)+=2;
           Enter(&symb, is_store, 2);
-#ifdef PATHSCALE_MERGE
-        } else if (type == MTYPE_C10 || type == MTYPE_CQ) {
-#else
-        } else if (type == MTYPE_CQ) {
+        } else if (type == MTYPE_CQ
+#if defined(TARG_IA64)
+	    || type == MTYPE_CQ
 #endif
+	      ) {
           SYMBOL symb(wn);
           (*num_scalar_refs)+=4;
           Enter(&symb, is_store, 4);
@@ -4211,14 +4203,14 @@ void SYMBOL_TREE::Enter_Scalar_Refs(WN *wn, ARRAY_REF *ar,
         Enter(&symb, is_store, 1);
         (*num_scalar_refs)++;
       } else if ((type == MTYPE_C4) || (type==MTYPE_C8) || 
-#ifdef PATHSCALE_MERGE      	
+#if defined(TARG_IA64)
       	(type == MTYPE_F10) ||
 #endif
       	(type == MTYPE_FQ)) {
         Enter(&symb, is_store, 2);
         (*num_scalar_refs)+=2;
       } else if (type == MTYPE_CQ
-#ifdef PATHSCALE_MERGE      	
+#if defined(TARG_IA64)
       	|| type == MTYPE_C10
 #endif
       	) {
@@ -4538,18 +4530,13 @@ REGISTER_MODEL::Count_Op(WN* wn)
   } else if (!OPCODE_is_leaf(opcode)) {
     TYPE_ID ti = OPCODE_rtype(opcode);
     TYPE_ID ti2 = OPCODE_desc(opcode);
-#ifdef PATHSCALE_MERGE
-    if (ti == MTYPE_C4 || ti2 == MTYPE_C4 ||
-	ti == MTYPE_C8 || ti2 == MTYPE_C8 ||
-	ti == MTYPE_C10 || ti2 == MTYPE_C10 ||
-	ti == MTYPE_CQ || ti2 == MTYPE_CQ ||
-        ti == MTYPE_F10 || ti2 == MTYPE_F10 ||
-	ti == MTYPE_FQ || ti2 == MTYPE_FQ) {
-#else
     if ((ti == MTYPE_C4) || (ti == MTYPE_C8) || (ti == MTYPE_CQ) ||
         (ti2 == MTYPE_C4) || (ti2 == MTYPE_C8) || (ti2 == MTYPE_CQ) ||
-        (ti == MTYPE_FQ) || (ti2 == MTYPE_FQ)) {
+#if defined(TARG_IA64)
+	ti == MTYPE_C10 || ti2 == MTYPE_C10 ||
+        ti == MTYPE_F10 || ti2 == MTYPE_F10 ||
 #endif
+        (ti == MTYPE_FQ) || (ti2 == MTYPE_FQ)) {
         result = 2.0;
     } else if ((ti == MTYPE_F4) || (ti == MTYPE_F8) || 
         (ti2 == MTYPE_F4) || (ti2 == MTYPE_F8)) { 

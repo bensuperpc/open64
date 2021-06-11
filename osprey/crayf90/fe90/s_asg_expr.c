@@ -1,5 +1,8 @@
 /*
- *  Copyright (C) 2006. QLogic Corporation. All Rights Reserved.
+ * Copyright 2007, 2008. PathScale, LLC.  All Rights Reserved.
+ */
+/*
+ *  Copyright (C) 2006, 2007. QLogic Corporation. All Rights Reserved.
  */
 
 /*
@@ -132,7 +135,7 @@ static boolean expr_semantics_d (opnd_type *result_opnd,
 #endif /* KEY Bug 934 */
 
 
-# if (defined(_HOST_OS_IRIX) || defined(_HOST_OS_LINUX))
+# if (defined(_HOST_OS_IRIX) || defined(_HOST_OS_LINUX) || defined(_HOST_OS_DARWIN))
 # pragma inline uplus_opr_handler
 # pragma inline power_opr_handler
 # pragma inline mult_opr_handler
@@ -337,6 +340,7 @@ help_assign_cpnts(int line, int col, Uint type_idx,
   for (int sn_idx = ATT_FIRST_CPNT_IDX(TYP_IDX(type_idx));
     sn_idx != NULL_IDX;
     sn_idx = SN_SIBLING_LINK(sn_idx)) {
+    boolean need_semantics = FALSE;
     int cpnt_attr_idx = SN_ATTR_IDX(sn_idx);
     int l_idx = do_make_struct_opr(line, col, lvalue_idx, lvalue_fld,
       cpnt_attr_idx);
@@ -356,8 +360,7 @@ help_assign_cpnts(int line, int col, Uint type_idx,
 	line, col);
     }
 
-    else if (Structure == TYP_TYPE(ATD_TYPE_IDX(cpnt_attr_idx)) &&
-      ATT_ALLOCATABLE_CPNT(TYP_IDX(ATD_TYPE_IDX(cpnt_attr_idx)))) {
+    else if (allocatable_structure_component(cpnt_attr_idx)) {
 
       /* Non-allocatable array whose element type is a structure having
        * allocatable components or subcomponents: no dope vector, so we can't
@@ -379,12 +382,20 @@ help_assign_cpnts(int line, int col, Uint type_idx,
     else {
       new_ir_idx = gen_ir(IR_Tbl_Idx, l_idx, Asg_Opr,
         ATD_TYPE_IDX(cpnt_attr_idx), line, col, IR_Tbl_Idx, r_idx);
+      /* Array, character assignments need expansion by semantics processing */
+      need_semantics = (ATD_ARRAY_IDX(cpnt_attr_idx) != NULL_IDX ||
+        TYP_TYPE(ATD_TYPE_IDX(cpnt_attr_idx)) == Character);
     }
 
     if (new_ir_idx != NULL_IDX) {
       gen_sh(After, Assignment_Stmt, line, col, FALSE, FALSE, TRUE);
       SH_IR_IDX(curr_stmt_sh_idx) = new_ir_idx;
-      SH_P2_SKIP_ME(curr_stmt_sh_idx) = TRUE;
+      if (need_semantics) {
+	assignment_stmt_semantics();
+      }
+      else {
+	SH_P2_SKIP_ME(curr_stmt_sh_idx) = TRUE;
+      }
     }
   }
 }
@@ -904,7 +915,12 @@ CK_WHERE:
       }
 #endif /* KEY Bug 572 */
 
+#ifdef KEY /* Bug 14150 */
+      ok &= check_for_legal_assignment_define(&l_opnd,
+        IR_OPR(ir_idx) == Ptr_Asg_Opr);
+#else /* KEY Bug 14150 */
       ok &= check_for_legal_define(&l_opnd);
+#endif /* KEY Bug 14150 */
 
       attr_idx = find_base_attr(&l_opnd, &line, &col);
 
@@ -1740,7 +1756,7 @@ static boolean expr_sem_d(opnd_type      *result_opnd,
                attr_idx = ATD_SF_ARG_IDX(attr_idx);
                OPND_IDX((*result_opnd)) = attr_idx;
             }
-# if (defined(_TARGET_OS_IRIX) || defined(_TARGET_OS_LINUX))
+# if (defined(_TARGET_OS_IRIX) || defined(_TARGET_OS_LINUX) || defined(_TARGET_OS_DARWIN))
 # if 0
             else if (ATD_CLASS(attr_idx) == Dummy_Argument &&
                      ATD_ARRAY_IDX(attr_idx) &&
@@ -4153,7 +4169,29 @@ void	add_substring_length(int	sub_idx)
    IR_COL_NUM(max_idx)		= col;
 
    IL_FLD(list_idx) = IR_Tbl_Idx;
-   IL_IDX(list_idx) = max_idx;
+#ifdef KEY /* Bug 11922 */
+   /*
+    * When the -i8 option is on, what should be the type of the integer
+    * lengths of character data? Throughout the front end, the assumption is
+    * that the lengths are Integer_4 (e.g. in the extra integer arguments
+    * passed to a procedure with character*(*) dummy arguments.) And the
+    * code below this comment consistently uses CG_INTEGER_DEFAULT_TYPE, which
+    * remains Integer_4 even under -i8.
+    *
+    * However, under -i8 the subscripts of this expression are likely to be
+    * Integer_8, and they will force all the Integer_4 stuff to be converted
+    * upward. If we do not generate an explicit conversion back to Integer_4,
+    * then procedure calls, string comparison intrinsics, etc will fail under
+    * -i8 -m32 because they expect Integer_4.
+    */
+   if (cmd_line_flags.s_integer8) {
+     int convert_idx = gen_ir(IR_Tbl_Idx, max_idx, Cvrt_Opr,
+       CG_INTEGER_DEFAULT_TYPE, line, col, NO_Tbl_Idx, NULL_IDX);
+     IL_IDX(list_idx) = convert_idx;
+   }
+   else
+#endif /* KEY Bug 11922 */
+     IL_IDX(list_idx) = max_idx;
 
    NTR_IR_LIST_TBL(list2_idx);
    IR_FLD_L(max_idx) = IL_Tbl_Idx;

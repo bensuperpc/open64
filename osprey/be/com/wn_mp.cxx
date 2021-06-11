@@ -1,4 +1,8 @@
 /*
+ *  Copyright (C) 2007. QLogic Corporation. All Rights Reserved.
+ */
+
+/*
  * Copyright 2003, 2004, 2005, 2006 PathScale, Inc.  All Rights Reserved.
  */
 
@@ -47,7 +51,11 @@
 *  csc.
 */
 #include <sys/types.h>
+#if defined(BUILD_OS_DARWIN)
+#include <darwin_elf.h>
+#else /* defined(BUILD_OS_DARWIN) */
 #include <elf.h>
+#endif /* defined(BUILD_OS_DARWIN) */
 
 #define USE_STANDARD_TYPES          /* override unwanted defines in "defs.h" */
 
@@ -61,6 +69,9 @@
 #include "irbdata.h"                /* for inito */
 #include "dwarf_DST_mem.h"          /* for DST */
 #include "pu_info.h"
+#ifdef __MINGW32__
+#include <WINDOWS.h>
+#endif /* __MINGW32__ */
 #include "ir_bwrite.h"
 #include "ir_reader.h"
 #include "ir_bcom.h"
@@ -75,7 +86,9 @@
 
 #include <string.h>
 
+#if ! defined(BUILD_OS_DARWIN)
 #include <elf.h>
+#endif /* ! defined(BUILD_OS_DARWIN) */
 #include "alloca.h"
 #include "cxx_template.h"
 #include "defs.h"
@@ -186,7 +199,7 @@ inline void WN_set_offsetx ( WN *wn, WN_OFFSET ofst )
   }
 }
 
-inline TYPE_ID Promote_Type(TYPE_ID mtype)
+static inline TYPE_ID Promote_Type(TYPE_ID mtype)
 {
   switch (mtype) {
     case MTYPE_I1 : case MTYPE_I2: return(MTYPE_I4);
@@ -644,7 +657,7 @@ static BOOL critical_lock_not_init = TRUE; /* for uninitialized critical lock */
 
 /*  This table contains the external names of all MP runtime routines.  */
 
-static char *mpr_names [MPRUNTIME_LAST + 1] = {
+static const char *mpr_names [MPRUNTIME_LAST + 1] = {
   "",				/* MPRUNTIME_NONE */
   "__mp_setup",			/* MPR_SETUP */
   "__mp_cleanup",		/* MPR_CLEANUP */
@@ -990,6 +1003,19 @@ Get_Gtid(ST * gtid)
 The lock type of Intel RTL is an I4 array of size 8. But where to put it?
 Does every named lock need a different lock? Remained to be tested.
 */
+#ifdef TARG_MIPS
+#if defined(TARG_SL)
+BOOL Is_Target_32bit()
+{
+  return TRUE;
+}
+#else
+BOOL Is_Target_32bit () 
+{ 
+  return (Target_ABI == ABI_N32); 
+ }
+#endif
+#endif
 
 static void 
 Create_Lock_Type()
@@ -1760,11 +1786,7 @@ Gen_Threadpriv_Func(WN* prags, WN* block, BOOL prepend)
   ST *gtid_st = NULL;
   BOOL need_thread_num = FALSE;
 
-#ifdef TARG_X8664
   BOOL target_32bit = Is_Target_32bit();
-#else
-  BOOL target_32bit = FALSE;
-#endif
 
   const OPCODE uint_opc = (Pointer_Size == 4) ? OPC_U4INTCONST :
                          (Pointer_Size == 8) ? OPC_U8INTCONST : OPCODE_UNKNOWN;
@@ -1999,7 +2021,7 @@ Add_DST_variable ( ST *st, DST_INFO_IDX parent_dst,
       typesize = TY_size(ST_type(st));
     }
 
-    char *int_name1, *int_name2, *int_name3;
+    const char *int_name1, *int_name2, *int_name3;
     DST_INFO_IDX *int_idx_p;
 
     switch (typesize) {
@@ -2061,7 +2083,7 @@ Add_DST_variable ( ST *st, DST_INFO_IDX parent_dst,
     dst = DST_mk_formal_parameter( srcpos,
 			ST_name( st ),
 			int_idx,	/* type DST_IDX */
-			NULL,
+			ST_st_idx(st),	/* symbol */
 			DST_INVALID_IDX,
 			DST_INVALID_IDX,
 			FALSE,
@@ -2074,7 +2096,7 @@ Add_DST_variable ( ST *st, DST_INFO_IDX parent_dst,
 			ST_name( st ),
 			int_idx, 	/* type DST_IDX */
 			0 /* offset */,
-			(void *) NULL,	/* a_variable_ptr */
+			ST_st_idx(st),	/* symbol */
 			DST_INVALID_IDX,
 			FALSE,		/* memory allocated */
 			TRUE, 		/* parameter has sc_auto */
@@ -2082,12 +2104,14 @@ Add_DST_variable ( ST *st, DST_INFO_IDX parent_dst,
 			FALSE);		/* is_artificial */
 
   (void)DST_append_child( parent_dst, dst );
+#if 0
   info = DST_INFO_IDX_TO_PTR( dst );
   assoc = &DST_VARIABLE_def_st(
 		DST_ATTR_IDX_TO_PTR(DST_INFO_attributes(info), DST_VARIABLE));
   pDST_ASSOC_INFO_st_idx(assoc) = ST_st_idx(st);
   DST_SET_assoc_idx(DST_INFO_flag(info));
   DST_RESET_assoc_fe(DST_INFO_flag(info));
+#endif
 }
 
 
@@ -2208,7 +2232,7 @@ Create_New_DST ( DST_INFO_IDX dst, ST *st , BOOL append_to_nested )
 			name,
 			type_idx, 	/* type DST_IDX */
 			0 /* offset */,
-			(void *) NULL,	/* a_variable_ptr */
+			ST_st_idx(st),	/* symbol */
 			DST_INVALID_IDX,
 			FALSE,		/* memory allocated */
 			TRUE, 		/* parameter has sc_auto */
@@ -2218,12 +2242,14 @@ Create_New_DST ( DST_INFO_IDX dst, ST *st , BOOL append_to_nested )
   if (append_to_nested)
     (void)DST_append_child( nested_dst, new_dst );
   info = DST_INFO_IDX_TO_PTR( new_dst );
+#if 0
   iattr = DST_INFO_attributes(info);
   assoc = &DST_VARIABLE_def_st(
 		DST_ATTR_IDX_TO_PTR(iattr, DST_VARIABLE));
   pDST_ASSOC_INFO_st_idx(assoc) = ST_st_idx(st);
   DST_SET_assoc_idx(DST_INFO_flag(info));
   DST_RESET_assoc_fe(DST_INFO_flag(info));
+#endif
 }
 
 
@@ -2240,7 +2266,7 @@ Create_Func_DST ( char * st_name )
 			st_name,
 			DST_INVALID_IDX,	/* return type */
 			DST_INVALID_IDX,	/* for weak symbols */
-			(void *) NULL,
+			ST_st_idx(parallel_proc),
 			DW_INL_not_inlined,
 			DW_VIRTUALITY_none,
 			0,
@@ -2252,12 +2278,14 @@ Create_Func_DST ( char * st_name )
 			FALSE			/* external */
 			);
   (void)DST_append_child( dst, nested_dst );
+#if 0
   info = DST_INFO_IDX_TO_PTR( nested_dst );
   assoc = &DST_SUBPROGRAM_def_st(
 		DST_ATTR_IDX_TO_PTR(DST_INFO_attributes(info), DST_SUBPROGRAM));
   pDST_ASSOC_INFO_st_idx(assoc) = ST_st_idx(parallel_proc);
   DST_SET_assoc_idx(DST_INFO_flag(info));
   DST_RESET_assoc_fe(DST_INFO_flag(info));
+#endif
 }
 
 
@@ -2290,7 +2318,7 @@ to accept a value as the function's formal parameter.
 So, this function just allocate a temp var in current scope.
 */
 static void 
-Create_Temp( TYPE_ID mtype, char *name, ST **st )
+Create_Temp( TYPE_ID mtype, const char *name, ST **st )
 {
   ST *new_st;
   new_st = New_ST (CURRENT_SYMTAB);
@@ -2303,6 +2331,211 @@ Create_Temp( TYPE_ID mtype, char *name, ST **st )
   Set_ST_is_temp_var ( new_st );
   *st = new_st;
 }
+
+#ifdef KEY
+// If old_st_idx has already been localized, return the new
+// st_idx. Else, create a new local symbol and return its st_idx.
+static ST_IDX Localize_Symbol (ST_IDX old_st_idx, VAR_TABLE * v)
+{
+  for ( ; v->orig_st; v++) {
+    if (ST_st_idx(*v->orig_st) == old_st_idx &&
+        v->vtype == VAR_LOCAL) {
+      return ST_st_idx(*v->new_st);
+    }
+  }
+
+  ST_IDX new_st_idx = 0;
+
+  ST * new_st = New_ST (CURRENT_SYMTAB);
+  ST * old_st = &St_Table[old_st_idx];
+  ST_Init (new_st,
+           Save_Str (ST_name(old_st_idx)),
+           ST_class(old_st),
+           ST_sclass(old_st),
+           ST_export(old_st),
+           ST_type(old_st));
+  new_st->flags = old_st->flags;
+  new_st->flags_ext = old_st->flags_ext;
+
+  return ST_st_idx(new_st);
+}
+
+// For C++ exception handling, the PU holds different exception
+// handling-related information, generated by the front-end.
+// old_inito is expected to hold the start of the info for the
+// serial function.
+// Clone the information (INITOs, INITVs, and local STs), and
+// localize where necessary.
+//
+// TODO: The parallel function being created may not need all
+// the typeinfos from the serial function, but currently we will
+// have all of them in the typeinfo table for the parallel function.
+static INITO_IDX
+Process_PU_Exc_Info ( INITO_IDX old_inito, VAR_TABLE * vtab )
+{
+  INITO_IDX new_inito;
+  ST *old_initst, *new_initst;
+  INITV_IDX old_initv, new_initv, pinito, parent, prev;
+  STACK<INITV_IDX> old_stack(Malloc_Mem_Pool), new_stack(Malloc_Mem_Pool);
+
+  old_initst = INITO_st(old_inito);
+  old_initv  = INITO_val(old_inito);
+
+  // Table name (__EH_INFO_PER_PU__)
+  new_initst = New_ST (CURRENT_SYMTAB);
+  ST_Init (new_initst,
+           Save_Str ( ST_name(old_initst) ),
+           ST_class(old_initst),
+           ST_sclass(old_initst),
+           ST_export(old_initst),
+           ST_type(old_initst));
+
+  new_initst->flags = old_initst->flags;
+  new_initst->flags_ext = old_initst->flags_ext;
+
+  Set_ST_is_not_used(*old_initst);
+
+  new_inito = New_INITO ( new_initst );
+
+  pinito = new_inito;
+  parent = 0;
+  prev = 0;
+
+  // __Exc_Ptr__, __Exc_Filter__
+  for (INT i = 0; i < 2; i++)
+  {
+    (void) Initv_Table.New_entry(new_initv);
+    INITV& new_initv_ref = Initv_Table[new_initv];
+    INITV& old_initv_ref = Initv_Table[old_initv];
+    if (pinito) {
+      Set_INITO_val(pinito, new_initv);
+      pinito = 0;
+    } else if (prev) {
+      Set_INITV_next(prev, new_initv);
+    }
+    INITVKIND k = INITV_kind(old_initv);
+    Is_True (k == INITVKIND_VAL,
+             ("Unexpected initv kind during PU exception processing"));
+    INITO_IDX inito = 0;
+    ST_IDX st = TCON_uval(INITV_tc_val(old_initv_ref));
+    if (st)
+      st = Localize_Symbol (st, vtab);
+    INITV_Set_VAL(new_initv_ref, Enter_tcon (Host_To_Targ (MTYPE_U4, st)),
+                  INITV_repeat2(old_initv_ref));
+    old_initv = INITV_next(old_initv);
+    prev = new_initv;
+  }
+
+  INITO_IDX old_inito_array[2] = {0, 0};
+  INITO_IDX new_inito_array[2] = {0, 0};
+
+  // __TYPEINFO_TABLE__, __EH_SPEC_TABLE__
+  for (INT i = 0; i < 2; i++)
+  {
+    (void) Initv_Table.New_entry(new_initv);
+    INITV& new_initv_ref = Initv_Table[new_initv];
+    INITV& old_initv_ref = Initv_Table[old_initv];
+    if (prev)
+      Set_INITV_next(prev, new_initv);
+    INITVKIND k = INITV_kind(old_initv);
+    Is_True (k == INITVKIND_VAL,
+             ("Unexpected initv kind during typeinfo/EH-spec processing"));
+
+    INITO_IDX inito = 0;
+    ST_IDX st = TCON_uval(INITV_tc_val(old_initv_ref));
+    if (st)
+    {
+      inito = (INITO_IDX) st;
+      st = Localize_Symbol (INITO_st_idx(Inito_Table[inito]), vtab);
+      INITO_IDX new_inito = New_INITO (st, INITO_val(inito));
+
+      INITV_Set_VAL(new_initv_ref, Enter_tcon (Host_To_Targ (MTYPE_U4,
+                                                             new_inito)),
+                    INITV_repeat2(old_initv_ref));
+      old_inito_array[i] = inito;
+      new_inito_array[i] = new_inito;
+    }
+    else
+      INITV_Set_VAL(new_initv_ref, Enter_tcon (Host_To_Targ (MTYPE_U4, st)),
+                    INITV_repeat2(old_initv_ref));
+    old_initv = INITV_next(old_initv);
+    prev = new_initv;
+  }
+
+  for (INT i = 0; i < 2; i++) {
+
+    // i == 0 : info in typeinfo table
+    // i == 1 : info in exception-specification table
+    old_initv = old_inito_array[i] ? INITO_val(old_inito_array[i]) : 0;
+    pinito = new_inito_array[i];
+    parent = prev = 0;
+
+    while ( old_initv ) {
+
+      (void) Initv_Table.New_entry(new_initv);
+      INITV& new_initv_ref = Initv_Table[new_initv];
+      INITV& old_initv_ref = Initv_Table[old_initv];
+
+      if (pinito) {
+        Set_INITO_val(pinito, new_initv);
+        pinito = 0;
+      } else if (parent) {
+        Set_INITV_blk(parent, new_initv);
+        parent = 0;
+      } else if (prev) {
+        Set_INITV_next(prev, new_initv);
+      }
+
+      INITVKIND k = INITV_kind(old_initv);
+      switch ( k ) {
+
+      case INITVKIND_ZERO:
+        INITV_Set_ZERO(new_initv_ref, INITV_mtype(old_initv_ref),
+                       INITV_repeat2(old_initv_ref));
+        old_initv = INITV_next(old_initv);
+        prev = new_initv;
+        break;
+
+      case INITVKIND_ONE:
+        INITV_Set_ONE(new_initv_ref, INITV_mtype(old_initv_ref),
+                      INITV_repeat2(old_initv_ref));
+        old_initv = INITV_next(old_initv);
+        prev = new_initv;
+        break;
+
+      case INITVKIND_VAL:
+      {
+        ST_IDX st = TCON_uval(INITV_tc_val(old_initv_ref));
+        INITV_Set_VAL(new_initv_ref, Enter_tcon (Host_To_Targ (MTYPE_U4, st)),
+                      INITV_repeat2(old_initv_ref));
+        old_initv = INITV_next(old_initv);
+        prev = new_initv;
+      }
+      break;
+
+      case INITVKIND_BLOCK:
+        INITV_Set_BLOCK(new_initv_ref, INITV_repeat1(old_initv_ref), 0);
+        old_stack.Push(old_initv);
+        new_stack.Push(new_initv);
+        old_initv = INITV_blk(old_initv);
+        parent = new_initv;
+        prev = 0;
+        break;
+
+      default:
+        Fail_FmtAssertion ( "unexpected INITV kind %d", (INT) k );
+      }
+
+      while (!old_initv && old_stack.Elements() > 0) {
+        old_initv = INITV_next(old_stack.Pop());
+        prev = new_stack.Pop();
+      }
+    }
+  }
+
+  return new_inito;
+}
+#endif
 
 static WN * Gen_MP_Store ( ST * st, WN_OFFSET offset, WN * value, 
 			   BOOL scalar_only = FALSE );
@@ -2635,7 +2868,7 @@ is inheriting pu_recursive OK?
     handling.  */
 
 static void 
-Create_Preg_or_Temp ( TYPE_ID mtype, char *name, ST **st,
+Create_Preg_or_Temp ( TYPE_ID mtype, const char *name, ST **st,
 				  WN_OFFSET *ofst )
 {
   ST *new_st;
@@ -3034,6 +3267,9 @@ Walk_and_Info_Pregs ( WN * tree )
 	Walk_and_Info_Pregs ( WN_kid(tree, i) );
 
     if (OPCODE_has_sym(op) && OPCODE_has_offset(op) && WN_st(tree) &&
+#ifdef KEY // bug 11914: if OPC_PRAGMA, WN_offsetx will not return correct pnum
+        op != OPC_PRAGMA &&
+#endif
         (ST_class(WN_st(tree)) == CLASS_PREG) &&
         !Preg_Is_Dedicated(WN_offsetx(tree))) {
       PREG_IDX pnum = Get_Preg_Idx(WN_offsetx(tree));
@@ -3101,7 +3337,7 @@ Translate_Label ( LABEL_IDX plabel_idx )
   if (mpt == MPP_ORPHANED_SINGLE || mpt == MPP_ORPHANED_PDO)
     return plabel_idx;
 
-  LABEL_IDX clabel_idx = label_info_table[plabel_idx];
+  LABEL_IDX clabel_idx = label_info_table[LABEL_IDX_index(plabel_idx)];
 
   if (clabel_idx == LABEL_IDX_ZERO) {
       // remove when symtab-setting stuff gets cleaned up--DRK
@@ -3119,8 +3355,8 @@ Translate_Label ( LABEL_IDX plabel_idx )
 
     LABEL &clabel = New_LABEL(csymtab, clabel_idx);
     LABEL_Init(clabel, Save_Str(labelname),
-               LABEL_kind((*Scope_tab[psymtab].label_tab)[plabel_idx]));
-    label_info_table[plabel_idx] = clabel_idx;
+               LABEL_kind((*Scope_tab[psymtab].label_tab)[LABEL_IDX_index(plabel_idx)]));
+    label_info_table[LABEL_IDX_index(plabel_idx)] = clabel_idx;
   }
   
   return clabel_idx;
@@ -3433,12 +3669,12 @@ Localize_Variable ( VAR_TABLE *v, VAR_TYPE vtype, OPERATOR opr,
       ty = FLD_type(TY_fld(ty));
 #endif
     if ((TY_kind(ty) == KIND_POINTER) &&
-        ((v->is_static_array) || (vtype == VAR_REDUCTION_ARRAY)))
+	((v->is_static_array) || (vtype == VAR_REDUCTION_ARRAY)))
 #ifdef KEY //bug 11661
      {
 #endif
       ty = TY_pointed(ty);
-#ifdef KEY //bug 11661: for structure, we need the field type
+#ifdef KEY //bug 11661: for structure, we need the field type 
       if (TY_kind(ty) == KIND_STRUCT && vtype == VAR_REDUCTION_ARRAY)
         ty = FLD_type(TY_fld(ty));
      }
@@ -4008,7 +4244,7 @@ Gen_MP_Copyprivate(WN *copyprivates, WN **copyprivate_blockp,
   FLD *next;
   ST *st, *fld_st;
 
-#ifdef TARG_X8664
+#ifndef TARG_NVISA
   BOOL target_32bit = Is_Target_32bit();
 #else
   BOOL target_32bit = FALSE;
@@ -4839,6 +5075,7 @@ Walk_and_Localize (WN * tree, VAR_TABLE * vtab, Localize_Parent_Stack * lps,
              !is_orphaned_worksharing) {
     LABEL_IDX new_lab =  Translate_Label (WN_label_number(tree));
     WN_label_number(tree) = new_lab;
+    if (opr == OPR_LDA_LABEL) Set_LABEL_addr_saved(new_lab); // Bug 13821
   } else if (OPCODE_has_sym(op) && WN_st(tree)) {
     old_sym = WN_st(tree);
     old_offset = OPCODE_has_offset(op) ? WN_offsetx(tree) : 0;
@@ -5658,6 +5895,7 @@ static ST*
 Get_Threadprv_St(WN *prags, ST *copyin_st, ST **copyin_local_st)
 {
   ST *split_block;
+  ST *copyin_global_st = NULL;
   ST *common_block = ST_Source_Block(copyin_st, &split_block);
   if (!ST_is_thread_private(copyin_st) &&
      !(split_block && ST_is_thread_private(split_block)) &&
@@ -5666,11 +5904,12 @@ Get_Threadprv_St(WN *prags, ST *copyin_st, ST **copyin_local_st)
   BOOL match = FALSE;
   prags = WN_first(prags);
 
-  while (prags) { 
+  while (prags) {
     if (WN_opcode(prags) == OPC_PRAGMA &&
         WN_pragma(prags) == WN_PRAGMA_THREADPRIVATE &&
         WN_st(prags) == common_block) {
       *copyin_local_st = ST_ptr(WN_pragma_arg1(prags));
+      copyin_global_st = ST_ptr(WN_pragma_arg2(prags));
       match = TRUE;
     }
     prags = WN_next(prags);
@@ -5678,6 +5917,11 @@ Get_Threadprv_St(WN *prags, ST *copyin_st, ST **copyin_local_st)
   if (!match)
     Fail_FmtAssertion ( "bad copyin st (%s) in MP processing",
                             ST_st_idx(copyin_st) );
+  if (copyin_global_st)
+    common_block = copyin_global_st;
+  else
+    Is_True (FALSE, ("Copyin source ST not found in MP processing"));
+
   return common_block;
 }
 
@@ -5742,7 +5986,7 @@ Post_MP_Processing (WN * pu)
   // Localize the variables
   INT32 vsize = (local_count + 1) * sizeof(VAR_TABLE);
   var_table = (VAR_TABLE *) alloca (vsize);
-  bzero (var_table, vsize);
+  BZERO (var_table, vsize);
 
   mpt = MPP_ORPHAN;
 
@@ -5839,18 +6083,13 @@ Gen_MP_Copyin ( BOOL is_omp )
       if (WN_opcode(wnx) == OPC_PRAGMA) {
         ST *ppthd, *global;
         global = Get_Threadprv_St(reference_block, WN_st(wnx), &ppthd);
-	// Use ST_ofst only if we are generating a pointer to the
-	// threadprivate base of the st, instead of to the st itself.
-	//
-	// If ofst == 0, WN_Add will take care of it.
-	INT64 ofst = (global == WN_st (wnx)) ? 0 : ST_ofst (WN_st (wnx));
-        wny = WN_Add(Pointer_type,
-                     WN_CreateLdid(OPCODE_make_op(OPR_LDID, Pointer_type, Pointer_type),
-                                   0, ppthd,ST_type(ppthd)), 
-                     WN_Intconst (MTYPE_I4, ofst));
-        wnz = WN_Add(Pointer_type,
-                     WN_Lda(Pointer_type, 0, global),
-                     WN_Intconst (MTYPE_I4, ofst));
+        wny = WN_CreateLdid(OPCODE_make_op(OPR_LDID,
+                                           Pointer_type, Pointer_type),
+                            0, ppthd,ST_type(ppthd)); 
+        // See bugs 12688, 12696 for OpenMP library change in
+        // __ompc_get_thdprv() that necessitates the following.
+        wnz = WN_IloadLdid(TY_mtype(ST_type(global)), 0,
+                           ST_type(global), global, 0);
         ty = ST_type(WN_st(wnx));
         size = TY_size(ty);
       } else
@@ -6643,7 +6882,7 @@ ST_Has_Dope_Vector(ST *st)
    Gen_Restore_Stack_Pointer(). */
 
 static WN *
-Gen_Save_Stack_Pointer(char *st_basename, WN **sp_save_stid)
+Gen_Save_Stack_Pointer(const char *st_basename, WN **sp_save_stid)
 {
   char *newstname;
   static INT count = 0;
@@ -6940,7 +7179,7 @@ static WN *Gen_MP_Workshare_Region(WN *workshare_region)
     WN *nested_alloca_block = NULL;
 
     vt = (VAR_TABLE *) alloca((vt_size + 1) * sizeof(VAR_TABLE));
-    bzero(vt, (vt_size + 1) * sizeof(VAR_TABLE));
+    BZERO(vt, (vt_size + 1) * sizeof(VAR_TABLE));
     Create_Local_Variables(vt, NULL, NULL, nested_local_nodes,
                            NULL, NULL,
                            NULL, &nested_alloca_block);
@@ -7089,7 +7328,7 @@ static WN *Gen_MP_SingleProcess_Region(WN *single_region)
     WN *nested_alloca_block = NULL, *firstprivate_block = NULL;
 
     vt = (VAR_TABLE *) alloca((vt_size + 1) * sizeof(VAR_TABLE));
-    bzero(vt, (vt_size + 1) * sizeof(VAR_TABLE));
+    BZERO(vt, (vt_size + 1) * sizeof(VAR_TABLE));
     Create_Local_Variables(vt, NULL, NULL, nested_local_nodes,
                            nested_firstprivate_nodes, &firstprivate_block,
                            NULL, &nested_alloca_block);
@@ -10163,7 +10402,11 @@ Process_PDO ( WN * tree )
   is_omp = WN_pragma_omp(cur_node);
 
   next_node = WN_next(cur_node);
+#ifdef KEY
+  WN_DELETE_FromBlock (WN_region_pragmas(tree), cur_node);
+#else
   WN_Delete ( cur_node );
+#endif
 
   while (cur_node = next_node) {
 
@@ -10337,6 +10580,37 @@ Process_PDO ( WN * tree )
 
   body_block = WN_region_body(tree);
   first_node = pdo_node = WN_first(body_block);
+#ifdef KEY
+  // bug 13534: Sometimes the DO_LOOP may be inside a C++ exception
+  // region. Extract it out of the region, after some validation checks.
+  if (pdo_node && WN_operator(pdo_node) == OPR_REGION &&
+      WN_region_kind(pdo_node) == REGION_KIND_EH /* &&
+      pdo_node == WN_last(body_block) */) {
+
+    // The region is the only statement in the parallel DO.
+    // Bug 14036: The above line is not true any more. The
+    // restriction in the above line has been
+    // removed, because there is often a label after the EH
+    // region containing the DO loop, to account for the label
+    // a "break" may jump to.
+    WN * region_body = WN_region_body(pdo_node);
+    WN * stmt = WN_first(region_body);
+    for (; stmt; stmt = WN_next(stmt)) {
+      if (stmt == WN_last(region_body) &&
+          WN_opcode(stmt) == OPC_DO_LOOP)
+        break;
+    }
+    Is_True (!stmt || WN_operator(stmt) == OPR_DO_LOOP,
+             ("Expected statement to be DO_LOOP."));
+    if (stmt) {
+      // extract out of region
+      stmt = WN_EXTRACT_FromBlock (region_body, stmt);
+      // insert after region
+      WN_INSERT_BlockAfter (body_block, pdo_node, stmt);
+      first_node = pdo_node = WN_first(body_block);
+    }
+  }
+#endif
   while (pdo_node && (WN_opcode(pdo_node) != OPC_DO_LOOP)) {
     if ((WN_opcode(pdo_node) == OPC_DO_WHILE) ||
 	(WN_opcode(pdo_node) == OPC_WHILE_DO))
@@ -10369,7 +10643,7 @@ Process_PDO ( WN * tree )
         // privatize within DO_LOOP but not code before or after it
       vsize = (nested_local_count + 1) * sizeof(VAR_TABLE);
       nested_var_table = (VAR_TABLE *) alloca ( vsize );
-      bzero ( nested_var_table, vsize );
+      BZERO ( nested_var_table, vsize );
       Create_Local_Variables ( nested_var_table, nested_reduction_nodes,
 			       nested_lastlocal_nodes, nested_local_nodes,
 			       nested_firstprivate_nodes,
@@ -10407,7 +10681,7 @@ Process_PDO ( WN * tree )
       // Use local versions of the global tables.
       INT32 vsize_l = (nested_local_count + 1) * sizeof (VAR_TABLE);
       VAR_TABLE * nested_var_table_l = (VAR_TABLE *) alloca (vsize_l);
-      bzero ( nested_var_table_l, vsize_l );
+       ( nested_var_table_l, vsize_l );
       Create_Local_Variables ( nested_var_table_l, nested_reduction_nodes,
 			       nested_lastlocal_nodes, nested_local_nodes,
 			       nested_firstprivate_nodes,
@@ -10750,10 +11024,16 @@ Process_PDO ( WN * tree )
           if (!found_non_pod)
             Fail_FmtAssertion("missing non-POD lastprivate clauses");
         } else {
+#ifndef KEY
+            // KEY: GNU42 front-end does not want to ensure this, unless
+            // this is necessary. Unless required, the lastlocal nodes
+            // attached to the proper region seem more accurate.
+            //
             // non-orphaned PDO case: lastprivate nodes are on PARALLEL
           if (found_non_pod)
               // fecc should move lastprivate clauses to enclosing PARALLEL
             Fail_FmtAssertion("extraneous non-POD lastprivate clauses");
+#endif
         }
       } else {
         if (found_non_pod)
@@ -11134,6 +11414,16 @@ Process_Parallel_Do ( void )
                                    &non_pod_finalization_nodes );
 
 #ifdef KEY
+  if (LANG_Enable_CXX_Openmp && PU_misc_info(PU_Info_pu(ppuinfo)) &&
+      PU_src_lang(PU_Info_pu(ppuinfo)) == PU_CXX_LANG)
+  { // C++: This code has not yet been tested.
+    Is_True (parallel_proc, ("Parallel block unavailable"));
+    PU_IDX pu_idx = ST_pu(parallel_proc);
+    PU &pu = Pu_Table[pu_idx];
+    Set_PU_misc_info (pu,
+        Process_PU_Exc_Info(PU_misc_info (PU_Info_pu(ppuinfo)), var_table));
+  }
+
   // If chunk uses a private variable (e.g. threadprivate variable), fix it
   chunk_wn = Walk_and_Localize ( chunk_wn, var_table, &lps, FALSE,
                                  &non_pod_finalization_nodes );
@@ -11381,6 +11671,16 @@ Process_Parallel_Region ( void )
   Localize_Parent_Stack lps(FALSE, NULL);
   stmt_block = Walk_and_Localize ( stmt_block, var_table, &lps, TRUE , 
                                    &non_pod_finalization_nodes );
+#ifdef KEY
+  if (LANG_Enable_CXX_Openmp && PU_Info_pu(ppuinfo).misc)
+  { // C++
+    Is_True (parallel_proc, ("Parallel block unavailable"));
+    PU_IDX pu_idx = ST_pu(parallel_proc);
+    PU &pu = Pu_Table[pu_idx];
+    // Update typeinfo data present in PU.
+    pu.misc = Process_PU_Exc_Info(PU_Info_pu(ppuinfo).misc, var_table);
+  }
+#endif
   /* Transform contents of parallel region */
 
   if (copyin_nodes) {
@@ -11459,7 +11759,7 @@ static void Localize_in_serialized_parallel (void)
 {
   INT32 vsize_l = (local_count + 1) * sizeof(VAR_TABLE);
   VAR_TABLE * var_table_l = (VAR_TABLE *) alloca ( vsize_l );
-  bzero ( var_table_l, vsize_l );
+  BZERO ( var_table_l, vsize_l );
   Create_Local_Variables ( var_table_l, reduction_nodes, lastlocal_nodes,
                            local_nodes, firstprivate_nodes,
 			   &firstprivate_block, NULL, &alloca_block );
@@ -11611,17 +11911,17 @@ lower_mp ( WN * block, WN * node, INT32 actions )
 
   lsize = sizeof(LABEL_INFO_TABLE) * LABEL_Table_Size(CURRENT_SYMTAB);
   label_info_table = (LABEL_INFO_TABLE *) alloca ( lsize );
-  bzero ( label_info_table, lsize );
+  BZERO ( label_info_table, lsize );
 
   ssize = 4096 * sizeof(SHARED_TABLE);
   shared_table = (SHARED_TABLE *) alloca ( ssize );
-  bzero ( shared_table, ssize );
+  BZERO ( shared_table, ssize );
 
   if (mpid_size == 0) {
     mpid_size = 1028;
     msize = mpid_size * sizeof(MPID_TABLE);
     mpid_table = (MPID_TABLE *) malloc ( msize );
-    bzero ( mpid_table, msize );
+    BZERO ( mpid_table, msize );
   }
 
   pu_has_eh = PU_has_exc_scopes(Get_Current_PU());
@@ -12239,7 +12539,7 @@ lower_mp ( WN * block, WN * node, INT32 actions )
 
     vsize = (local_count + 1) * sizeof(VAR_TABLE);
     var_table = (VAR_TABLE *) alloca ( vsize );
-    bzero ( var_table, vsize );
+    BZERO ( var_table, vsize );
 
     fp = WN_LdidPreg ( Pointer_type, Frame_Pointer_Preg_Offset );
 
@@ -12377,7 +12677,7 @@ lower_mp ( WN * block, WN * node, INT32 actions )
 
     vsize = (local_count + 1) * sizeof(VAR_TABLE);
     var_table = (VAR_TABLE *) alloca ( vsize );
-    bzero ( var_table, vsize );
+    BZERO ( var_table, vsize );
 
     fp = WN_LdidPreg ( Pointer_type, Frame_Pointer_Preg_Offset );
 
@@ -12738,7 +13038,7 @@ LowerMP_PU_Init()
     region_id = 0;
     lock_id = 0;
     if (mpid_size > 0)
-      bzero ( mpid_table, mpid_size * sizeof(MPID_TABLE) );
+      BZERO ( mpid_table, mpid_size * sizeof(MPID_TABLE) );
       // ignore pu_chunk_node and pu_mpsched_node from prior PU; no need to
       // deallocate it since Whirl mempool gets popped at end of compiling
       // the PU

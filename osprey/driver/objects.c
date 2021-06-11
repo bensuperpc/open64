@@ -1,5 +1,13 @@
 /*
- * Copyright 2003, 2004, 2005 PathScale, Inc.  All Rights Reserved.
+ * Copyright (C) 2007 Pathscale, LLC.  All Rights Reserved.
+ */
+
+/*
+ *  Copyright (C) 2007. QLogic Corporation. All Rights Reserved.
+ */
+
+/*
+ * Copyright 2003, 2004, 2005, 2006 PathScale, Inc.  All Rights Reserved.
  */
 
 /*
@@ -124,6 +132,34 @@ find_full_path_of_gcc_file (char* const gcc_name, char* const comp_name,
             *p = '\0';
         }
 }
+
+#if 0
+/* search library_dirs for the crt file */
+char *
+find_crt_path (char *crtname)
+{
+        string_item_t *p;
+        buffer_t buf;
+        for (p = library_dirs->head; p != NULL; p = p->next) {
+                sprintf(buf, "%s/%s", p->name, crtname);
+                if (file_exists(buf)) {
+                        return string_copy(buf);
+                }
+        }
+        /* not found */
+        if (option_was_seen(O_nostdlib) || option_was_seen(O_L)) {
+                error("crt files not found in any -L directories:");
+                for (p = library_dirs->head; p != NULL; p = p->next) {
+                        fprintf(stderr, "\t%s/%s\n", p->name, crtname);
+                }
+                return crtname;
+        } else {
+                /* use default */
+                sprintf(buf, "%s/%s", get_phase_dir(P_startup), crtname);
+                return string_copy(buf);
+        }
+}
+#endif
 
 /* search library_dirs for the crt file */
 char*
@@ -300,8 +336,9 @@ int prof_lib_exists(const char *lib)
 
 void add_library(string_list_t *list, const char *lib)
 {
+    struct prof_lib *l;
     if (option_was_seen(O_profile)) {
-	for (struct prof_lib *l = prof_libs; l->name; l++) {
+	for (l = prof_libs; l->name; l++) {
 	    if (strcmp(l->name, lib) != 0)
 		continue;
 	    if (!l->always && !prof_lib_exists(lib))
@@ -324,13 +361,18 @@ add_object (int flag, char *arg)
 	switch (flag) {
 	case O_l:
 		/* when -lm, implicitly add extra math libraries */
-		if (strcmp(arg, "m") == 0 ||
-		    strcmp(arg, "mpath") == 0) {	// bug 5184
+		if (strcmp(arg, "m") == 0
+#ifndef VENDOR_OSP
+                    || strcmp(arg, "mpath") == 0
+#endif
+                 ) {	// bug 5184
+
 			/* add -lmv -lmblah */
-			add_library(lib_objects, "mv");
 			if (xpg_flag && invoked_lang == L_f77) {
-				add_library(lib_objects, "m" );
+				add_library(lib_objects, "mv");
+				add_library(lib_objects, "m");
 			} else {
+				add_library(objects, "mv");
 				add_library(objects, "m");
 			}
 			if (invoked_lang == L_CC) {
@@ -431,7 +473,9 @@ append_objects_to_list (string_list_t *list)
 	    do_exit(1);
 	}
 	append_string_lists (list, objects);
-	append_string_lists (list, lib_objects);
+	if (xpg_flag && invoked_lang == L_f77) {
+		append_string_lists (list, lib_objects);
+	}
 }
 
 /* append cxx_prelinker_objects to end of list */
@@ -508,6 +552,7 @@ add_library_options (void)
 		break;
 #endif
 	case ABI_I64:
+	case ABI_W64:
 		break;
 	case ABI_IA32:
  		break;
@@ -515,7 +560,6 @@ add_library_options (void)
 		internal_error("no abi set? (%d)", abi);
 	}
 }
-
 
 // Check whether the option should be turned into a linker option when pathcc
 // is called as a linker.
@@ -603,6 +647,12 @@ finalize_maybe_linker_options (boolean is_linker)
   }
 }
 
+
+#if defined(TARG_NVISA)
+// ignore ipa elf issues
+static int check_for_whirl (char *name) { return FALSE; }
+#else
+
 // Check for ELF files containing WHIRL objects.  Code taken from
 // ../cygnus/bfd/ipa_cmdline.c.
 
@@ -675,3 +725,4 @@ check_for_whirl(char *name)
     return FALSE;
     
 }
+#endif //TARG_NVISA

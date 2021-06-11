@@ -2217,7 +2217,7 @@ static void doall_cmic_semantics(void)
    int			shared_list_idx;
    long64		value;
 
-# if (defined(_TARGET_OS_IRIX) || defined(_TARGET_OS_LINUX))
+# if (defined(_TARGET_OS_IRIX) || defined(_TARGET_OS_LINUX) || defined(_TARGET_OS_DARWIN))
    int			max_idx;
    opnd_type		opnd2;
    char			string[13];
@@ -2381,7 +2381,7 @@ static void doall_cmic_semantics(void)
 
         IL_IDX(list2_idx) = attr_idx;
 
-# if (defined(_TARGET_OS_IRIX) || defined(_TARGET_OS_LINUX))
+# if (defined(_TARGET_OS_IRIX) || defined(_TARGET_OS_LINUX) || defined(_TARGET_OS_DARWIN))
         if (AT_OBJ_CLASS(attr_idx) == Data_Obj &&
             (ATD_ALLOCATABLE(attr_idx) ||
              ATD_CLASS(attr_idx) == CRI__Pointee ||
@@ -2774,7 +2774,7 @@ CONTINUE2:
             PRINTMSG(line, 1499, Error, column, "NUMCHUNKS");
          }
       }
-# if (defined(_TARGET_OS_IRIX) || defined(_TARGET_OS_LINUX))
+# if (defined(_TARGET_OS_IRIX) || defined(_TARGET_OS_LINUX) || defined(_TARGET_OS_DARWIN))
       else if (OPND_FLD(opnd) != CN_Tbl_Idx && OPND_FLD(opnd) != NO_Tbl_Idx &&
                (value == CMIC_WORK_DIST_CHUNKSIZE ||
                 value == CMIC_WORK_DIST_NUMCHUNKS)) {
@@ -2863,7 +2863,7 @@ static void doparallel_cmic_semantics(void)
    int			save_curr_stmt_sh_idx;
    long64		value;
 
-# if (defined(_TARGET_OS_IRIX) || defined(_TARGET_OS_LINUX))
+# if (defined(_TARGET_OS_IRIX) || defined(_TARGET_OS_LINUX) || defined(_TARGET_OS_DARWIN))
    int			list2_idx;
    int			max_idx;
    opnd_type		opnd2;
@@ -2919,7 +2919,7 @@ static void doparallel_cmic_semantics(void)
             PRINTMSG(line, 1499, Error, column, "NUMCHUNKS");
          }
       }
-# if (defined(_TARGET_OS_IRIX) || defined(_TARGET_OS_LINUX))
+# if (defined(_TARGET_OS_IRIX) || defined(_TARGET_OS_LINUX) || defined(_TARGET_OS_DARWIN))
       else if (OPND_FLD(opnd) != CN_Tbl_Idx && OPND_FLD(opnd) != NO_Tbl_Idx &&
                (value == CMIC_WORK_DIST_CHUNKSIZE ||
                 value == CMIC_WORK_DIST_NUMCHUNKS)) {
@@ -3101,7 +3101,7 @@ static void parallel_cmic_semantics(void)
    int                  private_list_idx;
    int                  shared_list_idx;
 
-# if (defined(_TARGET_OS_IRIX) || defined(_TARGET_OS_LINUX))
+# if (defined(_TARGET_OS_IRIX) || defined(_TARGET_OS_LINUX) || defined(_TARGET_OS_DARWIN))
    char			string[13];
 # endif
 
@@ -3251,7 +3251,7 @@ static void parallel_cmic_semantics(void)
 
          IL_IDX(list2_idx) = attr_idx;
 
-# if (defined(_TARGET_OS_IRIX) || defined(_TARGET_OS_LINUX))
+# if (defined(_TARGET_OS_IRIX) || defined(_TARGET_OS_LINUX) || defined(_TARGET_OS_DARWIN))
         if (AT_OBJ_CLASS(attr_idx) == Data_Obj &&
             (ATD_ALLOCATABLE(attr_idx) ||
              ATD_CLASS(attr_idx) == CRI__Pointee ||
@@ -4964,12 +4964,24 @@ static boolean assert_semantics(void)
          break;
 
       case ASSERT_PERMUTATION:
+#ifdef KEY /* Bug 12497 */
+         if (IR_FLD_R(ir_idx) == IL_Tbl_Idx) {
+	    attr_idx = IL_IDX(IR_IDX_R(ir_idx));
+	 }
+	 else
+#endif /* KEY Bug 12497 */
          attr_idx = IR_IDX_R(ir_idx);
          while (AT_ATTR_LINK(attr_idx)) {
             attr_idx = AT_ATTR_LINK(attr_idx);
             AT_LOCKED_IN(attr_idx) = TRUE;
          }
 
+#ifdef KEY /* Bug 12497 */
+         if (IR_FLD_R(ir_idx) == IL_Tbl_Idx) {
+	    IL_IDX(IR_IDX_R(ir_idx)) = attr_idx;
+	 }
+	 else
+#endif /* KEY Bug 12497 */
          IR_IDX_R(ir_idx) = attr_idx;
          break;
 

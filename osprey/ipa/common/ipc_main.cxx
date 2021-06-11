@@ -67,23 +67,10 @@
 static void 
 IP_set_target(void)
 {
-#ifdef _TARG_MIPS
-    switch (ld_ipa_opt[LD_IPA_TARGOS].flag) {
-    case TOS_MIPS_O32:
-	Target_ABI = ABI_32;
-	break;
-	
-    case TOS_MIPS_N32:
-	Target_ABI = ABI_N32;
-	break;
-
-    case TOS_MIPS_64:
-	Target_ABI = ABI_64;
-	break;
-    default:
-	Target_ABI = ABI_N32;
-	break;
-    }
+#ifdef TARG_MIPS
+    // 12343: Use IPA_Target_Type instead of ld_ipa_opt[LD_IPA_TARGOS].flag
+    // to distinguish between n32 and 64 in IPA
+    Target_ABI = IPA_Target_Type == IP_64_bit_ABI ? ABI_N64 : ABI_N32;
 
     switch (ld_ipa_opt[LD_IPA_ISA].flag) {
     case 1:
@@ -102,7 +89,7 @@ IP_set_target(void)
 	break;				// use default
     }
 
-    Use_32_Bit_Pointers = (Target_ABI < ABI_64);
+    Use_32_Bit_Pointers = (Target_ABI == ABI_N32);
 #endif
 
 #ifdef TARG_IA64
@@ -111,7 +98,7 @@ IP_set_target(void)
     Use_32_Bit_Pointers = FALSE;
 #endif
 
-#ifdef _TARG_IA32
+#ifdef TARG_IA32
     Target_ABI = ABI_I32;
     Target_ISA = TRUE;
 #endif
@@ -119,6 +106,12 @@ IP_set_target(void)
 #ifdef TARG_X8664
     Target_ABI = IPA_Target_Type == IP_64_bit_ABI ? ABI_n64 : ABI_n32;
     Target_ISA = TARGET_ISA_x86_64;
+    Use_32_Bit_Pointers = IPA_Target_Type == IP_32_bit_ABI;
+#endif
+
+#ifdef TARG_SL
+    Target_ABI = IPA_Target_Type == IP_64_bit_ABI ? ABI_N64 : ABI_N32;
+    Target_ISA = TARGET_ISA_M4;
     Use_32_Bit_Pointers = IPA_Target_Type == IP_32_bit_ABI;
 #endif
 

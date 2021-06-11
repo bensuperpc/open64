@@ -1,7 +1,5 @@
 # -*- Makefile -*-
 #
-#  Copyright (C) 2006. QLogic Corporation. All Rights Reserved.
-#
 #  Copyright 2003, 2004, 2005, 2006 PathScale, Inc.  All Rights Reserved.
 #
 
@@ -91,7 +89,7 @@ HOSTDEFS += -DMIPSEL
 
 #define NEW_INITIALIZER
 # This macro is for #420 in BugZilla, should be removed later
-#HOSTDEFS += -DNEW_INITIALIZER
+HOSTDEFS += -DNEW_INITIALIZER
 
 ifeq ($(BUILD_OPTIMIZE), DEBUG)
 HOSTDEFS += -DIs_True_On
@@ -102,11 +100,15 @@ else
 HOSTDEFS += -DDEBUG=0
 HOSTDEFS += -DCHECKING=0
 endif
+
+ifneq ($(BUILD_VARIANT), DEFAULT)
+HOSTDEFS += -D$(BUILD_VARIANT)
+endif
 ##########################################################
 # The following line is from original g++fe/Makefile.gbase
 HOSTDEFS += -DGPLUSPLUS_FE
 
-ifeq ($(BUILD_OS), LINUX)
+ifeq ($(BUILD_OS_LINUX_OR_DARWIN), TRUE)
 TARGDEFS = -D__MIPS_AND_IA64_ELF_H
 endif
 
@@ -128,6 +130,7 @@ TARG_COMUTIL_DIR        = $(TARGDIR)/libcomutil
 TARG_CMPLRS_DIR         = $(TARGDIR)/libcmplrs
 TARG_LIBIBERTY_DIR      = $(TARGDIR)/libiberty
 TARG_LIBSPIN_DIR      	= $(TARGDIR)/libspin
+TARG_LIBSPIN42_DIR      	= $(TARGDIR)/libspin_4_2_0
 
 # These are the directories in which to look for source files.
 
@@ -166,16 +169,11 @@ FE_CXX_SRCS =           \
     wgen_dst.cxx        \
     wgen_spin_symbol.cxx \
     wgen_tracing.cxx
-#   omp_directive.cxx     \
-#   rt_symtab.cxx         \
-#   tree_symtab.cxx       \
-#   wfe_decl.cxx          \
-#   wfe_dst.cxx           \
-#   wfe_expr.cxx         \
-#   wfe_misc.cxx          \
-#   wfe_omp_check_stack.cxx \
-#   wfe_omp_directives.cxx \
-#   wfe_stmt.cxx
+
+OPENMP_SRCS =           \
+    omp_directive.cxx   \
+    wgen_omp_check_stack.cxx \
+    wgen_omp_directives.cxx
 
 COMMON_COM_CXX_SRCS =   \
    config.cxx           \
@@ -229,6 +227,10 @@ FRONT_END_CXX_SRCS =            \
    $(COMMON_COM_TARG_CXX_SRCS)  \
    $(FE_CXX_SRCS)
 
+ifeq ($(BUILD_VARIANT), FE_GNU_4_2_0)
+FRONT_END_CXX_SRCS += $(OPENMP_SRCS)
+endif
+
 FRONT_END_C_OBJS = $(FRONT_END_C_SRCS:T:.c=.o)
 
 FRONT_END_CXX_OBJS = $(FRONT_END_CXX_SRCS:T:.cxx=.o)
@@ -262,7 +264,15 @@ LDIRT =
 #------------------------------------------------------------
 #  Define target
 #------------------------------------------------------------
+
+ifeq ($(BUILD_VARIANT), FE_GNU_4_2_0)
+TARGETS = wgen42
+LIBSPIN = libgspin42.a
+else
 TARGETS = wgen
+LIBSPIN = libgspin.a
+endif
+
 # Do not name the target: spin
 # gfecc is what a -Yf,<path> would expect - so keep it that way
 
@@ -276,14 +286,23 @@ COMUTIL_OBJS = $(TARG_COMUTIL_DIR)/libcomutil.a
 ###################################################################
 CMPLRS_OBJS  = $(TARG_CMPLRS_DIR)/libcmplrs.a
 LIBIBERTY_OBJS = $(TARG_LIBIBERTY_DIR)/libiberty.a
-LIBSPIN_OBJS = $(TARG_LIBSPIN_DIR)/libgspin.a
+#LIBSPIN_OBJS = $(BUILD_TOT)/../libspin/$(LIBSPIN)
 
+ifeq ($(BUILD_VARIANT), FE_GNU_4_2_0)
+LIBSPIN_OBJS = $(TARG_LIBSPIN42_DIR)/libgspin42.a
+else
+LIBSPIN_OBJS = $(TARG_LIBSPIN_DIR)/libgspin.a
+endif
+
+ifneq ($(BUILD_OS),DARWIN)
 LLDOPTS = -Wl,--export-dynamic
+endif
 LLDLIBS = $(COMUTIL_OBJS) $(LIBIBERTY_OBJS) $(LIBSPIN_OBJS)
 LLDLIBS += -lm $(CMPLRS_OBJS)
+LDIRT += $(TARGETS)
 
-default: first $(TARGETS) last
-#default: $(TARGETS) last
+#default: first $(TARGETS) last
+default: $(TARGETS) last
 
 #----------------------------------------------------------------------
 #  The commands in this section are done BEFORE any other target is
@@ -301,19 +320,22 @@ last: make_deps
 
 
 install: default
-ifeq ($(BUILD_OS), LINUX)
+ifeq ($(BUILD_OS_LINUX_OR_DARWIN), TRUE)
 	$(STD_INSTALL) $(STD_INSTALL_EXEC_MASK) -D $(TARGETS) $(STD_MONGOOSE_LINUX_LOC)/$(TARGETS)
 else
 	$(STD_INSTALL) -F $(STD_MONGOOSE_LOC) $(TARGETS)
 endif
 
+
 $(LIBSPIN_OBJS):
+ifeq ($(BUILD_VARIANT), FE_GNU_4_2_0)
+	$(call submake,$(TARG_LIBSPIN42_DIR))
+else
 	$(call submake,$(TARG_LIBSPIN_DIR))
+endif
 
-wgen : $(OBJECTS) $(LIBSPIN_OBJS)
-	$(link.cxxf) -g -o wgen $(OBJECTS) $(LDFLAGS)
-
-
+$(TARGETS) : $(OBJECTS) $(LIBSPIN_OBJS)
+	$(link.cxxf) -g -o $@ $(OBJECTS) $(LDFLAGS)
 #----------------------------------------------------------------------
 #  Include the usual commonrules
 #----------------------------------------------------------------------

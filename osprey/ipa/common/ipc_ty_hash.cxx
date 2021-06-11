@@ -86,6 +86,18 @@ Get_Kid_TY_IDX (TY_IDX ty_idx)
 // ======================================================================
 // Fast comparision of two TY's.  Correctness guaranteed by the assertion
 // at the beginning of Initialize_Type_Merging_Hash_Tables ()
+static inline BOOL
+operator== (const TY& ty1, const TY& ty2)
+{
+    const UINT64* p1 = reinterpret_cast<const UINT64*> (&ty1);
+    const UINT64* p2 = reinterpret_cast<const UINT64*> (&ty2);
+
+    return (p1 == p2 || (p1[0] == p2[0] &&
+			 p1[1] == p2[1] &&
+			 p1[2] == p2[2] &&
+			 ty1.Pu_flags() == ty2.Pu_flags()));
+}
+
 
 namespace
 {
@@ -993,22 +1005,35 @@ Initialize_Type_Merging_Hash_Tables (MEM_POOL* pool)
     
     // check if the assumption used by fast comparision of structs are valid
 #ifdef  __GNUC__
-
-    Is_True ((sizeof(TY) == 28 && __alignof__(TY) == 4) ,
-	     ("Invalid size/alignment assumption"));
-    Is_True (sizeof(FLD) == 28 && __alignof__(FLD) == 4,
-	     ("Invalid size/alignment assumption"));
-    Is_True (sizeof(ARB) == 32 && __alignof__(ARB) == 4,
-	     ("Invalid size/alignment assumption"));
+#ifndef TARG_SL
+    Is_True (sizeof(TY)  == 28 && __alignof__(TY)  == 4 &&
+	     sizeof(FLD) == 28 && __alignof__(FLD) == 4 &&
+	     sizeof(ARB) == 32 && __alignof__(ARB) == 4,
+	     ("Invalid size/alignment assumption:"
+	      " TY sz %d al %d, FLD sz%d al %d, ARB sz %d al %d",
+	      sizeof(TY), __alignof__(TY), sizeof(FLD),
+	      __alignof__(FLD), sizeof(ARB), __alignof__(ARB)));
 #else
-    Is_True ((sizeof(TY) == 24) && (__builtin_alignof(TY) == 8),
-	     ("Invalid size/alignment assumption"));
-    Is_True (sizeof(FLD) == 24 && __builtin_alignof (FLD) == 8,
-	     ("Invalid size/alignment assumption"));
-    Is_True (sizeof(ARB) == 32 && __builtin_alignof (ARB) == 8,
-	     ("Invalid size/alignment assumption"));
-#endif
-#endif
+    // On MIPS architecture, INT64 has alignment 8, so TY and FLD hash
+    // functions must accommodate four bytes padding at end
+    Is_True (sizeof(TY)  == 32 && __alignof__(TY)  == 8 &&
+	     sizeof(FLD) == 32 && __alignof__(FLD) == 8 &&
+	     sizeof(ARB) == 32 && __alignof__(ARB) == 8,
+	     ("Invalid size/alignment assumption:"
+	      " TY sz %d al %d, FLD sz%d al %d, ARB sz %d al %d",
+	      sizeof(TY), __alignof__(TY), sizeof(FLD),
+	      __alignof__(FLD), sizeof(ARB), __alignof__(ARB)));
+#endif // ! TARG_SL
+#else // for SL as well as IRIX, this is guaranteed by compiler, except for packed data
+    Is_True (sizeof(TY)  == 32 && __builtin_alignof(TY)  == 8 &&
+	     sizeof(FLD) == 32 && __builtin_alignof(FLD) == 8 &&
+	     sizeof(ARB) == 32 && __builtin_alignof(ARB) == 8,
+	     ("Invalid size/alignment assumption:"
+	      " TY sz %d al %d, FLD sz%d al %d, ARB sz %d al %d",
+	      sizeof(TY), __builtin_alignof(TY), sizeof(FLD),
+	      __builtin_alignof(FLD), sizeof(ARB), __builtin_alignof(ARB)));
+#endif // __GNUC__
+#endif // 0
     ty_hash_table = CXX_NEW (NEW_TY_HASH_TABLE (1000, TY_HASH (), TY_IS_EQUIVALENT(), 
 					    TY_EXTRACT_KEY (), pool),
 			     pool);

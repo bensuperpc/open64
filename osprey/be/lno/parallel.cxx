@@ -1,12 +1,4 @@
 /*
- *  Copyright (C) 2006. QLogic Corporation. All Rights Reserved.
- */
-
-/*
- * Copyright 2002, 2003, 2004, 2005, 2006 PathScale, Inc.  All Rights Reserved.
- */
-
-/*
 
   Copyright (C) 2000, 2001 Silicon Graphics, Inc.  All Rights Reserved.
 
@@ -174,7 +166,7 @@ static WN* Parallel_Loop(PARALLEL_INFO* parallel_info,
 static void ap_tlog_info(
   PARALLEL_INFO* parallel_info,
   DOLOOP_STACK* loop_stack,
-  char*         message)
+  const char* message)
 {
   char out_string[80];
   WN* wn_parallel = Parallel_Loop(parallel_info, loop_stack); 
@@ -1631,8 +1623,12 @@ static BOOL* Scl_Dep_Info(WN* wn_outer,
       continue; 
     for (WN* wn = wn_scalar; wn != NULL; wn = LWN_Get_Parent(wn)) {
       if (WN_opcode(wn) == OPC_DO_LOOP) {
-	DO_LOOP_INFO* dli = Get_Do_Loop_Info(wn);	  
-	if (dli->ARA_Info->Is_Problem_Scalar(wn_scalar)) 
+	DO_LOOP_INFO* dli = Get_Do_Loop_Info(wn);
+#ifdef KEY //bug 12049: we are only interested in the chunk of 'nloops' 
+           //loops with wn_outer as the outermost
+        if(dli->Depth  < outer_depth + nloops)
+#endif	  
+	if (dli->ARA_Info->Is_Problem_Scalar(wn_scalar))
 	  scl_list[dli->Depth - outer_depth] = TRUE; 
       }
       if (wn == wn_outer)

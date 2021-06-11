@@ -1,12 +1,4 @@
 /*
- *  Copyright (C) 2006. QLogic Corporation. All Rights Reserved.
- */
-
-/*
- * Copyright 2004, 2005, 2006 PathScale, Inc.  All Rights Reserved.
- */
-
-/*
 
   Copyright (C) 2000, 2001 Silicon Graphics, Inc.  All Rights Reserved.
 
@@ -211,7 +203,8 @@ static BOOL Has_Indirect_Ref (WN* wn)
       return TRUE;
   return FALSE;
 }
-
+#endif 
+#if defined(TARG_X8664) || defined(TARG_IA64)
 // i = i + inv -- stride is just inv (inv - non const)
 static WN *Obtain_Stride_From_Loop_Step(WN *loop)
 {
@@ -400,7 +393,7 @@ void PF_LOOPNODE::Add_Ref (WN* wn_array) {
     // TODO: If this is always safe, then we could make it default.
     for (INT i=0; i<array->Num_Vec(); i++) {
       ACCESS_VECTOR *av = array->Dim(i);
-#if defined(OSP_OPT) && defined(TARG_IA64)
+#if defined(TARG_IA64)
       // For IA64, prefetch can be more aggressive.
       if (av->Contains_Non_Lin_Symb() || av->Too_Messy) {
 	  if (Has_Indirect_Ref(wn_array))
@@ -429,9 +422,28 @@ void PF_LOOPNODE::Add_Ref (WN* wn_array) {
   }
 
   if (WN_element_size(wn_array) < 0) {
-    // Funny F90 strided array; pass for now
-    messy = TRUE;
+#ifdef TARG_X8664
+      //bug 5945: if the loop was vectorized
+      //the array is guaranteed to be contiguous, and we can prefetch
+      WN *parent = LWN_Get_Parent(wn_array);
+     if((WN_desc(parent) != MTYPE_V && MTYPE_is_vector(WN_desc(parent)))||
+       (WN_rtype(parent) != MTYPE_V && MTYPE_is_vector(WN_rtype(parent))));
+     else
+#endif
+       // Funny F90 strided array; pass for now (Guarding Loop for prefetch is expensive?)
+        messy = TRUE;
   }
+
+//bug 14291: It is aggressive to prefetch for a field of a Large structure, where the structure
+//is the array element. The case is similar to prefetch for non-continuous array, we can not
+//make sure whether the prefetched cache line will ever be used.
+#ifdef KEY
+ if(LNO_Run_Prefetch < AGGRESSIVE_PREFETCH &&
+    WN_element_size(wn_array) > 16 && 
+    WN_element_size(wn_array)%64 != 0){ //64 should be the cache line size in byte.
+     messy = TRUE;
+  }
+#endif
 
   if (LNO_Prefetch_Indirect && messy) {
     BOOL is_indirect = FALSE;
@@ -493,12 +505,12 @@ void PF_LOOPNODE::Add_Ref (WN* wn_array) {
     }
     return;
   } else if (messy) {
-#ifdef KEY //bug 10953: for cases may not be "messy"
+#if defined(TARG_X8664) || defined(TARG_IA64) //bug 10953: for cases may not be "messy"
      if(!Simple_Invariant_Stride_Access(wn_array, _code)){
 #endif
     _num_bad++;
     return;
-#ifdef KEY //bug 10953
+#if defined(TARG_X8664) || defined(TARG_IA64) //bug 10953
    }
 #endif
   }

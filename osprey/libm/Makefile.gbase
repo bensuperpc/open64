@@ -109,7 +109,9 @@ TARGETS = $(LIBRARY) $(PROF_LIB) $(DSO)
 endif
 
 ifeq ($(BUILD_ABI), I64BIT)
+  ifeq ($(BUILD_COMPILER), OSP)
 LCDEFS += -OPT:IEEE_comparisons -OPT:roundoff=0 -TENV:X=1 -LNO:prefetch=0
+  endif
 endif
 ifeq ($(BUILD_ABI), N32BIT)
 LCDEFS += -n32 -Wa,-mips4
@@ -317,5 +319,9 @@ $(PROF_LIB): $(OBJECTS:%.o=%.pg.o)
 	$(ranlib) $@
 
 $(DSO): $(OBJECTS:%.o=%.pic.o)
+ifeq ($(BUILD_OS), DARWIN)
+	$(ld) $(STD_DSO_LOADOPTS) -Wl,-x -o $@ $^ -lm
+else
 	$(ld) $(STD_DSO_LOADOPTS) -Wl,-x -Wl,-soname=$(DSO) -Wl,--version-script=$(BUILD_BASE)/$(DSO:%.so.$(dso_version)=%.vs) -o $@ $^ -lm
+endif
 	$(ln) -sf $(DSO) $(basename $(DSO))

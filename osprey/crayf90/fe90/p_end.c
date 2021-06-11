@@ -1,5 +1,8 @@
 /*
- *  Copyright (C) 2006. QLogic Corporation. All Rights Reserved.
+ * Copyright (C) 2007, 2008. PathScale, LLC. All Rights Reserved.
+ */
+/*
+ *  Copyright (C) 2006, 2007. QLogic Corporation. All Rights Reserved.
  */
 
 /*
@@ -76,7 +79,7 @@ static boolean	 end_task_do_blk(void);
 static void	 finish_cdir_id(void);
 static void	 loop_end_processing(void);
 
-# if (defined(_TARGET_OS_IRIX) || defined(_TARGET_OS_LINUX))
+# if (defined(_TARGET_OS_IRIX) || defined(_TARGET_OS_LINUX) || defined(_TARGET_OS_DARWIN))
 static void      check_loop_bottom_nesting(void);
 # endif
 
@@ -229,7 +232,7 @@ static void finish_cdir_id(void)
 
       NTR_IR_TBL(init_idx);
       IR_OPR(init_idx) = Init_Opr;
-# if (defined(_TARGET_OS_IRIX) || defined(_TARGET_OS_LINUX))
+# if (defined(_TARGET_OS_IRIX) || defined(_TARGET_OS_LINUX) || defined(_TARGET_OS_DARWIN))
       IR_OPR(init_idx) = Null_Opr;
 # endif
 
@@ -598,6 +601,23 @@ void parse_end_stmt (void)
             }
 
 	    break;
+
+#ifdef KEY /* Bug 10572 */
+	 case Tok_Kwd_Enum:
+
+            stmt_type				= End_Enum_Stmt;
+            SH_STMT_TYPE(curr_stmt_sh_idx)	= End_Enum_Stmt;
+
+            if (CURR_BLK != Enum_Blk || !match_name) {
+               blk_idx = blk_match_err(Enum_Blk, found_name, FALSE);
+            }
+
+            if (blk_idx != NULL_IDX) {
+               curr_stmt_category = Declaration_Stmt_Cat;
+            }
+
+	    break;
+#endif /* KEY Bug 10572 */
 
 
 	 case Tok_Kwd_Type:
@@ -1477,8 +1497,11 @@ static void end_internal_proc(boolean	err_call)
    int		 attr_idx;
    int		 ir_idx;
 
-
    TRACE (Func_Entry, "end_internal_proc", NULL);
+
+#ifdef KEY /* Bug 14110 */
+   revisit_volatile();
+#endif /* KEY Bug 14110 */
 
    do_cmic_blk_checks();
 
@@ -1613,6 +1636,10 @@ static void end_module_proc(boolean	err_call)
 
 
    TRACE (Func_Entry, "end_module_proc", NULL);
+
+#ifdef KEY /* Bug 14110 */
+   revisit_volatile();
+#endif /* KEY Bug 14110 */
 
    do_cmic_blk_checks();
 
@@ -3235,6 +3262,48 @@ static void end_interface_blk(boolean	err_call)
 }  /* end_interface_blk */
 
 
+#ifdef KEY /* Bug 10572 */
+/******************************************************************************\
+|*									      *|
+|* Description:								      *|
+|*	Complete the processing of the END statement for an enum block.  *|
+|*									      *|
+|* Input parameters:							      *|
+|*	err_call => Boolean - TRUE if this is called from an error situation. *|
+|*	            This means the compiler is trying to clean up the block   *|
+|*	            stack and do error recovery.                              *|
+|*									      *|
+|* Output parameters:							      *|
+|*	NONE								      *|
+|*									      *|
+|* Returns:								      *|
+|*	NONE								      *|
+|*									      *|
+\******************************************************************************/
+
+static void end_enum_blk(boolean	err_call)
+
+{
+   int		attr_idx;
+   boolean	found;
+   int		enum_idx;
+   int		sn_idx;
+
+
+   TRACE (Func_Entry, "end_enum_blk", NULL);
+
+   if (BLK_ENUM_EMPTY(blk_stk_idx) && !(BLK_ERR(blk_stk_idx) || err_call)) {
+     PRINTMSG(stmt_start_line, 197, Error, stmt_start_col, "ENUMERATOR",
+       "END ENUM");
+   }
+
+   POP_BLK_STK;
+
+   TRACE (Func_Exit, "end_enum_blk", NULL);
+
+}  /* end_enum_blk */
+
+#endif /* KEY Bug 10572 */
 /******************************************************************************\
 |*                                                                            *|
 |* Description:                                                               *|
@@ -3430,7 +3499,7 @@ static void end_type_blk(boolean	err_call)
 
          if (!aligned) {
 
-# if (defined(_TARGET_OS_IRIX) || defined(_TARGET_OS_LINUX))
+# if (defined(_TARGET_OS_IRIX) || defined(_TARGET_OS_LINUX) || defined(_TARGET_OS_DARWIN))
 
             switch(ATT_ALIGNMENT(CURR_BLK_NAME)) {
             case Align_Bit:
@@ -3549,7 +3618,7 @@ static void loop_end_processing()
    int		save_curr_stmt_sh_idx; 
    int		sh_idx;
 
-# if (defined(_TARGET_OS_IRIX) || defined(_TARGET_OS_LINUX)) 
+# if (defined(_TARGET_OS_IRIX) || defined(_TARGET_OS_LINUX)) || defined(_TARGET_OS_DARWIN) 
    int		blk_idx;
 # endif
 
@@ -3557,7 +3626,7 @@ static void loop_end_processing()
    TRACE (Func_Entry, "loop_end_processing", NULL);
 
 
-# if (defined(_TARGET_OS_IRIX) || defined(_TARGET_OS_LINUX)) 
+# if (defined(_TARGET_OS_IRIX) || defined(_TARGET_OS_LINUX)) || defined(_TARGET_OS_DARWIN) 
 
    /* If the current loop is in a loop nest preceded by a BLOCKABLE directive,*/
    /* make sure all the loops in the DO-variable list of the directive are    */
@@ -3722,7 +3791,7 @@ static void loop_end_processing()
 # endif
 
 
-# if (defined(_TARGET_OS_IRIX) || defined(_TARGET_OS_LINUX))
+# if (defined(_TARGET_OS_IRIX) || defined(_TARGET_OS_LINUX) || defined(_TARGET_OS_DARWIN))
        
    /* If the current loop is in a loop nest preceded by an INTERCHANGE,       */
    /* PDO, PARALLELDO, or DOACROSS directive, check to see if the current     */
@@ -4066,6 +4135,12 @@ static char *blk_desc_str(int	 blk_idx)
          blk_stmt_str = "INTERFACE";
          break;
 
+#ifdef KEY /* Bug 10572 */
+      case Enum_Blk:
+         blk_stmt_str = "ENUM";
+         break;
+#endif /* KEY Bug 10572 */
+
       case Derived_Type_Blk:
          blk_stmt_str = "TYPE";
          break;
@@ -4280,6 +4355,13 @@ int	blk_match_err(blk_cntxt_type	blk_type,
                      blk_desc_str(blk_stk_idx),
                      AT_OBJ_NAME_PTR(CURR_BLK_NAME));
             break;
+
+#ifdef KEY /* Bug 10572 */
+         case End_Enum_Stmt:
+	    PRINTMSG(TOKEN_LINE(token), 197, Error, TOKEN_COLUMN(token),
+	      EOS_STR, TOKEN_STR(token));
+	    break;
+#endif /* KEY Bug 10572 */
 # ifdef _DEBUG
          default:
             PRINTMSG(stmt_start_line, 179, Internal,
@@ -6026,7 +6108,7 @@ boolean remove_pdo_blk(boolean  cannot_nest,
 }  /* remove_pdo_blk */
 
 
-# if (defined(_TARGET_OS_IRIX) || defined(_TARGET_OS_LINUX))
+# if (defined(_TARGET_OS_IRIX) || defined(_TARGET_OS_LINUX) || defined(_TARGET_OS_DARWIN))
 
 
 /******************************************************************************\

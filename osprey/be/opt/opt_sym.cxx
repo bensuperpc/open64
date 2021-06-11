@@ -131,7 +131,7 @@
 extern "C" {
 #include "targ_const.h"
 #include "stdlib.h"
-char *Targ_Print( char *fmt, TCON cvalue );
+char *Targ_Print( const char *fmt, TCON cvalue );
 }
 
 #ifdef Is_True_On
@@ -193,6 +193,9 @@ OPT_STAB::OPT_STAB(MEM_POOL *pool) : aux_stab(pool),
 
   // The following are initialized in Create:
   _has_exc_handler = FALSE;
+#ifdef KEY
+  _has_nonlocal_goto_target = FALSE;
+#endif
 
   _ac_2_vsym_map.Init ();
   _pt_sum.Set_opt_stab (this);  
@@ -362,8 +365,11 @@ static void Collect_addr_passed_for_PU(WN *wn)
 
   // Fix 625656:
   //  Catch the cases not covered by addr_saved in be/com/opt_addr_flags.cxx.
-  if (WN_operator(wn) == OPR_PARM && 
-      (WN_Parm_By_Reference(wn) || WN_Parm_Passed_Not_Saved(wn))) 
+  if (WN_operator(wn) == OPR_PARM && (
+#if defined(TARG_SL)
+      WN_Parm_Dereference(wn) ||
+#endif
+      WN_Parm_By_Reference(wn) || WN_Parm_Passed_Not_Saved(wn))) 
     Collect_addr_passed(WN_kid0(wn));
   //
   // Fix 642145:
@@ -472,6 +478,10 @@ OPT_STAB::Count_syms(WN *wn)
 
   if (WN_operator(wn) == OPR_REGION && REGION_is_EH(wn))
     _has_exc_handler = TRUE;
+#ifdef KEY
+  if (PU_has_nonlocal_goto_label(Get_Current_PU()))
+    _has_nonlocal_goto_target = TRUE;
+#endif
 
   // any regions in the whirl are black boxes, ignore
   if (WN_operator(wn) == OPR_REGION) {
@@ -538,7 +548,7 @@ OPT_STAB::Count_syms(WN *wn)
 // ====================================================================
 
 
-char *
+const char *
 AUX_STAB_ENTRY::St_name(void)
 {
   if (st) { 
@@ -706,6 +716,7 @@ OPT_STAB::Enter_symbol(OPERATOR opr, ST* st, INT64 ofst,
 #ifdef KEY
   BOOL is_bit_field = FALSE;
 #endif
+  TY_IDX hl_ty = (TY_IDX)0;
 
   switch (opr) {
   case OPR_LDA:
@@ -756,6 +767,10 @@ OPT_STAB::Enter_symbol(OPERATOR opr, ST* st, INT64 ofst,
     if (opr == OPR_LDID)
       field_id = WN_field_id(wn);
 #endif
+    if (WN_field_id(wn) != (TY_IDX)0) {
+      UINT32 dummy;
+      WN_hl_object_ty(wn, hl_ty, dummy);
+    }
     break;
   case OPR_STBITS:
     bit_size = WN_bit_size(wn);
@@ -798,6 +813,10 @@ OPT_STAB::Enter_symbol(OPERATOR opr, ST* st, INT64 ofst,
     if (opr == OPR_STID)
       field_id = WN_field_id(wn);
 #endif
+    if (WN_field_id(wn) != (TY_IDX)0) {
+      UINT32 dummy;
+      WN_hl_object_ty(wn, hl_ty, dummy);
+    }
     break;
   default:
     stype = VT_OTHER;
@@ -845,6 +864,9 @@ OPT_STAB::Enter_symbol(OPERATOR opr, ST* st, INT64 ofst,
 
     if (kind_match &&
 	aux_stab[idx].Byte_size() == byte_size &&
+#ifdef KEY // bug 12321
+	aux_stab[idx].St() == st &&
+#endif
 	aux_stab[idx].St_ofst() == ofst &&
 	aux_stab[idx].Bit_size() == bit_size &&
 	aux_stab[idx].Bit_ofst() == bit_ofst &&
@@ -919,7 +941,13 @@ OPT_STAB::Enter_symbol(OPERATOR opr, ST* st, INT64 ofst,
   sym->Set_field_id(field_id);
   sym->Set_mclass(0);
   sym->Set_mtype(MTYPE_UNKNOWN);
-#ifdef KEY // bug 3091: to help create correct identity assignment for BS var
+  sym->Set_def_bbs(NULL);  
+
+#ifdef KEY 
+  // bug 13670: don't leave the field uninitialized
+  sym->Set_value_size(0);
+  sym->Set_spre_node(NULL);
+  // bug 3091: to help create correct identity assignment for BS var
   if (opr == OPR_LDID || opr == OPR_STID)
     sym->Set_wn(wn);
 #endif
@@ -956,6 +984,7 @@ OPT_STAB::Enter_symbol(OPERATOR opr, ST* st, INT64 ofst,
   sym->Set_byte_size(byte_size);
   sym->Set_bit_ofst_size(bit_ofst, bit_size);
   sym->Set_ty(wn_object_ty);
+  sym->Points_to()->Set_hl_ty(hl_ty);
 
   INT64 tmpofst;
   ST    *tmpbase;
@@ -1051,6 +1080,11 @@ OPT_STAB::Enter_ded_preg(ST *st, INT64 ofst, TY_IDX ty, INT32 mclass)
   sym->Set_stype(VT_NO_LDA_SCALAR);
   sym->Set_mclass(mclass);
   sym->Set_mtype(MTYPE_UNKNOWN);
+#ifdef KEY
+  // bug 13670
+  sym->Set_value_size(0);
+  sym->Set_spre_node(NULL);
+#endif
   sym->Clear_flags();
   sym->Set_st(st);
   sym->Set_st_ofst(ofst);
@@ -1088,6 +1122,11 @@ OPT_STAB::Create_vsym(EXPR_KIND k)
   vsym->Clear_flags();
   vsym->Set_mclass(0);
   vsym->Set_mtype(MTYPE_UNKNOWN);
+#ifdef KEY
+  // bug 13670
+  vsym->Set_value_size(0);
+  vsym->Set_spre_node(NULL);
+#endif
   vsym->Set_st(NULL);
   vsym->Set_st_ofst(0);
   vsym->Set_nonzerophis(NULL);
@@ -1104,11 +1143,12 @@ OPT_STAB::Create_vsym(EXPR_KIND k)
 
 
 AUX_ID
-OPT_STAB::Create_preg(MTYPE preg_ty, char *name, WN *home_wn)
+OPT_STAB::Create_preg(MTYPE preg_ty, const char *name, WN *home_wn)
 {
   ST *st;
 #ifdef KEY // bug 1523: preopt in ipl cannot use pregs due to exception handling
-  if (Has_exc_handler() && Phase() == PREOPT_IPA0_PHASE)
+  if ((Has_exc_handler()  || Has_nonlocal_goto_target())
+      && Phase() == PREOPT_IPA0_PHASE)
     st = Gen_Temp_Symbol(MTYPE_To_TY(preg_ty), name);
   else
 #endif
@@ -1144,6 +1184,14 @@ OPT_STAB::Create_preg(MTYPE preg_ty, char *name, WN *home_wn)
   sym->Set_synonym((AUX_ID) 0);
   sym->Set_home_sym((AUX_ID) 0);
   sym->Set_zero_cr(NULL);
+#ifdef KEY
+  // bug 13670
+  sym->Set_value_size(0);
+  sym->Set_spre_node(NULL);
+#endif
+
+  sym->Set_def_bbs(NULL);
+  
   sym->Points_to()->Analyze_ST(st, sym->St_ofst(),
 			       TY_size(MTYPE_To_TY(preg_ty)), 0, 0, 0,
 			       FALSE /* no equiv */);
@@ -1171,10 +1219,20 @@ AUX_STAB_ENTRY::Change_to_new_preg(OPT_STAB *opt_stab, CODEMAP *htable)
   if (preg_ty == 0) return;
 
   // Turn the variable into a PREG
-  char * name = St_name();
+  const char * name = St_name();
   Set_st(MTYPE_To_PREG(preg_ty));
   Set_stype(VT_NO_LDA_SCALAR);
+#ifdef TARG_NVISA
+  // want to find def for filling in home_wn of preg,
+  // which is needed for correct memory state info in Find_Lda.
+  WN *home_wn = NULL;
+  if (cr->Defstmt() && cr->Defstmt()->Rhs()) {
+    home_wn = cr->Defstmt()->Rhs()->Rvi_home_wn(opt_stab);
+  }
+  mINT64 offset = opt_stab->Alloc_preg(preg_ty, name, home_wn);
+#else
   mINT64 offset = opt_stab->Alloc_preg(preg_ty,name);
+#endif
   Set_st_ofst(offset);
   Set_st_group(0);	// clears "overlap" union
   Set_synonym((AUX_ID) 0);
@@ -2074,8 +2132,7 @@ OPT_STAB::Make_st_group(void)
 	UINT64 size = sorted[i]->Bit_size() == 0 ?
 	  sorted[i]->Byte_size() * 8 : sorted[i]->Bit_size();
         if (ofst < hi) {
-           // Merge
-#ifdef linux
+#if defined(linux) || defined(BUILD_OS_DARWIN)
 //         hi = (( hi > ofst + size ) ?  hi : ofst + size ) ;
            if (hi < ofst + size)
              hi = ofst + size;
@@ -2474,6 +2531,13 @@ OPT_STAB::Collect_ST_attr(void)
       TY_IDX ty = (psym->Field_id() != 0 && psym->Ty() != 0) ? psym->Ty() :
                    (ST_class(st) == CLASS_VAR ? ST_type(st) : (TY_IDX)0);
 #endif 
+      // Do not discard the high-level type which may be different from
+      // object-type. This is an example: "LDID agg.field". The agg.field
+      // is treated as a separate symbol (i.e. it has unique aux_id) by 
+      // Enter_symbol(). The pt->Ty() record the type-of(agg.field), and
+      // pt->Highlevel_ty() records type-of(agg).
+      //
+      TY_IDX hl_ty = pt->Highlevel_Ty();
       pt->Analyze_ST(st, psym->St_ofst(), psym->Byte_size(),
 		     psym->Bit_ofst(), psym->Bit_size(),
 #ifdef KEY
@@ -2486,6 +2550,10 @@ OPT_STAB::Collect_ST_attr(void)
       //  if a symbol has size 0, its offset is considered unknown.
       if (pt->Byte_Size() == 0)
 	pt->Set_ofst_kind(OFST_IS_UNKNOWN);
+
+      if (hl_ty != (TY_IDX)0 && pt->Highlevel_Ty() == (TY_IDX)0) {
+	pt->Set_hl_ty(hl_ty);
+      }
     }
 
     // Precompute the alias attributes and put them in bitsets.
@@ -2593,8 +2661,6 @@ OPT_STAB::Incorporate_alias_class_info(void)
 // Create creates the optimizer symbol table.
 //
 // ====================================================================
-
-
 void 
 OPT_STAB::Create(COMP_UNIT *cu, REGION_LEVEL rgn_level)
 {
@@ -2652,8 +2718,21 @@ OPT_STAB::Create(COMP_UNIT *cu, REGION_LEVEL rgn_level)
 
   // Fix 648051: move loop normalization after BE address flag is valid
   if (WOPT_Enable_IVR) {
+
     SET_OPT_PHASE("Loop normalization");
+    BOOL trace_loop = Get_Trace (TP_WOPT2, LOOP_NORM_FLAG);
+    if (trace_loop) {
+      fprintf (TFile, "%sDump before Loop Normalization \n%s", DBar, DBar);
+      fdump_tree (TFile, cu->Input_tree ());
+    }
+
     cu->Normalize_loop(cu->Input_tree());
+    
+    if (trace_loop) {
+      fprintf (TFile, "%sDump after Loop Normalization \n%s", DBar, DBar);
+      fdump_tree (TFile, cu->Input_tree ());
+    }
+
     SET_OPT_PHASE("Create AUX Symbol table");
   } 
 
@@ -2698,9 +2777,10 @@ OPT_STAB::Create(COMP_UNIT *cu, REGION_LEVEL rgn_level)
   pt->Set_ofst_kind(OFST_IS_UNKNOWN);
   pt->Set_base(NULL);
   pt->Set_global();
-  
+ 
   // Collect ST attributes (used by FFA and FSA)
   Collect_ST_attr();
+  
 
   // Setup empty du chain
   _ver_stab = CXX_NEW(VER_STAB_ARRAY_TYPE(&_ver_pool), &_ver_pool);
@@ -3990,6 +4070,7 @@ OPT_STAB::Collect_nested_ref_info(void)
 		    1);
   }
 }
+
 
 void
 VER_STAB_ENTRY::Print_use(WN *wn, FILE *fp) const

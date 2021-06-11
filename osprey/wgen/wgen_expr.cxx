@@ -1,4 +1,8 @@
 /*
+ * Copyright (C) 2007 PathScale, LLC.  All Rights Reserved.
+ */
+
+/*
  * Copyright (C) 2006, 2007. QLogic Corporation. All Rights Reserved.
  */
 
@@ -29,7 +33,11 @@
 extern "C"{
 #include "gspin-wgen-interface.h"
 }
+#if defined(BUILD_OS_DARWIN)
+#include <limits.h>
+#else /* defined(BUILD_OS_DARWIN) */
 #include <values.h>
+#endif /* defined(BUILD_OS_DARWIN) */
 #include "defs.h"
 #include "glob.h"
 #include "config.h"
@@ -51,10 +59,13 @@ extern "C"{
 #include "wgen_expr.h"
 #include "wgen_stmt.h"
 #include "wgen_tracing.h"
+#ifdef FE_GNU_4_2_0
+#include "omp_types.h"
+#include "wgen_omp_directives.h"
+#endif
 
 #define BITS_PER_UNIT 8
 
-extern void WGEN_add_pragma_to_enclosing_regions (WN_PRAGMA_ID, ST *);
 extern void WGEN_Expand_Return(gs_t, gs_t);
 
 LABEL_IDX loop_expr_exit_label = 0; // exit label for LOOP_EXPRs
@@ -205,6 +216,18 @@ struct operator_from_tree_t {
  GS_NOP_EXPR,			OPERATOR_UNKNOWN,
  GS_OBJ_TYPE_REF,		OPERATOR_UNKNOWN,
  GS_OFFSET_TYPE,		OPERATOR_UNKNOWN,
+#ifdef FE_GNU_4_2_0
+ GS_OMP_ATOMIC,			OPERATOR_UNKNOWN,
+ GS_OMP_CLAUSE,			OPERATOR_UNKNOWN,
+ GS_OMP_CRITICAL,		OPERATOR_UNKNOWN,
+ GS_OMP_FOR,			OPERATOR_UNKNOWN,
+ GS_OMP_MASTER,			OPERATOR_UNKNOWN,
+ GS_OMP_ORDERED,		OPERATOR_UNKNOWN,
+ GS_OMP_PARALLEL,		OPERATOR_UNKNOWN,
+ GS_OMP_SECTION,		OPERATOR_UNKNOWN,
+ GS_OMP_SECTIONS,		OPERATOR_UNKNOWN,
+ GS_OMP_SINGLE,			OPERATOR_UNKNOWN,
+#endif
  GS_ORDERED_EXPR,		OPERATOR_UNKNOWN,
  GS_PARM_DECL,			OPERATOR_UNKNOWN,
  GS_PHI_NODE,			OPERATOR_UNKNOWN,
@@ -327,6 +350,13 @@ struct operator_from_tree_t {
  GS_VEC_NEW_EXPR,		OPERATOR_UNKNOWN,
  GS_TEMPLATE_TEMPLATE_PARM,	OPERATOR_UNKNOWN,
 };
+
+#ifdef FE_GNU_4_2_0
+extern OPERATOR
+Operator_From_Tree_node (gs_code_t code) {
+  return Operator_From_Tree[code].opr;
+}
+#endif
 
 // KEY bug 11288: support for anonymous unions:
 // ---------------------------------------------
@@ -677,10 +707,8 @@ WGEN_Save_Expr (gs_t save_exp,
     wn = WGEN_Expand_Expr (exp);
 
     st = Gen_Temp_Symbol (ty_idx, "__save_expr");
-#if 0 // TODO
-#ifdef KEY
+#ifdef FE_GNU_4_2_0
     WGEN_add_pragma_to_enclosing_regions (WN_PRAGMA_LOCAL, st);
-#endif
 #endif
     WGEN_Set_ST_Addr_Saved (wn);
     wn = WN_Stid (mtype, 0, st, ty_idx, wn);
@@ -698,6 +726,62 @@ WGEN_Save_Expr (gs_t save_exp,
   }
   return wn;
 } /* WGEN_Save_Expr */
+
+static WN * 
+WGEN_Expand_Math_Errno_Sqrt(gs_t exp, TY_IDX ty_idx, TYPE_ID ret_mtype)
+{
+  WN *arg_wn = WGEN_Expand_Expr (gs_tree_value (gs_tree_operand (exp, 1)));
+  ST *arg_st = Gen_Temp_Symbol(ty_idx, "__sqrt_arg");
+#ifdef FE_GNU_4_2_0
+  WGEN_add_pragma_to_enclosing_regions (WN_PRAGMA_LOCAL, arg_st);
+#endif
+  WN *stmt = WN_Stid(ret_mtype, 0, arg_st, ty_idx, arg_wn);
+  WGEN_Stmt_Append(stmt, Get_Srcpos());
+
+  arg_wn = WN_Ldid(ret_mtype, 0, arg_st, ty_idx);
+  WN *wn = WN_CreateExp1 (OPR_SQRT, ret_mtype, MTYPE_V, arg_wn);
+
+  ST *res_st = Gen_Temp_Symbol(ty_idx, "__save_sqrt");
+#ifdef FE_GNU_4_2_0
+  WGEN_add_pragma_to_enclosing_regions (WN_PRAGMA_LOCAL, res_st);
+#endif
+  stmt = WN_Stid(ret_mtype, 0, res_st, ty_idx, wn);
+  WGEN_Stmt_Append(stmt, Get_Srcpos());
+
+  wn = WN_Ldid(ret_mtype, 0, res_st, ty_idx);
+  WN *wn0 = WN_Ldid(ret_mtype, 0, res_st, ty_idx);
+  WN *then_block = WN_CreateBlock();
+  WN *else_block = WN_CreateBlock();
+  WN *if_stmt = WN_CreateIf( WN_Relational(OPR_NE, ret_mtype, wn, wn0),
+  			     then_block, else_block);
+  WGEN_Stmt_Append(if_stmt, Get_Srcpos());
+
+  WGEN_Stmt_Push (then_block, wgen_stmk_if_then, Get_Srcpos());
+
+  // generate the call to sqrt()
+  gs_t arg0 = gs_tree_operand(exp, 0);
+  WN *call_wn = WN_Create(OPR_CALL, ret_mtype, MTYPE_V, 1);
+  ST *st2 = DECL_ST2(gs_tree_operand(arg0, 0));
+  if (Opt_Level > 0 && st2) {
+    WN_st_idx (call_wn) = ST_st_idx (st2);
+  }
+  else {
+    ST *st = Get_ST (gs_tree_operand (arg0, 0));
+    WN_st_idx (call_wn) = ST_st_idx (st);
+  }
+  arg_wn = WN_Ldid(ret_mtype, 0, arg_st, ty_idx);
+  arg_wn = WN_CreateParm(ret_mtype, arg_wn, ty_idx, WN_PARM_BY_VALUE);
+  WN_kid(call_wn, 0) = arg_wn;
+  WGEN_Stmt_Append(call_wn, Get_Srcpos());
+
+  wn = WN_Ldid (ret_mtype, -1, Return_Val_Preg, ty_idx);
+  stmt = WN_Stid(ret_mtype, 0, res_st, ty_idx, wn);
+  WGEN_Stmt_Append(stmt, Get_Srcpos());
+
+  WGEN_Stmt_Pop(wgen_stmk_if_then);
+
+  return WN_Ldid(ret_mtype, 0, res_st, ty_idx);
+}
 
 
 /* process the tree doing array indicing and return the WN that performs
@@ -1323,14 +1407,13 @@ WGEN_Lhs_Of_Modify_Expr(gs_code_t assign_code,
         volt = TRUE;
       }
       gs_t op = gs_tree_operand(lhs, 0);
-
-      WN* addr_wn = NULL;
+      WN *addr_wn = NULL;
       TY_IDX desc_ty_idx = component_ty_idx;
       if (desc_ty_idx == 0)
         desc_ty_idx = hi_ty_idx;
       if (TY_is_volatile(desc_ty_idx)) {
         Clear_TY_is_volatile(desc_ty_idx);
-	volt = TRUE;
+        volt = TRUE;
       }
       Is_True(! is_bit_field || field_id <= MAX_FIELD_ID,
               ("WGEN_Lhs_Of_Modify_Expr: field id for bit-field exceeds limit"));
@@ -1382,7 +1465,7 @@ WGEN_Lhs_Of_Modify_Expr(gs_code_t assign_code,
           addr_wn = WN_Ldid (Pointer_Mtype, preg, preg_st, address_ty_idx);
         }
       }
-	
+
       TYPE_ID rtype = Widen_Mtype(TY_mtype(desc_ty_idx));
       TYPE_ID desc = is_bit_field ? MTYPE_BS : TY_mtype(desc_ty_idx);
 
@@ -1775,6 +1858,9 @@ WGEN_Lhs_Of_Modify_Expr(gs_code_t assign_code,
 
   case GS_COMPOUND_LITERAL_EXPR: // bug 10144
     {
+#ifdef KEY // bug 14372
+      TY_IDX hi_ty_idx = Get_TY(gs_tree_type(lhs)); // type associated with field id
+#endif
       gs_t var = gs_decl_initial(gs_tree_operand(gs_tree_operand (lhs, 0), 0)); 
       st = WGEN_Generate_Temp_For_Initialized_Aggregate(var, "");
 
@@ -1793,11 +1879,16 @@ WGEN_Lhs_Of_Modify_Expr(gs_code_t assign_code,
       TYPE_ID desc = is_bit_field ? MTYPE_BS : TY_mtype(desc_ty_idx);
       if (desc == MTYPE_UNKNOWN)
 	desc = WN_rtype(rhs_wn); // is a scalar
+#ifdef KEY // bug 14372
+      wn = WN_Stid (desc, ST_ofst(copy) + component_offset, copy,
+		    hi_ty_idx, rhs_wn, field_id);
+#else
       if (desc_ty_idx == 0)
         desc_ty_idx = MTYPE_TO_TY_array[desc];
 
       wn = WN_Stid (desc, ST_ofst(copy) + component_offset, copy,
 		    desc_ty_idx, rhs_wn, field_id);
+#endif
       WGEN_Stmt_Append(wn, Get_Srcpos());
       if (need_result) // bug 10548
         wn = WN_CreateLdid(OPR_LDID, desc, desc,
@@ -2104,6 +2195,63 @@ emit_builtin_compare_and_swap (gs_t exp, INT32 k)
   return wn;
 } /* emit_builtin_compare_and_swap */
 
+/* OSP
+ * emit_builtin_sync_fetch_op
+ *   for FETCH_AND_OP (ADD, SUB, AND, OR, XOR, NAND)
+ *   for OP_AND_FETCH (ADD, SUB, AND, OR, XOR, NAND)
+ * It's necessary for GNU 4.2 FE
+ */
+static WN *
+emit_builtin_sync_fetch_op (INTRINSIC iopc, gs_t exp, INT32 k)
+{
+  WN        *wn;
+  WN        *arg_wn;
+  WN        *ikids [2];
+  TYPE_ID    obj_mtype;
+  TY_IDX     arg_ty_idx;
+  TYPE_ID    arg_mtype;
+  gs_t       list = gs_tree_operand (exp, 1);
+  OPCODE     opc;
+
+  obj_mtype  = TY_mtype (TY_pointed (Get_TY(gs_tree_type(gs_tree_value(list)))));
+  arg_ty_idx = Get_TY(gs_tree_type(gs_tree_value(list)));
+  arg_mtype  = TY_mtype (arg_ty_idx);
+  arg_wn     = WGEN_Expand_Expr (gs_tree_value (list));
+  arg_wn     = WN_CreateParm (arg_mtype, arg_wn, arg_ty_idx, WN_PARM_BY_VALUE);
+  ikids [0]  = arg_wn;
+  list       = gs_tree_chain (list);
+  arg_ty_idx = Get_TY(gs_tree_type(gs_tree_value(list)));
+  arg_mtype  = TY_mtype (arg_ty_idx);
+  arg_wn     = WGEN_Expand_Expr (gs_tree_value (list));
+  arg_wn     = WN_CreateParm (arg_mtype, arg_wn, arg_ty_idx, WN_PARM_BY_VALUE);
+  ikids [1]  = arg_wn;
+  list       = gs_tree_chain (list);
+
+  Is_True( (obj_mtype == MTYPE_I4 || obj_mtype == MTYPE_U4 ||
+            obj_mtype == MTYPE_I8 || obj_mtype == MTYPE_U8), 
+           ("Unsupported object type in emit_builtin_sync_fetch_op") );
+
+  emit_barrier (TRUE, list, k);
+  
+  opc = OPCODE_make_op(OPR_INTRINSIC_CALL, obj_mtype, MTYPE_V);
+  wn = WN_Create_Intrinsic (opc, iopc, 2, ikids);
+  WGEN_Stmt_Append (wn, Get_Srcpos());
+
+  ST       *preg_st = MTYPE_To_PREG(obj_mtype);
+  TY_IDX    preg_ty_idx = Be_Type_Tbl(obj_mtype);
+  PREG_NUM  preg = Create_Preg (obj_mtype, NULL);
+
+  wn = WN_Ldid (obj_mtype, -1, Return_Val_Preg, preg_ty_idx);
+  wn = WN_Stid (obj_mtype, preg, preg_st, preg_ty_idx, wn),
+  WGEN_Stmt_Append (wn, Get_Srcpos());
+
+  emit_barrier (FALSE, list, k);
+
+  wn = WN_Ldid (obj_mtype, preg, preg_st, preg_ty_idx);
+
+  return wn;
+} /* emit_builtin_sync_fetch_op */
+
 static void
 emit_builtin_synchronize (gs_t exp, INT32 k)
 {
@@ -2210,6 +2358,14 @@ WGEN_Address_Of(gs_t arg0)
         }
         else
           wn = WN_Lda (Pointer_Mtype, ST_ofst(st), st);
+
+#ifdef KEY
+      if (code0 == GS_FUNCTION_DECL) {
+	PU &pu = Pu_Table[ST_pu(st)];
+	if (PU_is_nested_func(pu))
+	  Set_PU_need_trampoline(pu);
+      }
+#endif
     }
     break;
 
@@ -2488,6 +2644,12 @@ WGEN_Address_Of(gs_t arg0)
     case GS_BASELINK: // bug 11167
       wn = WGEN_Address_Of (gs_baselink_functions (arg0));
       break;
+
+    case GS_CONST_DECL:  // bug 14204
+      st = WGEN_Generate_Temp_For_Initialized_Aggregate
+                                  (gs_decl_initial (arg0), "");
+      wn = WN_Lda (Pointer_Mtype, ST_ofst(st), st);
+      break;
 #endif
 
   default:
@@ -2523,7 +2685,7 @@ static WN *WGEN_x8664_va_arg(WN *ap_wn, BOOL isfloat, TY_IDX ty_idx, BOOL twice)
   WGEN_Stmt_Append (wn, Get_Srcpos ());
 
   ST *arg_temp_st = Gen_Temp_Symbol(Make_Pointer_Type(ty_idx), ".va_arg");
-#if 0 // wgen TODO
+#ifdef FE_GNU_4_2_0
   WGEN_add_pragma_to_enclosing_regions (WN_PRAGMA_LOCAL, arg_temp_st);
 #endif
   /* compute reg_save_area+gp_offset/fp_offset and store to arg_temp_st */
@@ -2600,7 +2762,7 @@ static WN *WGEN_x8664_va_arg_2_mixed(WN *ap_wn, BOOL isfloat0, BOOL isfloat1,
 
   /* allocate a temporary location to assemble the structure value */
   ST *struct_temp_st = Gen_Temp_Symbol(ty_idx, ".va_arg_struct");
-#if 0 // wgen TODO
+#ifdef FE_GNU_4_2_0
   WGEN_add_pragma_to_enclosing_regions (WN_PRAGMA_LOCAL, struct_temp_st);
 #endif
 
@@ -2642,7 +2804,7 @@ static WN *WGEN_x8664_va_arg_2_mixed(WN *ap_wn, BOOL isfloat0, BOOL isfloat1,
 
   /* put the address of struct_temp_st in arg_temp_st */
   ST *arg_temp_st = Gen_Temp_Symbol(Make_Pointer_Type(ty_idx), ".va_arg");
-#if 0 // wgen TODO
+#ifdef FE_GNU_4_2_0
   WGEN_add_pragma_to_enclosing_regions (WN_PRAGMA_LOCAL, arg_temp_st);
 #endif
   wn = WN_Lda(Pointer_Mtype, 0, struct_temp_st, 0);
@@ -2698,7 +2860,7 @@ static WN *WGEN_x8664_va_arg_2_float(WN *ap_wn, TY_IDX ty_idx)
 
   /* allocate a temporary location to assemble the structure value */
   ST *struct_temp_st = Gen_Temp_Symbol(ty_idx, ".va_arg_struct");
-#if 0 // wgen TODO
+#ifdef FE_GNU_4_2_0
   WGEN_add_pragma_to_enclosing_regions (WN_PRAGMA_LOCAL, struct_temp_st);
 #endif
 
@@ -2731,7 +2893,7 @@ static WN *WGEN_x8664_va_arg_2_float(WN *ap_wn, TY_IDX ty_idx)
 
   /* put the address of struct_temp_st in arg_temp_st */
   ST *arg_temp_st = Gen_Temp_Symbol(Make_Pointer_Type(ty_idx), ".va_arg");
-#if 0 // wgen TODO
+#ifdef FE_GNU_4_2_0
   WGEN_add_pragma_to_enclosing_regions (WN_PRAGMA_LOCAL, arg_temp_st);
 #endif
   wn = WN_Lda(Pointer_Mtype, 0, struct_temp_st, 0);
@@ -2875,17 +3037,26 @@ WGEN_target_builtins (gs_t exp, INTRINSIC * iopc, BOOL * intrinsic_op)
     case GSBI_IX86_BUILTIN_PADDB:
     case GSBI_IX86_BUILTIN_PADDW:
     case GSBI_IX86_BUILTIN_PADDD:
+    case GSBI_IX86_BUILTIN_PADDQ:
     case GSBI_IX86_BUILTIN_ADDPD:
+    case GSBI_IX86_BUILTIN_PADDB128:
+    case GSBI_IX86_BUILTIN_PADDQ128:
       wn = WN_Add (res_type, arg0, arg1);
       *intrinsic_op = FALSE;
       break;
     case GSBI_IX86_BUILTIN_PSUBB:
     case GSBI_IX86_BUILTIN_PSUBW:
     case GSBI_IX86_BUILTIN_PSUBD:
+    case GSBI_IX86_BUILTIN_PSUBQ:
     case GSBI_IX86_BUILTIN_SUBPD:
+    case GSBI_IX86_BUILTIN_PSUBB128:
+    case GSBI_IX86_BUILTIN_PSUBW128:
+    case GSBI_IX86_BUILTIN_PSUBD128:
+    case GSBI_IX86_BUILTIN_PSUBQ128:
       wn = WN_Sub (res_type, arg0, arg1);
       *intrinsic_op = FALSE;
       break;
+#if 0
     case GSBI_IX86_BUILTIN_PAND:
       if (MTYPE_is_mmx_vector(res_type))
 	goto unsupported;
@@ -2910,6 +3081,19 @@ WGEN_target_builtins (gs_t exp, INTRINSIC * iopc, BOOL * intrinsic_op)
       wn = WN_Bxor (res_type, arg0, arg1);
       *intrinsic_op = FALSE;
       break;
+#endif
+    case GSBI_IX86_BUILTIN_PSLLQ:
+      if (MTYPE_is_mmx_vector(res_type))
+	goto unsupported;
+      wn = WN_Shl (res_type, arg0, arg1);
+      *intrinsic_op = FALSE;
+      break;
+    case GSBI_IX86_BUILTIN_PSRLQ:
+      if (MTYPE_is_mmx_vector(res_type))
+	goto unsupported;
+      wn = WN_Lshr (res_type, arg0, arg1);
+      *intrinsic_op = FALSE;
+      break;
                                                                                 
     // Generate intrinsics to be expanded in CG expand
     case GSBI_IX86_BUILTIN_PADDSB:
@@ -2917,6 +3101,12 @@ WGEN_target_builtins (gs_t exp, INTRINSIC * iopc, BOOL * intrinsic_op)
       break;
     case GSBI_IX86_BUILTIN_PADDSW:
       *iopc = INTRN_PADDSW;
+      break;
+    case GSBI_IX86_BUILTIN_PADDD128:
+      *iopc = INTRN_PADDD128;
+      break;
+    case GSBI_IX86_BUILTIN_PADDW128:
+      *iopc = INTRN_PADDW128;
       break;
     case GSBI_IX86_BUILTIN_PSUBSB:
       *iopc = INTRN_PSUBSB;
@@ -2931,21 +3121,25 @@ WGEN_target_builtins (gs_t exp, INTRINSIC * iopc, BOOL * intrinsic_op)
       *iopc = INTRN_PADDUSW;
       break;
     case GSBI_IX86_BUILTIN_PSUBUSB:
+    case GSBI_IX86_BUILTIN_PSUBUSB128:
       *iopc = INTRN_PSUBUSB;
       break;
     case GSBI_IX86_BUILTIN_PSUBUSW:
+    case GSBI_IX86_BUILTIN_PSUBUSW128:
       *iopc = INTRN_PSUBUSW;
       break;
     case GSBI_IX86_BUILTIN_PMULLW:
       *iopc = INTRN_PMULLW;
       break;
     case GSBI_IX86_BUILTIN_PMULHW:
+    case GSBI_IX86_BUILTIN_PMULHW128:
       *iopc = INTRN_PMULHW;
       break;
     case GSBI_IX86_BUILTIN_PCMPEQB:
       *iopc = INTRN_PCMPEQB;
       break;
     case GSBI_IX86_BUILTIN_PCMPEQW:
+    case GSBI_IX86_BUILTIN_PCMPEQW128:
       *iopc = INTRN_PCMPEQW;
       break;
     case GSBI_IX86_BUILTIN_PCMPEQD:
@@ -2970,6 +3164,7 @@ WGEN_target_builtins (gs_t exp, INTRINSIC * iopc, BOOL * intrinsic_op)
       *iopc = INTRN_PUNPCKHDQ;
       break;
     case GSBI_IX86_BUILTIN_PUNPCKLBW:
+    case GSBI_IX86_BUILTIN_PUNPCKLBW128:
       *iopc = INTRN_PUNPCKLBW;
       break;
     case GSBI_IX86_BUILTIN_PUNPCKLWD:
@@ -2982,9 +3177,11 @@ WGEN_target_builtins (gs_t exp, INTRINSIC * iopc, BOOL * intrinsic_op)
       *iopc = INTRN_PACKSSWB;
       break;
     case GSBI_IX86_BUILTIN_PACKSSDW:
+    case GSBI_IX86_BUILTIN_PACKSSDW128:
       *iopc = INTRN_PACKSSDW;
       break;
     case GSBI_IX86_BUILTIN_PACKUSWB:
+    case GSBI_IX86_BUILTIN_PACKUSWB128:
       *iopc = INTRN_PACKUSWB;
       break;
     case GSBI_IX86_BUILTIN_PMULHUW:
@@ -3082,6 +3279,9 @@ WGEN_target_builtins (gs_t exp, INTRINSIC * iopc, BOOL * intrinsic_op)
 #endif
     case GSBI_IX86_BUILTIN_PMOVMSKB:
       *iopc = INTRN_PMOVMSKB;
+      break;
+    case GSBI_IX86_BUILTIN_PMOVMSKB128:
+      *iopc = INTRN_PMOVMSKB128;
       break;
     case GSBI_IX86_BUILTIN_ADDPS:
       *iopc = INTRN_ADDPS;
@@ -3193,6 +3393,9 @@ WGEN_target_builtins (gs_t exp, INTRINSIC * iopc, BOOL * intrinsic_op)
       break;
     case GSBI_IX86_BUILTIN_MOVSS:
       *iopc = INTRN_MOVSS;
+      break;
+    case GSBI_IX86_BUILTIN_MOVSD:
+      *iopc = INTRN_MOVSD;
       break;
     case GSBI_IX86_BUILTIN_MOVHLPS:
       *iopc = INTRN_MOVHLPS;
@@ -3416,7 +3619,312 @@ WGEN_target_builtins (gs_t exp, INTRINSIC * iopc, BOOL * intrinsic_op)
       *iopc = INTRN_STOREDQU;
       *intrinsic_op = FALSE;
       break;
-                                                                                
+    case GSBI_IX86_BUILTIN_VEC_INIT_V2SI:
+      *iopc = INTRN_VEC_INIT_V2SI;
+      break;
+    case GSBI_IX86_BUILTIN_VEC_EXT_V2SI:
+      *iopc = INTRN_VEC_EXT_V2SI;
+      break;
+    case GSBI_IX86_BUILTIN_VEC_EXT_V4SI:
+      *iopc = INTRN_VEC_EXT_V2SI;
+      break;
+    case GSBI_IX86_BUILTIN_VEC_EXT_V2DI:
+      *iopc = INTRN_VEC_EXT_V2SI;
+      break;
+    case GSBI_IX86_BUILTIN_VEC_EXT_V2DF:
+      wn = WN_Tas(MTYPE_F8, MTYPE_To_TY(MTYPE_V16F8), arg0);
+      *intrinsic_op = FALSE;
+      break;
+    case GSBI_IX86_BUILTIN_VEC_EXT_V4SF:
+      wn = WN_Tas(MTYPE_F4, MTYPE_To_TY(MTYPE_V16F4), arg0);
+      *intrinsic_op = FALSE;
+      break;
+    case GSBI_IX86_BUILTIN_PMADDWD:
+    case GSBI_IX86_BUILTIN_PMADDWD128:
+      *iopc = INTRN_PMADDWD;
+      break;
+    case GSBI_IX86_BUILTIN_PSLLW:
+      *iopc = INTRN_PSLLW_MMX;
+      break;
+    case GSBI_IX86_BUILTIN_PSLLD:
+      *iopc = INTRN_PSLLD_MMX;
+      break;
+    case GSBI_IX86_BUILTIN_PSRLW:
+      *iopc = INTRN_PSRLW_MMX;
+      break;
+    case GSBI_IX86_BUILTIN_PSRLD:
+      *iopc = INTRN_PSRLD_MMX;
+      break;
+    case GSBI_IX86_BUILTIN_PSRAW:
+      *iopc = INTRN_PSRAW_MMX;
+      break;
+    case GSBI_IX86_BUILTIN_PSRAD:
+      *iopc = INTRN_PSRAD_MMX;
+      break;
+    case GSBI_IX86_BUILTIN_PAND:
+      *iopc = INTRN_PAND_MMX;
+      break;
+    case GSBI_IX86_BUILTIN_PANDN:
+      *iopc = INTRN_PANDN_MMX;
+      break;
+    case GSBI_IX86_BUILTIN_PXOR:
+      *iopc = INTRN_PXOR_MMX;
+      break;
+    case GSBI_IX86_BUILTIN_POR:
+      *iopc = INTRN_POR_MMX;
+      break;
+    case GSBI_IX86_BUILTIN_VEC_INIT_V4HI: {
+      WN *arg[4];
+      gs_t t_node = t_list;
+      INT i;
+      for (i = 0; i < 4; i++, t_node = gs_tree_chain(t_node)) {
+	arg[i] = WGEN_Expand_Expr(gs_tree_value(t_node));
+	arg[i] = WN_CreateCvtl(OPC_U8CVTL, 16, arg[i]);
+      }
+      wn = arg[3];
+      for (i = 2; i >= 0; i--) {
+	wn = WN_Shl(MTYPE_U8, wn, WN_Intconst(MTYPE_U8, 16));
+	wn = WN_Bior(MTYPE_U8, wn, arg[i]);
+      }
+      *intrinsic_op = FALSE;
+      break;
+    }
+    case GSBI_IX86_BUILTIN_VEC_INIT_V8QI: {
+      WN *arg[8];
+      gs_t t_node = t_list;
+      INT i;
+      for (i = 0; i < 8; i++, t_node = gs_tree_chain(t_node)) {
+	arg[i] = WGEN_Expand_Expr(gs_tree_value(t_node));
+	arg[i] = WN_CreateCvtl(OPC_U8CVTL, 8, arg[i]);
+      }
+      wn = arg[7];
+      for (i = 6; i >= 0; i--) {
+	wn = WN_Shl(MTYPE_U8, wn, WN_Intconst(MTYPE_U8, 8));
+	wn = WN_Bior(MTYPE_U8, wn, arg[i]);
+      }
+      *intrinsic_op = FALSE;
+      break;
+    }
+    case GSBI_IX86_BUILTIN_COMIEQSS:
+    case GSBI_IX86_BUILTIN_UCOMIEQSS:
+      *iopc = INTRN_COMIEQSS;
+      break;
+    case GSBI_IX86_BUILTIN_COMILTSS:
+    case GSBI_IX86_BUILTIN_UCOMILTSS:
+      *iopc = INTRN_COMILTSS;
+      break;
+    case GSBI_IX86_BUILTIN_COMILESS:
+    case GSBI_IX86_BUILTIN_UCOMILESS:
+      *iopc = INTRN_COMILESS;
+      break;
+    case GSBI_IX86_BUILTIN_COMIGTSS:
+    case GSBI_IX86_BUILTIN_UCOMIGTSS:
+      *iopc = INTRN_COMIGTSS;
+      break;
+    case GSBI_IX86_BUILTIN_COMIGESS:
+    case GSBI_IX86_BUILTIN_UCOMIGESS:
+      *iopc = INTRN_COMIGESS;
+      break;
+    case GSBI_IX86_BUILTIN_COMINEQSS:
+    case GSBI_IX86_BUILTIN_UCOMINEQSS:
+      *iopc = INTRN_COMINEQSS;
+      break;
+    case GSBI_IX86_BUILTIN_COMIEQSD:
+    case GSBI_IX86_BUILTIN_UCOMIEQSD:
+      *iopc = INTRN_COMIEQSD;
+      break;
+    case GSBI_IX86_BUILTIN_COMILTSD:
+    case GSBI_IX86_BUILTIN_UCOMILTSD:
+      *iopc = INTRN_COMILTSD;
+      break;
+    case GSBI_IX86_BUILTIN_COMILESD:
+    case GSBI_IX86_BUILTIN_UCOMILESD:
+      *iopc = INTRN_COMILESD;
+      break;
+    case GSBI_IX86_BUILTIN_COMIGTSD:
+    case GSBI_IX86_BUILTIN_UCOMIGTSD:
+      *iopc = INTRN_COMIGTSD;
+      break;
+    case GSBI_IX86_BUILTIN_COMIGESD:
+    case GSBI_IX86_BUILTIN_UCOMIGESD:
+      *iopc = INTRN_COMIGESD;
+      break;
+    case GSBI_IX86_BUILTIN_COMINEQSD:
+    case GSBI_IX86_BUILTIN_UCOMINEQSD:
+      *iopc = INTRN_COMINEQSD;
+      break;
+    case GSBI_IX86_BUILTIN_CVTPI2PS:
+      *iopc = INTRN_CVTPI2PS;
+      break;
+    case GSBI_IX86_BUILTIN_CVTPS2PI:
+      *iopc = INTRN_CVTPS2PI;
+      break;
+    case GSBI_IX86_BUILTIN_CVTSI2SS:
+      *iopc = INTRN_CVTSI2SS;
+      break;
+    case GSBI_IX86_BUILTIN_CVTSI642SS:
+      *iopc = INTRN_CVTSI642SS;
+      break;
+    case GSBI_IX86_BUILTIN_CVTSS2SI:
+      *iopc = INTRN_CVTSS2SI;
+      break;
+    case GSBI_IX86_BUILTIN_CVTSS2SI64:
+      *iopc = INTRN_CVTSS2SI64;
+      break;
+    case GSBI_IX86_BUILTIN_CVTTPS2PI:
+      *iopc = INTRN_CVTTPS2PI;
+      break;
+    case GSBI_IX86_BUILTIN_CVTTSS2SI:
+      *iopc = INTRN_CVTTSS2SI;
+      break;
+    case GSBI_IX86_BUILTIN_CVTTSS2SI64:
+      *iopc = INTRN_CVTTSS2SI64;
+      break;
+    case GSBI_IX86_BUILTIN_CVTDQ2PD:
+      *iopc = INTRN_CVTDQ2PD;
+      break;
+    case GSBI_IX86_BUILTIN_CVTDQ2PS:
+      *iopc = INTRN_CVTDQ2PS;
+      break;
+    case GSBI_IX86_BUILTIN_CVTPD2DQ:
+      *iopc = INTRN_CVTPD2DQ;
+      break;
+    case GSBI_IX86_BUILTIN_CVTPD2PI:
+      *iopc = INTRN_CVTPD2PI;
+      break;
+    case GSBI_IX86_BUILTIN_CVTPD2PS:
+      *iopc = INTRN_CVTPD2PS;
+      break;
+    case GSBI_IX86_BUILTIN_CVTTPD2DQ:
+      *iopc = INTRN_CVTTPD2DQ;
+      break;
+    case GSBI_IX86_BUILTIN_CVTTPD2PI:
+      *iopc = INTRN_CVTTPD2PI;
+      break;
+    case GSBI_IX86_BUILTIN_CVTPI2PD:
+      *iopc = INTRN_CVTPI2PD;
+      break;
+    case GSBI_IX86_BUILTIN_CVTSI2SD:
+      *iopc = INTRN_CVTSI2SD;
+      break;
+    case GSBI_IX86_BUILTIN_CVTSI642SD:
+      *iopc = INTRN_CVTSI642SD;
+      break;
+    case GSBI_IX86_BUILTIN_CVTSD2SI:
+      *iopc = INTRN_CVTSD2SI;
+      break;
+    case GSBI_IX86_BUILTIN_CVTSD2SI64:
+      *iopc = INTRN_CVTSD2SI64;
+      break;
+    case GSBI_IX86_BUILTIN_CVTSD2SS:
+      *iopc = INTRN_CVTSD2SS;
+      break;
+    case GSBI_IX86_BUILTIN_CVTSS2SD:
+      *iopc = INTRN_CVTSS2SD;
+      break;
+    case GSBI_IX86_BUILTIN_CVTTSD2SI:
+      *iopc = INTRN_CVTTSD2SI;
+      break;
+    case GSBI_IX86_BUILTIN_CVTTSD2SI64:
+      *iopc = INTRN_CVTTSD2SI64;
+      break;
+    case GSBI_IX86_BUILTIN_CVTPS2DQ:
+      *iopc = INTRN_CVTPS2DQ;
+      break;
+    case GSBI_IX86_BUILTIN_CVTPS2PD:
+      *iopc = INTRN_CVTPS2PD;
+      break;
+    case GSBI_IX86_BUILTIN_CVTTPS2DQ:
+      *iopc = INTRN_CVTTPS2DQ;
+      break;
+    case GSBI_IX86_BUILTIN_LOADUPS:
+      *iopc = INTRN_LOADUPS;
+      break;
+    case GSBI_IX86_BUILTIN_STOREUPS:
+      *iopc = INTRN_STOREUPS;
+      *intrinsic_op = FALSE;
+      break;
+    case GSBI_IX86_BUILTIN_LOADUPD:
+      *iopc = INTRN_LOADUPD;
+      break;
+    case GSBI_IX86_BUILTIN_STOREUPD:
+      *iopc = INTRN_STOREUPD;
+      *intrinsic_op = FALSE;
+      break;
+    case GSBI_IX86_BUILTIN_LOADHPS:
+      *iopc = INTRN_LOADHPS;
+      break;
+    case GSBI_IX86_BUILTIN_STOREHPS:
+      *iopc = INTRN_STOREHPS;
+      *intrinsic_op = FALSE;
+      break;
+    case GSBI_IX86_BUILTIN_LOADLPS:
+      *iopc = INTRN_LOADLPS;
+      break;
+    case GSBI_IX86_BUILTIN_STORELPS:
+      *iopc = INTRN_STORELPS;
+      *intrinsic_op = FALSE;
+      break;
+    case GSBI_IX86_BUILTIN_MOVMSKPS:
+      *iopc = INTRN_MOVMSKPS;
+      break;
+    case GSBI_IX86_BUILTIN_MOVMSKPD:
+      *iopc = INTRN_MOVMSKPD;
+      break;
+    case GSBI_IX86_BUILTIN_MASKMOVDQU:
+      *iopc = INTRN_MASKMOVDQU;
+      *intrinsic_op = FALSE;
+      break;
+    case GSBI_IX86_BUILTIN_MASKMOVQ:
+      *iopc = INTRN_MASKMOVQ;
+      *intrinsic_op = FALSE;
+      break;
+    case GSBI_IX86_BUILTIN_MOVNTPD:
+      *iopc = INTRN_MOVNTPD;
+      *intrinsic_op = FALSE;
+      break;
+    case GSBI_IX86_BUILTIN_MOVNTI:
+      *iopc = INTRN_MOVNTI;
+      *intrinsic_op = FALSE;
+      break;
+    case GSBI_IX86_BUILTIN_MOVNTQ:
+      *iopc = INTRN_MOVNTQ;
+      *intrinsic_op = FALSE;
+      break;
+    case GSBI_IX86_BUILTIN_STMXCSR:
+      *iopc = INTRN_STMXCSR;
+      *intrinsic_op = FALSE;
+      break;
+    case GSBI_IX86_BUILTIN_LDMXCSR:
+      *iopc = INTRN_LDMXCSR;
+      *intrinsic_op = FALSE;
+      break;
+    case GSBI_IX86_BUILTIN_PSHUFLW:
+      *iopc = INTRN_PSHUFLW;
+      break;
+    case GSBI_IX86_BUILTIN_PSHUFHW:
+      *iopc = INTRN_PSHUFHW;
+      break;
+    case GSBI_IX86_BUILTIN_MOVNTSS:
+      *iopc = INTRN_MOVNTSS;
+      *intrinsic_op = FALSE;
+      break;
+    case GSBI_IX86_BUILTIN_MOVNTSD:
+      *iopc = INTRN_MOVNTSD;
+      *intrinsic_op = FALSE;
+      break;
+    case GSBI_IX86_BUILTIN_EXTRQI:
+      *iopc = INTRN_EXTRQ;
+      break;
+    case GSBI_IX86_BUILTIN_EXTRQ:
+      *iopc = INTRN_EXTRQ;
+      break;
+    case GSBI_IX86_BUILTIN_INSERTQI:
+      *iopc = INTRN_INSERTQI;
+      break;
+    case GSBI_IX86_BUILTIN_INSERTQ:
+      *iopc = INTRN_INSERTQ;
+      break;
     default:
 unsupported:
       if (Opt_Level > 0)
@@ -3491,7 +3999,131 @@ gs_t first_in_compound_expr(gs_t node)
 
 #ifdef KEY
 extern BOOL processing_function_prototype;
-#endif
+
+#ifdef FE_GNU_4_2_0
+static inline BOOL
+expr_is_final_value (gs_t expr)
+{
+  if (expr == NULL /* TODO: || IS_EMPTY_STMT (expr)*/)
+    return FALSE;
+
+  switch (gs_tree_code (expr))
+  {
+    case GS_BIND_EXPR:
+    case GS_CLEANUP_POINT_EXPR:
+    case GS_TRY_FINALLY_EXPR:
+    case GS_TRY_CATCH_EXPR:
+    case GS_STATEMENT_LIST:
+    case GS_COMPOUND_EXPR:
+      return FALSE;
+    default:
+      return TRUE;
+  }
+}
+
+// Mimick voidify_wrapper_expr() to obtain any value from the statement.
+static WN *
+get_wrapper_value (gs_t stmt)
+{
+  Is_True (gs_tree_code(stmt) == GS_BIND_EXPR,
+           ("get_wrapper_value() only accepts BIND_EXPR"));
+
+  gs_t type = gs_tree_type (stmt);
+  gs_t temp = NULL;
+  if (type && gs_tree_code (type) != GS_VOID_TYPE)
+  {
+    gs_t p;
+
+    // Traverse and go deeper looking for a value.
+    for (p = stmt; p; )
+    {
+      switch (gs_tree_code (p))
+      {
+        case GS_BIND_EXPR:
+          if (expr_is_final_value (gs_bind_expr_body (p)))
+          {
+            temp = gs_build_decl (GS_VAR_DECL, type);
+            gs_t s = gs_build_2 (GS_TCC_EXPRESSION, GS_INIT_EXPR, temp,
+                            gs_bind_expr_body(p));
+            gs_set_operand(p, GS_BIND_EXPR_BODY, s);
+            goto out;
+          }
+          else
+            p = gs_bind_expr_body (p);
+          break;
+
+        case GS_CLEANUP_POINT_EXPR:
+        case GS_TRY_FINALLY_EXPR:
+        case GS_TRY_CATCH_EXPR:
+          if (expr_is_final_value (gs_tree_operand (p, 0)))
+          {
+            temp = gs_build_decl (GS_VAR_DECL, type);
+            gs_t s = gs_build_2 (GS_TCC_EXPRESSION, GS_INIT_EXPR, temp,
+                            gs_tree_operand(p, 0));
+            gs_set_tree_operand(p, 0, s);
+            goto out;
+          }
+          else
+            p = gs_tree_operand (p, 0);
+          break;
+
+        case GS_STATEMENT_LIST:
+        {
+	  gs_t stmt_list = gs_statement_list_elts(p);
+	  for (gs_t list = stmt_list; gs_code(list) != EMPTY; 
+	       list = gs_operand(list, 1))
+          {
+	    if (gs_code (gs_operand(list, 1)) == EMPTY /* last stmt ? */)
+            {
+              p = gs_operand(list, 0);
+              if (expr_is_final_value (p))
+              {
+                temp = gs_build_decl (GS_VAR_DECL, type);
+                p = gs_build_2 (GS_TCC_EXPRESSION, GS_INIT_EXPR, temp, p);
+                gs_set_operand(list, 0, p);
+                goto out;
+              }
+              break;
+            }
+          }
+        }
+        break;
+
+        case GS_COMPOUND_EXPR:
+        {
+          gs_t e = p;
+          for (; gs_tree_code (p) == GS_COMPOUND_EXPR; p = gs_tree_operand (p, 1))
+            e = p;
+          if (expr_is_final_value (p))
+          {
+            temp = gs_build_decl (GS_VAR_DECL, type);
+            p = gs_build_2 (GS_TCC_EXPRESSION, GS_INIT_EXPR, temp, p);
+            gs_set_tree_operand(e, 1, p);
+            goto out;
+          }
+        }
+        break;
+
+        default:
+          // expr_is_final_value() ensures we don't reach here.
+          Is_True (FALSE, ("get_wrapper_value() should not reach here"));
+      }
+    }
+
+    out:
+
+      if (!temp)
+        return NULL;
+
+      ST * s = Get_ST(temp);
+      TY_IDX ty_idx = ST_type(s);
+      return WN_Ldid(TY_mtype(ty_idx), 0, s, ty_idx);
+  }
+
+  return NULL;
+}
+#endif // FE_GNU_4_2_0
+#endif // KEY
 
 WN * 
 WGEN_Expand_Expr (gs_t exp,
@@ -3573,14 +4205,20 @@ WGEN_Expand_Expr (gs_t exp,
 
 	Register_Cleanup(exp); // KEY bug 11188
 	body = gs_bind_expr_body(exp);
+#ifdef FE_GNU_4_2_0
+	// Bugs 12698, 13979: Try to get the value of the bind_expr.
+	wn = get_wrapper_value(exp);
+#endif
 	if (gs_tree_code(body) != GS_STATEMENT_LIST)
 	  WGEN_Expand_Stmt(body); // only 1 statement
 	else {
 	  gs_t stmt_list = gs_statement_list_elts(body);
 	  gs_t list;
 	  for (list = stmt_list; gs_code(list) != EMPTY; 
-	       list = gs_operand(list, 1))
-	    WGEN_Expand_Stmt(gs_operand(list, 0));
+	       list = gs_operand(list, 1)) {
+	    gs_t stmt = gs_operand(list, 0);
+	    WGEN_Expand_Stmt(stmt);
+	  }
 	}
 	Unregister_Cleanup(); // KEY bug 11188
       }
@@ -3617,8 +4255,8 @@ WGEN_Expand_Expr (gs_t exp,
 	// be a reference, in which case use the referenced symbol instead
 	// of creating a new one.
 	if (gs_tree_code(opnd0) != GS_INDIRECT_REF &&
-            gs_tree_code(opnd0) != GS_COMPONENT_REF &&
-            gs_tree_code(opnd0) != GS_ARRAY_REF)
+	    gs_tree_code(opnd0) != GS_COMPONENT_REF &&
+	    gs_tree_code(opnd0) != GS_ARRAY_REF)
 #endif
 	{
 	st    = Get_ST (gs_tree_operand(exp, 0));
@@ -3688,7 +4326,11 @@ WGEN_Expand_Expr (gs_t exp,
 	  // WGEN_Expand_Expr to put the result in the area addressed by the
 	  // INDIRECT_REF.
 	  if (gs_tree_code(opnd0) == GS_INDIRECT_REF) {
-	    ST *st = Get_ST(gs_tree_operand(opnd0, 0));
+	    gs_t var = opnd0;
+	    if (gs_tree_code(gs_tree_operand(var, 0)) == GS_NON_LVALUE_EXPR ||
+	        gs_tree_code(gs_tree_operand(var, 0)) == GS_NOP_EXPR)
+	      var = gs_tree_operand(var, 0); // bugs 13261, 13474
+	    ST *st = Get_ST(gs_tree_operand(var, 0));
 	    WN *ldid_wn = WN_Ldid (Pointer_Mtype, 0, st, ST_type(st));
 	    WN *result_wn = WGEN_Expand_Expr (t, TRUE, 0, 0, 0, 0, FALSE, FALSE,
 					     ldid_wn);
@@ -4145,12 +4787,12 @@ WGEN_Expand_Expr (gs_t exp,
         wn = WN_Binary (OPR_COMPLEX, complex_mtype,
 			WN_Unary (OPR_REALPART, float_mtype, wn0),
 			WN_Unary (OPR_NEG, float_mtype,
-				  WN_Unary (OPR_IMAGPART, float_mtype, wn0)));
+				  WN_Unary (OPR_IMAGPART, float_mtype, WN_COPY_Tree(wn0))));
 #else
         wn = WN_Binary (OPR_COMPLEX, complex_mtype,
 			WN_Unary (OPR_REALPART, float_mtype, wn0),
 			WN_Unary (OPR_NEG, float_mtype,
-				  WN_Unary (OPR_REALPART, float_mtype, wn0)));
+				  WN_Unary (OPR_REALPART, float_mtype, WN_COPY_Tree(wn0))));
 #endif
       }
       break;
@@ -4168,6 +4810,11 @@ WGEN_Expand_Expr (gs_t exp,
 			       , FALSE, target_wn
 #endif
 			       );
+
+#ifdef KEY // bug 12548
+	if (!wn)
+	  break;
+#endif
 	if (mtyp == MTYPE_V) 
 	  break;
 	if (mtyp == MTYPE_M) 
@@ -4289,15 +4936,15 @@ WGEN_Expand_Expr (gs_t exp,
 	  TYPE_ID desc = TY_mtype(ty_idx);
 	  if (WN_operator(wn) == OPR_ILOAD) {
             wn = WN_CreateIload(OPR_ILOAD, rtype, desc,
-			        ofst + component_offset, ty_idx,
-			        Make_Pointer_Type (ty_idx, FALSE), WN_kid0(wn),
-			        field_id + DECL_FIELD_ID(arg1));
+			        WN_offset(wn) + ofst + component_offset, ty_idx,
+			        WN_load_addr_ty(wn), WN_kid0(wn),
+			        WN_field_id(wn)+field_id + DECL_FIELD_ID(arg1));
 	  } 
 	  else if (WN_operator(wn) == OPR_LDID) {
 	    WN_set_rtype(wn, rtype);
 	    WN_set_desc(wn, desc);
 	    WN_offset(wn) = WN_offset(wn)+ofst+component_offset;
-	    WN_set_field_id(wn, field_id + DECL_FIELD_ID(arg1));
+	    WN_set_field_id(wn, WN_field_id(wn)+field_id + DECL_FIELD_ID(arg1));
 	  } 
 	} 
 	// bug 6122
@@ -4376,6 +5023,11 @@ WGEN_Expand_Expr (gs_t exp,
 
 	Is_True(! is_bit_field || field_id <= MAX_FIELD_ID,
 		("WGEN_Expand_Expr: field id for bit-field exceeds limit"));
+
+#ifdef KEY // bug 12548
+	if (!wn0)
+	  break;
+#endif
 
         if (!WGEN_Keep_Zero_Length_Structs &&
             rtype == MTYPE_M              &&
@@ -4470,6 +5122,11 @@ WGEN_Expand_Expr (gs_t exp,
 	      else if (MTYPE_byte_size(WN_rtype(wn0) == 4))
 		wn = WN_Cvt(MTYPE_I4, mtyp, wn0);
 	      else wn = WN_Cvt(WN_rtype(wn0), mtyp, wn0);
+	    }
+	    // bug 14430: Generate a CVT with the same signedness.
+	    else if (MTYPE_signed(WN_rtype(wn0)) != MTYPE_signed(mtyp) &&
+	             MTYPE_bit_size(WN_rtype(wn0)) > MTYPE_bit_size(mtyp)) {
+	      wn = WN_Cvt(Mtype_TransferSign(mtyp, WN_rtype(wn0)), mtyp, wn0);
 	    }
 	    else
 #endif
@@ -4624,7 +5281,7 @@ WGEN_Expand_Expr (gs_t exp,
 	  ty_idx = Get_TY (gs_tree_type(exp));
 #endif
 	  st = Gen_Temp_Symbol (ty_idx, "__cleanup_point_expr");
-#if 0 // wgen TODO
+#ifdef FE_GNU_4_2_0
   	  WGEN_add_pragma_to_enclosing_regions (WN_PRAGMA_LOCAL, st);
 #endif
 	  TYPE_ID mtype = TY_mtype (ty_idx);
@@ -4681,7 +5338,7 @@ WGEN_Expand_Expr (gs_t exp,
 #ifdef KEY // Bug 11875
         if (code == GS_COMPLEX_EXPR && !MTYPE_float(WN_rtype(wn0))) {
 	  printf("%s does not support complex integer data types "
-		 "(a GNU extension)\n", lang_cplus ? "openCC" : "opencc");
+		 "(a GNU extension)\n", lang_cplus ? "pathCC" : "pathcc");
 	  exit(2);
 	}
 #endif
@@ -4797,6 +5454,8 @@ WGEN_Expand_Expr (gs_t exp,
     case GS_COND_EXPR:
       {
         TY_IDX ty_idx1, ty_idx2;
+        if (gs_tree_has_location(exp) == gs_true) // it would otherwise be -1
+          lineno = gs_expr_lineno(exp);
 	if (gs_tree_operand(exp, 1) != NULL &&
 	    gs_tree_type(gs_tree_operand(exp, 1)) != NULL)
 	  ty_idx1 = Get_TY (gs_tree_type(gs_tree_operand (exp, 1)));
@@ -4814,19 +5473,24 @@ WGEN_Expand_Expr (gs_t exp,
 	wn0 = WGEN_Expand_Expr_With_Sequence_Point (gs_tree_operand (exp, 0),
 						   Boolean_type);
 #endif
-	if (TY_mtype (ty_idx) == MTYPE_V) {
+
+        FmtAssert( (wn0 != NULL), ("Child 0 of IF can not be NULL!"));
+
+	if (TY_mtype (ty_idx)  == MTYPE_V ||
+            TY_mtype (ty_idx1) == MTYPE_V ||
+            TY_mtype (ty_idx2) == MTYPE_V) {
 	  // If ty_idx is MTYPE_V, no return value is needed
 	  // We convert it into if...then...else
 	  WN *then_block = WN_CreateBlock ();
 	  WN *else_block = WN_CreateBlock ();
 	  WN *if_stmt    = WN_CreateIf (wn0, then_block, else_block);
 #ifdef KEY
+	  SRCPOS if_stmt_srcpos = Get_Srcpos();
          // Bug 11937: Generate guard variables where necessary. (See
          // explanation below).
          //
          // We may need to generate initializations for guard variables,
          // so write out the IF statement at the end.
-
          // "then" statement
           WGEN_Stmt_Push (then_block, wgen_stmk_if_then, Get_Srcpos());
           WGEN_Guard_Var_Push();
@@ -4859,7 +5523,7 @@ WGEN_Expand_Expr (gs_t exp,
             }
           }
           // Generate IF statement.
-          WGEN_Stmt_Append (if_stmt, Get_Srcpos());
+          WGEN_Stmt_Append (if_stmt, if_stmt_srcpos);
 #else
 	  WGEN_Stmt_Append (if_stmt, Get_Srcpos());
 	  WGEN_Stmt_Push (then_block, wgen_stmk_if_then, Get_Srcpos());
@@ -4882,73 +5546,21 @@ WGEN_Expand_Expr (gs_t exp,
         }
 	else {
 #ifdef KEY
-
-	  FmtAssert(( TY_mtype(ty_idx1) != MTYPE_V || TY_mtype(ty_idx2) != MTYPE_V ),
-       	            ("GS_COND_EXPR: bad MTYPE for operand 0 and 1. Can not be MTYPE_V both."));
-		
 	  // Prepare a guard variable for each part of the conditional, in case
 	  // the conditional has a cleanup that is executed after the whole
 	  // conditional expression is evaluated.  The guard variable ensures
 	  // that a cleanup is executed only if its part of the conditional is
 	  // executed.
-
 	  WGEN_Guard_Var_Push();
-	  
-	  if (TY_mtype(ty_idx1) == MTYPE_V) {
-	    // The res of operand is MTYPE_V,
-	    // we generate a dummy return value 0.
-	    // usually, this return value should not be used.
-	    WN* comma_block = WN_CreateBlock ();
-	    WGEN_Stmt_Push (comma_block, wgen_stmk_comma, Get_Srcpos ());
-	    WN* null_wn = WGEN_Expand_Expr (gs_tree_operand (exp, 1), 
-			    FALSE, 0, 0, 0, 0, FALSE, FALSE, target_wn);
-	    Is_True( (null_wn == NULL), 
-		     ("GS_COND_EXPR: Should not return a WN for MTYPE_V."));
-	    WGEN_Stmt_Pop (wgen_stmk_comma);
-	    Is_True( (TY_mtype(ty_idx) != MTYPE_BS  &&
-		      TY_mtype(ty_idx) != MTYPE_STR), 
-                     ("GS_COND_EXPR: bad MTYPE for ty_idx"));
-	    
-	    // Create a temporary st for the dummy return value.
-	    TYPE_ID comma_ty = Widen_Mtype(TY_mtype(ty_idx));
-	    ST* dummy_st = Gen_Temp_Symbol(ty_idx, "_unused");
-	    Set_ST_is_not_used(dummy_st);
-	    WN* dummy_wn = WN_Ldid(comma_ty, 0, ST_st_idx(dummy_st), ty_idx, 0);
-	    wn1 = WN_CreateComma (OPR_COMMA, comma_ty, 
-			          MTYPE_V, comma_block, dummy_wn);
-	  }
-	  else {
-	    wn1 = WGEN_Expand_Expr_With_Sequence_Point (gs_tree_operand (exp, 1),
-						        TY_mtype (ty_idx),
-						        target_wn);
-	  }
+	  wn1 = WGEN_Expand_Expr_With_Sequence_Point (gs_tree_operand (exp, 1),
+						     TY_mtype (ty_idx),
+						     target_wn);
 	  gs_t guard_var1 = WGEN_Guard_Var_Pop();
+
 	  WGEN_Guard_Var_Push();
-
-	  if (TY_mtype(ty_idx2) == MTYPE_V) {
-	    WN* comma_block = WN_CreateBlock ();
-	    WGEN_Stmt_Push (comma_block, wgen_stmk_comma, Get_Srcpos ());
-	    WN* null_wn = WGEN_Expand_Expr (gs_tree_operand (exp, 2),
-			    FALSE, 0, 0, 0, 0, FALSE, FALSE, target_wn);
-	    Is_True( (null_wn == NULL),
-		     ("GS_COND_EXPR: Should not return a WN for MTYPE_V."));
-	    WGEN_Stmt_Pop (wgen_stmk_comma);
-	    Is_True( (TY_mtype(ty_idx) != MTYPE_BS  &&
-		      TY_mtype(ty_idx) != MTYPE_STR),
-		      ("GS_COND_EXPR: bad MTYPE for ty_idx"));
-
-	    TYPE_ID comma_ty = Widen_Mtype(TY_mtype(ty_idx)); 
-	    ST* dummy_st = Gen_Temp_Symbol(ty_idx, "_unused");
-	    Set_ST_is_not_used(dummy_st);
-	    WN* dummy_wn = WN_Ldid(comma_ty, 0, ST_st_idx(dummy_st), ty_idx, 0);
-	    wn2 = WN_CreateComma (OPR_COMMA, comma_ty, 
-			          MTYPE_V, comma_block, dummy_wn);
-	  }
-	  else {
-	    wn2 = WGEN_Expand_Expr_With_Sequence_Point (gs_tree_operand (exp, 2),
-						        TY_mtype (ty_idx),
-						        target_wn);
-          }
+	  wn2 = WGEN_Expand_Expr_With_Sequence_Point (gs_tree_operand (exp, 2),
+						     TY_mtype (ty_idx),
+						     target_wn);
 	  gs_t guard_var2 = WGEN_Guard_Var_Pop();
 
 	  // Add guard variables if they are needed.
@@ -5039,6 +5651,8 @@ WGEN_Expand_Expr (gs_t exp,
       // fall through
 #endif
     case GS_MODIFY_EXPR:
+      if (gs_tree_has_location(exp) == gs_true) // it would otherwise be -1
+        lineno = gs_expr_lineno(exp);
       /*
        * When operand 1 of an init_expr or modify_expr is a target_expr,
        * then the temporary in the target_expr needs to be replaced by
@@ -5135,6 +5749,24 @@ WGEN_Expand_Expr (gs_t exp,
        // by kg++fe to access through the fake arg0, in order to avoid
        // (indirect_ref (nop (var_decl))) which is generated by g++.
       {
+        // OSP
+        gs_t init_expr_opnd0 = gs_tree_operand(exp, 0);
+        if ( gs_tree_code(init_expr_opnd0) == GS_INDIRECT_REF ) {
+          gs_t init_expr_opnd1 = gs_tree_operand(exp, 1);
+          gs_t var_decl = gs_tree_operand(init_expr_opnd0, 0);
+          if ( gs_tree_code(var_decl) == GS_NON_LVALUE_EXPR )
+            var_decl = gs_tree_operand(var_decl, 0);
+          if ( ( gs_tree_code(init_expr_opnd1) == GS_TARGET_EXPR ||
+                 ( gs_tree_code(init_expr_opnd1) == GS_NOP_EXPR &&
+                   gs_tree_code(gs_tree_operand(init_expr_opnd1, 0)) == GS_TARGET_EXPR ) ) &&
+               gs_tree_code(var_decl) == GS_VAR_DECL ) {
+            ST *st = Get_ST(var_decl);
+            WN *target_wn = WN_Ldid(Pointer_Mtype, 0, st, ST_type(st));
+            wn = WGEN_Expand_Expr(init_expr_opnd1, TRUE, 0, 0, 0, 0, FALSE, FALSE, target_wn);
+            break;
+          }
+        }
+#if 0
 	gs_t init_expr_opnd0 = gs_tree_operand(exp, 0);
 	if (gs_tree_code(gs_tree_operand(exp, 1)) == GS_NOP_EXPR &&
 	    gs_tree_code(gs_tree_operand(gs_tree_operand(exp, 1), 0)) == GS_TARGET_EXPR &&
@@ -5146,6 +5778,7 @@ WGEN_Expand_Expr (gs_t exp,
 	  wn = WGEN_Expand_Expr(t, TRUE, 0, 0, 0, 0, FALSE, FALSE, target_wn);
 	  break;
 	}
+#endif
       }
 #endif
       if (lang_cplus)
@@ -5170,6 +5803,10 @@ WGEN_Expand_Expr (gs_t exp,
 	  // Only check for indirect_ref if the indirect_ref is created by
 	  // kg++fe to access through the fake arg0, in order to avoid
 	  // (indirect_ref (nop (var_decl))) which is generated by g++.
+	  //
+	  // The above is no longer true in kg++fe, now INDIRECT_REFs
+	  // generated by g++ are also handled. Note we may need the same
+	  // support here also.
 	  gs_t init_expr_opnd0 = gs_tree_operand(exp, 0);
 	  if (gs_tree_code(init_expr_opnd0) == GS_INDIRECT_REF &&
 	      gs_tree_code(gs_tree_operand(init_expr_opnd0, 0)) == GS_RESULT_DECL) {
@@ -5204,8 +5841,8 @@ WGEN_Expand_Expr (gs_t exp,
 	  // replacing opnd0 of the target_expr with opnd0 of this
 	  // INIT_EXPR/MODIFY_EXPR.
 	  else if (gs_tree_code(initializer = gs_tree_operand(t,1)) ==
-	              GS_AGGR_INIT_EXPR &&
-	           gs_aggr_init_via_ctor_p(initializer)) {
+	              GS_AGGR_INIT_EXPR /*&&
+	           gs_aggr_init_via_ctor_p(initializer)*/) {
 
 	    gs_set_tree_operand(t, 0, gs_tree_operand(exp,0));
 	    wn = WGEN_Expand_Expr(t);
@@ -5296,8 +5933,7 @@ WGEN_Expand_Expr (gs_t exp,
 	  TYPE_ID desc = TY_mtype(Get_TY(gs_tree_type(exp_opnd1)));
 	  wn1 = WGEN_Expand_Ptr_To_Member_Func_Call_Expr(exp_opnd1, 0,
 						       Widen_Mtype(desc), desc);
-        } 
-	else
+        } else
         {
           gs_t lhs = gs_tree_operand (exp, 0);
 	  if (gs_tree_code(lhs) == GS_INDIRECT_REF &&
@@ -5400,7 +6036,10 @@ WGEN_Expand_Expr (gs_t exp,
 	  else WN_set_operator(wn, OPR_ILDBITS);
 	  WN_set_bit_offset_size(wn, bofst, bsiz);
 #ifdef KEY
-	  WN_set_ty (wn, MTYPE_To_TY (WN_desc(wn)));
+	  TY_IDX ty = MTYPE_To_TY (WN_desc(wn));
+	  WN_set_ty (wn, ty);
+	  if (WN_operator(wn) == OPR_ILDBITS)
+	    WN_set_load_addr_ty(wn, Make_Pointer_Type(ty));  // Bug 12394
 	  break;
 #endif
 	}
@@ -5415,6 +6054,9 @@ WGEN_Expand_Expr (gs_t exp,
 	// does not hold any more.
 		WN_set_field_id (wn, 0);
 	  WN_set_ty (wn, ty);
+	  // bug 12394
+	  if (WN_operator(wn) == OPR_ILOAD || WN_operator(wn) == OPR_ILDBITS)
+	    WN_set_load_addr_ty(wn, Make_Pointer_Type(ty));
 	}
 #else
 	  WN_set_ty (wn, MTYPE_To_TY (WN_desc(wn)));
@@ -5608,13 +6250,6 @@ WGEN_Expand_Expr (gs_t exp,
 		  break;
 		}
 #endif
-		if ( arglist == NULL ||
-                      gs_tree_value (arglist) == NULL ||
-		      gs_tree_chain (arglist) == NULL ||
-		      gs_tree_value (gs_tree_chain (arglist)) == NULL ) {
-		  printf("error: too few arguments to function 'va_start'\n");
-		  Terminate(2);
-		}
 		arg1 = gs_tree_value (arglist);
 		arg2 = gs_tree_value (gs_tree_chain (arglist));
 		WN *arg_wn = WGEN_Expand_Expr (arg1);
@@ -5825,67 +6460,70 @@ WGEN_Expand_Expr (gs_t exp,
 
 #ifdef KEY
 	    case GSBI_BUILT_IN_FLOOR:
+#ifdef FE_GNU_4_2_0
+	    case GSBI_BUILT_IN_LFLOOR:
+#endif
+	    {
 	      arg_wn = WGEN_Expand_Expr (gs_tree_value (gs_tree_operand (exp, 1)));
-#ifdef TARG_IA64
-	      if (MTYPE_is_integral(ret_mtype)) {
-		  wn = WN_CreateExp1 (OPR_FLOOR, ret_mtype, MTYPE_F8, arg_wn);
-	      }
-	      else {
-                  wn0 = WN_CreateExp1 (OPR_FLOOR, MTYPE_I8  , MTYPE_F8, arg_wn);
-	          wn = WN_Cvt(WN_rtype(wn0), ret_mtype, wn0);
-	      }
+#if defined TARG_MIPS  // bug 12594: call library function for floor
+              iopc = INTRN_FLOOR;
+              intrinsic_op = TRUE;
 #else	      
 	      wn = WN_CreateExp1 (OPR_FLOOR, ret_mtype, MTYPE_F8, arg_wn);
+              whirl_generated = TRUE;
 #endif
-	      whirl_generated = TRUE;
 	      break;
+            }
 
 	    case GSBI_BUILT_IN_FLOORF:
-	      arg_wn = WGEN_Expand_Expr (gs_tree_value (gs_tree_operand (exp, 1)));
-#ifdef TARG_IA64
-              if (MTYPE_is_integral(ret_mtype)) {
-		  wn = WN_CreateExp1 (OPR_FLOOR, ret_mtype, MTYPE_F4, arg_wn);
-	      }
-	      else {
-	          wn0 = WN_CreateExp1 (OPR_FLOOR, MTYPE_I8  , MTYPE_F4, arg_wn);
-		  wn = WN_Cvt(WN_rtype(wn0), ret_mtype, wn0);
-	      }
-#else	      
-	      wn = WN_CreateExp1 (OPR_FLOOR, ret_mtype, MTYPE_F4, arg_wn);
+#ifdef FE_GNU_4_2_0
+	    case GSBI_BUILT_IN_LFLOORF:
 #endif
-	      whirl_generated = TRUE;
+	    {
+	      arg_wn = WGEN_Expand_Expr (gs_tree_value (gs_tree_operand (exp, 1)));
+#if defined TARG_MIPS  // bug 12594: call library function for floor
+              iopc = INTRN_FLOORF;
+              intrinsic_op = TRUE;
+#else
+	      
+	      wn = WN_CreateExp1 (OPR_FLOOR, ret_mtype, MTYPE_F4, arg_wn);
+              whirl_generated = TRUE;
+#endif
 	      break;
+            }
 
+#ifndef TARG_MIPS  // Bug 9071: MIPS needs quad emulation for floor operation
             case GSBI_BUILT_IN_FLOORL:
+#ifdef FE_GNU_4_2_0
+            case GSBI_BUILT_IN_LFLOORL:
+#endif
               arg_wn = WGEN_Expand_Expr (gs_tree_value (gs_tree_operand (exp, 1)));
 #ifdef TARG_IA64
-              if (MTYPE_is_integral(ret_mtype)) {
-		  wn = WN_CreateExp1 (OPR_FLOOR, ret_mtype, MTYPE_F10, arg_wn);
-	      }
-              else {
-		  wn0 = WN_CreateExp1 (OPR_FLOOR, MTYPE_I8, MTYPE_F10, arg_wn);
-		  wn = WN_Cvt(WN_rtype(wn0), ret_mtype, wn0);
-	      }
+	      wn = WN_CreateExp1 (OPR_FLOOR, ret_mtype, MTYPE_F10, arg_wn);
 #else	      
 	      wn = WN_CreateExp1 (OPR_FLOOR, ret_mtype, MTYPE_FQ, arg_wn);
 #endif
 	      whirl_generated = TRUE;
               break;
+#endif // !TARG_MIPS
 #endif
+
+	      case GSBI_BUILT_IN_SQRT:
+              case GSBI_BUILT_IN_SQRTF:
+#ifndef TARG_MIPS  // MIPS needs quad emulation for sqrt operation
+              case GSBI_BUILT_IN_SQRTL:
+#endif
+		if (! gs_flag_errno_math(program)) {
+		  arg_wn = WGEN_Expand_Expr (gs_tree_value (gs_tree_operand (exp, 1)));
+		  wn = WN_CreateExp1 (OPR_SQRT, ret_mtype, MTYPE_V, arg_wn);
+		}
+		else wn = WGEN_Expand_Math_Errno_Sqrt(exp, ty_idx, ret_mtype);
+		whirl_generated = TRUE;
+		break;
 
 #ifdef KEY
-	      case GSBI_BUILT_IN_SQRT:
-		if (gs_flag_errno_math(program)) {
-		  break;
-		}
-#else
-              case GSBI_BUILT_IN_FSQRT:
+	      case GSBI_BUILT_IN_SINF:
 #endif
-                arg_wn = WGEN_Expand_Expr (gs_tree_value (gs_tree_operand (exp, 1)));
-                wn = WN_CreateExp1 (OPR_SQRT, ret_mtype, MTYPE_V, arg_wn);
-                whirl_generated = TRUE;
-                break;
-
               case GSBI_BUILT_IN_SIN:
 		intrinsic_op = TRUE;
 #ifdef TARG_X8664
@@ -5910,6 +6548,9 @@ WGEN_Expand_Expr (gs_t exp,
                 break;
 
               case GSBI_BUILT_IN_COS:
+#ifdef KEY
+	      case GSBI_BUILT_IN_COSF:
+#endif
 		intrinsic_op = TRUE;
 #ifdef TARG_X8664
                 if (!Force_IEEE_Comparisons)
@@ -5933,7 +6574,62 @@ WGEN_Expand_Expr (gs_t exp,
                 break;
 
 #ifdef KEY
+              case GSBI_BUILT_IN_ACOS:
+              case GSBI_BUILT_IN_ACOSF:
+		if (ret_mtype == MTYPE_V) ret_mtype = MTYPE_F8;
+		if (! gs_flag_errno_math(program)) {  // Bug 14262
+		  if (ret_mtype == MTYPE_F4) iopc = INTRN_F4ACOS;
+		  else if (ret_mtype == MTYPE_F8) iopc = INTRN_F8ACOS;
+		  else Fail_FmtAssertion ("unexpected mtype for intrinsic 'acos'");
+		  intrinsic_op = TRUE;
+		}
+                break;
+
+              case GSBI_BUILT_IN_ASIN:
+              case GSBI_BUILT_IN_ASINF:
+		if (ret_mtype == MTYPE_V) ret_mtype = MTYPE_F8;
+		if (! gs_flag_errno_math(program)) {  // Bug 14262
+		  if (ret_mtype == MTYPE_F4) iopc = INTRN_F4ASIN;
+		  else if (ret_mtype == MTYPE_F8) iopc = INTRN_F8ASIN;
+		  else Fail_FmtAssertion ("unexpected mtype for intrinsic 'asin'");
+		  intrinsic_op = TRUE;
+		}
+                break;
+
+              case GSBI_BUILT_IN_ATAN:
+              case GSBI_BUILT_IN_ATANF:
+                 if (ret_mtype == MTYPE_V) ret_mtype = MTYPE_F8;
+                 if (ret_mtype == MTYPE_F4) iopc = INTRN_F4ATAN;
+                else if (ret_mtype == MTYPE_F8) iopc = INTRN_F8ATAN;
+                else Fail_FmtAssertion ("unexpected mtype for intrinsic 'log'");
+                intrinsic_op = TRUE;
+                break;
+
+              case GSBI_BUILT_IN_LOG10:
+              case GSBI_BUILT_IN_LOG10F:
+		if (ret_mtype == MTYPE_V) ret_mtype = MTYPE_F8;
+		if (! gs_flag_errno_math(program)) {  // Bug 14262
+		  if (ret_mtype == MTYPE_F4) iopc = INTRN_F4LOG10;
+		  else if (ret_mtype == MTYPE_F8) iopc = INTRN_F8LOG10;
+		  else Fail_FmtAssertion ("unexpected mtype for intrinsic 'log10'");
+		  intrinsic_op = TRUE;
+		}
+                break;
+
+              case GSBI_BUILT_IN_LOG:
+              case GSBI_BUILT_IN_LOGF:
+		if (ret_mtype == MTYPE_V) ret_mtype = MTYPE_F8;
+
+		if (! gs_flag_errno_math(program)) {  // Bug 14262
+		  if (ret_mtype == MTYPE_F4) iopc = INTRN_F4LOG;
+		  else if (ret_mtype == MTYPE_F8) iopc = INTRN_F8LOG;
+		  else Fail_FmtAssertion ("unexpected mtype for intrinsic 'log'");
+		  intrinsic_op = TRUE;
+		}
+                break;
+
               case GSBI_BUILT_IN_EXP:
+              case GSBI_BUILT_IN_EXPF:
 		// bug 3390
 		// If return type is void, generate an intrinsic assuming
 		// double (so if it is without side-effects, optimizer can 
@@ -5957,17 +6653,17 @@ WGEN_Expand_Expr (gs_t exp,
                 // exp[lf]?(3)'s are), we only permit ret_mtype MTYPE_F8 here.
 
                 if (ret_mtype == MTYPE_V) ret_mtype = MTYPE_F8;
-
-	        FmtAssert(ret_mtype == MTYPE_F8, 
-			  ("unexpected mtype for intrinsic 'pow'"));
-		iopc = INTRN_F8EXPEXPR;
-		intrinsic_op = TRUE;
+		if (! gs_flag_errno_math(program)) {  // Bug 14262
+		  FmtAssert(ret_mtype == MTYPE_F8,
+			    ("unexpected mtype for intrinsic 'pow'"));
+		  iopc = INTRN_F8EXPEXPR;
+		  intrinsic_op = TRUE;
+		}
 		break;
 
 	      case GSBI_BUILT_IN_POWI: // bug 10963
 		if (ret_mtype == MTYPE_V) ret_mtype = MTYPE_F8;
-
-		FmtAssert(ret_mtype == MTYPE_F8, 
+		FmtAssert(ret_mtype == MTYPE_F8,
 			  ("unexpected mtype for intrinsic 'powi'"));
 		iopc = INTRN_F8F8I4EXPEXPR;
 		intrinsic_op = TRUE;
@@ -5975,8 +6671,7 @@ WGEN_Expand_Expr (gs_t exp,
 
 	      case GSBI_BUILT_IN_POWIF: // bug 11246
 		if (ret_mtype == MTYPE_V) ret_mtype = MTYPE_F4;
-
-		FmtAssert(ret_mtype == MTYPE_F4, 
+		FmtAssert(ret_mtype == MTYPE_F4,
 			  ("unexpected mtype for intrinsic 'powif'"));
 		intrinsic_op = TRUE;
 		iopc = INTRN_F4F4I4EXPEXPR;
@@ -5990,12 +6685,12 @@ WGEN_Expand_Expr (gs_t exp,
                           ("unexpected mtype for intrinsic 'powil'"));
 #else		
 		if (ret_mtype == MTYPE_V) ret_mtype = MTYPE_FQ;
-
-		FmtAssert(ret_mtype == MTYPE_FQ, 
+		FmtAssert(ret_mtype == MTYPE_FQ,
 			  ("unexpected mtype for intrinsic 'powil'"));
 #endif
 		iopc = INTRN_FQFQI4EXPEXPR;
 		intrinsic_op = TRUE;
+		iopc = INTRN_FQFQI4EXPEXPR;
 		break;
 #endif // KEY
 
@@ -6043,9 +6738,37 @@ WGEN_Expand_Expr (gs_t exp,
                 wn = emit_builtin_compare_and_swap (exp, num_args-3);
                 whirl_generated = TRUE;
                 break;
+#endif
 
-              case BUILT_IN_SYNCHRONIZE:
+#ifdef FE_GNU_4_2_0
+	      // OSP
+              case GSBI_BUILT_IN_FETCH_AND_ADD_4:
+                wn = emit_builtin_sync_fetch_op (INTRN_FETCH_AND_ADD_I4, exp, num_args-2);
+                whirl_generated = TRUE;
+                break;
+              case GSBI_BUILT_IN_FETCH_AND_ADD_8:
+                wn = emit_builtin_sync_fetch_op (INTRN_FETCH_AND_ADD_I8, exp, num_args-2);
+                whirl_generated = TRUE;
+                break;
+
+              case GSBI_BUILT_IN_ADD_AND_FETCH_4:
+                wn = emit_builtin_sync_fetch_op (INTRN_ADD_AND_FETCH_I4, exp, num_args-2);
+                whirl_generated = TRUE;
+                break;
+              case GSBI_BUILT_IN_ADD_AND_FETCH_8:
+                wn = emit_builtin_sync_fetch_op (INTRN_ADD_AND_FETCH_I8, exp, num_args-2);
+                whirl_generated = TRUE;
+                break;
+#endif
+
+#ifdef FE_GNU_4_2_0
+              case GSBI_BUILT_IN_SYNCHRONIZE:
                 emit_builtin_synchronize (exp, num_args);
+                whirl_generated = TRUE;
+                break;
+
+              case GSBI_BUILT_IN_GOMP_BARRIER:
+                WGEN_expand_barrier ();
                 whirl_generated = TRUE;
                 break;
 #endif
@@ -6078,7 +6801,7 @@ WGEN_Expand_Expr (gs_t exp,
               case GSBI_BUILT_IN_FRAME_ADDRESS:
 		Set_PU_has_alloca(Get_Current_PU());
 		iopc = MTYPE_byte_size(Pointer_Mtype) == 4 ?
-		   	 INTRN_U4READFRAMEPOINTER : INTRN_U4READFRAMEPOINTER;
+		   	 INTRN_U4READFRAMEPOINTER : INTRN_U8READFRAMEPOINTER;
 		intrinsic_op = TRUE;
 		break;
 	      case GSBI_BUILT_IN_APPLY_ARGS:
@@ -6127,7 +6850,7 @@ WGEN_Expand_Expr (gs_t exp,
 		  ST* alloca_st_0 = 
 		    Gen_Temp_Symbol (ty_idx, 
 				     "__builtin_apply_alloca0");
-#if 0 // wgen TODO
+#ifdef FE_GNU_4_2_0
 		  WGEN_add_pragma_to_enclosing_regions (WN_PRAGMA_LOCAL,
 						       alloca_st_0);
 #endif
@@ -6141,7 +6864,7 @@ WGEN_Expand_Expr (gs_t exp,
 		  ST *alloca_st_1 = 
 		    Gen_Temp_Symbol (ty_idx, 
 				     "__builtin_apply_alloca1");
-#if 0 // wgen TODO
+#ifdef FE_GNU_4_2_0
 		  WGEN_add_pragma_to_enclosing_regions (WN_PRAGMA_LOCAL,
 		  				       alloca_st_1);
 #endif
@@ -6249,6 +6972,7 @@ WGEN_Expand_Expr (gs_t exp,
 #ifdef KEY
 	        iopc = INTRN_EXPECT;
 	        intrinsic_op = TRUE;
+                if (ret_mtype == MTYPE_V) ret_mtype = MTYPE_I4; // bug 12344
 #else
 	        wn = WGEN_Expand_Expr (gs_tree_value (gs_tree_operand (exp, 1)));
 	        whirl_generated = TRUE;
@@ -6261,12 +6985,11 @@ WGEN_Expand_Expr (gs_t exp,
                 if (ret_mtype == MTYPE_V)
                   ret_mtype = MTYPE_I4;
                 break;
-
+#ifndef KEY
 	      case GSBI_BUILT_IN_CTYPE_B_LOC: 
 	        iopc = INTRN_CTYPE_B_LOC; 
 		intrinsic_op = TRUE; 
 		break;
-
 	      case GSBI_BUILT_IN_CTYPE_TOUPPER_LOC: 
 	        iopc = INTRN_CTYPE_TOUPPER_LOC; 
 		intrinsic_op = TRUE; 
@@ -6276,7 +6999,7 @@ WGEN_Expand_Expr (gs_t exp,
 	        iopc = INTRN_CTYPE_TOLOWER_LOC; 
 		intrinsic_op = TRUE; 
 		break;
-
+#endif
 	      case GSBI_BUILT_IN_EXTEND_POINTER:
 		wn = WGEN_Expand_Expr (gs_tree_value (gs_tree_operand (exp, 1)));
 		whirl_generated = TRUE;
@@ -6295,7 +7018,24 @@ WGEN_Expand_Expr (gs_t exp,
 	        iopc = INTRN_PARITY;
 		intrinsic_op = TRUE;
 		break;
-	
+
+#ifdef TARG_MIPS
+	      case GSBI_BUILT_IN_CLZ:
+	      case GSBI_BUILT_IN_CLZL:
+	      case GSBI_BUILT_IN_CLZLL:
+		// For MIPS, Always inline-expand CLZ
+		iopc = INTRN_CLZ32;
+		intrinsic_op = TRUE;
+		break;
+
+	      case GSBI_BUILT_IN_CTZ:
+	      case GSBI_BUILT_IN_CTZL:
+	      case GSBI_BUILT_IN_CTZLL:
+		// For MIPS, Always inline-expand CTZ
+		iopc = INTRN_CTZ;
+		intrinsic_op = TRUE;
+		break;
+#else	
 	      case GSBI_BUILT_IN_CLZ:
 		// INTRN_CLZ32 is inline-expanded
 	        iopc = INTRN_CLZ32; 
@@ -6322,7 +7062,7 @@ WGEN_Expand_Expr (gs_t exp,
 	        iopc = TARGET_64BIT ? INTRN_CTZ : INTRN_CTZ64;
 		intrinsic_op = TRUE;
 		break;
-
+#endif
 	      case GSBI_BUILT_IN_TRAP:
 		call_wn = WN_Create (OPR_CALL, MTYPE_V, MTYPE_V, 0);
 		st = Get_ST (gs_tree_operand (arg0, 0));
@@ -6362,7 +7102,7 @@ WGEN_Expand_Expr (gs_t exp,
 #endif
 
 #ifdef TARG_X8664
-              case GSBI_BUILT_IN_COSF:
+//            case GSBI_BUILT_IN_COSF:
               case GSBI_BUILT_IN_COSL:
                 if (!Force_IEEE_Comparisons)
                 {
@@ -6377,7 +7117,7 @@ WGEN_Expand_Expr (gs_t exp,
                 }
                 break;
                                                                                 
-              case GSBI_BUILT_IN_SINF:
+//            case GSBI_BUILT_IN_SINF:
               case GSBI_BUILT_IN_SINL:
                 if (!Force_IEEE_Comparisons)
                 {
@@ -6395,6 +7135,15 @@ WGEN_Expand_Expr (gs_t exp,
 
 #ifdef KEY
               case GSBI_BUILT_IN_TAN:
+              case GSBI_BUILT_IN_TANF:
+
+                if (ret_mtype == MTYPE_V) ret_mtype = MTYPE_F8;
+                if (ret_mtype == MTYPE_F4) iopc = INTRN_F4TAN;
+                else if (ret_mtype == MTYPE_F8) iopc = INTRN_F8TAN;
+                else Fail_FmtAssertion ("unexpected mtype for intrinsic 'tan'");
+                intrinsic_op = TRUE;
+                break;
+/*
                 // return type should only be F8 for tan
                 if (ret_mtype == MTYPE_F8)
                 {
@@ -6402,6 +7151,69 @@ WGEN_Expand_Expr (gs_t exp,
                   intrinsic_op = TRUE;
                 }
                 break;
+*/
+#ifdef FE_GNU_4_2_0
+              // add
+              case GSBI_BUILT_IN_FETCH_AND_ADD_1:
+              case GSBI_BUILT_IN_FETCH_AND_ADD_2:
+                iopc = INTRN_FETCH_AND_ADD_I4;
+                break;
+
+              // sub
+              case GSBI_BUILT_IN_FETCH_AND_SUB_1:
+              case GSBI_BUILT_IN_FETCH_AND_SUB_2:
+              case GSBI_BUILT_IN_FETCH_AND_SUB_4:
+                iopc = INTRN_FETCH_AND_SUB_I4;
+                break;
+
+              case GSBI_BUILT_IN_FETCH_AND_SUB_8:
+                iopc = INTRN_FETCH_AND_SUB_I8;
+                break;
+
+              // or
+              case GSBI_BUILT_IN_FETCH_AND_OR_1:
+              case GSBI_BUILT_IN_FETCH_AND_OR_2:
+              case GSBI_BUILT_IN_FETCH_AND_OR_4:
+                iopc = INTRN_FETCH_AND_OR_I4;
+                break;
+
+              case GSBI_BUILT_IN_FETCH_AND_OR_8:
+                iopc = INTRN_FETCH_AND_OR_I8;
+                break;
+
+              // xor
+              case GSBI_BUILT_IN_FETCH_AND_XOR_1:
+              case GSBI_BUILT_IN_FETCH_AND_XOR_2:
+              case GSBI_BUILT_IN_FETCH_AND_XOR_4:
+                iopc = INTRN_FETCH_AND_XOR_I4;
+                break;
+
+              case GSBI_BUILT_IN_FETCH_AND_XOR_8:
+                iopc = INTRN_FETCH_AND_XOR_I8;
+                break;
+
+              // and
+              case GSBI_BUILT_IN_FETCH_AND_AND_1:
+              case GSBI_BUILT_IN_FETCH_AND_AND_2:
+              case GSBI_BUILT_IN_FETCH_AND_AND_4:
+                iopc = INTRN_FETCH_AND_AND_I4;
+                break;
+
+              case GSBI_BUILT_IN_FETCH_AND_AND_8:
+                iopc = INTRN_FETCH_AND_AND_I8;
+                break;
+
+              // compare_and_swap
+              case GSBI_BUILT_IN_VAL_COMPARE_AND_SWAP_1:
+              case GSBI_BUILT_IN_VAL_COMPARE_AND_SWAP_2:
+              case GSBI_BUILT_IN_VAL_COMPARE_AND_SWAP_4:
+                iopc = INTRN_COMPARE_AND_SWAP_I4;
+                break;
+
+              case GSBI_BUILT_IN_VAL_COMPARE_AND_SWAP_8:
+                iopc = INTRN_COMPARE_AND_SWAP_I8;
+                break;
+#endif // FE_GNU_4_2_0
 #endif
 
 	      default:
@@ -6471,6 +7283,23 @@ WGEN_Expand_Expr (gs_t exp,
 	  if (iopc) {
             call_wn = WN_Create (OPR_INTRINSIC_CALL, ret_mtype, MTYPE_V, num_args);
 	    WN_intrinsic (call_wn) = iopc;
+
+#ifdef TARG_X8664
+	    if (iopc == INTRN_STMXCSR) {
+    	      ST *tmp_st = Gen_Temp_Symbol(MTYPE_To_TY(MTYPE_I4), "__stmxcsr");
+	      arg_wn = WN_Lda(Pointer_Mtype, ST_ofst(tmp_st), tmp_st, 0);
+	      arg_wn = WN_CreateParm(Pointer_Mtype, arg_wn,
+				Make_Pointer_Type(MTYPE_To_TY(MTYPE_I4), FALSE),
+				WN_PARM_BY_VALUE);
+	      WN_kid (call_wn, 0) = arg_wn;
+	      WN_set_kid_count(call_wn, 1);
+	      wn0 = WN_CreateBlock ();
+	      WN_INSERT_BlockLast (wn0, call_wn);
+	      wn1 = WN_Ldid(MTYPE_I4, ST_ofst(tmp_st), tmp_st, MTYPE_To_TY(MTYPE_I4));
+	      wn  = WN_CreateComma(OPR_COMMA, MTYPE_I4, MTYPE_V, wn0, wn1);
+	      break;
+	    }
+#endif
 	  }
 	  else {
 	    num_handlers = Current_Handler_Count();
@@ -6501,22 +7330,24 @@ WGEN_Expand_Expr (gs_t exp,
           wn_kid0 = WGEN_Expand_Expr (gs_tree_operand (exp, 0));
           WN_kid(call_wn, num_args-1) = wn_kid0;
           WN_set_ty (call_wn, TY_pointed(Get_TY(gs_tree_type (gs_tree_operand (exp, 0)))));
+
           /* 
-             Check if the indirect call is a call to a virtual function
-             First, get the TY of the address and the field ID
+             Check if the indirect call is a call to a virtual function 
+             First, get the TY of the address and the field ID 
              1) For IA64, virtual function call is 
-                                              LDID object
-                 LDID object                ILOAD vptr field
-               ILOAD vptr field    or     ADD offset
-             ICALL                      ICALL
-             2) For X86, virtual function call is
-                   LDID object
-                 ILOAD vptr field
-               ILOAD offset
-             ICALL
-          */
-          kid_ty_idx = kid_field_id = 0;
-#ifdef TARG_IA64
+                     LDID object 
+                   LDID object              ILOAD vptr field 
+                 ILOAD vptr field   or    ADD offset 
+               ICALL                    ICALL 
+             2) For X86, virtual function call is 
+                     LDID object 
+                   ILOAD vptr field 
+                 ILOAD offset 
+               ICALL 
+          */ 
+          kid_ty_idx = kid_field_id = 0; 
+#ifdef TARG_IA64 
+
           switch (WN_operator(wn_kid0)) {
               case OPR_ILOAD :
                   // if offset == 0, ILOAD the vptr directly
@@ -6532,16 +7363,17 @@ WGEN_Expand_Expr (gs_t exp,
                   }
                   break;
           }
-#endif
-#ifdef TARG_X8664
-          if (WN_operator(wn_kid0) == OPR_ILOAD) {
-              WN *wn_kid0_kid0 = WN_kid0(wn_kid0);
-              if (WN_operator(wn_kid0_kid0) == OPR_ILOAD) {
-                  kid_ty_idx = WN_ty(wn_kid0_kid0);
-                  kid_field_id = WN_field_id(wn_kid0_kid0);
-              }
-          }
-#endif
+#endif 
+#ifdef TARG_X8664 
+          if (WN_operator(wn_kid0) == OPR_ILOAD) { 
+              WN *wn_kid0_kid0 = WN_kid0(wn_kid0); 
+              if (WN_operator(wn_kid0_kid0) == OPR_ILOAD) { 
+                  kid_ty_idx = WN_ty(wn_kid0_kid0); 
+                  kid_field_id = WN_field_id(wn_kid0_kid0); 
+              } 
+          } 
+#endif 
+
           if (kid_ty_idx > 0 && kid_field_id > 0) {
               // If the TY and the field ID of the address are found,
               // then check if the field of the TY is a virtual pointer
@@ -6559,6 +7391,11 @@ WGEN_Expand_Expr (gs_t exp,
           gs_t func = gs_tree_operand (arg0, 0);
           if (gs_decl_inline (func)) {
             wgen_invoke_inliner = TRUE;
+          }
+          PU& pu_ent = Pu_Table[ST_pu(st)];
+          // this_volatile flag in gcc means that the function will not return
+          if (gs_tree_this_volatile(func)) {
+            Set_PU_has_attr_noreturn (pu_ent);
           }
         }
 
@@ -6628,6 +7465,7 @@ WGEN_Expand_Expr (gs_t exp,
 	    if (WN_operator(arg_wn) == OPR_LDA) {
 	      ST *st = WN_st(arg_wn);
 	      Set_ST_addr_passed(*st);
+	      Set_ST_addr_saved(*st);
 	    }
 #endif // KEY
 	  }
@@ -6725,7 +7563,7 @@ WGEN_Expand_Expr (gs_t exp,
 		  st ? Index_To_Str(Save_Str2(".Mreturn.",
 					      ST_name(ST_st_idx(st))))
 		     : ".Mreturn.");
-#if 0 // wgen TODO
+#ifdef FE_GNU_4_2_0
 	    WGEN_add_pragma_to_enclosing_regions (WN_PRAGMA_LOCAL, ret_st);
 #endif
 
@@ -7018,11 +7856,15 @@ WGEN_Expand_Expr (gs_t exp,
         /* Compute the rounded size of the type.  */
 	align = TARGET_64BIT ? 8 : 4;
 	rounded_size = ((TY_size(Get_TY(type)) + align - 1) / align) * align;
+#ifdef TARG_MIPS // bug 12916: further align to double-word boundary
+	rounded_size = ((rounded_size + 7) / 8) * 8;
+#endif
 
 	/* Get AP.  */
 	WN *ap_load = WGEN_Expand_Expr (gs_tree_operand (exp, 0));
         TY_IDX     ap_ty_idx = Get_TY (gs_tree_type (gs_tree_operand (exp, 0)));
         WN        *ap_addr;
+	TY_IDX	   ap_addr_ty;
         ST        *ap_st;
         WN_OFFSET  ap_offset;
 
@@ -7035,6 +7877,7 @@ WGEN_Expand_Expr (gs_t exp,
           ap_st     = NULL;
           ap_offset = WN_offset (ap_load);
           ap_addr   = WN_COPY_Tree (WN_kid0 (ap_load));
+	  ap_addr_ty = WN_load_addr_ty(ap_load);
           if (WN_has_side_effects (ap_addr))
             Fail_FmtAssertion ("VA_ARG_EXPR: ap address has side effects");
         }
@@ -7070,7 +7913,7 @@ WGEN_Expand_Expr (gs_t exp,
 	  adj = gs_n(gs_tree_int_cst_low(gs_type_size(type))) / BITS_PER_UNIT;
 	  if (rounded_size > align)
 	    adj = rounded_size;
-	  wn = WN_Binary (OPR_ADD, Pointer_Mtype, wn,
+	  wn = WN_Binary (OPR_ADD, Pointer_Mtype, WN_COPY_Tree (ap_load),
 			  WN_Intconst (Pointer_Mtype, 3));
 	  wn = WN_Binary (OPR_BAND, Pointer_Mtype, wn,
 			  WN_Intconst (Pointer_Mtype, -8));
@@ -7079,15 +7922,28 @@ WGEN_Expand_Expr (gs_t exp,
 	} else
 
 	/* Compute new value for AP.  */
-	wn = WN_Binary (OPR_ADD, Pointer_Mtype, wn,
+	wn = WN_Binary (OPR_ADD, Pointer_Mtype, WN_COPY_Tree (ap_load),
 			WN_Intconst (Pointer_Mtype, rounded_size));
+#ifdef TARG_X8664 // bug 12118: pad since under -m32, vector types are 8-byte aligned
+	if (MTYPE_is_vector(mtype) && ! TARGET_64BIT) {
+	  wn = WN_Add(Pointer_Mtype, wn, WN_Intconst(Pointer_Mtype, 7));
+	  wn = WN_Div(Pointer_Mtype, wn, WN_Intconst(Pointer_Mtype, 8));
+	  wn = WN_Mpy(Pointer_Mtype, wn, WN_Intconst(Pointer_Mtype, 8));
+	}
 #endif
-
+#ifdef TARG_MIPS // bug 12945: pad since long doubles are 16-byte aligned
+	if (mtype == MTYPE_FQ) {
+	  wn = WN_Add(Pointer_Mtype, wn, WN_Intconst(Pointer_Mtype, 15));
+	  wn = WN_Div(Pointer_Mtype, wn, WN_Intconst(Pointer_Mtype, 16));
+	  wn = WN_Mpy(Pointer_Mtype, wn, WN_Intconst(Pointer_Mtype, 16));
+	}
+#endif
+#endif
 	if (ap_st)
 	  wn = WN_Stid (Pointer_Mtype, ap_offset, ap_st, ap_ty_idx, wn);
         else {
           wn = WN_CreateIstore (OPR_ISTORE, MTYPE_V, Pointer_Mtype, ap_offset,
-                                ap_ty_idx, wn, ap_addr, 0);
+                                ap_addr_ty, wn, ap_addr, 0);
         }
         WGEN_Stmt_Append (wn, Get_Srcpos ());
 #ifdef TARG_IA64
@@ -7104,10 +7960,13 @@ WGEN_Expand_Expr (gs_t exp,
 	if (Target_Byte_Sex != Host_Byte_Sex)
           wn = WN_CreateIload (OPR_ILOAD, Widen_Mtype (mtype), mtype, 
 			  ((MTYPE_size_min(mtype)==32)?4:0)-rounded_size, 
-			  ap_ty_idx, 
-			  Make_Pointer_Type (ap_ty_idx, FALSE),
+			  ty_idx, Make_Pointer_Type(ty_idx, FALSE), 
 			  ap_load);
+	else
 #endif
+        wn = WN_CreateIload (OPR_ILOAD, Widen_Mtype (mtype), mtype, -rounded_size,
+			     ty_idx, Make_Pointer_Type(ty_idx, FALSE), 
+			     ap_load);
       }
       break;
 
@@ -7151,13 +8010,16 @@ WGEN_Expand_Expr (gs_t exp,
     {
       if (key_exceptions)
       {
-	ST_IDX exc_ptr_st = TCON_uval (INITV_tc_val (INITO_val (Get_Current_PU().eh_info)));
+	ST_IDX exc_ptr_st = Get_exception_pointer_symbol ();
       	wn = WN_Ldid (Pointer_Mtype, 0, exc_ptr_st, Get_TY(gs_tree_type(exp)));
       }
       else
       {
-      	ST * preg_st = MTYPE_To_PREG(Pointer_Mtype);
-      	wn = WN_Ldid (Pointer_Mtype, 0, preg_st, Get_TY(gs_tree_type(exp)));
+        // bug 12500: dummy exc_ptr_expr
+        if (!Dummy_Exc_Ptr_Expr)
+          Dummy_Exc_Ptr_Expr = Gen_Temp_Symbol (Get_TY(gs_tree_type(exp)),
+                                                "__dummy_exc_ptr");
+      	wn = WN_Ldid (Pointer_Mtype, 0, Dummy_Exc_Ptr_Expr, Get_TY(gs_tree_type(exp)));
       }
     }
       break;
@@ -7229,10 +8091,15 @@ WGEN_Expand_Expr (gs_t exp,
 
     case GS_STATEMENT_LIST: {
 	gs_t stmt_list = gs_statement_list_elts(exp);
+#ifdef FE_GNU_4_2_0
+        for (int i=0; i < gs_length(stmt_list); i++)
+          WGEN_Expand_Stmt(gs_index(stmt_list, i), target_wn);
+#else
 	gs_t list;
 	for (list = stmt_list; gs_code(list) != EMPTY; 
 	     list = gs_operand(list, 1))
 	  WGEN_Expand_Stmt(gs_operand(list, 0), target_wn);
+#endif
       }
       break;
 
@@ -7243,6 +8110,23 @@ WGEN_Expand_Expr (gs_t exp,
     case GS_SWITCH_STMT:
       WGEN_Expand_Stmt(exp, target_wn);
       break;
+
+#ifdef FE_GNU_4_2_0
+    case GS_SWITCH_EXPR:
+    case GS_CASE_LABEL_EXPR:
+
+    // OpenMP TREE nodes
+    case GS_OMP_ATOMIC:
+    case GS_OMP_CRITICAL:
+    case GS_OMP_FOR:
+    case GS_OMP_MASTER:
+    case GS_OMP_ORDERED:
+    case GS_OMP_PARALLEL:
+    case GS_OMP_SECTIONS:
+    case GS_OMP_SINGLE:
+      WGEN_Expand_Stmt(exp);
+      break;
+#endif
 
     case GS_BREAK_STMT:
     case GS_CONTINUE_STMT:
@@ -7267,10 +8151,14 @@ WGEN_Expand_Expr (gs_t exp,
 	  WN_set_rtype(wn, mtyp);
 	  WN_set_desc(wn, mtyp);
 	}
-	else if (! (MTYPE_is_vector(mtyp) && MTYPE_is_vector(WN_rtype(wn)))) {
-	  // bug 11797: TAS between vector types not needed
-	  wn = WN_Tas(mtyp, MTYPE_To_TY(mtyp), wn);
+#ifdef TARG_X8664
+	else if (MTYPE_is_vector(mtyp) && MTYPE_is_vector(WN_rtype(wn)) &&
+		 MTYPE_is_mmx_vector(mtyp) == MTYPE_is_mmx_vector(WN_rtype(wn))) {
+	  // bug 11797: CVT between vector types not needed
 	}
+#endif
+	else
+	  wn = WN_Cvt(WN_rtype(wn), mtyp, wn);
       }
       break;
 

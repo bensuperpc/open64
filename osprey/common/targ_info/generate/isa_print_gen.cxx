@@ -1,5 +1,9 @@
 /*
- * Copyright 2004 PathScale, Inc.  All Rights Reserved.
+ *  Copyright (C) 2007 PathScale, LLC.  All Rights Reserved.
+ */
+
+/*
+ * Copyright 2004, 2005, 2006 PathScale, Inc.  All Rights Reserved.
  */
 
 /*
@@ -60,18 +64,29 @@
 #include "targ_isa_properties.h"
 #include "gen_util.h"
 #include "isa_print_gen.h"
+#include "targ_isa_operands.h"
 
 /* The maximum number of operands and results used by ANY target.
  * (It would be better to get the max operands and results from the
  * generated targ_isa_operands.h file -- Ken)
  */
-#define MAX_OPNDS 6
-#define MAX_RESULTS 2
+#ifdef TARG_SL
+#define MAX_OPNDS 9
+#define MAX_RESULTS 4
+#else
+#define MAX_OPNDS ISA_OPERAND_max_operands
+#define MAX_RESULTS ISA_OPERAND_max_results
+#endif
 
 typedef enum {
 	END	= 0,			// end of list marker
 	NAME	= 1,			// instruction name/mnemonic
+#ifdef TARG_X8664
+   	SEGMENT = 2,			// address segment prefix
+	OPND    = 3,			// OPND+n => operand n
+#else
 	OPND    = 2,			// OPND+n => operand n
+#endif
    	RESULT  = OPND+MAX_OPNDS,	// RESULT+n => result n
 } COMP_TYPE;
 
@@ -172,6 +187,10 @@ const char* Print_Name(int print_index)
 	comp_name[i] = "ISA_PRINT_COMP_end";
       } else if (i == NAME) {
 	comp_name[i] = "ISA_PRINT_COMP_name";
+#ifdef TARG_X8664
+      } else if (i == SEGMENT) {
+	comp_name[i] = "ISA_PRINT_COMP_segment";
+#endif
       } else if (i == OPND) {
 	comp_name[i] = "ISA_PRINT_COMP_opnd";
       } else if (i > OPND && i < (OPND + MAX_OPNDS)) {
@@ -374,12 +393,18 @@ void ISA_Print_End(void)
   fprintf(hfile, "\ntypedef enum {\n"
 	"  %-21s = %d,  /* %s */\n"
 	"  %-21s = %d,  /* %s */\n"
+#ifdef TARG_X8664
+	"  %-21s = %d,  /* %s */\n"
+#endif
 	"  %-21s = %d,  /* %s */\n"
    	"  %-21s = %d,  /* %s */\n"
    	"  %-21s = %d   /* %s */\n"
 	"} ISA_PRINT_COMP;\n",
 	Print_Name(END), END, "End of list marker",
 	Print_Name(NAME), NAME, "Instruction name",
+#ifdef TARG_X8664
+	Print_Name(SEGMENT), SEGMENT, "Address segment prefix",
+#endif
 	Print_Name(OPND), OPND, "OPND+n => operand n",
 	Print_Name(RESULT), RESULT, "RESULT+n => result n",
         "ISA_PRINT_COMP_MAX", MAX_LISTING_OPERANDS-1, "Last component");
@@ -516,3 +541,20 @@ void ISA_Print_End(void)
 
   Emit_Footer (hfile);
 }
+
+#ifdef TARG_X8664
+/////////////////////////////////////
+void Segment (void)
+/////////////////////////////////////
+//  See interface description.
+/////////////////////////////////////
+{
+  if (current_print_desc->args == MAX_LISTING_OPERANDS) {
+    fprintf(stderr, "### Error: too many listing operands for %s\n",
+		    current_print_desc->type->name);
+    exit(EXIT_FAILURE);
+  }
+  current_print_desc->arg[current_print_desc->args] = SEGMENT;
+  current_print_desc->args++;
+}
+#endif

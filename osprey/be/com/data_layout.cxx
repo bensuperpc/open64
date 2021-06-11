@@ -40,10 +40,10 @@
 /* ====================================================================
  * ====================================================================
  *
- * $Revision: 1.1.1.1 $
- * $Date: 2005/10/21 19:00:00 $
- * $Author: marcel $
- * $Source: /proj/osprey/CVS/open64/osprey1.0/be/com/data_layout.cxx,v $
+ * $Revision: 1.68 $
+ * $Date: 05/12/05 08:59:12-08:00 $
+ * $Author: bos@eng-24.pathscale.com $
+ * $Source: /scratch/mee/2.4-65/kpro64-pending/be/com/SCCS/s.data_layout.cxx $
  *
  * Revision history:
  *  11-Nov-94 - Original Version
@@ -60,8 +60,14 @@
 #endif /* USE_PCH */
 #pragma hdrstop
 #include <cmplrs/rcodes.h>
+#ifndef __MINGW32__
 #include <sys/resource.h>
+#endif /* __MINGW32__ */
+#if (__GNUC__==2)
+#include <slist>
+#else
 #include <ext/slist>
+#endif
 #include "defs.h"
 #include "erglob.h"
 #include "erbe.h"
@@ -87,9 +93,23 @@
 #include "config_opt.h"    // for CIS_Allowed
 
 extern void (*CG_Set_Is_Stack_Used_p)();
+extern INT (*Push_Pop_Int_Saved_Regs_p)(void);
 #endif
-
+#if defined(TARG_SL)
+#include <map>
+#include <vector>
+#include "fb_whirl.h"
+#endif
 extern void Early_Terminate (INT status);
+
+#ifdef TARG_MIPS
+#if defined(TARG_SL)
+static BOOL inline Is_Target_32bit (void) { return TRUE; }
+#else
+//static BOOL inline Is_Target_64bit (void) { return TRUE; }
+static BOOL inline Is_Target_32bit (void) { return FALSE; }
+#endif
+#endif // TARG_MIPS
 
 #define ST_force_gprel(s)	ST_gprel(s)
 
@@ -103,6 +123,9 @@ STACK_MODEL Current_PU_Stack_Model = SMODEL_UNDEF;
 #define ST_NAME(st)	(ST_class(st) == CLASS_CONST ? \
 	Targ_Print(NULL,STC_val(st)) : ST_name(st) )
 
+#define ST_NO_LINKAGE(st) \
+    (ST_export(st) == EXPORT_LOCAL ||   \
+     ST_export(st) == EXPORT_LOCAL_INTERNAL)
 static BOOL Frame_Has_Calls;	// whether stack frame has calls
 
 /* ====================================================================
@@ -133,7 +156,7 @@ typedef struct {
   SF_SEGMENT	seg;	/* Which segment */
   ST           *block;  /* Which ST block */
   mINT64	maxsize;/* Maximum allocated size */
-  char	       *name;	/* For tracing */
+  const char   *name;	/* For tracing */
 } SF_SEG_DESC;
 
 #define	SFSEG_seg(s)	((s)->seg)
@@ -560,7 +583,7 @@ Create_Local_Block( STACK_DIR dir, STR_IDX name )
 }
 
 static ST *
-Create_Base_Reg (char *name, STACK_DIR dir)
+Create_Base_Reg (const char *name, STACK_DIR dir)
 {
   ST *new_blk = Create_Local_Block(dir, Save_Str(name));
   Set_STB_root_base(new_blk);
@@ -927,6 +950,14 @@ static ST*
 Get_Section_ST(SECTION_IDX sec, UINT align, ST_SCLASS sclass)
 {
   if (SEC_block(sec) == NULL) {
+#if defined(TARG_X8664) || defined(TARG_SL)  // bug 9795
+    if (sec == _SEC_DATA && align != 0)
+      align = MAX(align, 16);
+#if defined(TARG_SL)
+    if (((sec == _SEC_SDATA) || (sec == _SEC_DATA)) && (align < 4))
+      align = 4;
+#endif
+#endif
     ST *new_blk = New_ST_Block (Save_Str(SEC_name(sec)), 
 	TRUE/*is_global*/, sclass, align, 0);
     Set_STB_section_idx(new_blk, sec);
@@ -968,18 +999,35 @@ Get_Section_ST_With_Given_Name (SECTION_IDX sec, ST_SCLASS sclass, STR_IDX name)
 			break;
 		}
 	}
+
 	if (newblk == NULL) {
-		// bug fix for OSP_129
-		// bug fix for OSP_254
-		// The gnu4 FE will put static variables in STL into .gnu.linkonce.d. or .gnu.linkonce.b
-		// If the section name does not start with .gnu.linkonce.b.
-		//    It's a user-defineded section, we 
-		//       Create Data section for user-defineded section
-	      if ( sec == _SEC_BSS && strncmp(Index_To_Str(name), ".gnu.linkonce.b.", 16) )
-		sec = _SEC_DATA; 
+              // bug fix for OSP_129
+              // bug fix for OSP_254
+              // The gnu4 FE will put static variables in STL into .gnu.linkonce.d. or .gnu.linkonce.b. or .bss.
+              // If the section name doesn't start with 
+              //     .gnu.linkonce.b. -or-
+              //     .bss.     
+              //    It's a user-defineded section, we 
+              //       Create Data section for user-defineded section
+              // The goal of these code is to be compatible with GCC
+              if ( strncmp(Index_To_Str(name), ".gnu.linkonce.b.", 16) == 0 || 
+                   strncmp(Index_To_Str(name), ".bss.", 5) == 0 ) {
+                // For .gnu.linkonce.b., .bss., force to _SEC_BSS
+		sec = _SEC_BSS;
+              }
+              else if ( sec == _SEC_BSS ) {
+                // Otherwise, user defined section, force to _SEC_DATA
+                sec = _SEC_DATA;
+              }
 	      ST *blk = Get_Section_ST(sec, 0, sclass);
-	      newblk = Copy_ST_Block(blk);
-	      Set_ST_name_idx(newblk, name);
+	      if (strcmp(SEC_name(sec), Index_To_Str(name)) == 0) {
+		// seen this before, no need to create a new blk
+		newblk = blk;
+	      }
+	      else {
+		  newblk = Copy_ST_Block(blk);
+		  Set_ST_name_idx(newblk, name);
+	      }
 	}
 	return newblk;
 }
@@ -991,13 +1039,14 @@ void
 Assign_ST_To_Named_Section (ST *st, STR_IDX name)
 {
 	ST *newblk;
+	if (ST_is_not_used(st))
+		return;
+
 	// bug fix for OSP_138
 	SECTION_IDX sec_idx;    
 	/* If st has section name attribute and it's same as one of the predefined section name,
 	 * it is hanled in the same way as normal st. So it isn't assigned to section here. */
 	if (ST_has_Predefined_Named_Section(st, sec_idx))
-		return;
-	if (ST_is_not_used(st))
 		return;
 	if (ST_class(st) == CLASS_FUNC) {
 		if (ST_sclass(st) == SCLASS_EXTERN) {
@@ -1020,13 +1069,13 @@ Assign_ST_To_Named_Section (ST *st, STR_IDX name)
 		case SCLASS_FSTATIC:
 		case SCLASS_PSTATIC:
 			// must be initialized
-     			if (ST_is_constant(st)) sec = _SEC_RDATA;
+    			if (ST_is_constant(st)) sec = _SEC_RDATA;
 		        // bug fix for OSP_129
 			else if ( ST_is_initialized(st) )
 				sec = _SEC_DATA;
 			else
 			        sec = _SEC_BSS;	// if data is not initialized, it's still in BSS
-		        break;
+			break;
 		case SCLASS_UGLOBAL:
 #ifdef KEY
     			if (ST_is_constant(st) &&	// bug 4743
@@ -1034,7 +1083,20 @@ Assign_ST_To_Named_Section (ST *st, STR_IDX name)
 			  sec = _SEC_RDATA;
 			} else
 #endif
-			sec = _SEC_BSS;
+#if defined(TARG_SL)
+			if (name != _SEC_BSS) {
+			  DevWarn("change user specified section symbol to be initialized");
+			  Set_ST_is_initialized(st);
+			  Set_ST_sclass(st, SCLASS_DGLOBAL);
+			  INITO_IDX ino = New_INITO(st);
+			  INITV_IDX inv = New_INITV();
+			  INITV_Init_Pad (inv, ST_size(st));
+			  Set_INITO_val(ino, inv);
+			  sec = _SEC_DATA;
+			}
+			else
+#endif
+			  sec = _SEC_BSS;
 			break;
 #ifdef KEY
 		case SCLASS_COMMON:
@@ -1385,11 +1447,21 @@ Allocate_Entry_Formal(ST *formal, BOOL on_stack, BOOL in_formal_reg)
 	sec = Shorten_Section(formal, _SEC_BSS);
     	Allocate_Object_To_Section(formal, sec, Adjusted_Alignment(formal));
     }
+#ifdef TARG_NVISA
+    // if use shared memory, then treat like static (don't put on stack)
+    // will end up putting it in param memory.
+    else if (ST_in_shared_mem(formal)) {
+	Clear_ST_is_value_parm(formal);
+    	Allocate_Object_To_Section(formal, _SEC_BSS, Adjusted_Alignment(formal));
+    }
+#endif
+#ifndef TARG_MIPS // bug 12772
     else if (in_formal_reg)
     {
       /* parameter is in register, so put in FORMAL area */
       Add_Object_To_Frame_Segment ( formal, SFSEG_FORMAL, TRUE );
     }
+#endif
     else if (on_stack)
     {
       /* parameter is on stack, so put in either UPFORMAL or FTEMP area */
@@ -1400,6 +1472,13 @@ Allocate_Entry_Formal(ST *formal, BOOL on_stack, BOOL in_formal_reg)
       	Add_Object_To_Frame_Segment ( formal, SFSEG_UPFORMAL, TRUE );
       }
     }
+#ifdef TARG_MIPS // bug 12772
+    else if (in_formal_reg)
+    {
+      /* parameter is in register, so put in FORMAL area */
+      Add_Object_To_Frame_Segment ( formal, SFSEG_FORMAL, TRUE );
+    }
+#endif
     else 
     {
 	// formal not in usual parameter reg and not on stack
@@ -2034,6 +2113,7 @@ Initialize_Stack_Frame (WN *PU_tree)
 	fprintf(TFile, "<lay> Determine_Stack_Model for %s\n", 
 		ST_name(WN_st(PU_tree)));
 
+#ifndef TARG_X8664
   if (PU_has_return_address(Get_Current_PU()) 
 	&& MTYPE_byte_size(Pointer_Mtype) < MTYPE_byte_size(Spill_Int_Mtype) )
   {
@@ -2053,6 +2133,7 @@ Initialize_Stack_Frame (WN *PU_tree)
 	    MTYPE_byte_size(Spill_Int_Mtype) - MTYPE_byte_size(Pointer_Mtype) :
 	    0);
   }
+#endif
 
   Init_Segment_Descriptors();
   Init_PU_arg_area_size_array();
@@ -2088,13 +2169,20 @@ Initialize_Stack_Frame (WN *PU_tree)
 
   if (PUSH_RETURN_ADDRESS_ON_STACK) {
     // Reserve the space on stack for the return address (ia32)
-    ST* ra_st = New_ST ();
-    ST_Init (ra_st, 
-             Save_Str("return_address"),
-             CLASS_VAR,
-             SCLASS_FORMAL,
-             EXPORT_LOCAL,
-             MTYPE_To_TY(Pointer_Mtype));
+    ST* ra_st;
+#ifdef KEY // bug 12261: check before creating another return address symbol
+    if ((ra_st = Find_Special_Return_Address_Symbol()) == NULL) {
+#endif
+      ra_st = New_ST ();
+      ST_Init (ra_st, 
+	       Save_Str("return_address"),
+	       CLASS_VAR,
+	       SCLASS_FORMAL,
+	       EXPORT_LOCAL,
+	       MTYPE_To_TY(Pointer_Mtype));
+#ifdef KEY 
+    }
+#endif
     Add_Object_To_Frame_Segment (ra_st, SFSEG_UPFORMAL, TRUE);
     upformal_size += MTYPE_byte_size(Pointer_Mtype);
   }
@@ -2128,6 +2216,12 @@ Initialize_Stack_Frame (WN *PU_tree)
   /* make sure all formals are allocated before we split into regions */
   Allocate_All_Formals (PU_tree);
   Init_Formal_Segments (formal_size, upformal_size);
+
+#ifdef TARG_NVISA
+  // initially, we are limited to 256 bytes of formal space
+  if ((formal_size + upformal_size) > 256) 
+	ErrMsg (EC_Too_Many_Args, ST_name(WN_st(PU_tree)));
+#endif
 }
 
 // this is called after lowering, when have more accurate view of code.
@@ -2183,10 +2277,10 @@ Process_Stack_Variable ( ST *st )
 
    if (! is_root_block && ST_class(st) == CLASS_BLOCK) return;
 
-   if ((PU_src_lang (Get_Current_PU()) & (PU_CXX_LANG | PU_C_LANG)) &&
-        ST_is_return_var(st)) {
-     Set_ST_base (st, FP_Sym);
-     Set_ST_ofst (st, Is_Target_32bit()? 4 : 8);
+   if((PU_src_lang(Get_Current_PU()) & (PU_CXX_LANG|PU_C_LANG)) &&
+      ST_is_return_var(st)) {
+     Set_ST_base(st, FP_Sym);
+     Set_ST_ofst(st, Is_Target_32bit()? 4 : 8);
      return;
    }
 
@@ -2206,7 +2300,7 @@ Process_Stack_Variable ( ST *st )
 }
 
 static void
-Trace_Stack_Segments( char *msg, ST *SP_baseST, ST *FP_baseST )
+Trace_Stack_Segments(const char *msg, ST *SP_baseST, ST *FP_baseST )
 {
   SF_SEGMENT s;
 
@@ -2317,6 +2411,15 @@ INT64 Finalize_Stack_Frame (void)
     Set_ST_base(SF_Block(SFSEG_UPFORMAL), SP_Sym);
     Assign_Offset(SF_Block(SFSEG_UPFORMAL), SP_Sym, 
 	(Frame_Has_Calls ? Stack_Offset_Adjustment : 0), 0);
+#ifdef TARG_X8664
+    {
+      int push_pop_int_saved_regs = (*Push_Pop_Int_Saved_Regs_p)();
+      if (push_pop_int_saved_regs & 1)
+	push_pop_int_saved_regs++;
+      Set_ST_ofst(SF_Block(SFSEG_UPFORMAL), ST_ofst(SF_Block(SFSEG_UPFORMAL)) +
+		    push_pop_int_saved_regs * MTYPE_byte_size(Pointer_Mtype));
+    }
+#endif
     break;
 
   case SMODEL_LARGE:
@@ -2335,8 +2438,11 @@ INT64 Finalize_Stack_Frame (void)
   Frame_Size = ROUNDUP(Frame_Size, stack_align);
 #ifdef TARG_X8664 // this is needed to maintain 16 bytes gap that contains
     		  // the save area for return-addr and frame-ptr
-  if (Current_PU_Stack_Model == SMODEL_SMALL && PUSH_FRAME_POINTER_ON_STACK)
+  if (Current_PU_Stack_Model == SMODEL_SMALL && PUSH_FRAME_POINTER_ON_STACK) {
     Frame_Size += MTYPE_byte_size(Pointer_Mtype);
+    if ((*Push_Pop_Int_Saved_Regs_p)() & 1)
+      Frame_Size += MTYPE_byte_size(Pointer_Mtype);
+  }
 #endif
 
   // the stack-frame-adjustment represents N bytes of free space
@@ -2346,6 +2452,31 @@ INT64 Finalize_Stack_Frame (void)
   if (!Frame_Has_Calls) {
 	Frame_Size = MAX(0, Frame_Size - Stack_Offset_Adjustment);
   }
+
+#if defined(BUILD_OS_DARWIN)
+// Darwin requires 16 byte alignment of the stack pointer even in -m32
+// (otherwise, for example, dynamic linking code faults on a movdqa
+// instruction). Because the "call" pushes a 4-byte return address onto the
+// stack which isn't included in Frame_Size, it's not sufficient just to
+// round up the Frame_Size. If the frame will use the stack pointer instead
+// of the base pointer, then the offset to the arguments needs to take into
+// account any padding we add.
+if(! Is_Target_64bit() ) {
+  int excess = MTYPE_byte_size(Pointer_Mtype) *
+    ((Current_PU_Stack_Model == SMODEL_DYNAMIC) ?
+    2 :
+    1);
+  int mod = (Frame_Size + excess) % 16;
+  if (mod) {
+    excess = 16 - mod;
+    Frame_Size += excess;
+    ST *upformal = SF_Block(SFSEG_UPFORMAL);
+    if (Current_PU_Stack_Model == SMODEL_SMALL) {
+      Set_ST_ofst(upformal, ST_ofst(upformal) + excess);
+    }
+  }
+}
+#endif /* defined(BUILD_OS_DARWIN) */
 
   if ( Trace_Frame ) {
     Trace_Stack_Segments ( "Finalize_Stack_Frame", SP_Sym, FP_Sym);
@@ -2362,13 +2493,17 @@ INT64 Finalize_Stack_Frame (void)
 	if (Trace_Frame) fprintf(TFile, "<lay> stack-model underflowed\n");
 
   {	/* check that stacksize does not exceed system max */
-#if defined(linux)
+
+#ifndef __MINGW32__
+#if defined(linux) || defined(__CYGWIN__) || defined(__APPLE__) || defined(BUILD_OS_DARWIN)
         struct rlimit rlp;
         getrlimit(RLIMIT_STACK, &rlp);
 #else
 	struct rlimit64 rlp;
 	getrlimit64 (RLIMIT_STACK, &rlp);
 #endif
+#endif /* __MINGW32__ */
+
 #ifndef KEY // Redhat 8.0 will have unlimited stack size
 	if (Frame_Size > rlp.rlim_cur)
 		ErrMsg (EC_LAY_stack_limit, Frame_Size, (INT64) rlp.rlim_cur);
@@ -2525,7 +2660,10 @@ if (Trace_Frame) fprintf(TFile, "<lay> didn't check Gspace for %s\n", ST_NAME(st
        case MTYPE_U8:
 	 newsec = _SEC_LIT8;
 	 break;
+#if defined(TARG_IA64)
        case MTYPE_F10:
+       case MTYPE_C10:
+#endif
        case MTYPE_FQ:
 	 newsec = _SEC_LIT16;
 	 break;
@@ -2604,7 +2742,293 @@ Allocate_Label (ST *lab)
   /* this is a reference only, no storage need be allocated */
   Assign_Object_To_Section ( lab, _SEC_TEXT, 0 );
 }
- 
+
+
+#ifdef TARG_SL
+inline SECTION_IDX
+Get_Vbuf_Section(const ST *st)
+{
+	if( ST_in_v1buf(st))
+	{
+		return _SEC_VS1DATA;
+	}
+	else if(ST_in_v2buf(st)){
+		return _SEC_VS2DATA;
+	}
+	else {
+	    return _SEC_VS4DATA;
+	}
+}
+
+typedef std::map<ST*, float> ST_FREQ_MAP;
+typedef ST_FREQ_MAP::iterator ST_FREQ_ITER;
+//iterate the inputed whirl tree, depth first, postorder 
+//for all the load and store operation, collect the st references and calculate frequences based on profile
+static void
+Walk_And_Collect_Heur_Based_Refs(WN *wn, ST_FREQ_MAP *st2f_map)
+{
+  OPERATOR opr=WN_operator(wn);
+  ST *st=NULL;
+  switch (opr) {
+  case OPR_LDID:
+  case OPR_LDA:
+ 	st=WN_st(wn);
+	break; 	
+  case OPR_STID:
+      Walk_And_Collect_Heur_Based_Refs(WN_kid0(wn), st2f_map);
+	st=WN_st(wn);
+	break;
+  case OPR_BLOCK:
+      for(WN *kid=WN_first(wn); kid; kid=WN_next(kid))
+	  	Walk_And_Collect_Heur_Based_Refs(kid, st2f_map);
+      break;
+  case OPR_FUNC_ENTRY:
+  	Walk_And_Collect_Heur_Based_Refs(WN_func_body(wn), st2f_map);
+	break;
+  default:
+  	for(INT i=0;i<WN_kid_count(wn); i++)
+        Walk_And_Collect_Heur_Based_Refs(WN_kid(wn, i), st2f_map);  	
+  	break;
+  }
+  
+  if(st!=NULL && ST_sclass(st)==SCLASS_AUTO) {
+	if((*st2f_map).find(st)==st2f_map->end())
+		(*st2f_map)[st]=1;
+	else 
+		(*st2f_map)[st]=(*st2f_map)[st]+1;
+  }
+  return;
+}
+
+//iterate the inputed whirl tree, depth first, preorder 
+//for all the load and store operation, collect the st references and calculate frequences based on heuristic
+static void
+Walk_And_Collect_Fb_Based_Refs(WN *wn, float& cur_freq, ST_FREQ_MAP *st2f_map)
+{
+  ST *st=NULL;
+  OPERATOR opr=WN_operator(wn);
+  switch (opr) {
+  case OPR_FUNC_ENTRY:
+	{
+	FB_FREQ freq_default = Cur_PU_Feedback->Query( wn, FB_EDGE_ENTRY_OUTGOING );
+	cur_freq=freq_default.Value();
+	Walk_And_Collect_Fb_Based_Refs(WN_func_body(wn), cur_freq, st2f_map);
+	}
+	break;
+  case OPR_BLOCK:
+	{
+	for(WN* kid=WN_first(wn);kid;kid=WN_next(kid))
+		Walk_And_Collect_Fb_Based_Refs(kid, cur_freq, st2f_map);
+	}
+  	break;
+  case OPR_DO_LOOP:
+	{
+	FB_FREQ freq_exit, freq_iterate;
+	freq_exit = Cur_PU_Feedback->Query(wn, FB_EDGE_LOOP_EXIT);
+	freq_iterate = Cur_PU_Feedback->Query( wn, FB_EDGE_LOOP_ITERATE );
+	cur_freq=freq_iterate.Value();
+	Walk_And_Collect_Fb_Based_Refs(WN_start(wn), cur_freq, st2f_map);
+	cur_freq=freq_iterate.Value();
+	Walk_And_Collect_Fb_Based_Refs(WN_do_body(wn), cur_freq, st2f_map);
+	cur_freq=freq_iterate.Value();
+	Walk_And_Collect_Fb_Based_Refs(WN_step(wn), cur_freq, st2f_map);
+	cur_freq=freq_iterate.Value()+1;
+	Walk_And_Collect_Fb_Based_Refs(WN_end(wn), cur_freq, st2f_map);
+	cur_freq=freq_exit.Value();
+	}
+  	break;
+  case OPR_DO_WHILE:
+	{
+      	FB_FREQ freq_positive, freq_out, freq_back;
+      	freq_positive = Cur_PU_Feedback->Query( wn, FB_EDGE_LOOP_POSITIVE );
+      	freq_out = Cur_PU_Feedback->Query( wn, FB_EDGE_LOOP_OUT );
+      	freq_back = Cur_PU_Feedback->Query( wn, FB_EDGE_LOOP_BACK );
+      	float iterate = freq_positive.Value()+freq_back.Value();
+	cur_freq=freq_positive.Value()+freq_back.Value();
+	Walk_And_Collect_Fb_Based_Refs(WN_while_body(wn), cur_freq, st2f_map);
+	cur_freq=freq_positive.Value()+freq_back.Value();
+	Walk_And_Collect_Fb_Based_Refs(WN_while_test(wn), cur_freq, st2f_map);
+	cur_freq=freq_out.Value();
+	}
+  	break;
+  case OPR_WHILE_DO:
+  	{
+	FB_FREQ freq_exit, freq_iterate;
+	freq_exit    = Cur_PU_Feedback->Query( wn, FB_EDGE_LOOP_EXIT );
+	freq_iterate = Cur_PU_Feedback->Query( wn, FB_EDGE_LOOP_ITERATE );
+	cur_freq=freq_iterate.Value();
+	Walk_And_Collect_Fb_Based_Refs(WN_while_body(wn), cur_freq, st2f_map);
+	cur_freq=freq_iterate.Value();
+	Walk_And_Collect_Fb_Based_Refs(WN_while_test(wn), cur_freq, st2f_map);
+	cur_freq=freq_exit.Value();
+  	}
+  	break;
+  case OPR_IF:
+	{
+      FB_FREQ freq_then, freq_else;
+      freq_then = Cur_PU_Feedback->Query( wn, FB_EDGE_BRANCH_TAKEN     );
+      freq_else = Cur_PU_Feedback->Query( wn, FB_EDGE_BRANCH_NOT_TAKEN );
+      cur_freq=freq_then.Value()+freq_else.Value();
+      Walk_And_Collect_Fb_Based_Refs(WN_if_test(wn), cur_freq, st2f_map);
+	float out_freq_then=freq_then.Value();
+	Walk_And_Collect_Fb_Based_Refs(WN_then(wn), out_freq_then, st2f_map); 
+	float out_freq_else=freq_else.Value();
+	Walk_And_Collect_Fb_Based_Refs(WN_else(wn), out_freq_else, st2f_map); 
+	cur_freq=out_freq_then + out_freq_else;
+  	}
+  	break;
+  case OPR_GOTO:
+  	{
+	cur_freq=0;	
+  	}
+  	break;
+  case OPR_SWITCH:
+  case OPR_COMPGOTO:
+  case OPR_XGOTO:
+  	{
+	Walk_And_Collect_Fb_Based_Refs(WN_kid0(wn), cur_freq, st2f_map);
+	cur_freq=0;	
+  	}
+  	break;
+  case OPR_TRUEBR:
+  case OPR_FALSEBR:
+  	{
+      FB_FREQ freq_branch, freq_default;
+      freq_branch  = Cur_PU_Feedback->Query( wn, FB_EDGE_BRANCH_TAKEN     );
+      freq_default = Cur_PU_Feedback->Query( wn, FB_EDGE_BRANCH_NOT_TAKEN );
+      cur_freq=freq_branch.Value()+freq_default.Value();
+      Walk_And_Collect_Fb_Based_Refs(WN_kid0(wn), cur_freq, st2f_map);
+      cur_freq=freq_default.Value();
+  	}
+	break;
+  case OPR_RETURN:
+  	{
+	cur_freq=0;	
+  	}
+  	break;
+  case OPR_RETURN_VAL:
+  	{
+	Walk_And_Collect_Fb_Based_Refs(WN_kid0(wn), cur_freq, st2f_map);
+	cur_freq=0;
+  	}
+  	break;
+  case OPR_LABEL:
+  	{
+	FB_FREQ freq_l = Cur_PU_Feedback->Query( wn, FB_EDGE_INCOMING );
+	cur_freq=freq_l.Value();
+  	}
+	break;
+  case OPR_CALL:
+  case OPR_ICALL:
+  case OPR_VFCALL:
+  case OPR_PICCALL:
+  case OPR_INTRINSIC_CALL:
+  case OPR_IO: //here may exist issues
+  	{
+	if(Cur_PU_Feedback->Same_in_out(wn)) {
+	      FB_FREQ freq_in = Cur_PU_Feedback->Query( wn, FB_EDGE_CALL_INOUTSAME );
+	      cur_freq=freq_in.Value();              
+		for ( INT t = 0; t < WN_kid_count(wn); ++t ) {
+			Walk_And_Collect_Fb_Based_Refs(WN_kid(wn, t), cur_freq, st2f_map);
+		}
+		cur_freq=freq_in.Value();
+	} else {
+		FB_FREQ freq_entry = Cur_PU_Feedback->Query( wn, FB_EDGE_CALL_INCOMING );
+		FB_FREQ freq_exit  = Cur_PU_Feedback->Query( wn, FB_EDGE_CALL_OUTGOING );
+	      cur_freq=freq_entry.Value();
+		for ( INT t = 0; t < WN_kid_count(wn); ++t ) 
+			Walk_And_Collect_Fb_Based_Refs(WN_kid(wn, t), cur_freq, st2f_map);
+		cur_freq=freq_exit.Value();
+	}
+  	}
+  	break;
+  case OPR_REGION:
+  	{
+      FB_FREQ freq_entry = Cur_PU_Feedback->Query( wn, FB_EDGE_CALL_INCOMING );
+      FB_FREQ freq_exit  = Cur_PU_Feedback->Query( wn, FB_EDGE_CALL_OUTGOING );
+      cur_freq=freq_entry.Value();
+      Walk_And_Collect_Fb_Based_Refs(WN_region_body(wn), cur_freq, st2f_map);
+      cur_freq=freq_exit.Value();
+  	}
+  	break;
+  case OPR_LDA:
+  case OPR_LDID:
+  	st=WN_st(wn);
+	break;
+  case OPR_STID: 
+  	{
+  	Walk_And_Collect_Fb_Based_Refs(WN_kid0(wn), cur_freq, st2f_map);
+  	st=WN_st(wn);
+  	}
+	break;
+  default:
+  	for(int i=0;i<WN_kid_count(wn);i++)
+	  Walk_And_Collect_Fb_Based_Refs(WN_kid(wn, i), cur_freq, st2f_map);
+	break;
+  }
+
+  if(st!=NULL && ST_sclass(st)==SCLASS_AUTO) {
+	if((*st2f_map).find(st)==st2f_map->end())
+		(*st2f_map)[st]=cur_freq;
+	else 
+		(*st2f_map)[st]=(*st2f_map)[st]+cur_freq;
+  }
+  
+  return;
+}
+
+
+
+class Sort_Vst_By_Freq_Size{
+private:
+  ST_FREQ_MAP& st2f;
+public:
+  Sort_Vst_By_Freq_Size(ST_FREQ_MAP& st2f_map) : 
+  	st2f(st2f_map) 
+  {}
+  bool operator()(ST *st1, ST *st2) {
+    return st2f[st1]/float(ST_size(st1))>st2f[st2]/float(ST_size(st2));
+  }
+};
+
+extern void
+Pre_Allocate_Objects(WN* wn)
+{
+  ST_FREQ_MAP st2f_map;
+  //step1: walk whirl tree and collect stack variables and their reference freqs
+  if(Cur_PU_Feedback) {
+    float freq=0;
+    Walk_And_Collect_Fb_Based_Refs(wn, freq, &st2f_map);
+  }
+  else
+    Walk_And_Collect_Heur_Based_Refs(wn, &st2f_map);
+
+  //step2: sort the variables in some order 
+  vector<ST *> sorted_vst;
+  for(ST_FREQ_ITER itr=st2f_map.begin(); itr!=st2f_map.end();itr++)
+  	sorted_vst.push_back(itr->first);
+
+  sort(sorted_vst.begin(), sorted_vst.end(), Sort_Vst_By_Freq_Size(st2f_map));
+
+  if(Trace_Frame) {
+    fprintf(TFile, "Ordered objects:\n");
+    for(vector<ST*>::iterator itr=sorted_vst.begin(); itr!=sorted_vst.end();itr++) {
+      ST *st=*itr;
+      fprintf(TFile, "%s: size=%lld, freq=%f\n", ST_name(st), ST_size(st), st2f_map[st]);
+    }
+  }
+
+  //step3: allocate the variables in order
+  for(vector<ST*>::iterator itr=sorted_vst.begin(); itr!=sorted_vst.end();itr++) {
+    ST *st=*itr;
+    Allocate_Object(st);
+  }
+  return;
+}
+
+#endif 
+
+
 // bug fix for OSP_138
 /* =====================================================================
  * 
@@ -2621,8 +3045,9 @@ BOOL
 ST_has_Predefined_Named_Section(ST *st, SECTION_IDX &sec_idx) {
 
   for (sec_idx = _SEC_UNKNOWN; sec_idx <= _SEC_DISTR_ARRAY; sec_idx ++) {
-  	if (!strcmp(Index_To_Str(Find_Section_Name_For_ST(st)), SEC_name(sec_idx)))
-  		return TRUE;
+  	if (SEC_name(sec_idx) && 
+	    !strcmp(Index_To_Str(Find_Section_Name_For_ST(st)), SEC_name(sec_idx)))
+  	  return TRUE;
   }
 
   return FALSE;
@@ -2693,27 +3118,28 @@ Allocate_Object ( ST *st )
     Clear_ST_is_not_used(SF_Block(SFSEG_FORMAL));
   }
 
-  if (Is_Allocated(st))
-  	// bug fix for OSP_138
-	/* If st has section name attribute and the section name is same as
-	 * one of the predefined section, it will be processed later */
-	if (!ST_has_named_section(st))
-  		return;
-  	else if (!ST_has_Predefined_Named_Section(st, sec))
-		return;
-  
+  if (Is_Allocated(st)) {
+    // bug fix for OSP_138
+    /* If st has section name attribute and the section name is same as
+     * one of the predefined section, it will be processed later */
+    if (!ST_has_named_section(st))
+      return;
+    else if (!ST_has_Predefined_Named_Section(st, sec))
+      return;
+  }
+
   if (ST_is_not_used(st)) return;
 
   if (ST_has_named_section(st)) {
-	// bug fix for OSP_138
-	if (ST_has_Predefined_Named_Section(st, sec))
-		// Assign st to appropriate section
-		Allocate_Object_To_Predefined_Named_Section(st, sec);
-	else {
-		STR_IDX name = Find_Section_Name_For_ST (st);
-		Assign_ST_To_Named_Section (st, name);
-	}
-	return;
+    // bug fix for OSP_138
+    if (ST_has_Predefined_Named_Section(st, sec))
+      // Assign st to appropriate section
+      Allocate_Object_To_Predefined_Named_Section(st, sec);
+    else {
+      STR_IDX name = Find_Section_Name_For_ST (st);
+      Assign_ST_To_Named_Section (st, name);
+    }
+    return;
   }
   if (Has_Base_Block(st)) {
 	base_st = Base_Symbol(st);	/* allocate the base, not the leaf */
@@ -2737,24 +3163,70 @@ Allocate_Object ( ST *st )
     break;
   case SCLASS_PSTATIC :
   case SCLASS_FSTATIC :
-    if (ST_is_thread_local(st)) {
+    if (ST_is_thread_private(st)) {
       if (ST_is_initialized(st) && !ST_init_value_zero (st))
-#ifndef TARG_IA64
-        sec = _SEC_DATA;
+#if defined(KEY) && !defined(TARG_SL)
+        sec = _SEC_LDATA_MIPS_LOCAL;	// bug 12619
 #else
         sec = _SEC_LDATA;
 #endif
+#ifdef TARG_SL 
+      else if(ST_in_v1buf(st)) 
+        sec = _SEC_VS1DATA;
+      else if(ST_in_v2buf(st)) 
+        sec = _SEC_VS2DATA;
+      else if(ST_in_v4buf(st)) 
+        sec = _SEC_VS4DATA;
+#endif      	  
+
       else
-#ifndef TARG_IA64
-        // We only implement TLS on IA64 so far
+#ifdef KEY
         sec = _SEC_BSS;
 #else
         sec = _SEC_LBSS;
-#endif // TARG_IA64
+#endif // KEY
     }
+#ifdef KEY
+    else if (ST_is_thread_local(st)) {
+      if (ST_is_initialized(st) && !ST_init_value_zero(st))
+        sec = _SEC_LDATA;
+      else
+        sec = _SEC_LBSS;
+    }
+#endif
     else if (ST_is_initialized(st) && !ST_init_value_zero (st))
-        sec = (ST_is_constant(st) ? _SEC_RDATA : _SEC_DATA);
+#ifdef TARG_X8664
+    {
+      if (ST_is_constant(st))
+        // GNU puts CLASS_CONST data in .rodata.
+        if (Gen_PIC_Shared &&
+            !ST_NO_LINKAGE(st) && 
+            ST_sym_class(st) != CLASS_CONST)
+          sec = _SEC_DATA_REL_RO; // bug 10097
+        else
+          sec = _SEC_RDATA;
+      else
+        sec = _SEC_DATA;
+    }
+#elif defined(TARG_SL)
+      sec = _SEC_DATA;
+#else
+      sec = (ST_is_constant(st) ? _SEC_RDATA : _SEC_DATA);
+#endif
+
     else
+#ifdef TARG_SL
+    if (ST_in_vbuf(st)) {
+/*  currently assembler don't support vbuf section for each v1buf v2buf v4buf,
+ *  all these three type variables has only one section _SEC_VSDATA
+ */
+      sec = Get_Vbuf_Section(st);
+    }
+    else if(ST_in_sbuf(st)){
+      sec = _SEC_SSDATA;
+    }
+    else 
+#endif  
 	sec = _SEC_BSS;
     sec = Shorten_Section ( st, sec );
     Allocate_Object_To_Section ( base_st, sec, Adjusted_Alignment (base_st) );
@@ -2806,35 +3278,49 @@ Allocate_Object ( ST *st )
     }
     break;
   case SCLASS_UGLOBAL :
-    if (ST_is_thread_local(st)) {
-#ifndef TARG_IA64
-      // We only implement TLS on IA64 so far
+    if (ST_is_thread_private(st)) {
+#ifdef KEY
       sec = _SEC_BSS;
 #else
       sec = _SEC_LBSS;
-#endif // TARG_IA64
+#endif // KEY
     } 
+#ifdef KEY
+    else if (ST_is_thread_local(st)) {
+      sec = _SEC_LBSS;
+    }
+#endif
     else sec = _SEC_BSS;
     sec = Shorten_Section ( st, sec );
     Allocate_Object_To_Section ( base_st, sec, Adjusted_Alignment(base_st));
     break;
   case SCLASS_DGLOBAL :
-    if (ST_is_thread_local(st)) {
-#ifndef TARG_IA64
-      // We only implement TLS on IA64 so far
-      sec = _SEC_DATA;
-#else      
+    if (ST_is_thread_private(st))
+#if defined(KEY) && !defined(TARG_SL)
+      sec = _SEC_LDATA_MIPS_LOCAL;	// bug 12619
+#else
       sec = _SEC_LDATA;
 #endif
-    }
+#ifdef KEY
+    else if (ST_is_thread_local(st)) sec = _SEC_LDATA;
+#endif
     else if (ST_is_constant(st)) {
 #ifdef TARG_X8664
       if (Gen_PIC_Shared)
-	sec = _SEC_DATA_REL_RO;
+	sec = _SEC_DATA_REL_RO; // bug 6925
       else
 #endif
       sec = _SEC_RDATA;
     }
+
+#ifdef TARG_SL
+    else if (ST_in_vbuf(st)) {
+      sec = Get_Vbuf_Section(st);
+    }
+    else if(ST_in_sbuf(st)){
+      sec = _SEC_SSDATA;
+    }
+#endif
     else sec = _SEC_DATA;
     sec = Shorten_Section ( st, sec );
     Allocate_Object_To_Section ( base_st, sec, Adjusted_Alignment(base_st));
@@ -3044,6 +3530,12 @@ Stack_Offset_Adjustment_For_PU (void)
 	return Stack_Offset_Adjustment;
   else
 	return 0;
+}
+
+extern void
+Set_Frame_Has_Calls(BOOL b)
+{
+    Frame_Has_Calls = b;
 }
 
 #ifdef TARG_X8664

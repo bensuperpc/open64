@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2006. QLogic Corporation. All Rights Reserved.
+ *  Copyright (C) 2006, 2007. QLogic Corporation. All Rights Reserved.
  */
 
 /*
@@ -52,7 +52,9 @@
 
 #include <algorithm>
 #include <vector>
+#if ! defined(BUILD_OS_DARWIN)
 #include "libelf/libelf.h"
+#endif /* ! defined(BUILD_OS_DARWIN) */
 #include "dwarf_stuff.h"
 #include "defs.h"
 #include "errors.h"
@@ -511,9 +513,6 @@ struct IS_SIB_RANGE {
   }
 };
 
-#if defined(KEY) && defined(TARG_MIPS)
-static BOOL Is_Target_64bit (void) { return TRUE; }
-#endif
 
 static LABEL_IDX Duplicate_LABEL (LABEL_IDX oldi)
 {
@@ -549,7 +548,7 @@ void
 EH_Set_Start_Label(EH_RANGE* p)
 {
   LABEL_IDX label;
-#ifdef OSP_OPT
+#ifdef TARG_IA64
   // too much Eh label will affect the cfg and region formation,
   // further affects the register allocation and instruction schedule
   // for optimization of EH implementation
@@ -598,7 +597,7 @@ void
 EH_Set_End_Label(EH_RANGE* p)
 {
   LABEL_IDX label;
-#ifdef OSP_OPT
+#ifdef TARG_IA64
   // too much Eh label will affect the cfg and region formation,
   // further affects the register allocation and instruction schedule
   // for optimization of EH implementation
@@ -911,7 +910,14 @@ ST_For_Range_Table(WN * wn)
   TY& ty = New_TY(tyi);
   TY_Init(ty, size, KIND_STRUCT, MTYPE_M,
 	  Save_Str2(".range_table.",ST_name(pu)));
+#ifdef KEY
+  if (Is_Target_64bit())
+    Set_TY_align(tyi, 8);
+  else
+    Set_TY_align(tyi, 4);
+#else
   Set_TY_align(tyi, 4);
+#endif
   st = New_ST(CURRENT_SYMTAB);
   ST_Init(st, TY_name_idx(ty),
 	  CLASS_VAR, SCLASS_EH_REGION, EXPORT_LOCAL, tyi);
@@ -1012,7 +1018,7 @@ Convert_TF_Map_To_FT_Map(TF_MAP& src, FT_MAP& dst)
 static INITV_IDX
 Get_TF_Map_and_EH_Spec_List(PU& pu, TF_MAP& tfmap)
 {
-  INITO_IDX ino_idx = pu.eh_info;
+  INITO_IDX ino_idx = pu.misc;
   tfmap.clear();
 
   if (ino_idx == INITO_IDX_ZERO) {
@@ -1050,6 +1056,72 @@ Get_TF_Map_and_EH_Spec_List(PU& pu, TF_MAP& tfmap)
   return (id != 0) ? INITV_blk(INITO_val(id)) : INITV_IDX_ZERO;
 }
 
+
+// bug 3416: The exception ranges in exception table must be sorted in
+// increasing order of call-site address. The problem shows up when we
+// generate nested regions due to code like "if (foo()) bar();".
+// So flatten the regions here to remove overlap between parent and child
+// regions. As a side-effect, add new ranges resulting from the splits.
+// Assumption: a parent region is always listed after its children (even if
+// not immediately after). The caller of this function must, therefore, sort
+// the list before calling.
+// Transformation:
+// R1_begin:
+//    R2_begin:
+//    R2_end:
+// R1_end:
+//
+// R2_end - R2_begin  ===>    R2_begin - R1_begin
+// R1_end - R1_begin          R2_end - R2_begin
+//                            R1_end - R2_end (bug 3736)
+//
+// TODO: Check if the new regions created have any call, if not, don't
+// create, or delete the region.
+static void flatten_regions (void)
+{
+  vector<EH_RANGE> new_ranges;
+  int i=0;
+  while (i < range_list.size() - 1)
+  {
+    if (range_list[i].parent) 
+    {
+      int first_child, last_child;
+      first_child = last_child = i++;
+      // search for the parent
+      while (range_list[first_child].parent != &range_list[i])
+      {
+        if (range_list[i].parent == range_list[first_child].parent)
+	{
+          range_list[i].parent = NULL;
+	  last_child = i;
+	}
+	i++;
+      }
+      // 'i' has the parent
+      EH_RANGE new_range (range_list[i].rid);
+      new_range.start_label = range_list[last_child].end_label;
+      new_range.end_label = range_list[i].end_label;
+      new_range.end_bb = range_list[i].end_bb;
+      new_range.has_call = range_list[i].has_call; // not accurate
+      new_ranges.push_back (new_range);
+
+      // Update the parent now to end before the 1st child
+      range_list[i].end_label = range_list[first_child].start_label;
+      range_list[i].end_bb = Get_Label_BB (range_list[i].end_label);
+      range_list[first_child].parent = NULL;
+      i = first_child + 1; // start over
+    }
+    else i++;
+  }
+
+  for (vector<EH_RANGE>::iterator iter = new_ranges.begin();
+       iter != new_ranges.end(); ++iter)
+    range_list.add_range (*iter);
+}
+
+#include <map>
+using namespace std;
+
 struct cmpst
 {
   bool operator() (const ST_IDX i1, const ST_IDX i2) const
@@ -1081,7 +1153,7 @@ struct sort_on_filter : public binary_function<type_filter_entry,
 static INITO*
 Create_Type_Filter_Map (void)
 {
-  INITV_IDX i = INITV_next (INITV_next (INITO_val (Get_Current_PU().eh_info)));
+  INITV_IDX i = INITV_next (INITV_next (INITO_val (PU_misc_info (Get_Current_PU()))));
   INITO* ino;
   INITO_IDX idx = TCON_uval (INITV_tc_val(i));
   if (idx)	// idx for typeinfo_table
@@ -1120,6 +1192,20 @@ Create_Type_Filter_Map (void)
   }
   return ino;
 }
+
+// This function returns the size of an LEB128 encoding of value. We do
+// not use the encoding however. We emit the unencoded value with the LEB128
+// directive.
+static int
+sizeof_signed_leb128 (int value)
+{
+  char buff[ENCODE_SPACE_NEEDED];
+  int size;
+  int res = _dwarf_pro_encode_signed_leb128_nm (value, &size, buff, sizeof(buff));
+  FmtAssert (res == DW_DLV_OK, ("Encoding for exception table failed"));
+  return size;
+}
+
 
 static const char*
 Get_INITV_kind (INITVKIND kind)
@@ -1278,7 +1364,7 @@ EH_Print_Range_List (void)
 void
 Print_PU_EH_Entry(PU& pu, ST* pu_st, FILE* fp)
 {
-  INITO_IDX ino_idx = pu.eh_info;
+  INITO_IDX ino_idx = pu.misc;
   /*
    *    .eh_info (INITO) = <etable (ST), exc_ptr_iv (INITV)>
    *			--> exc_ptr_iv(__Exc_Ptr__)			(ST_IDX)
@@ -1363,18 +1449,6 @@ Print_PU_EH_Entry(PU& pu, ST* pu_st, FILE* fp)
   fprintf(fp, "\n");
 }
 
-// This function returns the size of an LEB128 encoding of value. We do
-// not use the encoding however. We emit the unencoded value with the LEB128
-// directive.
-static int
-sizeof_signed_leb128 (int value)
-{
-  char buff[ENCODE_SPACE_NEEDED];
-  int size;
-  int res = _dwarf_pro_encode_signed_leb128_nm (value, &size, buff, sizeof(buff));
-  FmtAssert (res == DW_DLV_OK, ("Encoding for exception table failed"));
-  return size;
-}
 
 static void
 INITV_Init_Integer_2(INITV_IDX inv, TYPE_ID mtype, INT64 val, UINT16 repeat)
@@ -1411,69 +1485,6 @@ EH_Get_PU_Range_INITO(bool bSetNull)
 }
 
 
-#ifdef KEY
-// bug 3416: The exception ranges in exception table must be sorted in
-// increasing order of call-site address. The problem shows up when we
-// generate nested regions due to code like "if (foo()) bar();".
-// So flatten the regions here to remove overlap between parent and child
-// regions. As a side-effect, add new ranges resulting from the splits.
-// Assumption: a parent region is always listed after its children (even if
-// not immediately after). The caller of this function must, therefore, sort
-// the list before calling.
-// Transformation:
-// R1_begin:
-//    R2_begin:
-//    R2_end:
-// R1_end:
-//
-// R2_end - R2_begin  ===>    R2_begin - R1_begin
-// R1_end - R1_begin          R2_end - R2_begin
-//                            R1_end - R2_end (bug 3736)
-//
-// TODO: Check if the new regions created have any call, if not, don't
-// create, or delete the region.
-static void flatten_regions (void)
-{
-  vector<EH_RANGE> new_ranges;
-  int i=0;
-  while (i < range_list.size() - 1)
-  {
-    if (range_list[i].parent) 
-    {
-      int first_child, last_child;
-      first_child = last_child = i++;
-      // search for the parent
-      while (range_list[first_child].parent != &range_list[i])
-      {
-        if (range_list[i].parent == range_list[first_child].parent)
-	{
-          range_list[i].parent = NULL;
-	  last_child = i;
-	}
-	i++;
-      }
-      // 'i' has the parent
-      EH_RANGE new_range (range_list[i].rid);
-      new_range.start_label = range_list[last_child].end_label;
-      new_range.end_label = range_list[i].end_label;
-      new_range.end_bb = range_list[i].end_bb;
-      new_range.has_call = range_list[i].has_call; // not accurate
-      new_ranges.push_back (new_range);
-
-      // Update the parent now to end before the 1st child
-      range_list[i].end_label = range_list[first_child].start_label;
-      range_list[i].end_bb = Get_Label_BB (range_list[i].end_label);
-      range_list[first_child].parent = NULL;
-      i = first_child + 1; // start over
-    }
-    else i++;
-  }
-
-  for (vector<EH_RANGE>::iterator iter = new_ranges.begin();
-       iter != new_ranges.end(); ++iter)
-    range_list.add_range (*iter);
-}
-#endif
 
 
 #ifdef TARG_IA64 
@@ -1484,7 +1495,7 @@ bool pu_need_LSDA;
  */
 
 // check whether need not to create INITO for LSDA
-// Another way: check if exception type info stored in INITO pu.eh_info is NULL/ZERO
+// Another way: check if exception type info stored in INITO pu.misc is NULL/ZERO
 bool
 PU_Need_Not_Create_LSDA ()
 {
@@ -1740,6 +1751,7 @@ Create_INITO_For_Range_Table(ST * st, ST * pu)
 }
 
 #else // TARG_IA64
+
 /* implementation on X8664. 
  */
 #ifdef KEY
@@ -2197,7 +2209,7 @@ EH_Write_Range_Table(WN * wn)
 
 #ifdef KEY
   // C++ exceptions not yet supported within MP regions.
-  if (PU_mp_lower_generated (Get_Current_PU ()))
+  if (!LANG_Enable_CXX_Openmp && PU_mp_lower_generated (Get_Current_PU ()))
   {
     EH_RANGE_LIST::iterator first(range_list.begin());
     EH_RANGE_LIST::iterator last(range_list.end());

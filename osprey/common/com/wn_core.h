@@ -1,4 +1,8 @@
 /*
+ *  Copyright (C) 2007. QLogic Corporation. All Rights Reserved.
+ */
+
+/*
  * Copyright 2003, 2004, 2005, 2006 PathScale, Inc.  All Rights Reserved.
  */
 
@@ -407,7 +411,15 @@ typedef enum REGION_KIND {
   REGION_KIND_EXC_SPEC   = 0xa,
   REGION_KIND_MASK       = 0xb,
   REGION_KIND_GUARD      = 0xc,
-  REGION_KIND_NULL_CLEANUP = 0xd  /* cleanup with empty destructor */
+  REGION_KIND_NULL_CLEANUP = 0xd, /* cleanup with empty destructor */
+
+#if defined(TARG_SL) //fork_joint
+  /* add following region kind for main thread and minor thread */ 
+  REGION_KIND_MINOR = 0x11,  /* minor thread */ 
+  REGION_KIND_MAJOR = 0x12,  /* major thread */ 
+  REGION_KIND_SL2_ENCLOSING_REGION = 0x13,
+  REGION_KIND_HOT   = 0x14,
+#endif
 } REGION_KIND;
 
 class WN {
@@ -438,8 +450,13 @@ public:
             } pragma;
 	    TY_IDX	    io_item_ty;  /* for IO_ITEM */
             struct {
+#if defined(TARG_SL)
+                REGION_KIND region_kind: 7;
+                mUINT32     region_id  :25;
+#else 
                 REGION_KIND region_kind: 4;
                 mUINT32     region_id  :28;
+#endif 
             } region;
 	 } ua;
 	 union {
@@ -511,6 +528,35 @@ public:
         } up2;
       } pragma;
    } u3;
+
+#if defined(TARG_SL)
+// following struct include some target specific extension 
+   struct
+  {
+     BOOL vbuf_ofst_adjusted;
+     BOOL is_internal_mem_ofst;
+     BOOL compgoto_para;
+     BOOL compgoto_for_minor;
+  }sl_ext; 
+
+// need a flag to record if there are div/rem in actual 
+   UINT32 div_in_actual;
+#define WN_div_in_actual(x)  ((x)->div_in_actual)
+#define WN_Set_div_in_actual(x, y) (((x)->div_in_actual) = (y)) 
+
+#define WN_vbuf_ofst_adjusted(x) ((x)->sl_ext.vbuf_ofst_adjusted)
+#define WN_Set_vbuf_ofst_adjusted(x) ((x)->sl_ext.vbuf_ofst_adjusted = TRUE)
+
+
+#define WN_is_internal_mem_ofst(x) ((x)->sl_ext.is_internal_mem_ofst)
+#define WN_Set_is_internal_mem_ofst(x) ((x)->sl_ext.is_internal_mem_ofst = TRUE)
+
+#define WN_is_compgoto_para(x) ((x) ->sl_ext.compgoto_para)
+#define WN_Set_is_compgoto_para(x) ((x) ->sl_ext.compgoto_para = TRUE)
+
+#define WN_is_compgoto_for_minor(x) ((x) ->sl_ext.compgoto_for_minor)
+#define WN_Set_is_compgoto_for_minor(x)  ((x) ->sl_ext.compgoto_for_minor = TRUE)
+#endif // TARG_SL
 
 #ifndef WN_NO_ACCESSOR_FUNCTIONS
 
@@ -671,6 +717,10 @@ public:
   friend inline void        WN_Copy_u1u2 (WN*, const WN*);
   friend inline void        WN_Copy_u3 (WN*, const WN*);
 
+#if defined(TARG_SL)
+// following accessor used to access sl specific extension stuff
+  friend inline void        WN_Copy_sl_ext(WN* , const WN*); 
+#endif 
 #endif /* WN_NO_ACCESSOR_FUNCTIONS */
 };
 
@@ -800,6 +850,10 @@ inline INT32& WN_pragma_preg (WN* wn) { return wn->u3.pragma.up2.pragma_preg; }
 
 inline void WN_Copy_u1u2 (WN* dst, const WN* src) { dst->u1u2 = src->u1u2; }
 inline void WN_Copy_u3 (WN* dst, const WN* src) { dst->u3 = src->u3; }
+
+#if defined(TARG_SL) || defined(TARG_SL2)
+inline void WN_Copy_sl_ext(WN* dst,  const WN* src)  { dst->sl_ext = src->sl_ext; }
+#endif
 
 #else
 
@@ -1284,7 +1338,11 @@ inline BOOL WN_Is_Volatile_Mem(const WN *wn)
       return TY_is_volatile(pointed);
     } else {
       return TY_is_volatile(WN_ty(wn)) ||
+#ifdef KEY	// bug 12404
+	OPCODE_has_2ty(opc) && TY_is_volatile(TY_pointed(WN_load_addr_ty(wn)));
+#else
 	OPCODE_has_2ty(opc) && TY_is_volatile(WN_load_addr_ty(wn));
+#endif
     }
   }
   return FALSE;
@@ -1398,6 +1456,12 @@ inline BOOL WN_Is_Volatile_Mem(const WN *wn)
 #define WN_PARM_NOT_EXPOSED_USE   0x40  /* there is no exposed use */
 #define WN_PARM_IS_KILLED   0x80        /* the parameter is killed, for
 					   pass by reference */
+
+#if defined(TARG_SL)
+#define WN_PARM_DEREFERENCE  0x100
+#define WN_Parm_Dereference(x)         (WN_parm_flag(x) & WN_PARM_DEREFERENCE)
+#define WN_Set_Parm_Dereference(x)   (WN_parm_flag(x) |= WN_PARM_DEREFERENCE)
+#endif // TARG_SL
 
 #define WN_Parm_By_Reference(x)		(WN_parm_flag(x) & WN_PARM_BY_REFERENCE)
 #define WN_Set_Parm_By_Reference(x)	(WN_parm_flag(x) |= WN_PARM_BY_REFERENCE)
@@ -1558,7 +1622,8 @@ inline mINT16 WN_num_actuals(const WN *wn)
  *              ^^^^^^^^^                     unused           (8 bits, 16..23)
  *            ^                               read(0)/write(1) (1 bit,  24)
  *           ^                                1 if manual prefetch  (1 bit, 25)
- *         ^^                                 unused           (2 bits, 26..27)
+ *          ^                                 keep                  (1 bit, 26)
+ *         ^                                  non-temporal          (1 bit, 27)                       
  *    ^^^^                                    confidence #     (4 bits, 28..31)
  *
  ***********************************************************************/
@@ -1569,7 +1634,6 @@ inline mINT16 WN_num_actuals(const WN *wn)
 #define PF_GET_STRIDE_2L(flag)  (((flag) >> 8)   & 0xff)
 #define PF_GET_CONFIDENCE(flag) (((flag) >> 28)  & 0xf)
 #define PF_GET_MANUAL(flag)     (((flag) >> 25) & 0x1)
-
 #ifdef KEY //bug 10953
 #define PF_GET_KEEP_ANYWAY(flag) (((flag) >> 26) & 0x1)
 #define PF_GET_NON_TEMPORAL(flag) (((flag) >> 27) & 0x1)
@@ -1582,14 +1646,12 @@ inline mINT16 WN_num_actuals(const WN *wn)
 #define PF_SET_CONFIDENCE(flag, x) flag = (((flag)&0x0fffffff) | ((x)&0xf)<<28)
 #define PF_SET_MANUAL(flag)        flag |= 0x02000000
 #define PF_UNSET_MANUAL(flag)      flag &= 0xfdffffff
-
 #ifdef KEY //bug 10953
 #define PF_SET_KEEP_ANYWAY(flag)   flag |= 0x04000000
 #define PF_UNSET_KEEP_ANYWAY(flag) flag &= 0xfbffffff
 #define PF_SET_NON_TEMPORAL(flag)  flag |= 0x08000000
 #define PF_UNSET_NON_TEMPORAL(flag) flag &= 0xf7ffffff
 #endif
-
 
 #define WN_pf_read(wn)       (((~(WN_prefetch_flag(wn))) >> 24) & 0x1)
 #define WN_pf_write(wn)      (((WN_prefetch_flag(wn))  >> 24) & 0x1)

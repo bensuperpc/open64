@@ -249,8 +249,14 @@
 #ifdef KEY /* Bug 6845 */
 # define DV_ALLOC_CPNT_OFFSET_WORD_SIZE		1
 #endif /* KEY Bug 6845 */
+
+#if defined (TARG_X8664) && defined (_HOST64)
+# define DV_DIM_WORD_SIZE               ((SET_POINTER_SIZE)? 3 : 3)
+# define DV_HD_WORD_SIZE                ((SET_POINTER_SIZE)? 6 : 8)
+#else
 # define DV_DIM_WORD_SIZE		3       /* Size of dope vector dimen  */
 # define DV_HD_WORD_SIZE		6       /* Size of dope vector header */
+#endif
 
 # define DV_BASE_ADDR(DOPE)             (DOPE).base_addr
 # define DV_EL_LEN(DOPE)                (DOPE).el_len
@@ -671,6 +677,29 @@
 # define ATD_WAS_SCOPED(IDX)		attr_tbl[IDX].fld.flag45
 # endif
 
+#ifdef KEY /* Bug 14150 */
+# ifdef _DEBUG
+# define AT_BIND_ATTR(IDX)						       \
+		((!(AT_OBJ_CLASS(IDX) == Data_Obj &&                           \
+		   ATD_CLASS(IDX) == Dummy_Argument)) ?                        \
+		   attr_tbl : sytb_var_error("AT_BIND_ATTR", IDX))             \
+		   [IDX].fld.flag46
+# else
+# define AT_BIND_ATTR(IDX)		attr_tbl[IDX].fld.flag46
+# endif
+
+# ifdef _DEBUG
+# define ATD_VALUE_ATTR(IDX)                                                   \
+		((AT_OBJ_CLASS(IDX) == Data_Obj &&                             \
+		   ATD_CLASS(IDX) == Dummy_Argument) ?                         \
+		attr_tbl : sytb_var_error("AT_VALUE_ATTR", IDX))               \
+		[IDX].fld.flag46
+# else
+# define ATD_VALUE_ATTR(IDX)		attr_tbl[IDX].fld.flag46
+# endif
+
+#endif /* KEY Bug 14150 */
+
 # ifdef _DEBUG
 # define ATD_DV_ALIAS(IDX)  						       \
         (((AT_OBJ_CLASS(IDX) == Data_Obj) && 				       \
@@ -784,10 +813,17 @@
 # endif
 
 # ifdef _DEBUG
+#ifdef KEY /* Bug 14150 */
+# define ATD_IGNORE_TKR(IDX)						       \
+        ((AT_OBJ_CLASS(IDX) == Data_Obj || AT_OBJ_CLASS(IDX) == Pgm_Unit) ?    \
+                attr_tbl : sytb_var_error("ATD_IGNORE_TKR", IDX))	       \
+                [IDX].fld.flag48
+#else /* KEY */
 # define ATD_IGNORE_TKR(IDX)						       \
         ((AT_OBJ_CLASS(IDX) == Data_Obj) ?                                     \
                 attr_tbl : sytb_var_error("ATD_IGNORE_TKR", IDX))	       \
                 [IDX].fld.flag48
+#endif /* KEY Bug 14150 */
 # else
 # define ATD_IGNORE_TKR(IDX)		attr_tbl[IDX].fld.flag48
 # endif
@@ -3220,8 +3256,23 @@
 # define GA_ORIG_NAME_LONG(IDX)     &(str_pool[GA_ORIG_NAME_IDX(IDX)].name_long)
 # define GA_REFERENCED(IDX)		global_attr_tbl[IDX].fld.referenced
 # define GA_USE_ASSOCIATED(IDX)		global_attr_tbl[IDX].fld.use_associated
+#ifdef KEY /* Bug 14150 */
+# define GA_BIND_ATTR(IDX)		global_attr_tbl[IDX].fld.flag10
+# define GA_BINDING_LABEL(IDX)		global_attr_tbl[IDX].fld.binding_label
+#endif /* KEY Bug 14150 */
 
 /* Definitions for data object class */
+
+#ifdef KEY /* Bug 14110 */
+# ifdef _DEBUG
+# define GAD_VOLATILE(IDX)                                            \
+       ((GA_OBJ_CLASS(IDX) == Data_Obj) ?                                     \
+               global_attr_tbl : ga_var_error("GAD_ARRAY_ELEMENT_REF", IDX))  \
+               [IDX].fld.flag7
+# else
+# define GAD_VOLATILE(IDX)     global_attr_tbl[IDX].fld.flag7
+# endif
+#endif /* KEY Bug 14110 */
 
 # ifdef _DEBUG
 # define GAD_ARRAY_ELEMENT_REF(IDX)					       \
@@ -3736,6 +3787,10 @@
  * and therefore needs to save/restore FPU state on entry/exit */
 # define SCP_USES_IEEE(IDX)		scp_tbl[IDX].wd[3].fld1.flag1
 #endif /* KEY Bug 5089 */
+#ifdef KEY /* Bug 11741 */
+/* Scope is interface body having "import" sans explicit list of identifiers */
+# define SCP_IMPORT(IDX)		scp_tbl[IDX].wd[4].fld1.flag1
+#endif /* KEY Bug 11741 */
 # define SCP_INLINE_SGI(IDX)		scp_tbl[IDX].wd[3].fld1.flag2
 # define SCP_NOINLINE_SGI(IDX)		scp_tbl[IDX].wd[3].fld1.flag3
 # define SCP_DBG_PRINT_SYTB(IDX)	scp_tbl[IDX].wd[25].fld1.flag1
@@ -4088,6 +4143,13 @@
 # define SB_DEF_LINE(IDX)		stor_blk_tbl[IDX].fld.def_line
 # define SB_DUPLICATE_COMMON(IDX)	stor_blk_tbl[IDX].fld.duplicate_common
 # define SB_EQUIVALENCED(IDX)		stor_blk_tbl[IDX].fld.equivalenced
+#ifdef KEY /* Bug 14150 */
+# define SB_BIND_ATTR(IDX)		stor_blk_tbl[IDX].fld.bind_attr
+# define SB_EXT_NAME_IDX(IDX)		stor_blk_tbl[IDX].fld.ext_name_idx
+# define SB_EXT_NAME_LEN(IDX)		stor_blk_tbl[IDX].fld.ext_name_len
+# define SB_EXT_NAME(IDX)	      name_pool[SB_EXT_NAME_IDX(IDX)].name_char
+# define SB_EXT_NAME_PTR(IDX)	     &name_pool[SB_EXT_NAME_IDX(IDX)].name_char
+#endif /* KEY Bug 14150 */
 # define SB_FILL_SYMBOL(IDX)		stor_blk_tbl[IDX].fld.fill_symbol
 # define SB_FIRST_ATTR_IDX(IDX)		stor_blk_tbl[IDX].fld.first_attr_idx
 # define SB_HAS_RENAMES(IDX)		stor_blk_tbl[IDX].fld.has_renames
@@ -4109,7 +4171,14 @@
 # define SB_NAME_IN_STONE(IDX)		stor_blk_tbl[IDX].fld.name_in_stone
 # define SB_NAME_LEN(IDX)		stor_blk_tbl[IDX].fld.name_len
 # define SB_ORIG_SCP_IDX(IDX)		stor_blk_tbl[IDX].fld.orig_scp_idx
+#ifdef KEY /* Bug 14150 */
+/* Assignment "SB_PAD_AMOUNT(IDX) = cmd_line_flags.pad_amount" will be a nop,
+ * and value of SB_PAD_AMOUNT(IDX) will always be zero because we don't support
+ * any way to set cmd_line_flags.pad_amount. */
+# define SB_PAD_AMOUNT(IDX)		cmd_line_flags.pad_amount
+#else /* KEY Bug 14150 */
 # define SB_PAD_AMOUNT(IDX)		stor_blk_tbl[IDX].fld.pad_amount
+#endif /* KEY Bug 14150 */
 # define SB_PAD_AMOUNT_SET(IDX)		stor_blk_tbl[IDX].fld.pad_amount_set
 # define SB_PAD_BLK(IDX)		stor_blk_tbl[IDX].fld.pad_blk
 # define SB_RUNTIME_INIT(IDX)		stor_blk_tbl[IDX].fld.runtime_init
@@ -4634,7 +4703,7 @@
 
 # if defined(_TARGET64) && defined(_HOST64)
 # define F_INT_TO_C(ARRAY,LIN_TYPE)	*(ARRAY)
-# elif (defined(_TARGET_OS_IRIX) || defined(_TARGET_OS_LINUX))
+# elif (defined(_TARGET_OS_IRIX) || defined(_TARGET_OS_LINUX) || defined(_TARGET_OS_DARWIN))
 # define F_INT_TO_C(ARRAY,LIN_TYPE)					       \
                         ((LIN_TYPE == Integer_8 || LIN_TYPE == Typeless_8)     \
                                    ? *((long64 *) (ARRAY)):(long64) *(ARRAY))
@@ -4658,7 +4727,7 @@
 /* 09Feb01[sos] was: # if defined(_TARGET64) && defined(_HOST64) */
 # if defined(_TARGET64)
 # define C_TO_F_INT(ARRAY, CONST, LIN_TYPE)	ARRAY[0] = CONST
-# elif (defined(_TARGET_OS_IRIX) || defined(_TARGET_OS_LINUX))
+# elif (defined(_TARGET_OS_IRIX) || defined(_TARGET_OS_LINUX) || defined(_TARGET_OS_DARWIN))
 # define C_TO_F_INT(ARRAY, CONST, LIN_TYPE)				       \
 	{								       \
 	long   *_cn_ptr;						       \

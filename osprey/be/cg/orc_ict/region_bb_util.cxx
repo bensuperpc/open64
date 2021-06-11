@@ -239,7 +239,7 @@ BB *RGN_Gen_And_Insert_BB_Before(BB *point, REGIONAL_CFG *regional_cfg){
 
 void RGN_Unlink_BB_Edges(BB *bb, REGIONAL_CFG *regional_cfg) {
     if (Get_Trace(TP_A_REGION, TT_RGN_SUMMERY))
-        fprintf(TFile, "*** beginning of RGN_Remove_BB_And_Edges(bb_id:%d *** \n",
+        fprintf(TFile, "*** beginning of RGN_Unlink_BB_Edges(bb_id:%d *** \n",
                 BB_id(bb));
     
     REGION *bb_rgn = Home_Region(bb);
@@ -263,8 +263,31 @@ void RGN_Unlink_BB_Edges(BB *bb, REGIONAL_CFG *regional_cfg) {
         RGN_Unlink_Pred_Succ(bb, succ);
     };
 
+    // OSP: delete the node from the region,
+    // otherwise, we'll get an assertion in verify region_cfg.
+    REGIONAL_CFG_NODE *node = Regional_Cfg_Node(bb);
+    REGION *root_region = node->Home_Region()->Tree()->Root();
+
+    // delete corresponding regional_cfg_node,
+    // if its home region's node set is empty, delete it also
+    if( regional_cfg->_node_set.size() == 1 ){
+        REGION *region = node->Home_Region();
+        REGION *par_rgn = region->Parent();
+        while( par_rgn->Regional_Cfg()->_node_set.size() == 1 ) {
+            region = par_rgn;
+            par_rgn = region->Parent();
+        };
+        region->Tree()->Del_Region(region);
+    }
+    else {
+        regional_cfg->Del_Node(node);
+    }
+
+    // Add the deleted node to root region to avoid its home region is NULL
+    root_region->Regional_Cfg()->Add_Node(bb);
+
     if (Get_Trace(TP_A_REGION, TT_RGN_SUMMERY))
-        fprintf(TFile, "*** end of RGN_Remove_BB_And_Edges *** \n");
+        fprintf(TFile, "*** end of RGN_Unlink_BB_Edges *** \n");
 
 } 
 
@@ -833,12 +856,16 @@ GTN_SET *Region_Def_Reach_In(REGION *rgn, MEM_POOL *pool){
 //
 //  Divide_BB: Divide one basic block into two, the boundary is indicated by point.
 //
+//  If force is TRUE, this routine will always create a new BB
+//      even if the point is the last op in the bb. -- added by jianxin.lai@hp
 //=============================================================================
-BB *RGN_Divide_BB(BB *bb, OP *point)
+BB *RGN_Divide_BB(BB *bb, OP *point, BOOL force)
 {
     Is_True( OP_bb(point) == bb, ("Divide_BB: op is not in bb!"));
     
-    if( point == BB_last_op(bb) )   return NULL;
+    // Alwayse create a new BB if force is ture 
+    //   even if the point is the last op
+    if( point == BB_last_op(bb) && ! force )   return NULL;
 
     BB* bottom_bb = RGN_Gen_And_Insert_BB_After(bb);
     if (BB_exit(bb)) {

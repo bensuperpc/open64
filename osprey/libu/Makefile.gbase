@@ -77,7 +77,6 @@ endif
 endif
 
 LF77OPTS = $(STD_COMPILE_OPTS)
-PREPFFOPTS =
 
 ifeq ($(BUILD_TARGET), IA32)
 LCDEFS += -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE
@@ -94,19 +93,15 @@ endif
 
 ifeq ($(BUILD_ABI), N32BIT)
 O_abi=N32
-PREPFFOPTS = -n32
 endif
 ifeq ($(BUILD_ABI), 64BIT)
 O_abi=64
-PREPFFOPTS = -64
 endif
 ifeq ($(BUILD_ARCH), MIPS3)
 O_mipsisa=3
-PREPFFOPTS += -mips3
 endif
 ifeq ($(BUILD_ARCH), MIPS4)
 O_mipsisa=4
-PREPFFOPTS += -mips4
 endif
 ifdef O_abi
 LCDEFS += -DT_MIPS$(O_mipsisa)_$(O_abi)
@@ -174,6 +169,9 @@ endif
 ifeq ($(BUILD_ABI), N32BIT)
 FC += -Wa,-mips4 
 endif
+ifeq ($(BUILD_ABI), I32BIT)
+  FC += -m32
+endif
 ifeq ($(BUILD_ARCH), IA32)
 ## Do not build the f90 routines yet.
 #SKIP_F90_ROUTINES = TRUE
@@ -195,7 +193,7 @@ endif
 ## C front end needs all the routines
 include $(BUILD_TOT)/libcsup/gen/gen.makeinclude
 
-ifeq ($(BUILD_OS), LINUX)
+ifeq ($(BUILD_OS_LINUX_OR_DARWIN), TRUE)
 CFILES += \
 	catgetmsg.c \
 	catmsgfmt.c 
@@ -240,7 +238,7 @@ exports: default
 ##endif
 
 install: default
-ifeq ($(BUILD_OS), LINUX)
+ifeq ($(BUILD_OS_LINUX_OR_DARWIN), TRUE)
 	$(STD_INSTALL) $(STD_INSTALL_READ_MASK) $(LIB_TARGETS)
 	$(INSTALL) $(STD_INSTALL_READ_MASK) -src $(MSGFILE) $(MSGFILE)
 	$(INSTALL) $(STD_INSTALL_READ_MASK) -src $(MSGFILE).m $(MSGFILE).m
@@ -262,13 +260,15 @@ else
  endif
 endif
 
+LF77OPTS = $(STD_COMPILE_OPTS)
+FFLAGS_NOLANG = $(FFLAGS:N-LANG\:exceptions=O*) -shared
+
 include $(COMMONRULES)
+
 
 VPATH = $(SRC_DIRS)
 LF77INCS = $(LCINCS)
 
-.F.o:
-	$(FC) $(PREPFFOPTS) $(FFLAGS) -c $<
 
 $(LIBRARY): $(OBJECTS)
 	$(ar) cru $@ $^
@@ -284,9 +284,13 @@ endif
 
 ### Until hpc is built for linux or until library uses its own ###
 $(DSO): $(OBJECTS:%.o=%.pic.o)
+ifeq ($(BUILD_OS), DARWIN)
+	@echo "Skipping unneeded " $(DSO)
+else
 	$(ld) $(STD_DSO_LOADOPTS) -o $@ $^
+endif
 
-ifeq ($(BUILD_OS), LINUX)
+ifeq ($(BUILD_OS_LINUX_OR_DARWIN), TRUE)
 lib.i: $(BUILD_BASE)/errmsg/lib.msg numbers.h
 	/usr/bin/cpp -traditional -E -I. $(BUILD_BASE)/errmsg/lib.msg > lib.i
 else

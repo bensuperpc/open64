@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2006. QLogic Corporation. All Rights Reserved.
+ *  Copyright (C) 2006, 2007. QLogic Corporation. All Rights Reserved.
  */
 
 /*
@@ -88,7 +88,11 @@ static void	free_get_stmt (void);
 void		ntr_next_msg_queue(int,int,msg_severities_type,
                                    int,char *, long,int);
 static void     move_up_next_msg_queue(void);
+#ifdef KEY /* Bug 10151 */
+static boolean	open_include_file (boolean, boolean);
+#else /* KEY Bug 10151 */
 static boolean	open_include_file (boolean);
+#endif /* KEY Bug 10151 */
 static void	update_global_line (void);
 static int      whats_after_paren_group(int *, int *, int);
 static int      whats_after_brkt_group(int *, int *, int);
@@ -1384,7 +1388,12 @@ static void fixed_get_stmt (void)
                         nxt_line_type = Include_Line;
                         include_stmt_file_line = SRC_STK_FILE_LINE(src_stk_idx);
 
-                        if (open_include_file (TRUE)) {
+#ifdef KEY /* Bug 10151 */
+                        if (open_include_file (TRUE, FALSE))
+#else /* KEY Bug 10151 */
+                        if (open_include_file (TRUE))
+#endif /* KEY Bug 10151 */
+			{
                            include_found  = TRUE;      /* flag begin of file */
                            include_switch = TRUE;      /* flag file switch   */
                         }
@@ -1501,7 +1510,13 @@ static void fixed_get_stmt (void)
 
                      include_stmt_file_line = SRC_STK_FILE_LINE(src_stk_idx);
 
-		     if (open_include_file (FALSE)) {
+#ifdef KEY /* Bug 10151 */
+		     if (open_include_file (FALSE,
+		       Pound_Include_Enter_Line == nxt_line_type))
+#else /* KEY Bug 10151 */
+		     if (open_include_file (FALSE))
+#endif /* KEY Bug 10151 */
+		     {
 			include_found  = TRUE;		/* flag begin of file */
 			include_switch = TRUE;		/* flag file switch   */
 		     }
@@ -2216,7 +2231,7 @@ START:
 # endif
          }
       }
-# if (defined(_TARGET_OS_IRIX) || defined(_TARGET_OS_LINUX))
+# if (defined(_TARGET_OS_IRIX) || defined(_TARGET_OS_LINUX) || defined(_TARGET_OS_DARWIN))
       else if (((ch = nxt_line[NXT_COL(2)]) == dollar) &&
                ((ch = nxt_line[NXT_COL(3)]) == uc_s   || ch == lc_s) &&
                ((ch = nxt_line[NXT_COL(4)]) == uc_g   || ch == lc_g) &&
@@ -2346,7 +2361,7 @@ START:
 
             idx = NXT_COL(5);
 
-# if (defined(_TARGET_OS_IRIX) || defined(_TARGET_OS_LINUX))
+# if (defined(_TARGET_OS_IRIX) || defined(_TARGET_OS_LINUX) || defined(_TARGET_OS_DARWIN))
             if (! is_star_directive(idx)) {
                PP_LINE_TYPE = Comment_Line;
             }
@@ -2507,7 +2522,7 @@ START:
 
             idx = NXT_COL(4);
 
-# if (defined(_TARGET_OS_IRIX) || defined(_TARGET_OS_LINUX))
+# if (defined(_TARGET_OS_IRIX) || defined(_TARGET_OS_LINUX) || defined(_TARGET_OS_DARWIN))
             if (! is_star_directive(idx)) {
                PP_LINE_TYPE = Comment_Line;
             }
@@ -3333,7 +3348,12 @@ static void free_get_stmt (void)
                         nxt_line_type = Include_Line;
                         include_stmt_file_line = SRC_STK_FILE_LINE(src_stk_idx);
 
-                        if (open_include_file (TRUE)) {
+#ifdef KEY /* Bug 10151 */
+                        if (open_include_file (TRUE, FALSE))
+#else /* KEY Bug 10151 */
+                        if (open_include_file (TRUE))
+#endif /* KEY Bug 10151 */
+			{
                            include_found  = TRUE;      /* flag begin of file */
                            include_switch = TRUE;      /* flag file switch   */
                         }
@@ -3440,7 +3460,13 @@ static void free_get_stmt (void)
 
                      include_stmt_file_line = SRC_STK_FILE_LINE(src_stk_idx);
 
-		     if (open_include_file (FALSE)) {
+#ifdef KEY /* Bug 10151 */
+		     if (open_include_file (FALSE,
+		       Pound_Include_Enter_Line == nxt_line_type))
+#else /* KEY Bug 10151 */
+		     if (open_include_file (FALSE))
+#endif /* KEY Bug 10151 */
+		     {
 		        include_found  = TRUE;		/* flag begin of file */
 		        include_switch = TRUE;		/* flag file switch   */
 		     }
@@ -3918,7 +3944,7 @@ START:
 # endif
          }
       }
-# if (defined(_TARGET_OS_IRIX) || defined(_TARGET_OS_LINUX))
+# if (defined(_TARGET_OS_IRIX) || defined(_TARGET_OS_LINUX) || defined(_TARGET_OS_DARWIN))
       else if (((ch = nxt_line[PP_IDX+1]) == dollar) &&
                ((ch = nxt_line[PP_IDX+2]) == uc_s   || ch == lc_s) &&
                ((ch = nxt_line[PP_IDX+3]) == uc_g   || ch == lc_g) &&
@@ -4110,7 +4136,7 @@ START:
             PP_ACTUAL_DIR_PREFIX = Cstar_Dir;
             in_format = FALSE;
 
-# if (defined(_TARGET_OS_IRIX) || defined(_TARGET_OS_LINUX))
+# if (defined(_TARGET_OS_IRIX) || defined(_TARGET_OS_LINUX) || defined(_TARGET_OS_DARWIN))
             if (! is_star_directive(idx)) {
                PP_LINE_TYPE = Comment_Line;
             }
@@ -4831,7 +4857,12 @@ START:
 |*									      *|
 \******************************************************************************/
 
+#ifdef KEY /* Bug 10151 */
+static boolean open_include_file (boolean pound_include_line,
+  boolean allow_recursion)
+#else /* KEY Bug 10151 */
 static boolean open_include_file (boolean pound_include_line)
+#endif /* KEY Bug 10151 */
 
 {
    char	       *char_ptr;
@@ -5136,10 +5167,17 @@ static boolean open_include_file (boolean pound_include_line)
    else {               /* Check for recursive use of INCLUDE file name.      */
 
 #ifdef KEY /* Bug 10151 */
-    /* -ftpp preprocessor can't handle recursive #include, but -cpp
-     * preprocessor can (and even issues a nice message in the case of
-     * infinite recursion) */
-    if (on_off_flags.preprocess) {
+    /*
+     * Fortran standard 'include' forbids recursive use, and originally this
+     * front end didn't allow it for any kind of inclusion (evidently -ftpp
+     * can't limit the depth because it doesn't implement macros, and who
+     * knows what Cc_Tok_Kwd_Include inclusion can or can't do.) But the cpp
+     * preprocessor can tolerate recursive inclusion, can use macros to
+     * limit it to a finite depth, and will issue a nice message if the
+     * recursion threatens to be infinite, so we don't want to forbid
+     * recursion solely on the basis of a "# filename lineno" directive.
+     */
+    if (!allow_recursion) {
 #endif /* KEY Bug 10151 */
       for (src_stk_i = src_stk_idx; src_stk_i > NULL_IDX; src_stk_i--) {
 
@@ -7728,7 +7766,12 @@ void preprocess_only_driver(void)
 
                include_stmt_file_line = SRC_STK_FILE_LINE(src_stk_idx);
 
-               if (open_include_file (TRUE)) {
+#ifdef KEY /* Bug 10151 */
+               if (open_include_file (TRUE, FALSE))
+#else /* KEY Bug 10151 */
+               if (open_include_file (TRUE))
+#endif /* KEY Bug 10151 */
+	       {
                   include_found  = TRUE;      /* flag begin of file */
                   include_switch = TRUE;      /* flag file switch   */
                }
@@ -8478,7 +8521,12 @@ static void pp_get_stmt (void)
 
                include_stmt_file_line = SRC_STK_FILE_LINE(src_stk_idx);
 
-               if (open_include_file (FALSE)) {
+#ifdef KEY /* Bug 10151 */
+               if (open_include_file (FALSE, FALSE))
+#else /* KEY Bug 10151 */
+               if (open_include_file (FALSE))
+#endif /* KEY Bug 10151 */
+	       {
                   include_found  = TRUE;          /* flag begin of file */
                   include_switch = TRUE;          /* flag file switch   */
                }
@@ -8493,7 +8541,12 @@ static void pp_get_stmt (void)
             cc_include_line = TRUE;
             include_stmt_file_line = SRC_STK_FILE_LINE(src_stk_idx);
 
-            if (open_include_file (TRUE)) {
+#ifdef KEY /* Bug 10151 */
+            if (open_include_file (TRUE, FALSE))
+#else /* KEY Bug 10151 */
+            if (open_include_file (TRUE))
+#endif /* KEY Bug 10151 */
+	    {
                include_found  = TRUE;      /* flag begin of file */
                include_switch = TRUE;      /* flag file switch   */
             }

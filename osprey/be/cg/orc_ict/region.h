@@ -304,7 +304,7 @@ class REGIONAL_CFG_NODE {
    
 friend class REGIONAL_CFG;
 friend class SCHEDULER;
-friend BB *RGN_Divide_BB(BB *bb, OP *point);
+friend BB *RGN_Divide_BB(BB *bb, OP *point, BOOL force);
 private:    
     union source_node {
         REGION *r;
@@ -556,7 +556,7 @@ friend void RGN_Add_Regional_Cfg_Edge(BB *pred,BB *succ,REGIONAL_CFG *cfg);
 friend void RGN_Del_Regional_Cfg_Edge(BB *pred,BB *succ,REGIONAL_CFG *cfg);
 friend void Collect_Entry_BBs(REGION *rgn, BB_VECTOR *entries);
 friend void Collect_Exit_BBs(REGION *rgn, BB_VECTOR *exits);
-friend BB *RGN_Divide_BB(BB *bb, OP *point);
+friend BB *RGN_Divide_BB(BB *bb, OP *point, BOOL force);
 //------------------------------------
 // region verify functions as friends
 //------------------------------------
@@ -1686,6 +1686,7 @@ friend class REGION_LOOP_UPDATE;
 friend class REGIONAL_CFG;
 
 friend void Verify_Region_Tree(REGION_TREE *tree,BB *first_bb);
+friend void RGN_Unlink_BB_Edges(BB *bb, REGIONAL_CFG *regional_cfg);
 friend void RGN_Remove_BB_And_Edges(BB *bb, REGIONAL_CFG *regional_cfg);
 typedef mempool_allocator<REGION*>       REGION_ALLOC;
 
