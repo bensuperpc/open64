@@ -644,14 +644,12 @@ static void Print_Label (FILE *pfile, ST *st, INT64 size)
 {
     ST *base_st;
     INT64 base_ofst;
-#ifdef TARG_IA64    
     // bug fix for OSP_155
     if (ST_is_export_hidden(st)) {
         fprintf ( pfile, "\t%s\t", AS_HIDDEN);
         EMT_Write_Qualified_Name(pfile, st);
         fprintf(pfile, "\n");
     }
-#endif
 
     if (ST_is_weak_symbol(st)) {
 	fprintf ( pfile, "\t%s\t", AS_WEAK);
@@ -893,7 +891,7 @@ mINT32 EMT_Put_Elf_Symbol (ST *sym)
 	    }
 	    else {
 		Elf64_Half symshndx;	/* sym section index */
-		if (ST_is_thread_private(sym)) symshndx = SHN_MIPS_LCOMMON;
+		if (ST_is_thread_local(sym)) symshndx = SHN_MIPS_LCOMMON;
 		else if (ST_is_gp_relative(sym)) symshndx = SHN_MIPS_SCOMMON;
 		else symshndx = SHN_COMMON;
 	  	symindex = Em_Add_New_Symbol (
@@ -1297,11 +1295,7 @@ static void r_assemble_list (
   }
 
   fputc ('\t', Asm_File);
-#ifdef TARG_X8664
   lc = CGEMIT_Print_Inst( op, result, opnd, Asm_File );
-#else
-  lc = TI_ASM_Print_Inst( OP_code(op), result, opnd, Asm_File );
-#endif
   FmtAssert (lc != TI_RC_ERROR, ("%s", TI_errmsg));
   vstr_end(buf);
 

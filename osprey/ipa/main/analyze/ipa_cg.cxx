@@ -236,6 +236,16 @@ IPA_update_summary_st_idx (const IP_FILE_HDR& hdr)
     }
   }
   
+  // process all TY_IDXs found in SUMMARY_CALLSITEs
+  INT32 num_callsites;
+  SUMMARY_CALLSITE *callsites = IPA_get_callsite_file_array(hdr, num_callsites);
+  for (i = 0; i < num_callsites; ++i) {
+    TY_IDX old_ty_idx = callsites[i].Get_virtual_class();
+    if (old_ty_idx) {
+      callsites[i].Set_virtual_class(idx_maps->ty[old_ty_idx]);
+    }
+  }
+  
   // process all ST_IDXs found in IVARs
   INT32 num_ivars;
   IVAR* ivars = IPA_get_ivar_file_array(hdr, num_ivars);
@@ -315,14 +325,14 @@ void
 IPA_update_ehinfo_in_pu (IPA_NODE *node)
 {
 	if (!(PU_src_lang (node->Get_PU()) & PU_CXX_LANG) ||
-	    !node->Get_PU().unused)
+	    !node->Get_PU().eh_info)
 	    return;
 
         int sym_size;
         SUMMARY_SYMBOL* sym_array = IPA_get_symbol_file_array(node->File_Header(), sym_size);
         FmtAssert (sym_array != NULL, ("Missing SUMMARY_SYMBOL section"));
                                                                                 
-        INITV_IDX tinfo = INITV_next (INITV_next (INITO_val (node->Get_PU().unused)));
+        INITV_IDX tinfo = INITV_next (INITV_next (INITO_val (node->Get_PU().eh_info)));
         INITO_IDX inito = TCON_uval (INITV_tc_val (tinfo));
         if (inito)
         {
@@ -336,7 +346,9 @@ IPA_update_ehinfo_in_pu (IPA_NODE *node)
                     continue;
                 }
                 int st_idx = TCON_uval (INITV_tc_val (st_entry));
-                if (st_idx < 0)
+		// bug fix for OSP_317
+		// 
+                if (st_idx < 0 || st_idx >= sym_size)
                 {
                     idx = INITV_next (idx);
                     continue;
@@ -349,10 +361,10 @@ IPA_update_ehinfo_in_pu (IPA_NODE *node)
 		if (ST_IDX_level(new_idx) == GLOBAL_SYMTAB) {
       		  Set_AUX_ST_flags (Aux_St_Table[new_idx], USED_IN_OBJ);
                   Clear_ST_is_not_used (St_Table[new_idx]);
-                INITV_IDX filter = INITV_next (st_entry); // for backup
-                INITV_Set_VAL (Initv_Table[st_entry], Enter_tcon (
+                  INITV_IDX filter = INITV_next (st_entry); // for backup
+                  INITV_Set_VAL (Initv_Table[st_entry], Enter_tcon (
                        Host_To_Targ (MTYPE_U4, new_idx)), 1);
-                Set_INITV_next (st_entry, filter);
+                  Set_INITV_next (st_entry, filter);
 		}
                 idx = INITV_next (idx);
             } while (idx);
@@ -764,22 +776,6 @@ Add_One_Node (IP_FILE_HDR& s, INT32 file_idx, INT i, NODE_INDEX& orig_entry_inde
 #endif
 
 #if defined(KEY) && !defined(_STANDALONE_INLINER) && !defined(_LIGHTWEIGHT_INLINER)
-    // Fix summary information in node only once, i.e. for pu_reorder=2
-    // in the first pass.
-    if (ipa_node && (PU_src_lang (ipa_node->Get_PU()) & PU_CXX_LANG) &&
-        IPA_Call_Graph_Tmp == NULL)
-    {
-      IPA_NODE_CONTEXT context (ipa_node);   // get node context
-      IPA_update_ehinfo_in_pu (ipa_node);
-    }
-
-    if (ipa_node && PU_has_mp (ipa_node->Get_PU ()) &&
-        IPA_Call_Graph_Tmp == NULL)
-    {
-      IPA_NODE_CONTEXT context (ipa_node);   // get node context
-      IPA_update_pragma_in_pu (ipa_node);
-    }
-
     // bug 4880
     // If lang of main pu is C++, -IPA:pu_reorder defaults to 1 w/ feedback
     if (!IPA_Enable_PU_Reorder_Set && Annotation_Filename &&

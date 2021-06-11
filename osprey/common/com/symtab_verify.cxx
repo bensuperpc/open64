@@ -165,12 +165,7 @@ ST_Verify_Sclass_Export (ST_SCLASS storage_class, ST_EXPORT export_class,
     case SCLASS_DISTR_ARRAY:
     case SCLASS_THREAD_PRIVATE_FUNCS:
     case SCLASS_COMMENT:
-#ifndef TARG_IA64
-      Is_True (export_class == EXPORT_LOCAL ||
-               export_class == EXPORT_LOCAL_INTERNAL,
-               (msg, Export_Name(export_class), Sclass_Name (storage_class)));
-#else
-      // bug fix for OSP_145
+      // bug fix for OSP_145, OSP_339, __attribute__((alias(...)))
       if ( export_class == EXPORT_PREEMPTIBLE ) {
         // maybe alias to FSTATIC
         ST_IDX base_idx = ST_base_idx (st);
@@ -184,7 +179,6 @@ ST_Verify_Sclass_Export (ST_SCLASS storage_class, ST_EXPORT export_class,
                  export_class == EXPORT_LOCAL_INTERNAL,
 		 (msg, Export_Name(export_class), Sclass_Name (storage_class)));
       }
-#endif
       break;
     case SCLASS_COMMON:
     case SCLASS_DGLOBAL:
@@ -673,7 +667,8 @@ void FLD::Verify (UINT64 record_size) const
       Is_True (bsize == 0, (msg, "ofst"));
     } else {
       // handle zero-size types, such as array of zero length
-      Is_True (TY_size (type) == 0, (msg, "ofst"));
+      if ( !(this->flags & FLD_LAST_FIELD) || (TY_kind (this->type) != KIND_ARRAY))
+        Is_True (TY_size (type) == 0, (msg, "ofst"));
     }
     
   }
@@ -1015,11 +1010,11 @@ void PU::Verify(UINT) const
 	   ("Invalid TY_IDX in PU::prototype"));
 
 #ifdef KEY
-// We are using 'unused' to store ST_IDXs of 2 special variables for
+// We are using 'eh_info' to store ST_IDXs of 2 special variables for
 // C++ exception handling.
   if (!(src_lang & PU_CXX_LANG))
 #endif // !KEY
-  Is_True (unused == 0, ("unused fields must be zero"));
+  Is_True (eh_info == 0, ("eh_info fields must be zero"));
 
   // Verify flags
   static char msg[] = "Invalid PU flags: (%s)";

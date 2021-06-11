@@ -1721,7 +1721,7 @@ add_final_ld_args (string_list_t *args, phases_t ld_phase)
 	//	add_library(args, "m" PSC_NAME_PREFIX);
 		add_library(args, "m");
 		add_library(args, "ffio");
-		add_library(args, "msgi");
+	//	add_library(args, "msgi");
 	    }
 #ifdef KEY
 	    if (option_was_seen(O_mp) ||
@@ -2592,11 +2592,9 @@ run_ld (void)
         char *our_path;
 
         if (abi == ABI_N32) {
-	 #ifdef PSC_TO_OPEN64
-          asprintf(&our_path, "%s/" OPEN64_FULL_VERSION "/32", root_prefix);
+          asprintf(&our_path, "%s" LIBPATH "/32", root_prefix);
         } else {
-          asprintf(&our_path, "%s/" OPEN64_FULL_VERSION, root_prefix);
-	 #endif
+          asprintf(&our_path, "%s" LIBPATH, root_prefix);
         }
 
         add_string(args, concat_strings("-L", our_path));
@@ -2814,7 +2812,7 @@ run_compiler (int argc, char *argv[])
 			    phase_order[i] != P_spin_cc1plus &&
 			    phase_order[i] != P_wgen &&
 #endif
-			    phase_order[i] < P_any_fe) 
+			    phase_order[i] < P_any_fe)
 			{
 			    add_command_line_arg(args, source_file);
 			    cmd_line_updated = TRUE;
@@ -2822,6 +2820,13 @@ run_compiler (int argc, char *argv[])
 			add_file_args (args, phase_order[i]);
 			run_phase (phase_order[i],
 				   get_full_phase_name(phase_order[i]), args);
+                        /* undefine the environment variable
+                         * DEPENDENCIES_OUTPUT after the pre-processor phase -
+                         * bug 386.
+                         */
+                        if (phase_order[i] == P_gcpp_plus)
+                          unsetenv("DEPENDENCIES_OUTPUT");
+
 			if ( i == 0 && (string_md == TRUE || string_mmd == TRUE)){
 			        /* Bug# 581, bug #932, bug# 1049, bug #433 */
 				/* We've run the dependency phase, so

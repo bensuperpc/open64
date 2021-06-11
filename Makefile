@@ -199,6 +199,7 @@ $(NATIVE_BUILD_DIR)/ir_tools/ir_b2a ir_b2a:
 $(NATIVE_BUILD_DIR)/crayf90/sgi/mfef95 mfef95:
 	$(SUBMAKE) -C $(NATIVE_BUILD_DIR)/crayf90
 
+
 .PHONY: Force
 $(NATIVE_BUILD_DIR_LD)/ld/ld-new ld-new: $(NATIVE_BUILD_DIR_LD)/Makefile Force
 	$(SUBMAKE) -C $(NATIVE_BUILD_DIR_LD)
@@ -271,7 +272,7 @@ endif
 	cd $(NATIVE_BUILD_DIR_LD); ./CLOBBER
 	cd $(GNUFE_BUILD_DIR); ./CLOBBER
 	@for i in libcif libcmplrs libcomutil libcsup libdwarf libelf libelfutil \
-		libiberty libunwindP libspin ; do  \
+		libiberty libunwindP libspin; do  \
 		$(SUBMAKE) -C "$(NATIVE_BUILD_DIR)/$${i}" clobber; \
 	done
 

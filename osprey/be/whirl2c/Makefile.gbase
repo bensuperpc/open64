@@ -283,7 +283,7 @@ LDIRT += be be.so whirl2c_dbg $(TARGET_SO)
 
 whirl2c.so:  $(WHIRL2C_CXX_OBJS) $(BE_WHIRL2C_DIR)/Exported \
 		$(WHIRL2C_DSOS) $(BE_BE_DIR)/so_locations
-	$(cxx) -o $@ $(STD_DSO_LOADOPTS) $(EXPORT_LIST) $(LDFLAGS) \
+	$(cxx) -o $@ -static-libgcc $(STD_DSO_LOADOPTS) $(EXPORT_LIST) $(LDFLAGS) \
 	$(WHIRL2C_CXX_OBJS) $(WHIRL2C_DSOS) $(LLDLIBS)
 
 # Make the back-end executable, then create a link to it named

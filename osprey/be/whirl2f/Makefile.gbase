@@ -299,7 +299,7 @@ install:: default
 
 whirl2f.so: $(WHIRL2F_C_OBJS)  $(BE_WHIRL2F_DIR)/Exported \
 		$(WHIRL2F_DSOS) $(BE_BE_DIR)/so_locations
-	$(cxx) -o $@ $(STD_DSO_LOADOPTS) $(EXPORT_LIST) $(LDFLAGS) \
+	$(cxx) -o $@ -static-libgcc $(STD_DSO_LOADOPTS) $(EXPORT_LIST) $(LDFLAGS) \
 	$(WHIRL2F_C_OBJS) $(WHIRL2F_DSOS) $(LLDLIBS)
 
 # Make the back-end executable, then create a link to it named

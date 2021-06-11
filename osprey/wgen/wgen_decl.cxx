@@ -74,6 +74,7 @@ extern "C" {
 #include "wgen_spin_symbol.h"
 #include "wgen_expr.h"
 #include "wgen_stmt.h"
+#include "wgen_tracing.h"
 //#include "tree_cmp.h"
 #include "wgen_dst.h" // DST_enter_member_function
 #include "dwarf_DST_dump.h"
@@ -371,6 +372,7 @@ WGEN_Expand_Function_Body (gs_t decl)
 
   expanded_decl(decl) = TRUE;
 
+  TRACE_EXPAND_GS(decl);
   (void) WGEN_Start_Function(decl);
   Set_Current_Function_Decl(decl);
 
@@ -661,6 +663,7 @@ static void process_local_classes()
 
 void WGEN_Expand_Decl(gs_t decl, BOOL can_skip)
 {
+  //  TRACE_EXPAND_GS(decl);
   Is_True(decl != NULL && gs_tree_code_class(decl) == GS_TCC_DECLARATION,
           ("Argument to WGEN_Expand_Decl isn't a decl node"));
 /*
@@ -955,7 +958,7 @@ Setup_Entry_For_EH (void)
     INITV_Set_VAL (Initv_Table[eh_spec], Enter_tcon (Host_To_Targ (MTYPE_U4,
                                 0)), 1);
     Set_INITV_next (tinfo, eh_spec);
-    Get_Current_PU().unused = New_INITO (ST_st_idx (etable), exc_ptr_iv);
+    Get_Current_PU().eh_info = New_INITO (ST_st_idx (etable), exc_ptr_iv);
 }
 
 
@@ -1454,6 +1457,12 @@ WGEN_Start_Function(gs_t fndecl)
 
     Set_PU_Info_flags(pu_info, PU_IS_COMPILER_GENERATED);
 
+    if (strcmp (ST_name (func_st), "main") == 0) {
+      PU& pu = Pu_Table[ST_pu (St_Table [PU_Info_proc_sym (pu_info)])];
+      Set_PU_is_mainpu (pu);
+      Set_PU_no_inline (pu);
+    }     
+
     if (PU_Info_Table [CURRENT_SYMTAB])
       PU_Info_next (PU_Info_Table [CURRENT_SYMTAB]) = pu_info;
     else if (CURRENT_SYMTAB == GLOBAL_SYMTAB + 1)
@@ -1507,6 +1516,12 @@ WGEN_Start_Function(gs_t fndecl)
       Set_TY_is_varargs (ty_idx);
       Set_TY_has_prototype (ty_idx);
       Set_PU_prototype (pu, ty_idx);
+	  
+      gs_t fntype = gs_tree_type(fndecl);
+      if (gs_tree_code(fntype) == GS_METHOD_TYPE) {
+          TY_IDX base = Get_TY(gs_type_method_basetype(fntype));
+          Set_PU_base_class(pu, base);
+      }
     }
 
     if (!thunk && gs_decl_global_ctor_p(fndecl)) {
@@ -1684,18 +1699,31 @@ private:
   void Add_Init_For_WHIRL(WN *init_wn, UINT size, INT64 ofst);
   void Add_Initv_For_Tree (gs_t val, UINT size);
   void Add_Bitfield_Initv_For_Tree (gs_t val, FLD_HANDLE fld, INT &bytes);
-  void Traverse_Aggregate_Pad ( ST     *st,
+  void Traverse_Aggregate_Pad ( 
+#ifdef NEW_INITIALIZER
+        WN     *target,
+#else
+        ST     *st,
+#endif
 	BOOL   gen_initv,
 	UINT   pad,
 	UINT   current_offset);
 void Traverse_Aggregate_Array (
+#ifdef NEW_INITIALIZER
+        WN   *target,
+#else
 	ST   *st,            // symbol being initialized
+#endif
 	gs_t init_list,      // list of initializers for each array element
 	gs_t type,           // type of array
 	BOOL gen_initv,      // TRUE if initializing with INITV, FALSE for statements
 	UINT current_offset); // offset from start of symbol for current array
   UINT Traverse_Aggregate_Struct (
+#ifdef NEW_INITIALIZER
+        WN   *target,
+#else
 	ST   *st,               // symbol being initialized
+#endif
 	gs_t init_list,         // list of initializers for elements in STRUCT
 #ifdef KEY
 	gs_t struct_type,       // type of top level structure
@@ -1722,14 +1750,22 @@ public:
 
   void WGEN_Add_Aggregate_Init_Padding (INT size);
   void Traverse_Aggregate_Vector (
+#ifdef NEW_INITIALIZER
+        WN * target,
+#else
 	ST * st,              // symbol being initialized
+#endif
 	gs_t init_list,       // list of initializers for units in vector
 	TYPE_ID mtyp,         // type of vector
 	BOOL gen_initv,       // TRUE if initializing with INITV, FALSE for statements
 	UINT current_offset,  // offset from start of symbol for current vector
 	BOOL vec_cst = FALSE);// init_list is a constant or not
   UINT Traverse_Aggregate_Constructor (
+#ifdef NEW_INITIALIZER
+        WN   *target,
+#else
 	ST   *st,               // symbol being initialized
+#endif
 	gs_t init_list,         // list of initilaizers for this aggregate
 #ifdef KEY
 	gs_t struct_type,	  // type of top level struct
@@ -2070,7 +2106,11 @@ AGGINIT::WGEN_Add_Aggregate_Init_Address (gs_t init)
 		  iload_ofst = WN_offset(wn);
 		  wn = WN_kid0(wn);
 		}
-		if (WN_operator(wn) != OPR_ARRAY)
+		// bug fix for OSP_128
+		//
+		if (WN_operator(wn) == OPR_INTCONST) 
+		  WGEN_Add_Aggregate_Init_Integer(WN_const_val(wn) + iload_ofst, Pointer_Size);
+		else if (WN_operator(wn) != OPR_ARRAY)
 		  WGEN_Add_Aggregate_Init_Symbol (WN_st(wn), WN_offset(wn)+iload_ofst);
 		else {
 		  FmtAssert(WN_operator(WN_array_base(wn)) == OPR_LDA,
@@ -2461,7 +2501,13 @@ AGGINIT::Add_Bitfield_Initv_For_Tree (gs_t val, FLD_HANDLE fld, INT &bytes)
 // "bytes" will be updated with the additional bytes that this invocation
 // generates stores into
 static void
-Gen_Assign_Of_Init_Val (ST *st, gs_t init, UINT offset, UINT array_elem_offset,
+Gen_Assign_Of_Init_Val (
+#ifdef NEW_INITIALIZER
+WN *target,
+#else
+ST *st, 
+#endif
+gs_t init, UINT offset, UINT array_elem_offset,
 	TY_IDX ty, BOOL is_bit_field, UINT field_id, FLD_HANDLE fld, INT &bytes)
 {
 #ifdef KEY
@@ -2469,8 +2515,35 @@ Gen_Assign_Of_Init_Val (ST *st, gs_t init, UINT offset, UINT array_elem_offset,
     // memory, then tell the call expr to put the result directly into ST.
     if (TY_return_in_mem(ty) &&
 	gs_tree_code(init) == GS_CALL_EXPR) {
+#ifndef NEW_INITIALIZER
       WN *target = WN_Lda (Pointer_Mtype, 0, st, 0);
+      bytes += TY_size(ty);
+#endif
       WGEN_Expand_Expr (init, TRUE, 0, 0, 0, 0, FALSE, FALSE, target);
+      return;
+    }
+#endif
+
+#ifdef NEW_INITIALIZER
+    if (TY_return_in_mem(ty) &&
+        gs_tree_code(init) == GS_TARGET_EXPR) {
+      // We can not pass the offset to WGEN_Expand_Expr,
+      //  because it's not handled in that function, so we make an add here
+      Is_True ((WN_operator(target) == OPR_LDID ||
+                WN_operator(target) == OPR_LDA),
+               ("Bad operator for target") );
+      if (WN_offset(target) != 0 || offset != 0) {
+          TY_IDX targ_ty = WN_ty(target);
+          ST* addr_st = Gen_Temp_Symbol (TY_mtype(targ_ty), "target");
+          WN* wn = WN_Stid (TY_mtype(targ_ty), 0, addr_st, targ_ty,
+                            WN_Binary (OPR_ADD, Pointer_Mtype, 
+				       WN_CopyNode(target),
+                                       WN_Intconst(MTYPE_I4, offset) ) );
+          WGEN_Stmt_Append (wn, Get_Srcpos());
+          target = WN_Ldid (TY_mtype(targ_ty), 0, addr_st, targ_ty);
+      }
+      WGEN_Expand_Expr (init, TRUE, 0, 0, 0, 0, FALSE, FALSE, target);
+      bytes += TY_size(ty);
       return;
     }
 #endif
@@ -2490,7 +2563,12 @@ Gen_Assign_Of_Init_Val (ST *st, gs_t init, UINT offset, UINT array_elem_offset,
 #else
 				      WN_Intconst(MTYPE_I4, size));
 #endif
+
+#ifdef NEW_INITIALIZER
+        WN *addr_wn = target;
+#else
 	WN *addr_wn = WN_Lda(Pointer_Mtype, 0, st);
+#endif
 	WGEN_Stmt_Append(
 		WN_CreateMstore (offset, ptr_ty,
 				 load_wn,
@@ -2504,7 +2582,11 @@ Gen_Assign_Of_Init_Val (ST *st, gs_t init, UINT offset, UINT array_elem_offset,
 #ifdef KEY // bug 3247
 	if (size - gs_tree_string_length(init)) {
 	  load_wn = WN_Intconst(MTYPE_U4, 0);
+#ifdef NEW_INITIALIZER
+          addr_wn = target;
+#else
 	  addr_wn = WN_Lda(Pointer_Mtype, 0, st);
+#endif
 	  WGEN_Stmt_Append(
 		  WN_CreateMstore (offset+gs_tree_string_length(init), ptr_ty,
 				   load_wn,
@@ -2522,8 +2604,26 @@ Gen_Assign_Of_Init_Val (ST *st, gs_t init, UINT offset, UINT array_elem_offset,
 	} else
 	    field_id = 0;	// uses offset instead
 	WGEN_Set_ST_Addr_Saved (init_wn);
+#ifdef NEW_INITIALIZER
+        //TY_IDX ptr_ty = Make_Pointer_Type(ty);
+        //WN *wn = WN_CreateMstore(offset, ty, init_wn, target, WN_Intconst(MTYPE_I4, TY_size(ty)) );
+        WN* wn = NULL;
+        Is_True( (WN_operator(target) == OPR_LDID ||
+                  WN_operator(target) == OPR_LDA),
+                 ("Invalid operator for target"));
+        if( WN_operator(target) == OPR_LDID ) {
+            TY_IDX ptr_ty = Make_Pointer_Type(ty);
+            wn = WN_Istore(mtype, offset, ptr_ty, target, init_wn, field_id);
+        }
+        else { // OPR_LDA
+            ST *st = WN_st(target);
+            wn = WN_Stid (mtype, WN_lda_offset(target) + offset, st,
+                          ty, init_wn, field_id); 
+        }
+#else
 	WN *wn = WN_Stid (mtype, ST_ofst(st) + offset, st,
 		ty, init_wn, field_id);
+#endif
 	WGEN_Stmt_Append(wn, Get_Srcpos());
 	if (! is_bit_field) 
 	  bytes += TY_size(ty);
@@ -2559,9 +2659,14 @@ WGEN_Process_Initialization ( gs_t exp )
            ("WGEN_Process_Initialization: Unhandled tree code in init"));
 
   ST * st = Get_ST(lhs);
-
+#ifdef NEW_INITIALIZER
+  WN* target = WN_Lda(Pointer_Mtype, 0, st);
+  Gen_Assign_Of_Init_Val (target, init, 0, 0, ST_type(st), FALSE, 0,
+                          FLD_HANDLE(), emitted_bytes);
+#else
   Gen_Assign_Of_Init_Val (st, init, 0, 0, ST_type(st), FALSE, 0,
                           FLD_HANDLE(), emitted_bytes);
+#endif
 }
 
 // For the specified symbol, generate padding at the offset specified.
@@ -2570,7 +2675,11 @@ WGEN_Process_Initialization ( gs_t exp )
 
 void
 AGGINIT::Traverse_Aggregate_Pad (
+#ifdef NEW_INITIALIZER
+  WN     *target,
+#else
   ST     *st,
+#endif
   BOOL   gen_initv,
   UINT   pad,
   UINT   current_offset)
@@ -2581,7 +2690,11 @@ AGGINIT::Traverse_Aggregate_Pad (
   else {
     WN *zero_wn = WN_Intconst(MTYPE_U4, 0);
     WN *pad_wn = WN_Intconst(MTYPE_U4, pad);
+#ifdef NEW_INITIALIZER
+    WN *addr_wn = target;
+#else
     WN *addr_wn = WN_Lda(Pointer_Mtype, 0, st);
+#endif
     TY_IDX mstore_ty = Make_Pointer_Type(MTYPE_To_TY(MTYPE_U1)); // char *
     WGEN_Stmt_Append (WN_CreateMstore (current_offset, mstore_ty,
                                       zero_wn, addr_wn, pad_wn),
@@ -2596,7 +2709,11 @@ AGGINIT::Traverse_Aggregate_Pad (
 
 void
 AGGINIT::Traverse_Aggregate_Array (
+#ifdef NEW_INITIALIZER
+  WN   *target,
+#else
   ST   *st,            // symbol being initialized
+#endif
   gs_t init_list,      // list of initializers for each array element
   gs_t type,           // type of array
   BOOL gen_initv,      // TRUE if initializing with INITV, FALSE for statements
@@ -2640,7 +2757,11 @@ AGGINIT::Traverse_Aggregate_Array (
     else lindex = hindex = gs_get_integer_value(gs_tree_purpose(init));
     if ( emitted_bytes/esize < lindex ) {
       // pad (lindex - current_offset/esize)*esize bytes
+#ifdef NEW_INITIALIZER
+      Traverse_Aggregate_Pad (target, gen_initv,
+#else
       Traverse_Aggregate_Pad (st, gen_initv, 
+#endif
 			      (lindex - emitted_bytes/esize)*esize,
 			      current_offset);
       current_offset += (lindex - emitted_bytes/esize)*esize;
@@ -2659,7 +2780,11 @@ AGGINIT::Traverse_Aggregate_Array (
       // recursively process nested ARRAYs and STRUCTs
       // update array_elem_offset to current_offset to
       // keep track of where each array element starts
-      Traverse_Aggregate_Constructor (st, gs_tree_value(init), 
+#ifdef NEW_INITIALIZER
+      Traverse_Aggregate_Constructor (target, gs_tree_value(init), 
+#else
+      Traverse_Aggregate_Constructor (st, gs_tree_value(init),
+#endif
 #ifdef KEY
 				      gs_tree_type(type),
 #endif
@@ -2693,7 +2818,11 @@ AGGINIT::Traverse_Aggregate_Array (
 	  emitted_bytes += esize;
 	}
 	else
-	  Gen_Assign_Of_Init_Val (st, gs_tree_value(init), current_offset, 0,
+#ifdef NEW_INITIALIZER
+	  Gen_Assign_Of_Init_Val (target, gs_tree_value(init), current_offset, 0,
+#else
+          Gen_Assign_Of_Init_Val (st, gs_tree_value(init), current_offset, 0,
+#endif
 				  ety, FALSE, 0, FLD_HANDLE (), emitted_bytes);
 	current_offset += esize;
       }
@@ -2737,8 +2866,11 @@ AGGINIT::Traverse_Aggregate_Array (
   pad = TY_size (ty) - emitted_bytes;
 
   if (pad > 0)
+#ifdef NEW_INITIALIZER
+    Traverse_Aggregate_Pad (target, gen_initv, pad, current_offset);
+#else
     Traverse_Aggregate_Pad (st, gen_initv, pad, current_offset);
-
+#endif
 } /* Traverse_Aggregate_Array */
 
 #ifdef KEY
@@ -2774,7 +2906,11 @@ UINT Advance_Field_Id (FLD_HANDLE field, UINT field_id) {
 
 UINT
 AGGINIT::Traverse_Aggregate_Struct (
+#ifdef NEW_INITIALIZER
+  WN   *target,
+#else
   ST   *st,               // symbol being initialized
+#endif
   gs_t init_list,         // list of initializers for elements in STRUCT
 #ifdef KEY
   gs_t struct_type,       // type of top level structure
@@ -2866,7 +3002,11 @@ AGGINIT::Traverse_Aggregate_Struct (
     pad = FLD_ofst (fld) - emitted_bytes;
 
     if (pad > 0) {
+#ifdef NEW_INITIALIZER
+      Traverse_Aggregate_Pad (target, gen_initv, pad, current_offset);
+#else
       Traverse_Aggregate_Pad (st, gen_initv, pad, current_offset);
+#endif
       current_offset += pad;
       emitted_bytes  += pad;
     }
@@ -2887,7 +3027,12 @@ AGGINIT::Traverse_Aggregate_Struct (
       // For an example see Traverse_Aggregate_Array
       INT array_size = TY_size(fld_ty);
 #endif
+
+#ifdef NEW_INITIALIZER
+      field_id = Traverse_Aggregate_Constructor (target, init_value,
+#else
       field_id = Traverse_Aggregate_Constructor (st, init_value,
+#endif
 #ifdef KEY
   						 struct_type,
 #endif
@@ -2909,7 +3054,7 @@ AGGINIT::Traverse_Aggregate_Struct (
     // Fields corresponding to pointer-to-member-functions are represented as
     // records with fields __pfn and __delta.  The initializer is a TREE_LIST
     // of __pfn and __delta.  Bug 3143.
-    else if (gs_type_ptrmemfunc_p(gs_tree_type(field))) {
+    else if (field && gs_type_ptrmemfunc_p(gs_tree_type(field))) {
       gs_t element_type;
       element_type = gs_tree_type(field);
 
@@ -2918,7 +3063,11 @@ AGGINIT::Traverse_Aggregate_Struct (
       // PTRMEM_CST was expanded by GCC's cplus_expand_constant.  Get the
       // result.
       gs_t expanded_ptrmem_cst = gs_expanded_ptrmem_cst(init_value);
+#ifdef NEW_INITIALIZER
+      field_id = Traverse_Aggregate_Constructor (target, expanded_ptrmem_cst,
+#else
       field_id = Traverse_Aggregate_Constructor (st, expanded_ptrmem_cst,
+#endif
   						 struct_type,
                                                  element_type, gen_initv,
                                                  current_offset,
@@ -2953,7 +3102,11 @@ AGGINIT::Traverse_Aggregate_Struct (
         }
       }
       else {
+#ifdef NEW_INITIALIZER
+        Gen_Assign_Of_Init_Val (target,  gs_tree_value(init),
+#else
         Gen_Assign_Of_Init_Val (st, gs_tree_value(init),
+#endif
                                 current_offset, array_elem_offset,
 #ifndef KEY
                                 is_bit_field ? ty : fld_ty,
@@ -2965,10 +3118,11 @@ AGGINIT::Traverse_Aggregate_Struct (
       }
     }
 
-    // advance ot next field
+    // advance to next field
     current_offset = current_offset_base + emitted_bytes;
     fld = FLD_next(fld);
-    field = next_real_field(type, field);
+    if (field)
+      field = next_real_field(type, field);
     while (field && gs_tree_code(field) != GS_FIELD_DECL)
       field = next_real_field(type, field);
   }
@@ -2989,6 +3143,25 @@ AGGINIT::Traverse_Aggregate_Struct (
 	TYPE_ID mtyp = TY_mtype(fld_ty);
 	mtyp = (mtyp == MTYPE_V) ? MTYPE_I4 : Widen_Mtype(mtyp);
 	WN *init_wn = WN_Intconst (mtyp, 0);
+#ifdef NEW_INITIALIZER
+        TY_IDX struct_ty = Get_TY ( struct_type );
+        //TY_IDX ptr_ty = Make_Pointer_Type(struct_ty);
+        //WN *wn = WN_CreateMstore(array_elem_offset, ptr_ty, init_wn, target, WN_Intconst(MTYPE_I4, TY_size(struct_ty)) );
+        WN* wn = NULL;
+        Is_True( (WN_operator(target) == OPR_LDID ||
+                  WN_operator(target) == OPR_LDA),
+                 ("Invalid operator for target"));
+        if( WN_operator(target) == OPR_LDID ) {
+            TY_IDX ptr_ty = Make_Pointer_Type(struct_ty);
+            wn = WN_Istore(MTYPE_BS, array_elem_offset, struct_ty, 
+                           target, init_wn, field_id);
+        }
+        else { // OPR_LDA
+            ST *st = WN_st(target);
+            wn = WN_Stid (MTYPE_BS, WN_lda_offset(target) + array_elem_offset,
+                          st, struct_ty, init_wn, field_id);
+        }
+#else
 	WN *wn = WN_Stid (MTYPE_BS, ST_ofst(st) + array_elem_offset, st,
 #ifndef KEY
 			  ty, 
@@ -2996,6 +3169,7 @@ AGGINIT::Traverse_Aggregate_Struct (
 			  Get_TY(struct_type),
 #endif
 			  init_wn, field_id);
+#endif
 	WGEN_Stmt_Append(wn, Get_Srcpos());
       }
     }
@@ -3013,7 +3187,11 @@ AGGINIT::Traverse_Aggregate_Struct (
   pad = TY_size (ty) - emitted_bytes;
 
   if (pad > 0)
+#ifdef NEW_INITIALIZER
+    Traverse_Aggregate_Pad (target, gen_initv, pad, current_offset);
+#else
     Traverse_Aggregate_Pad (st, gen_initv, pad, current_offset);
+#endif
 
   return field_id;
 } /* Traverse_Aggregate_Struct */
@@ -3024,7 +3202,11 @@ AGGINIT::Traverse_Aggregate_Struct (
 // If gen_initv is FALSE generate a sequence of stores.
 void
 AGGINIT::Traverse_Aggregate_Vector (
+#ifdef NEW_INITIALIZER
+  WN * target,
+#else
   ST * st,             // symbol being initialized
+#endif
   gs_t init_list,      // list of initializers for units in vector
   TYPE_ID mtyp,	       // type of vector
   BOOL gen_initv,      // TRUE if initializing with INITV, FALSE for statements
@@ -3054,7 +3236,11 @@ AGGINIT::Traverse_Aggregate_Vector (
       emitted_bytes += esize;
     }
     else
+#ifdef NEW_INITIALIZER
+      Gen_Assign_Of_Init_Val (target, gs_tree_value(init),
+#else
       Gen_Assign_Of_Init_Val (st, gs_tree_value(init),
+#endif
                               current_offset, 0,
                               Get_TY(unit_type),
                               0, 0, FLD_HANDLE(), emitted_bytes);
@@ -3065,18 +3251,30 @@ AGGINIT::Traverse_Aggregate_Vector (
   INT pad = MTYPE_byte_size(mtyp) - emitted_bytes;
 
   if (pad > 0)
+#ifdef NEW_INITIALIZER
+    Traverse_Aggregate_Pad (target, gen_initv, pad, current_offset);
+#else
     Traverse_Aggregate_Pad (st, gen_initv, pad, current_offset);
+#endif
 } /* Traverse_Aggregate_Vector */
 
 void
 Traverse_Aggregate_Vector_Const (
+#ifdef NEW_INITIALIZER
+  WN * target,
+#else
   ST * st,             // symbol being initialized
+#endif
   gs_t init_list,      // list of initializers for units in vector
   BOOL gen_initv,      // TRUE if initializing with INITV, FALSE for statements
   UINT current_offset) // offset from start of symbol for current vector
 {
   AGGINIT agginit;
+#ifdef NEW_INITIALIZER
+  agginit.Traverse_Aggregate_Vector(target, init_list, WN_desc(target),
+#else
   agginit.Traverse_Aggregate_Vector(st, init_list, TY_mtype(ST_type(st)), 
+#endif
 				    gen_initv, current_offset, TRUE);
 }
 #endif
@@ -3093,7 +3291,11 @@ Traverse_Aggregate_Vector_Const (
 
 UINT
 AGGINIT::Traverse_Aggregate_Constructor (
+#ifdef NEW_INITIALIZER
+  WN   *target,
+#else
   ST   *st,               // symbol being initialized
+#endif
   gs_t init_list,         // list of initilaizers for this aggregate
 #ifdef KEY
   gs_t struct_type,	  // type of top level struct
@@ -3119,8 +3321,12 @@ AGGINIT::Traverse_Aggregate_Constructor (
   }
 
   if (TY_kind (ty) == KIND_STRUCT) {
-
+#ifdef NEW_INITIALIZER
+    field_id = Traverse_Aggregate_Struct (target, init_list,
+#else
     field_id = Traverse_Aggregate_Struct (st, init_list, 
+#endif
+
 #ifdef KEY
 					  struct_type,
 #endif
@@ -3131,15 +3337,21 @@ AGGINIT::Traverse_Aggregate_Constructor (
 
   else
   if (TY_kind (ty) == KIND_ARRAY) {
-
+#ifdef NEW_INITIALIZER
+    Traverse_Aggregate_Array (target, init_list, type, gen_initv, current_offset);
+#else
     Traverse_Aggregate_Array (st, init_list, type, gen_initv, current_offset);
+#endif
   }
 
 #ifdef KEY // bug 9550
   else
   if (TY_kind (ty) == KIND_SCALAR && MTYPE_is_vector (TY_mtype (ty))) {
-
+#ifdef NEW_INITIALIZER
+    Traverse_Aggregate_Vector(target, init_list, TY_mtype(ty), gen_initv, current_offset);
+#else
     Traverse_Aggregate_Vector(st, init_list, TY_mtype(ty), gen_initv, current_offset);
+#endif
   }
 #endif
 
@@ -3330,7 +3542,12 @@ AGGINIT::Add_Inito_For_Tree (gs_t init, ST *st)
 	break;
   case GS_CONSTRUCTOR: {
 	AGGINIT agginit(New_INITO(st));
+#ifdef NEW_INITIALIZER
+        WN* target = WN_Lda (Pointer_Mtype, 0, st, 0);
+        agginit.Traverse_Aggregate_Constructor (target, init,
+#else
 	agginit.Traverse_Aggregate_Constructor (st, init, 
+#endif
 #ifdef KEY
 					gs_tree_type(init),
 #endif
@@ -3374,7 +3591,12 @@ WGEN_Generate_Temp_For_Initialized_Aggregate (gs_t init, char * name)
   {
 	// do sequence of stores to temp
 	Set_ST_sclass(temp, SCLASS_AUTO);	// put on stack
+#ifdef NEW_INITIALIZER
+        WN* target = WN_Lda (Pointer_Mtype, 0, temp, 0);
+        agginit.Traverse_Aggregate_Constructor (target, init,
+#else
 	agginit.Traverse_Aggregate_Constructor (temp, init, 
+#endif
 #ifdef KEY
 					gs_tree_type(init),
 #endif
@@ -3385,7 +3607,12 @@ WGEN_Generate_Temp_For_Initialized_Aggregate (gs_t init, char * name)
 	// setup inito for temp
 	Set_ST_is_initialized(temp);
 	agginit.Set_inito(New_INITO(temp));
+#ifdef NEW_INITIALIZER
+        WN* target = WN_Lda (Pointer_Mtype, 0, temp, 0);
+        agginit.Traverse_Aggregate_Constructor (target, init,
+#else
 	agginit.Traverse_Aggregate_Constructor (temp, init, 
+#endif
 #ifdef KEY
 					gs_tree_type(init),
 #endif
@@ -3417,6 +3644,73 @@ WGEN_Generate_Temp_For_Initialized_Aggregate (gs_t init, char * name)
   }
   return temp;
 }
+
+#ifdef NEW_INITIALIZER
+ST* WGEN_Generate_Initialized_Aggregate(WN* target, gs_t init)
+{
+  Is_True(gs_tree_code(init) == GS_CONSTRUCTOR, 
+          ("wrong tree code for target"));
+  Is_True((WN_operator(target) == OPR_LDID ||
+           WN_operator(target) == OPR_LDA),
+          ("Invalid target operator"));
+  ST* target_st = WN_st(target);
+
+  AGGINIT agginit;
+  gs_code_t code = gs_tree_code(init);
+  if (! Use_Static_Init_For_Aggregate (target_st, init))
+  {
+	agginit.Traverse_Aggregate_Constructor (target, init, 
+					gs_tree_type(init),
+					gs_tree_type(init),
+                                        FALSE /*gen_initv*/, 
+                                        0 /*currect_ofst*/, 
+                                        0, 0);
+	return target_st;
+  }
+  else {
+        // TODO: We do not need to create a temp ST in all cases.
+        //  if ST_class(target_st) is FORMAL, we need it indeed.
+        DevWarn ("Static initialize %s(%s)\n", 
+                 ST_name(target_st), Sclass_Name(ST_sclass(target_st)));
+        TY_IDX ty_idx = Get_TY(gs_tree_type(init));
+	ST *temp = New_ST (CURRENT_SYMTAB);
+	ST_Init (temp,
+        	 Save_Str2 (ST_name(target_st), ".init"),
+        	 CLASS_VAR, SCLASS_PSTATIC, EXPORT_LOCAL,
+        	 ty_idx );
+	// setup inito for target_st
+	Set_ST_is_initialized(temp);
+	agginit.Set_inito(New_INITO(temp));
+	WN* temp_target = WN_Lda (Pointer_Mtype, 0, temp, 0);
+
+	agginit.Traverse_Aggregate_Constructor (temp_target, init, 
+					gs_tree_type(init),
+					gs_tree_type(init),
+                                        TRUE /*gen_initv*/, 
+                                        0, 
+                                        0, 0);
+	// following inlined from WGEN_Finish_Aggregate_Init()
+	TY_IDX ty = ST_type(temp);
+	if (TY_size(ty) == 0 ||
+	    (TY_kind(ty) == KIND_ARRAY &&
+	     !ARB_const_ubnd (TY_arb(ty)) &&
+	     TY_size(ty) <= Get_INITO_Size(agginit.Inito()))) {
+	      // e.g. array whose size is determined by init;
+	      // fill in with initv size
+	      Set_TY_size(ty, Get_INITO_Size(agginit.Inito()));
+	      if (TY_kind(ty) == KIND_ARRAY) {
+		      Set_ARB_const_ubnd (TY_arb(ty));
+		      Set_ARB_ubnd_val (TY_arb(ty), 
+			      (TY_size(ty) / TY_size(TY_etype(ty))) - 1 );
+	      }
+	}
+	if (agginit.Last_initv() == 0) {
+	  agginit.WGEN_Add_Aggregate_Init_Padding (0);
+	}
+	return temp;
+  }
+}
+#endif
 
 static gs_t init_decl = NULL;
 
@@ -3488,7 +3782,12 @@ WGEN_Initialize_Decl (gs_t decl)
 		else {
 			// do sequence of stores for each element
 			AGGINIT agginit;
+#ifdef NEW_INITIALIZER
+                        WN *target = WN_Lda (Pointer_Mtype, 0, st, 0);
+                        agginit.Traverse_Aggregate_Constructor (target, init, 
+#else
 			agginit.Traverse_Aggregate_Constructor (st, init, 
+#endif
 #ifdef KEY
 				gs_tree_type(init),
 #endif
@@ -3498,7 +3797,12 @@ WGEN_Initialize_Decl (gs_t decl)
 	}
 	else {
 		INT emitted_bytes;
+#ifdef NEW_INITIALIZER
+                WN *target = WN_Lda (Pointer_Mtype, 0, st, 0);
+                Gen_Assign_Of_Init_Val (target, init, 
+#else
 		Gen_Assign_Of_Init_Val (st, init, 
+#endif
 			0 /*offset*/, 0 /*array_elem_offset*/,
 			ST_type(st), FALSE, 0 /*field_id*/,
 			FLD_HANDLE(), emitted_bytes);
