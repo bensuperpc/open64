@@ -1,4 +1,8 @@
 /*
+ * Copyright (C) 2008-2010 Advanced Micro Devices, Inc.  All Rights Reserved.
+ */
+
+/*
  * Copyright 2002, 2003, 2004, 2005, 2006 PathScale, Inc.  All Rights Reserved.
  */
 
@@ -56,7 +60,6 @@
  */
 
 
-#define __STDC_LIMIT_MACROS
 #include <stdint.h>
 #include "defs.h"
 #include "config_targ.h"
@@ -115,6 +118,14 @@ BOOL CG_skip_local_hbf = FALSE;
 BOOL CG_skip_local_loop = FALSE;
 BOOL CG_skip_local_sched = FALSE;
 BOOL CG_skip_local_swp = FALSE;
+#ifdef TARG_X8664
+BOOL CG_cmp_load_exec = FALSE;
+BOOL CG_fma4_load_exec = FALSE;
+BOOL CG_128bitstore = TRUE;
+BOOL CG_branch_fuse = TRUE;
+BOOL CG_dispatch_schedule = FALSE;
+BOOL CG_strcmp_expand = TRUE;
+#endif
 BOOL CG_opt_level;
 BOOL CG_localize_tns = FALSE;
 BOOL CG_localize_tns_Set = FALSE;
@@ -208,8 +219,10 @@ BOOL CG_tune_do_loop = TRUE;
 BOOL CG_enable_thr = FALSE;
 BOOL CG_cond_defs_allowed = FALSE;
 BOOL LOCS_Enable_Bundle_Formation = FALSE;
-#if defined(TARG_MIPS) && !defined(TARG_SL)
+#if defined(TARG_LOONGSON) || defined(TARG_MIPS) && !defined(TARG_SL)   
 BOOL CG_tail_call = FALSE;
+#elif defined(TARG_PPC32)
+BOOL CG_tail_call = FALSE;// we have some problem with struct value parameter tail call OPT
 #else
 BOOL CG_tail_call = TRUE;
 #endif
@@ -247,6 +260,21 @@ UINT32 CG_zdl_enabled_level = 2; // default value is 2
 UINT32 CG_zdl_skip_e = 0;  
 UINT32 CG_zdl_skip_a = INT32_MAX;
 UINT32 CG_zdl_skip_b = 0;
+BOOL CG_enable_opt_condmv = TRUE;
+BOOL CG_enable_CBUS_workaround = FALSE;
+BOOL CG_enable_LD_NOP_workaround = FALSE;
+BOOL CG_enbale_C3_AR_dependence_workaround = FALSE;
+#endif
+#ifdef TARG_LOONGSON
+BOOL CG_Enable_RVI_2_CG = FALSE;
+BOOL CG_enable_del_base_tn=FALSE;
+BOOL CG_enable_auto_add_op=FALSE;
+BOOL CG_enable_del_auto_add_op=FALSE;
+BOOL CG_enable_float_pointer_example=FALSE;
+BOOL CG_enable_too_many_spill=FALSE;
+BOOL CG_enable_improve_fp_efficiency=FALSE;
+BOOL CG_enable_all_ldst_is_lbsb=FALSE;
+BOOL CG_enable_improve_icache_efficiency=FALSE;
 #endif
 BOOL CG_enable_loop_optimizations = TRUE;
 BOOL GCM_Motion_Across_Calls = TRUE;
@@ -259,7 +287,7 @@ BOOL GCM_PRE_Enable_Scheduling = TRUE;
 BOOL GCM_POST_Enable_Scheduling = TRUE;
 BOOL GCM_Enable_Scheduling = TRUE;
 BOOL CGTARG_Enable_Brlikely = TRUE;
-#ifdef TARG_X8664
+#if defined(TARG_X8664) || defined(TARG_LOONGSON)
 BOOL Enable_Fill_Delay_Slots = FALSE;
 BOOL GCM_Enable_Fill_Delay_Slots = FALSE;
 BOOL CG_use_movlpd = TRUE;
@@ -303,6 +331,7 @@ BOOL EMIT_explicit_bundles = TRUE;
 INT32 EMIT_Long_Branch_Limit = DEFAULT_LONG_BRANCH_LIMIT;
 
 INT32 CGEXP_expandconstant = DEFAULT_CGEXP_CONSTANT;
+BOOL CG_divrem_opt = FALSE;
 BOOL CGEXP_use_copyfcc = TRUE;
 BOOL CGEXP_normalize_logical = FALSE;
 BOOL CGEXP_gp_prolog_call_shared = TRUE;
@@ -324,6 +353,7 @@ INT32 CG_Max_Accreg = 4;
 INT32 CG_Max_Addreg = 8;
 BOOL CG_round_spreg = TRUE;
 BOOL CG_check_packed = TRUE;
+BOOL CG_branch_taken = TRUE; //option for sl1
 #else
 BOOL CGEXP_cvrt_int_div_to_mult = TRUE;
 BOOL CGEXP_cvrt_int_div_to_fdiv = TRUE;
@@ -483,12 +513,19 @@ OPTION_LIST *Arc_Profile_Region = NULL;
 INT32 CG_cse_regs = INT32_MAX - 1000;
 INT32 CG_sse_cse_regs = INT32_MAX - 1000;
 #endif
-#ifdef TARG_X8664
+#if defined(TARG_X8664) || defined(TARG_LOONGSON)
 INT32 CG_sse_load_execute = 0;
 INT32 CG_load_execute = 1;
 BOOL CG_loadbw_execute = FALSE;
 BOOL CG_p2align = FALSE;
+BOOL CG_loop32 = FALSE;
+BOOL CG_compute_to = FALSE;
 BOOL CG_valgrind_friendly = TRUE;
+BOOL CG_Movext_ICMP = TRUE;
+#endif
+#ifdef TARG_LOONGSON
+BOOL CGEXP_float_use_madd = FALSE;
+BOOL CGEXP_use_Loongson2e_MultDivMod = FALSE; 
 #endif
 
 // temporary flags for controlling algorithm selection for fdiv, sqrt, etc

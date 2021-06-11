@@ -1,4 +1,7 @@
 /*
+ * Copyright (C) 2010-2011 Advanced Micro Devices, Inc.  All Rights Reserved.
+ */
+/*
  * Copyright 2004, 2005, 2006 PathScale, Inc.  All Rights Reserved.
  */
 
@@ -94,7 +97,12 @@ RENAMING_SCOPE::~RENAMING_SCOPE()
  * Must be F77/F90, either SCLASS_COMMON or SCLASS_DGLOBAL (for initialized)
  ***********************************************************************/
 
-static BOOL ST_Is_Common_Block (ST *st)
+#ifdef TARG_LOONGSON
+BOOL
+#else
+static BOOL
+#endif 
+ST_Is_Common_Block (ST *st)
 {
 
     // N.B.: COMMON blocks are always in the global symtab
@@ -423,7 +431,7 @@ Rename_Privatized_COMMON(WN *wn, RENAMING_STACK *stack)
 static ST *Create_Local_Threadprivate_Symbol(ST *old_st)
 {
   ST_SCLASS sclass = ST_sclass(old_st);
-  Is_True(SCLASS_Is_Not_PU_Local(sclass),
+  Is_True(sclass != SCLASS_AUTO,
           ("Create_Local_Symbol() called for ST with sclass %d",
            (INT) sclass ) );
 
@@ -465,8 +473,9 @@ static ST *Create_Global_Threadprivate_Symbol(ST *old_st)
 
   ST *new_thdprv_st = New_ST(GLOBAL_SYMTAB); 
 
-  ST_SCLASS sclass = (ST_sclass (old_st) == SCLASS_FSTATIC) ?
-                                SCLASS_FSTATIC : SCLASS_COMMON;
+  ST_SCLASS sclass = ((ST_sclass (old_st) == SCLASS_FSTATIC
+		      || ST_sclass (old_st) == SCLASS_PSTATIC) ?
+		      SCLASS_FSTATIC : SCLASS_COMMON);
 
   TY_IDX old_ty_idx, new_ty_idx;
 
@@ -502,9 +511,11 @@ Rename_Threadprivate_COMMON(WN* pu, WN* parent, WN *wn, RENAMING_STACK *stack, R
   if (st) {
     ST *split_block;
     ST *common_block = ST_Source_Block(st, &split_block);
-    if (ST_is_thread_private(st) || 
-       (split_block && ST_is_thread_private(split_block)) ||
-       (common_block && ST_is_thread_private(common_block))) {
+
+    // Note that symbols in blocks are now marked to be thread private
+    // since it is possible that some symbols can be referenced as thread
+    // private and some as global.
+    if (ST_is_thread_private(st)) {
       ST *new_st; // renamed version of st
       ST *new_st_for_common_blk;
 
@@ -512,6 +523,10 @@ Rename_Threadprivate_COMMON(WN* pu, WN* parent, WN *wn, RENAMING_STACK *stack, R
       if (!new_st_for_common_blk) {
         new_st_for_common_blk = Create_Global_Threadprivate_Symbol(common_block);
         common_blk_scope->map.Enter(common_block, new_st_for_common_blk);
+	// Keep track of local symbols, whose mappings need to be removed before
+	// processing the next PU.
+	if (ST_IDX_level(ST_st_idx(common_block)) != GLOBAL_SYMTAB)
+	  common_blk_scope->local_mappings.push_front(common_block);
       }
 
       new_st = scope->map.Find(common_block);

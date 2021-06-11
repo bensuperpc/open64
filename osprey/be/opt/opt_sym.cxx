@@ -1,4 +1,8 @@
 /*
+ * Copyright (C) 2009 Advanced Micro Devices, Inc.  All Rights Reserved.
+ */
+
+/*
  *  Copyright (C) 2006. QLogic Corporation. All Rights Reserved.
  */
 
@@ -84,7 +88,6 @@
 #pragma hdrstop
 
 
-#define __STDC_LIMIT_MACROS
 #include <stdint.h>
 #include "limits.h"
 
@@ -122,6 +125,7 @@
 #endif
 #include "opt_points_to.h"
 #include "opt_cvtl_rule.h"
+#include "opt_alias_mgr.h"
 
 #include <algorithm>
 
@@ -366,9 +370,7 @@ static void Collect_addr_passed_for_PU(WN *wn)
   // Fix 625656:
   //  Catch the cases not covered by addr_saved in be/com/opt_addr_flags.cxx.
   if (WN_operator(wn) == OPR_PARM && (
-#if defined(TARG_SL)
       WN_Parm_Dereference(wn) ||
-#endif
       WN_Parm_By_Reference(wn) || WN_Parm_Passed_Not_Saved(wn))) 
     Collect_addr_passed(WN_kid0(wn));
   //
@@ -838,10 +840,6 @@ OPT_STAB::Enter_symbol(OPERATOR opr, ST* st, INT64 ofst,
   
   // Lookup the opt_stab first
   while (idx && aux_stab[idx].St() != NULL) {
-#if 0 // necessitated by the fix to bug 6293
-    Is_True(aux_stab[idx].St() == st,
-	    ("Enter_aux_stab::lookup wrong ST chain."));
-#endif
     BOOL kind_match = FALSE;
     switch (aux_stab[idx].Stype()) {
     case VT_NO_LDA_SCALAR:
@@ -1725,15 +1723,25 @@ OPT_STAB::Convert_ST_to_AUX(WN *wn, WN *block_wn)
 				 WN_kid0(wn)); 
       if (twn) {
 	opr = WN_operator(twn);
+        FmtAssert(opr == OPR_LDID || opr == OPR_LDBITS || opr == OPR_INTCONST,
+                  ("Unknown operator: opr:%s when simpilfying iload", 
+                  OPERATOR_name(opr)));
 	rtype = WN_rtype(twn);
 	desc = WN_desc(twn);
-        WN_set_operator(wn, opr);
+	// reset map_id since OPR_INTCONST is in different mapcat group than OPR_LDID/OPR_LDBITS.
+	if (opr == OPR_INTCONST) 
+	  WN_set_map_id(wn, -1);
+	WN_change_operator(wn, opr);
 	WN_set_rtype(wn, rtype);
 	WN_set_desc(wn, desc);
-        WN_load_offset(wn) = WN_load_offset(twn);
-        WN_st_idx(wn) = WN_st_idx(twn);
-        WN_set_ty(wn, WN_ty(twn));
-	WN_kid0(wn) = NULL;
+        if (opr == OPR_INTCONST)
+          WN_const_val(wn) = WN_const_val(twn);
+        else {
+          WN_load_offset(wn) = WN_load_offset(twn);
+          WN_st_idx(wn) = WN_st_idx(twn);
+          WN_set_ty(wn, WN_ty(twn));
+	  WN_kid0(wn) = NULL;
+        }
 	WN_Delete(twn);
       }
     }
@@ -1756,7 +1764,7 @@ OPT_STAB::Convert_ST_to_AUX(WN *wn, WN *block_wn)
 	opr = WN_operator(twn);
 	rtype = WN_rtype(twn);
 	desc = WN_desc(twn);
-        WN_set_operator(wn, opr);
+        WN_change_operator(wn, opr);
 	WN_set_rtype(wn, rtype);
 	WN_set_desc(wn, desc);
         WN_load_offset(wn) = WN_load_offset(twn);
@@ -1787,7 +1795,7 @@ OPT_STAB::Convert_ST_to_AUX(WN *wn, WN *block_wn)
     if (opr == OPR_TRUEBR && WN_const_val(test) != 0 ||
 	opr == OPR_FALSEBR && WN_const_val(test) == 0) {
       WN_Delete(test);
-      WN_set_operator(wn, OPR_GOTO);
+      WN_change_operator(wn, OPR_GOTO);
       WN_set_rtype(wn, MTYPE_V);
       WN_set_desc(wn, MTYPE_V);
       WN_set_kid_count(wn, 0);
@@ -1832,9 +1840,7 @@ OPT_STAB::Convert_ST_to_AUX(WN *wn, WN *block_wn)
     BOOL in_parallel_region_save = FALSE;
     if (Phase() != MAINOPT_PHASE && PU_has_mp(Get_Current_PU()) && 
 	! PU_mp_lower_generated(Get_Current_PU())) {
-      // see if there is a WN_PRAGMA_PARALLEL
-      has_parallel_pragma = Is_region_with_pragma(wn, WN_PRAGMA_PARALLEL_BEGIN)
-      			 || Is_region_with_pragma(wn, WN_PRAGMA_MASTER_BEGIN);
+      has_parallel_pragma = Is_region_with_pragma(wn, WN_PRAGMA_MASTER_BEGIN);
     }
     for (i = 0; i < WN_kid_count(wn); i++) {
       if (has_parallel_pragma && i == 2) {
@@ -2519,7 +2525,7 @@ OPT_STAB::Collect_ST_attr(void)
     ST *st = psym->St();
     const INT32 stype = psym->Stype();
 
-    if (stype == VT_OTHER) continue;
+    if (stype == VT_OTHER || stype == VT_UNKNOWN) continue;
       
     // Update POINTS_TO 
     POINTS_TO *pt = psym->Points_to();
@@ -2758,11 +2764,6 @@ OPT_STAB::Create(COMP_UNIT *cu, REGION_LEVEL rgn_level)
   
   // Setup ST alias groups
   Make_st_group();
-#if 0 // OPT_REVISE_SSA will use Enter_symbol later
-  // st_chain_map is no longer needed now that we have ST alias groups 
-  CXX_DELETE(st_chain_map, &_st_chain_pool);
-  st_chain_map = NULL;
-#endif
   // Identify synonyms within aux_stab, and convert STs into their
   // lowest numbered synonyms
   Canonicalize();
@@ -3589,6 +3590,18 @@ CHI_NODE::Print(FILE *fp) const
 #endif
 }
 
+void     
+CHI_NODE::Print_Deref(FILE *fp) const
+{
+  if (Live())
+    fprintf(fp, "sym%dv%d <- chi( sym%dv%d )\n",
+                Aux_id(), RESULT()->Version(), 
+                Aux_id(), OPND()->Version());
+  else
+    fprintf(fp, "(not live) sym%dv%d <- chi( sym%dv%d )\n",
+                Aux_id(), Result(), 
+                Aux_id(), Opnd());
+}
 
 void
 CHI_LIST::Print(FILE *fp)
@@ -3608,12 +3621,17 @@ void
 MU_NODE::Print(FILE *fp) const
 {
 #ifdef KEY
-  fprintf(fp, " sym%dv%d ", Aux_id(), Opnd());
+  fprintf(fp, " mu[ sym%dv%d ]\n", Aux_id(), Opnd());
 #else
   fprintf(fp, " sym%d ", Aux_id());
 #endif
 }
 
+void
+MU_NODE::Print_Deref(FILE *fp) const
+{
+  fprintf(fp, " sym%dv%d ", Aux_id(), OPND()->Version());
+}
 
 void
 MU_LIST::Print(FILE *fp)
@@ -3623,7 +3641,7 @@ MU_LIST::Print(FILE *fp)
 
   fprintf(fp, "       mu[");
   FOR_ALL_NODE(mnode, mu_iter, Init(this)) {
-    mnode->Print(fp);
+    fprintf(fp, " sym%dv%d ", mnode->Aux_id(), mnode->Opnd());
   }
   fprintf(fp, "]\n");
 }
@@ -3695,7 +3713,7 @@ void OPT_STAB::Print_aux_entry(AUX_ID i, FILE *fp)
     break;
   }
   if (psym->Is_real_var() || psym->Is_virtual()) {
-    if (bbl->Len() > 0) {
+    if (bbl && bbl->Len() > 0) {
       fprintf(fp, "       defined in BBs ");
       bbl->Print(fp);
       fprintf(fp, "\n");
@@ -3780,7 +3798,6 @@ AUX_STAB_ENTRY::Has_multiple_signs(void) const
 void OPT_STAB::Print_occ_tab(FILE *fp, WN *wn)
 #endif
 {
-#if 1
   /* WN_MAP_ITER has been removed because it does not work reliably for
      this sort of thing.  (The mapping may contain dangling pointers for
      WNs that have been deleted.)  If anyone needs this to work, it
@@ -3800,20 +3817,6 @@ void OPT_STAB::Print_occ_tab(FILE *fp, WN *wn)
       occ->Print(fp);
       for ( INT32 i = 0; i < WN_kid_count( wn ); i++ )
         Print_occ_tab( fp, WN_kid( wn, i ));
-  }
-#endif
-#else
-
-  WN_MAP_ITER map_iter;
-  INT32 category;
-  OCC_TAB_ENTRY **addr;
-  for (category = 0; category <  WN_MAP_CATEGORIES; category++) {
-    WN_MAP_ITER_Init(&map_iter, Current_Map_Tab, WN_sym_map(),
-		     (OPCODE_MAPCAT) category);
-    while (addr = (OCC_TAB_ENTRY **) WN_MAP_ITER_Step(&map_iter, NULL)) {
-      if (*addr != NULL)
-	(*addr)->Print(fp);
-    }
   }
 #endif
 }
@@ -4010,6 +4013,9 @@ OPT_STAB::Collect_nested_ref_info(void)
   // symtabs.
   FOR_ALL_NODE(var, aux_stab_iter, Init()) {
     ST *var_base;
+
+    if (Aux_stab_entry(var)->Stype() == VT_UNKNOWN)
+      continue;
 
     if (!Aux_stab_entry(var)->Has_nested_ref() &&
 	(ST_class(var_base = Aux_stab_entry(var)->Base()) == CLASS_VAR) &&

@@ -1,4 +1,8 @@
 /*
+ * Copyright (C) 2009 Advanced Micro Devices, Inc.  All Rights Reserved.
+ */
+
+/*
  *  Copyright (C) 2006. QLogic Corporation. All Rights Reserved.
  */
 
@@ -50,6 +54,7 @@
 #include "config_wopt.h"	// for WOPT_Alias_Class_Limit,
 				//     WOPT_Ip_Alias_Class_Limit
 #include "be_memop_annot.h"
+#include "alias_analyzer.h"
 #if defined(TARG_SL)
 #include "intrn_info.h"
 #endif
@@ -235,6 +240,7 @@ enum PT_ATTR {
 #ifdef KEY
   PT_ATTR_FIELD          = 0x1000000,  // is a field in a struct
 #endif
+  PT_ATTR_ARRAY          = 0x2000000,  // array reference
 
   // 24 of 32 bits used
 };
@@ -293,7 +299,7 @@ friend class POINTS_TO;
   IDTYPE        _ip_alias_class;   // which equivalence class this
 				   // memop is in, according to
 				   // whole-program analysis
-
+  AliasTag     _alias_tag;  // tag used to query AliasAnalyzer results
 };
 
 // for alias classification
@@ -465,6 +471,7 @@ public:
 #ifdef KEY
   BOOL        Is_field(void)         const { return ai._attr & PT_ATTR_FIELD; }
 #endif
+  BOOL        Is_array(void)         const { return ai._attr & PT_ATTR_ARRAY; }
 
 
   //  Set members
@@ -513,6 +520,8 @@ public:
 	ai._ip_alias_class = PESSIMISTIC_AC_ID;
       }
     }
+  void Set_alias_tag(const AliasTag tag) { ai._alias_tag = tag; }
+
   void Set_ty(TY_IDX ty)                  { _ty = ty; }
   void Set_hl_ty(TY_IDX hlty)             { _hl_ty = hlty; }
   void Set_field_id (UINT32 fldid)        { _field_id = fldid; }
@@ -554,6 +563,7 @@ public:
 #ifdef KEY
   void Set_is_field(void)                 { ai._attr = (PT_ATTR) (ai._attr | PT_ATTR_FIELD); }
 #endif
+  void Set_is_array(void)                 { ai._attr = (PT_ATTR) (ai._attr | PT_ATTR_ARRAY); }
 
   void Reset_attr(void)                   { ai._attr = PT_ATTR_NONE; }
   void Reset_not_addr_saved(void)         { ai._attr = (PT_ATTR) (ai._attr & ~PT_ATTR_NOT_ADDR_SAVED); }
@@ -587,6 +597,7 @@ public:
 #ifdef KEY
   void Reset_is_field(void) { ai._attr = (PT_ATTR) (ai._attr & ~PT_ATTR_FIELD); }
 #endif
+  void Reset_is_array(void) { ai._attr = (PT_ATTR) (ai._attr & ~PT_ATTR_ARRAY); }
 
   void Init(void) {
     //  Set fields in POINTS_TO to invalid for error detection.
@@ -608,6 +619,7 @@ public:
     Set_id(0);
     Set_alias_class(OPTIMISTIC_AC_ID);
     Set_ip_alias_class(OPTIMISTIC_AC_ID);
+    Set_alias_tag(EmptyAliasTag);
     _mem_annot.Init();
     // The default attributes: 
     Set_attr(PT_ATTR_NONE);
@@ -655,6 +667,8 @@ public:
 
   IDTYPE Ip_alias_class(void) const { return ai._ip_alias_class; }
 
+  AliasTag Alias_tag(void) const { return ai._alias_tag; }
+
   void Shift_ofst(mINT64 shift)   // shift offset by that amount
     { Set_byte_ofst( Byte_Ofst() + shift ); }
 
@@ -673,6 +687,9 @@ public:
 
   // Merge the information from alias classification for two POINTS_TO's
   void Meet_info_from_alias_class(const POINTS_TO *);
+
+  // Merge the information from the alias tags for two POINTS_TO's
+  void Meet_alias_tag(const POINTS_TO *, AliasAnalyzer *);
 
   // Merge two points to information
   void Meet(const POINTS_TO *, ST *);
@@ -909,6 +926,7 @@ WN *Find_addr_recur(WN *wn, const SYMTAB &stab)
     if(INTRN_copy_addr(WN_intrinsic(wn)))
       return Find_addr_recur(WN_kid0(WN_kid0(wn)),stab);
     return NULL;
+#endif
 
   case OPR_PARM:
     if ((WN_Parm_By_Reference(wn) || WN_Parm_Dereference(wn)) && WN_kid_count(wn))
@@ -916,13 +934,6 @@ WN *Find_addr_recur(WN *wn, const SYMTAB &stab)
     // otherwise, there is no address expression
     return NULL;
 
-#else
-    // if it is called by reference, LDID is a addr expr
-    if (WN_Parm_By_Reference(wn) && WN_kid_count(wn))
-      return Find_addr_recur(WN_kid0(wn), stab);
-    // otherwise, there is no address expression
-    return NULL;
-#endif
   case OPR_LDA:
     return wn;
   case OPR_LDID:

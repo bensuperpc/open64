@@ -1,4 +1,8 @@
 /*
+ * Copyright (C) 2010 Advanced Micro Devices, Inc.  All Rights Reserved.
+ */
+
+/*
  * Copyright 2004, 2005, 2006 PathScale, Inc.  All Rights Reserved.
  */
 
@@ -60,7 +64,6 @@
  * ====================================================================
  */
 
-#define __STDC_LIMIT_MACROS
 #include <stdint.h>
 #ifdef USE_PCH
 #include "lno_pch.h"
@@ -379,11 +382,11 @@ Gather_Scatter_Scalar_Expand(WN*                                loop,
 	     wtype == MTYPE_F8 || wtype == MTYPE_C4) ? 8 :
   (wtype == MTYPE_I4 || wtype == MTYPE_U4 ||
    wtype == MTYPE_F4) ? 4 :
-#if defined(TARG_IA64)
+#if defined(TARG_IA64) || defined(TARG_X8664)
   (wtype == MTYPE_F10) ? 16 :
 #endif
   (wtype == MTYPE_FQ || wtype == MTYPE_C8) ? 16 :
-#if defined(TARG_IA64)
+#if defined(TARG_IA64) || defined(TARG_X8664)
   (wtype == MTYPE_C10 || wtype == MTYPE_CQ) ? 32 :
 #else
   (wtype == MTYPE_CQ) ? 32 :
@@ -892,7 +895,7 @@ INT64 Get_FP_Counts(WN* wn)
 	(OPCODE_rtype(opcode)==MTYPE_F4)|| 
 	(OPCODE_rtype(opcode)==MTYPE_F8)|| (OPCODE_desc(opcode)==MTYPE_C4) || 
 	(OPCODE_desc(opcode)==MTYPE_C8) || (OPCODE_rtype(opcode)==MTYPE_C4)||
-#if defined(TARG_IA64)
+#if defined(TARG_IA64) || defined(TARG_X8664)
 	OPCODE_desc(opcode) == MTYPE_F10 || OPCODE_rtype(opcode) == MTYPE_F10 ||
 	OPCODE_desc(opcode) == MTYPE_C10 || OPCODE_rtype(opcode) == MTYPE_C10 ||
 #endif
@@ -1263,16 +1266,6 @@ Perform_Gather_Scatter(
     // create a 'new_ind = new_id + 1' and replace the loop 'step'
     WN* wn_step = WN_step(loop_current);
 
-#if 0
-    DEF_LIST *def_list=Du_Mgr->Ud_Get_Def(WN_kid0(WN_kid0(wn_step)));
-    Is_True(def_list,("Empty definition nodes \n"));
-    DEF_LIST_ITER d_iter(def_list);
-    for (DU_NODE *def_node=(DU_NODE *)d_iter.First();
-	 !d_iter.Is_Empty(); def_node = (DU_NODE *)d_iter.Next()){
-      WN* def=def_node->Wn();
-      Dump_WN(def,stdout,1,2,2);
-    }
-#endif
 
     Replace_Symbol(wn_step,old_symbol,new_ind,NULL);
     cons_1 = LWN_Copy_Tree(cons_1);
@@ -1341,7 +1334,7 @@ Perform_Gather_Scatter(
     DYN_ARRAY<SCALAR_NODE*> site_I1(&PHASE25_default_pool);
     DYN_ARRAY<SCALAR_NODE*> use_U1(&PHASE25_default_pool);
     DYN_ARRAY<SCALAR_NODE*> site_U1(&PHASE25_default_pool);
-#if defined(TARG_IA64)
+#if defined(TARG_IA64) || defined(TARG_X8664)
     DYN_ARRAY<SCALAR_NODE*> use_F10(&PHASE25_default_pool);
     DYN_ARRAY<SCALAR_NODE*> site_F10(&PHASE25_default_pool);
     DYN_ARRAY<SCALAR_NODE*> use_C10(&PHASE25_default_pool);
@@ -1408,7 +1401,7 @@ Perform_Gather_Scatter(
 	use_U1.AddElement(exposed_use[i-1]->Bottom_nth(j));
 	site_U1.AddElement(exposed_site[i-1]->Bottom_nth(j));
 	break;
-#if defined(TARG_IA64)
+#if defined(TARG_IA64) || defined(TARG_X8664)
       case MTYPE_F10:
         use_F10.AddElement(exposed_use[i-1]->Bottom_nth(j));
         site_F10.AddElement(exposed_site[i-1]->Bottom_nth(j));
@@ -1479,7 +1472,7 @@ Perform_Gather_Scatter(
       Gather_Scatter_Scalar_Expand(loop_first, ld_inc, tile_loop,
 				   loop_current, use_U1, site_U1, 
 				   if_stmt, &alloc_loop,&dealloc_loop);
-#if defined(TARG_IA64)
+#if defined(TARG_IA64) || defined(TARG_X8664)
     if (use_F10.Elements())
       Gather_Scatter_Scalar_Expand(loop_first, ld_inc, tile_loop,
                                    loop_current, use_F10, site_F10,

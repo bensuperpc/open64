@@ -1,4 +1,8 @@
 /*
+ * Copyright (C) 2009-2010 Advanced Micro Devices, Inc.  All Rights Reserved.
+ */
+
+/*
  * Copyright 2003, 2004, 2005, 2006 PathScale, Inc.  All Rights Reserved.
  */
 
@@ -73,6 +77,16 @@
 #include "cg_internal.h"
 #include "targ_sim.h"
 #include "whirl2ops.h"
+#include "cg.h"
+#if defined(TARG_PPC32)
+#include <queue>
+#include <set>
+#endif
+
+#if defined(TARG_SL)
+#include <queue>
+#include <set>
+#endif
 
 static BOOL Trace_Localize = FALSE;
 
@@ -235,6 +249,9 @@ Localize_Global_Return_Reg (BB *current_bb, TN *ret_tn)
 			}
 		}
 	}
+#if defined(TARG_SL)	
+	if (bb == NULL) return;
+#endif	
 	FmtAssert(bb != NULL && BB_call(bb), ("didn't find call BB before bb %d for tn %d", BB_id(current_bb), TN_number(ret_tn)));
 	bb = BB_next(bb);	/* go back to bb after call */
 	/* insert copy at beginning of bb */
@@ -242,6 +259,82 @@ Localize_Global_Return_Reg (BB *current_bb, TN *ret_tn)
 	BB_Prepend_Ops (bb, &ops);
 }
 
+/*
+ * Check if the BB is entry BB:
+ *   1. BB is entry BB or
+ *   2. BB is original entry BB and now it's after the PIC entry due to PIC code on IA-32
+ */
+static BOOL
+BB_like_entry(BB* bb)
+{
+    if ( BB_entry(bb) )
+        return TRUE;
+
+#if defined(TARG_X8664)
+    if ( BB_after_pic_entry(bb) ) {
+        Is_True( Is_Target_32bit() && Gen_PIC_Shared,
+                 ("Only allow split_from_entry on IA-32 with -fPIC") );
+        Is_True( BB_preds_len(bb) == 1,
+                 ("after_pic_entry can only have one pred") );
+        return TRUE;
+    }
+#endif
+
+    return FALSE;
+}
+
+#ifdef TARG_X8664
+/*
+ * Handle the GNU regparm extension (including fastcall) on IA-32:
+ *
+ * Is this BB a non-standard call that takes the register as an argument?
+ */
+static BOOL
+Is_Regparm_Call(BB *bb, INT regnum)
+{
+    if (!Is_Target_32bit() || !BB_call(bb))
+        return FALSE;
+
+    CALLINFO *call_info = ANNOT_callinfo(
+        ANNOT_Get(BB_annotations(bb), ANNOT_CALLINFO));
+
+    ST *call_st = CALLINFO_call_st(call_info);
+    WN *call_wn = CALLINFO_call_wn(call_info);
+
+    TY_IDX func_type = call_st ? ST_pu_type(call_st) : WN_ty(call_wn);
+    INT regparm = TY_register_parm(func_type);
+
+    return (regnum == RAX && regparm > 0) ||
+        (regnum == RDX && regparm > 1) ||
+        (regnum == RCX && regparm > 2);
+}
+#endif
+
+/*
+ * Is this BB a call that returns via the first arg?
+ */
+static BOOL
+Return_Via_First_Arg(BB *bb)
+{
+    if (!BB_call(bb))
+        return FALSE;
+
+    CALLINFO *call_info = ANNOT_callinfo(
+        ANNOT_Get(BB_annotations(bb), ANNOT_CALLINFO));
+
+    ST *call_st = CALLINFO_call_st(call_info);
+    WN *call_wn = CALLINFO_call_wn(call_info);
+
+    TY_IDX func_type = call_st ? ST_pu_type(call_st) : WN_ty(call_wn);
+
+    return RETURN_INFO_return_via_first_arg(Get_Return_Info(
+        TY_ret_type(func_type),
+        No_Simulated
+#ifdef TARG_X8664
+        , call_st ? PU_ff2c_abi(Pu_Table[ST_pu(call_st)]) : FALSE
+#endif
+        ));
+}
 
 /*
  * Check if a dedicated TN is global, and if so, make it local.
@@ -315,6 +408,8 @@ Check_If_Dedicated_TN_Is_Global (TN *tn, BB *current_bb, BOOL def)
 	else if (regnum==RAX && def && BB_call(current_bb)) {
 	    	/* RAX is used to pass number of SSE regs used */
 	}
+    else if (def && Is_Regparm_Call(current_bb, regnum))
+        ;    // okay
 #endif
 	else if (is_func_arg || is_func_retval) {
 		if (def && is_func_arg && BB_call(current_bb))
@@ -337,18 +432,8 @@ Check_If_Dedicated_TN_Is_Global (TN *tn, BB *current_bb, BOOL def)
 #endif // TARG_X8664 || TARG_SL
 		else if (def && is_func_arg && BB_asm(current_bb))
 			;	// okay
-		else if (def && is_func_retval && BB_call(current_bb)
-		    && RETURN_INFO_return_via_first_arg(Get_Return_Info(
-			  TY_ret_type(ST_pu_type(CALLINFO_call_st(
-			    ANNOT_callinfo(ANNOT_Get(
-				BB_annotations(current_bb),ANNOT_CALLINFO)) ))),
-			  No_Simulated
-#ifdef TARG_X8664
-			  , PU_ff2c_abi(Pu_Table[ST_pu(CALLINFO_call_st(
-			    ANNOT_callinfo(ANNOT_Get(
-				BB_annotations(current_bb),ANNOT_CALLINFO)) ))])
-#endif
-			  ) ) )
+        else if (def && is_func_retval
+            && Return_Via_First_Arg(current_bb))
 			// can return via first arg in retval reg.
 			;	// okay
 		else if (!def && is_func_retval && BB_entry(current_bb)
@@ -378,6 +463,11 @@ Check_If_Dedicated_TN_Is_Global (TN *tn, BB *current_bb, BOOL def)
 		else if (def && is_func_arg && !BB_call(current_bb)) {
 			Localize_Global_Param_Reg (current_bb, tn);
 		} 
+#ifdef TARG_X8664
+                else if (def && is_func_retval && PU_has_builtin_apply) {
+                        ;       // okay
+                }
+#endif
 		else if (def && is_func_retval && !BB_exit(current_bb)) {
 			Localize_Global_Return_Reg_Def (current_bb, tn);
 		}
@@ -395,6 +485,14 @@ Check_If_Dedicated_TN_Is_Global (TN *tn, BB *current_bb, BOOL def)
 		else if (!def && regnum == RDX &&
 			 BB_entry(current_bb) && BB_handler(current_bb))
 		  ;   // okay because RAX and RDX will be saved at the entry of a handler
+                else if (!def && regnum == RDX &&
+                        PU_has_builtin_apply_args && BB_entry(current_bb))
+                    ;  // okay because RDX will be saved at the function entry
+                else if (!def && Is_Target_32bit() && BB_like_entry(current_bb) &&
+                          ( (regnum==RAX && TY_register_parm( Get_Current_PU_TY() ) > 0 ) ||
+                            (regnum==RDX && TY_register_parm( Get_Current_PU_TY() ) > 1 ) ||
+                            (regnum==RCX && TY_register_parm( Get_Current_PU_TY() ) > 2 ) ) )
+                        ;       // okey because RAX, RDX, RCX can be args for regparm on IA-32
 #endif
 		else if (!def && is_func_retval 
 		    && BB_prev(current_bb) != NULL 
@@ -418,6 +516,10 @@ Check_If_Dedicated_TN_Is_Global (TN *tn, BB *current_bb, BOOL def)
 			/* not after call, so must span bb's */
 			Localize_Global_Return_Reg (current_bb, tn);
 		}
+#ifdef TARG_LOONGSON
+		else if (!def && BB_handler(current_bb))
+		  ;
+#endif
 		else {
 			FmtAssert (FALSE, ("use of param reg TN%d in bb %d is global", TN_number(tn), BB_id(current_bb)));
 		}
@@ -919,6 +1021,7 @@ Localize_Any_Global_TNs ( RID *rid )
  *
  * =======================================================================
  */
+#ifndef TARG_LOONGSON
 static BB *
 BB_Reaches_Call_or_Exit( BB *start )
 {
@@ -941,8 +1044,82 @@ BB_Reaches_Call_or_Exit( BB *start )
   }
 
   BB_MAP_Delete( visited );
+
   return ans;
 }
+#else
+ /* For loongson, there will be some codes like:
+  *                    IF:    $4 = ...
+  *                            $5 = ...
+  *                            $6 = ...
+  *                            hi, lo = div ...
+  *                            ... ...
+  *                            beq ...
+  *                 /      |
+  *               /        |
+  *       THEN:         |
+  *           ... ...       |
+  *              \          |
+  *               \         |
+  *                  CALL:
+  *                      $7 = ...
+  *                      printf(... )
+  *
+  * For the above example, $4,$5,$6,$7 are parameters of the call. But
+  * when preparing those parameters, there is a branch. So, just looking
+  * for the unique successor will not work any longer. We need a recursive
+  * way to look for the reached CALL/EXIT bb.
+  *
+  */
+static BB*
+BB_Reaches_Call_or_Exit_Helper(BB* start, BB_MAP visited)
+{
+  BB *ans = NULL, *result = NULL;
+  RID *rid;
+  BBLIST *slist;
+  BB *succ;
+
+  if ( BB_MAP32_Get( visited, start) )
+    return NULL;
+
+  rid = BB_rid(start);
+  if (rid && RID_level(rid) >= RL_CGSCHED)
+    return NULL;
+
+  BB_MAP32_Set( visited, start, 1 );
+
+  if (BB_call(start) || BB_exit(start) || BB_asm(start)) {
+     return start;
+  }
+
+  for ( slist = BB_succs( start ); slist; slist = BBLIST_next( slist ) ) {
+    succ = BBLIST_item( slist );
+    ans = BB_Reaches_Call_or_Exit_Helper(succ, visited);
+    if (ans != NULL) {
+      if (result == NULL) {
+        result = ans;
+      } else {
+        Is_True(ans == result,
+                      ("BB%d reaches two or more CALL/EXIT BBs.", start->id));
+      }
+    }
+    return ans;
+  }
+}
+
+static BB *
+BB_Reaches_Call_or_Exit( BB *start )
+{
+  BB_MAP visited = BB_MAP32_Create();
+
+  BB *ans = BB_Reaches_Call_or_Exit_Helper(start, visited);
+
+  BB_MAP_Delete( visited );
+  return ans;
+}
+#endif
+
+
 
 /* =======================================================================
  *
@@ -986,6 +1163,38 @@ Call_or_Entry_Reaches_BB(BB *start)
       return bb;
     }
   }
+
+#if defined(TARG_SL) || defined(TARG_PPC32)
+  /*
+   * Fix a bug, in OspreyTest/SingleSource/gcc.c-torture/double/unsorted/poor.c
+   * If  preds(bb1) = {bb2, bb3}, the original code only search bb2, but bb3 is omitted.
+   * The added codes is a breadth-first search up travel.
+   */
+  std::queue<BB*> to_visit;
+  std::set<BB*>   visited_bb;
+  to_visit.push(start);
+  int cnt = 0;
+
+  /* CFG : breadth-first search up travel  */
+  while ((!to_visit.empty()) && (cnt++ < BB_SEARCH_LIMIT)) {
+    bb = to_visit.front();
+    visited_bb.insert(bb);
+    to_visit.pop();
+    if (BB_entry(bb)) return bb;
+
+    BBLIST* nxt;
+    BBLIST* prevs;
+
+	/* Push all not visited pred of BB to to_visit queue */
+    for (prevs = BB_preds(bb); prevs; prevs = nxt) {
+      BB* bb_prev = BBLIST_item(prevs);
+      nxt = BBLIST_next(prevs);
+
+      if (visited_bb.count(bb_prev) == 0) 
+        to_visit.push(bb_prev);
+    } 
+  }
+#endif  
   return NULL;
 }
 
@@ -1051,6 +1260,28 @@ BB_Predecessor_Compiled_Region( INT *exit_num, BB *start )
   }
   return NULL;
 }
+
+#ifdef TARG_SL
+/* Is Tn defined in Local BB before end_op */
+static BOOL 
+TN_Def_Local(BB * bb, OP * end_op, TN * ded_tn)
+{
+  OP * op = NULL;
+  TN * tn = NULL;
+  FOR_ALL_BB_OPs (bb, op) {
+  	if (op == end_op) {
+	  break;
+  	}
+	for (INT i = 0; i < OP_results(op); i++) {
+	  tn = OP_result(op,i);
+	  if (tn == ded_tn) 
+	  	return TRUE;
+	}
+  }
+
+  return FALSE;
+}
+#endif
 
 /* =======================================================================
  *
@@ -1177,7 +1408,7 @@ Localize_or_Replace_Dedicated_TNs(void)
 
     FOR_ALL_BB_OPs (bb, op) {
 
-#ifdef TARG_X8664
+#if defined(TARG_X8664) || defined(TARG_SL)
       /* Do not replace dedicated tn inside an inline asm. (bug#3067)
        */
       if( OP_code(op) == TOP_asm ){
@@ -1207,6 +1438,10 @@ Localize_or_Replace_Dedicated_TNs(void)
 #endif
 	if ( non_region_def_bb == bb ) // the def is already local
 	  continue;
+#if defined(TARG_SL)	
+	else if (TN_Def_Local(bb, op, tn))
+	  continue;	
+#endif	
 	else if ( non_region_def_bb ) {
 	  // replace this use by a use of new_tn and add a copy new_tn <- tn
 	  // in non_region_def_bb

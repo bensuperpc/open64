@@ -1,4 +1,8 @@
 /*
+ * Copyright (C) 2008-2010 Advanced Micro Devices, Inc.  All Rights Reserved.
+ */
+
+/*
  * Copyright 2002, 2003, 2004, 2005, 2006 PathScale, Inc.  All Rights Reserved.
  */
 
@@ -85,6 +89,24 @@
  *  BOOL CG_skip_local_sched
  *	Enable skipping of scheduling of basic blocks based on the 
  *	-CG:skip_local_[after,before,equal] options.
+ *
+ *  BOOL CG_cmp_load_exec
+ *     Enable cmp load exec EBO optimization which folds loads onto
+ *      cmp operations for X8664.
+ *
+ *  BOOL CG_fma4_load_exec
+ *     Enable fma4 load exec EBO optimization which folds loads onto
+ *      fma4 operations for X8664.
+ *
+ *  BOOL CG_dispatch_schedule
+ *     Enable dispatch scheduling for Orochi style architectures.
+ *
+ *  BOOL CG_128bitstore
+ *     Enable 128bit unaligned stores optimization which emits movup{s|d}
+ *     instead of movhp{s|d} with movlp{s|d}.
+ *
+ *  BOOL CG_branch_fuse
+ *     Enable branch fusion for specified targets.
  *
  *  BOOL CG_skip_local_swp
  *	Enable skipping of pipelining of inner loops based on the 
@@ -441,6 +463,10 @@ extern UINT32 CG_zdl_enabled_level;
 extern UINT32 CG_zdl_skip_e;
 extern UINT32 CG_zdl_skip_a;
 extern UINT32 CG_zdl_skip_b;
+extern BOOL CG_enable_opt_condmv;
+extern BOOL CG_enable_CBUS_workaround;
+extern BOOL CG_enable_LD_NOP_workaround;
+extern BOOL CG_enbale_C3_AR_dependence_workaround;
 #endif
 #ifdef TARG_IA64
 extern BOOL CG_tune_do_loop;
@@ -500,6 +526,14 @@ extern BOOL CG_skip_local_hbf;
 extern BOOL CG_skip_local_loop;
 extern BOOL CG_skip_local_sched;
 extern BOOL CG_skip_local_swp;
+#ifdef TARG_X8664
+extern BOOL CG_cmp_load_exec;
+extern BOOL CG_fma4_load_exec;
+extern BOOL CG_dispatch_schedule;
+extern BOOL CG_128bitstore;
+extern BOOL CG_branch_fuse;
+extern BOOL CG_strcmp_expand;
+#endif
 extern INT CG_opt_level;
 extern BOOL CG_localize_tns;
 extern BOOL CG_localize_tns_Set;
@@ -528,6 +562,18 @@ extern BOOL CG_enable_spec_idiv_overridden;
 extern BOOL CG_enable_spec_fdiv_overridden;
 extern BOOL CG_enable_spec_fsqrt_overridden;
 extern BOOL CG_create_madds;
+#ifdef TARG_LOONGSON
+extern BOOL CG_enable_del_base_tn;
+extern BOOL CG_enable_auto_add_op;
+extern BOOL CG_enable_del_auto_add_op;
+extern BOOL CG_enable_float_pointer_example;
+extern BOOL CG_enable_too_many_spill;
+extern BOOL CG_enable_improve_icache_efficiency;
+extern BOOL CG_enable_improve_fp_efficiency;
+extern BOOL CG_enable_all_ldst_is_lbsb;
+extern const char *Cycle_String;
+extern BOOL Cycle_BB_Enable;  
+#endif
 
 #define CG_maxinss_default 100
 extern INT32 CG_maxinss;
@@ -644,7 +690,9 @@ extern INT32 CG_Max_Accreg;
 extern INT32 CG_Max_Addreg;
 extern BOOL  CG_round_spreg;
 extern BOOL  CG_check_packed;
+extern BOOL CG_branch_taken;
 #endif
+extern BOOL CG_divrem_opt;
 
 extern BOOL EMIT_pjump_all;
 extern BOOL EMIT_use_cold_section;
@@ -807,14 +855,17 @@ extern BOOL LOCS_Balance_Unsched_Fp_set;
 extern BOOL LOCS_Reduce_Prefetch;
 extern BOOL LOCS_Reduce_Prefetch_set;
 #endif
-#ifdef TARG_X8664
+#if defined(TARG_X8664) || defined(TARG_LOONGSON)
 extern INT32 CG_sse_load_execute;
 extern INT32 CG_load_execute;
 extern BOOL CG_use_movlpd;
 extern BOOL CG_use_setcc;
 extern BOOL CG_use_short_form;
 extern BOOL CG_loadbw_execute;
+extern BOOL CG_Movext_ICMP;
 extern BOOL CG_p2align;
+extern BOOL CG_loop32;
+extern BOOL CG_compute_to;
 extern UINT64 CG_p2align_freq;
 extern UINT32 CG_p2align_max_skip_bytes;
 extern UINT32 CG_movnti;
@@ -857,6 +908,14 @@ extern BOOL CG_optimize_copies;   // optimize copies that have later src use
 extern BOOL CG_use_16bit_ops;	  // try to replace 32bit ops with 16bit ops
 extern BOOL CG_skip_local_16bit;  // to skip individual 16bit optimizations
 
+#endif
+
+#ifdef TARG_LOONGSON
+extern BOOL CGEXP_float_use_madd;
+/* Use Loongson 2e's special mult/div/mod without hi/lo registers 
+ instructions mult.g multu.g dmult.g dmultu.g div.g divu.g ddiv.g
+ ddivu.g mod.g modu.g dmod.g dmodu.g */
+extern BOOL CGEXP_use_Loongson2e_MultDivMod;
 #endif
 
 #endif /* cg_flags_INCLUDED */

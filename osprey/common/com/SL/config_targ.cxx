@@ -1,37 +1,14 @@
-/*
-
-  Copyright (C) 2000, 2001 Silicon Graphics, Inc.  All Rights Reserved.
-
-  This program is free software; you can redistribute it and/or modify it
-  under the terms of version 2 of the GNU General Public License as
-  published by the Free Software Foundation.
-
-  This program is distributed in the hope that it would be useful, but
-  WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
-
-  Further, this software is distributed without any warranty that it is
-  free of the rightful claim of any third person regarding infringement 
-  or the like.  Any license provided herein, whether implied or 
-  otherwise, applies only to this software file.  Patent licenses, if 
-  any, provided herein do not apply to combinations of this program with 
-  other software, or any other product whatsoever.  
-
-  You should have received a copy of the GNU General Public License along
-  with this program; if not, write the Free Software Foundation, Inc., 59
-  Temple Place - Suite 330, Boston MA 02111-1307, USA.
-
-  Contact information:  Silicon Graphics, Inc., 1600 Amphitheatre Pky,
-  Mountain View, CA 94043, or:
-
-  http://www.sgi.com
-
-  For further information regarding this notice, see:
-
-  http://oss.sgi.com/projects/GenInfo/NoticeExplan
-
-*/
-
+/********************************************************************\
+|*                                                                  *|   
+|*  Copyright (c) 2006 by SimpLight Nanoelectronics.                *|
+|*  All rights reserved                                             *|
+|*                                                                  *|
+|*  This program is free software; you can redistribute it and/or   *|
+|*  modify it under the terms of the GNU General Public License as  *|
+|*  published by the Free Software Foundation; either version 2,    *|
+|*  or (at your option) any later version.                          *|
+|*                                                                  *|
+\********************************************************************/
 
 /* ====================================================================
  * ====================================================================
@@ -80,7 +57,7 @@ extern char *Ofast;		/* defined in config_opt.cxx */
 
 /* Architecture specific definitions */
 BOOL ARCH_generate_nor = FALSE; // Generate the NOR opcode
-BOOL ARCH_mask_shift_counts = FALSE; // shift counts are masked by the hardware (vs. truncated)
+BOOL ARCH_mask_shift_counts = TRUE; // shift counts are masked by the hardware (vs. truncated)
 
 /* Target selection */
 TARGET_ABI Target_ABI = ABI_UNDEF;
@@ -364,14 +341,10 @@ Prepare_Target ( void )
     if ( strcmp ( ABI_Name, "n32" ) == 0 ) {
       Target_ABI = ABI_N32;
       isa_default = TARGET_ISA_Mips64;
-#if 0 // for non-KEY, default target is r10000
-      targ_default = TARGET_sb1;
-#else
 #ifdef TARG_SL
       targ_default = TARGET_sl1_pcore;
 #else
       targ_default = TARGET_R10K;
-#endif
 #endif
       Use_32_Bit_Pointers = TRUE;
     } else if ( strcmp ( ABI_Name, "n64" ) == 0 ) {
@@ -435,6 +408,8 @@ Prepare_Target ( void )
       targ = TARGET_sl2_pcore;
     } else if (strcasecmp (Processor_Name, "sl2_mcore") == 0 ) {
       targ = TARGET_sl2_mcore;
+    }  else if (strcasecmp (Processor_Name, "sl5") == 0 ) {
+      targ = TARGET_sl5;
     }
 #endif
     else {
@@ -478,6 +453,10 @@ Prepare_Target ( void )
     case TARGET_sl2_mcore:
         Target_ISA = TARGET_ISA_Mips64;
         Target = TARGET_sl2_mcore;
+        break;
+    case TARGET_sl5:
+        Target_ISA = TARGET_ISA_Mips64;
+        Target = TARGET_sl5;
         break;
 #endif
     case TARGET_UNDEF:
@@ -583,7 +562,7 @@ Configure_Target ( void )
   Integer_type = MTYPE_I4;
 
   Split_Quad_Ops = TRUE;
-  Split_64_Bit_Int_Ops = FALSE;
+  Split_64_Bit_Int_Ops = TRUE;
 
 #if defined(FRONT_END_C) || defined(FRONT_END_CPLUSPLUS)
 #ifndef EDG_FORTRAN

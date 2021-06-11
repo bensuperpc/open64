@@ -1,4 +1,8 @@
 /*
+ * Copyright (C) 2009-2010 Advanced Micro Devices, Inc.  All Rights Reserved.
+ */
+
+/*
  * Copyright 2004, 2005, 2006 PathScale, Inc.  All Rights Reserved.
  */
 
@@ -40,6 +44,7 @@
 #define intrn_info_INCLUDED "intrn_info.h"
 
 #include "defs.h"
+#include "mtypes.h"
 #include "wintrinsic.h"
 
 /* Enumeration of mnemonic names for the return types of intrinsic
@@ -68,22 +73,43 @@ typedef enum INTRN_RETKIND {
   IRETURN_SZT,               /* size_t */
   IRETURN_PC,                /* pointer to char */
   IRETURN_F10,               /* MTYPE_F10 */
+  IRETURN_C10,               /* MTYPE_C10 */
+  IRETURN_F16,               /* MTYPE_F16 */
+  IRETURN_C16,               /* MTYPE_C16 */
 #ifdef TARG_X8664
   IRETURN_V16I2,	     /* MTYPE_V16I2 */
   IRETURN_V16I4,	     /* MTYPE_V16I4 */
   IRETURN_V16F4,	     /* MTYPE_V16F4 */
   IRETURN_V16F8,	     /* MTYPE_V16F8 */
   IRETURN_V16C8,	     /* MTYPE_V16C8 */
+  IRETURN_V8I1,              /* MTYPE_V8I1 */
+  IRETURN_V8I2,              /* MTYPE_V8I2 */
+  IRETURN_V8I4,              /* MTYPE_V8I4 */
+  IRETURN_V8I8,              /* MTYPE_V8I8 */
   IRETURN_M8I1,              /* MTYPE_M8I1 */
   IRETURN_M8I2,              /* MTYPE_M8I2 */
   IRETURN_M8I4,              /* MTYPE_M8I4 */
   IRETURN_V16I8,             /* MTYPE_V16I8 */
   IRETURN_V16I1,             /* MTYPE_V16I1 */
+  IRETURN_V32C4,             /* MTYPE_V32C4 */
+  IRETURN_V32C8,             /* MTYPE_V32C8 */
+  IRETURN_V32I1,             /* MTYPE_V32I1 */
+  IRETURN_V32I2,             /* MTYPE_V32I2 */
+  IRETURN_V32I4,             /* MTYPE_V32I4 */
+  IRETURN_V32I8,             /* MTYPE_V32I8 */
+  IRETURN_V32F4,             /* MTYPE_V32F4 */
+  IRETURN_V32F8,             /* MTYPE_V32F8 */
 #endif
   IRETURN_PPU2,         /* return type of ctype_b_loc() */
   IRETURN_PPI4,         /* return type of ctype_toupper_loc() and ctype_tolower_loc() */
 } INTRN_RETKIND;
 #define INTRN_RETKIND_LAST IRETURN_F10
+
+#if defined(TARG_IA64) || defined(TARG_X8664)
+#define IRETURN_LD IRETURN_F10
+#else
+#define IRETURN_LD IRETURN_FQ
+#endif
 
 // some defines to make parameters more readable
 #define BYVAL		TRUE
@@ -98,8 +124,14 @@ typedef enum INTRN_RETKIND {
 #define NOT_ACTUAL	FALSE
 #define CGINTRINSIC	TRUE
 #define NOT_CGINTRINSIC	FALSE
+
+#ifdef TARG_SL
+#define NOT_SLAVE       FALSE 
+#define SLAVE           TRUE 
+#else
 #define NOT_SLAVE       CGINTRINSIC
 #define SLAVE           NOT_CGINTRINSIC
+#endif
 
 // the info we store for each intrinsic
 typedef struct intrn_info_t {
@@ -117,6 +149,8 @@ typedef struct intrn_info_t {
 } intrn_info_t;
 
 extern const intrn_info_t intrn_info[];
+
+extern TYPE_ID INTRN_Size_Mtype (const INTRINSIC id);
 
 inline BOOL INTRN_by_value (const INTRINSIC i)
 {
@@ -188,9 +222,7 @@ inline BOOL INTRN_is_sl (const INTRINSIC i)
 
 inline BOOL INTRN_is_slave (const INTRINSIC i)
 {
-  if (i == INTRN_C3_PTR)
-    return TRUE;
-  return FALSE;
+  return intrn_info[i].slave;
 }
 
 inline BOOL INTRN_copy_addr(const INTRINSIC i)
@@ -220,32 +252,10 @@ typedef struct  {
 } sl_intrn_meminfo_t; 
 
 #define INVALID_PID -1
-#define SL_INTRN_MEMINFO_LAST 48
+#define SL_INTRN_MEMINFO_LAST 27 
 static sl_intrn_meminfo_t sl_intrn_meminfo_tab[SL_INTRN_MEMINFO_LAST] = {
-  //c3 intrinsics
-  INTRN_C3_MAC_A,	FALSE, FALSE, 2, {2, 4}, {0} ,
-  INTRN_C3_MACN_A,	FALSE, FALSE, 2, {2, 4}, {0},	
-  INTRN_C3_MAC_AR, 	FALSE, FALSE, 1, {3, INVALID_PID}, {0},
-  INTRN_C3_MACN_AR, 	FALSE, FALSE, 1, {3, INVALID_PID}, {0},
-  INTRN_C3_MULA_AR, 	FALSE, FALSE, 1, {3, INVALID_PID}, {0},
-  INTRN_C3_DMAC_A, 	FALSE, FALSE, 2, {2, 4}, {0},
-  INTRN_C3_DMACN_A, 	FALSE, FALSE, 2, {2, 4}, {0},
-  INTRN_C3_SAADDH_A, 	FALSE, FALSE, 2, {0, 2}, {0},
-  INTRN_C3_SASUBH_A, 	FALSE, FALSE, 2, {0, 2}, {0},
-  INTRN_C3_MULA_A, 	FALSE, FALSE, 2, {2, 4}, {0},
-  INTRN_C3_SAMULH_A, 	FALSE, FALSE, 2, {0, 2}, {0},
-  INTRN_C3_DMULT_A, 	FALSE, FALSE, 2, {2, 4}, {0},
-  INTRN_C3_DMULTN_A, 	FALSE, FALSE, 2, {2, 4}, {0},
-  INTRN_C3_SAADD_A, 	FALSE, FALSE, 2, {0, 2}, {0},
-  INTRN_C3_SAADDHA_A, 	FALSE, FALSE, 1, {2, INVALID_PID}, {0},
-  INTRN_C3_SASUB_A, 	FALSE, FALSE, 2, {0, 2}, {0},
-  INTRN_C3_LOAD, 	FALSE, FALSE, 1, {0, INVALID_PID}, {0},
-  INTRN_C3_STORE, 	FALSE, TRUE,  1, {1, INVALID_PID}, {0},
-  INTRN_C3_FFTLD, 	FALSE, FALSE, 1, {0, INVALID_PID}, {0},
-  INTRN_C3_FFTST, 	FALSE, TRUE,  1, {1, INVALID_PID}, {0},
-  INTRN_SET_CIRCBUF, 	FALSE, FALSE, 2, {3, 4}, {0},
-  INTRN_RESET_CIRCBUF, 	FALSE, FALSE, 2, {3, 4}, {0},
   // new C3 intrinsics
+  INTRN_C3_SET_CIRCBUF, FALSE, FALSE, 2, {3, 4}, {0},
   INTRN_C3DMAC_A, 	FALSE, FALSE, 2, {2, 4}, {0},
   INTRN_C3DMULA_A, 	FALSE, FALSE, 1, {2, INVALID_PID}, {0},
   INTRN_C3LD, 		FALSE, FALSE, 1, {0, INVALID_PID}, {0},

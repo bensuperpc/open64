@@ -1,4 +1,8 @@
 /*
+ * Copyright (C) 2009-2011 Advanced Micro Devices, Inc.  All Rights Reserved.
+ */
+
+/*
  * Copyright (C) 2006, 2007. QLogic Corporation. All Rights Reserved.
  */
 
@@ -82,6 +86,11 @@
 #include "wn_mp.h"                    // for WN_has_pragma_with_side_effect
 #include "ipl_lno_util.h" 
 #include "wb_ipl.h"
+
+// Generate summary information for Nystrom alias analyzer
+#include "ipa_be_summary.h"
+#include "nystrom_alias_analyzer.h"
+#include "constraint_graph.h"
 
 extern BOOL DoPreopt;
 extern BOOL Do_Par;
@@ -417,7 +426,7 @@ SUMMARIZE<program>::Summarize (WN *w)
 {
   static BOOL Temp_pool_initialized = FALSE;
   WN_MAP save_parent_map = Parent_Map;
-  
+
   if (!Temp_pool_initialized) {
     Temp_pool_initialized = TRUE;
     MEM_POOL_Initialize(&Temp_pool, "temp pool", 0);
@@ -470,6 +479,11 @@ SUMMARIZE<program>::Summarize (WN *w)
   Set_entry_point (w);
   Process_procedure (w);
 
+  // Generate summary information for Nystrom alias analyzer
+  // must generate CG summary befoer processing alt entry, otherwise
+  // CG summry is recorded on alt_entry's procedure summary
+  generateConstraintGraphSummary(w);
+
   // if the original subroutine contained alternate entry points
   // then we need to create summary procedure nodes for each
   // alternate entry point. The entry points occuring in the
@@ -498,6 +512,7 @@ SUMMARIZE<program>::Summarize (WN *w)
     _alt_entry.Free_array();
     _alt_entry.Resetidx();
   }
+
 
 #ifdef KEY
   if (Get_Trace (TP_IPL, TT_IPL_SUMMARY))
@@ -967,21 +982,34 @@ SUMMARIZE<program>::Process_eh_globals (void)
       {
         INITV_IDX st_entry = INITV_blk (blk);
 	ST_IDX st_idx = 0;
-	if (INITV_kind (st_entry) != INITVKIND_ZERO)
+	bool catch_all = false;
+	if (INITV_kind (st_entry) == INITVKIND_ONE)
+	{
+	  catch_all = true;
+	}
+	else if (INITV_kind (st_entry) != INITVKIND_ZERO)
 	{
 	  st_idx = TCON_uval (INITV_tc_val (st_entry));
 	  FmtAssert (st_idx != 0, ("Invalid st idx"));
 	}
-	if (st_idx <= 0)
+	if (st_idx <= 0 && !catch_all)
 	{
 	  blk = INITV_next (blk);
 	  continue;
 	}
-	INT32 index = Get_symbol_index (&St_Table [st_idx]);
 	INITV_IDX filter = INITV_next (st_entry); // for backup
-	FmtAssert (index >= 0, ("Unexpected summary id for eh symbol"));
-	INITV_Set_VAL (Initv_Table[st_entry], Enter_tcon (
-	               Host_To_Targ (MTYPE_U4, index)), 1);
+	if (!catch_all)
+	{
+	  INT32 index = Get_symbol_index (&St_Table [st_idx]);
+	  FmtAssert (index >= 0, ("Unexpected summary id for eh symbol"));
+	  INITV_Set_VAL (Initv_Table[st_entry], Enter_tcon (
+	                 Host_To_Targ (MTYPE_U4, index)), 1);
+	}
+	else
+	{
+	  // copy catch-all marker
+	  INITV_Set_ONE (Initv_Table[st_entry], MTYPE_U4, 1);
+	}
         Set_INITV_next (st_entry, filter);
 	blk = INITV_next (blk);
       } while (blk);
@@ -1040,7 +1068,7 @@ SUMMARIZE<program>::Process_eh_region (WN * wn)
     for (; types; types = INITV_next (types))
     {
       int sym = 0;
-      if (INITV_kind (types) != INITVKIND_ZERO)
+      if (INITV_kind (types) == INITVKIND_VAL)
         sym = TCON_uval (INITV_tc_val (types));
       if (sym > 0)
       {
@@ -1577,10 +1605,16 @@ SUMMARIZE<program>::Process_procedure (WN* w)
 
 #if defined(KEY) && !defined(_STANDALONE_INLINER) && !defined(_LIGHTWEIGHT_INLINER)
             // This ifdef is redundant, but just for clarity.
-            if (Cur_PU_Feedback && WN_operator(w2) == OPR_ICALL)
-	      Process_icall (proc, w2, loopnest, probability);
+            if (Cur_PU_Feedback && WN_operator(w2) == OPR_ICALL && 
+                  !WN_Call_Is_Virtual(w2))
+	       Process_icall (proc, w2, loopnest, probability);
 #endif
 #endif // KEY
+            if ( IPA_Enable_Fast_Static_Analysis_VF == TRUE && 
+                  WN_Call_Is_Virtual(w2)) {
+                  // add the virtual function dummy callsite if appropriate
+	          Process_virtual_function (proc, w2, loopnest, probability);
+            }
 
             proc->Incr_call_count ();
 #ifdef KEY
@@ -1814,7 +1848,6 @@ SUMMARIZE<program>::Process_procedure (WN* w)
             {
               ST * thdprv_st = ST_ptr (WN_pragma_arg2(w2));
               Get_symbol_index (thdprv_st);  
-              WN_pragma_arg2(w2) = Get_symbol_index (thdprv_st);
               Record_global_ref (w2, thdprv_st, OPR_PRAGMA, TRUE);
 
               // increment modcount
@@ -1982,7 +2015,7 @@ SUMMARIZE<program>::Process_procedure (WN* w)
       // of the PU size.
       for (i = label_use_map.begin(); i != label_use_map.end(); i++)
       {
-        Is_True ((*i).second.wn, ("Process_procedure: Undefined label?"));
+        Is_True (Do_Altentry || (*i).second.wn, ("Process_procedure: Undefined label?"));
         if (!(*i).second.seen)
         {
           unused_labels++;
@@ -2085,6 +2118,7 @@ SUMMARIZE<program>::Process_procedure (WN* w)
     if ( Has_local_pragma && Has_pdo_pragma)
 	proc->Set_has_pdo_pragma();
 
+
 } // SUMMARIZE::Process_procedure
 				 
 //====================================================================
@@ -2128,29 +2162,96 @@ SUMMARIZE<program>::Update_call_pragmas (SUMMARY_CALLSITE *callsite)
     }
 } // SUMMARIZE::Update_call_pragmas
 
+/*
+File 1: osprey/ipa/local/ipl_summarize_template.h
+Notes for File 1:
+    I added a Process_virtual_function function for use during ipl summarizing.
+    It is mandatory to call this function on a virtual function in order to 
+    get IPA to consider that function during virtual function transformation.
+    The prototype to Process_virtual_function is in ipl_summarize.h 
+
+    This contents of this function are just like Process_Icall function already in ipl.
+
+    Note: 
+        1: When feedback is available, the existing ICALL transformation pass 
+            applies icall transformation on virtual functions as well.
+            In order for my work to coexist with this framework, I do not call 
+            Process_virtual_function on WHIRLs in case Cur_PU_Feedback 
+            is not NULL, i.e. if there is feedback data available 
+            on the current PU. 
+
+*/
+
+#if defined(KEY) && !defined(_STANDALONE_INLINER) && !defined(_LIGHTWEIGHT_INLINER)
+template <PROGRAM program>
+void
+SUMMARIZE<program>::Process_virtual_function (SUMMARY_PROCEDURE * proc, 
+        WN * wn, INT loopnest, float probability)
+{
+  Is_True (WN_operator (wn) == OPR_ICALL, ("Process_virtual_function: ICALL expected"));
+
+
+  SUMMARY_CALLSITE * cs = New_callsite();
+  cs->Set_callsite_id (proc->Get_callsite_count());
+  cs->Set_loopnest (loopnest);
+  cs->Set_probability (probability);
+  cs->Set_param_count (WN_num_actuals (wn));
+  cs->Set_return_type (WN_rtype (wn));
+  static ST * st = NULL;
+
+  if (! st)
+  {
+    PU_IDX pu_idx;
+    PU& pu = New_PU (pu_idx);
+
+    // a dummy placeholder for prototype
+    PU_Init (pu, MTYPE_TO_TY_array[MTYPE_V], GLOBAL_SYMTAB+1);
+
+    st = New_ST (GLOBAL_SYMTAB);
+    ST_Init (st, Save_Str ("__dummy_virtual_function_target"),
+                 CLASS_FUNC, SCLASS_EXTERN, EXPORT_PREEMPTIBLE,
+                 TY_IDX (pu_idx));
+    vector<IPL_ST_INFO>& aux_st = Aux_Symbol_Info[GLOBAL_SYMTAB];
+    aux_st.insert (aux_st.end(), 1, IPL_ST_INFO ());
+  }
+  cs->Set_symbol_index (Get_symbol_index (st));
+  cs->Set_virtual_function_target();
+ 
+  for (INT i = 0; i < cs->Get_param_count (); i++)
+    Process_actual (WN_actual (wn, i));
+
+  if (cs->Get_param_count () > 0)
+    cs->Set_actual_index (Get_actual_idx () - cs->Get_param_count () + 1);
+
+  proc->Incr_callsite_count ();
+  proc->Incr_call_count ();
+}
+#endif // KEY && !(_STANDALONE_INLINER) && !(_LIGHTWEIGHT_INLINER)
+
 #if defined(KEY) && !defined(_STANDALONE_INLINER) && !defined(_LIGHTWEIGHT_INLINER)
 // If found suitable, generate a new callsite summary for the direct call
 // that IPA may add for this icall. Fix other summary data as if proc now
 // has another callsite.
 template <PROGRAM program>
-void
+SUMMARY_CALLSITE *
 SUMMARIZE<program>::Process_icall (SUMMARY_PROCEDURE * proc, WN * wn,
                                    INT loopnest, float probability)
 {
   Is_True (WN_operator (wn) == OPR_ICALL, ("Process_icall: ICALL expected"));
 
+  SUMMARY_CALLSITE * cs = NULL;
   // Tune this parameter
   const int freq_threshold = IPA_Icall_Min_Freq;
 
   const FB_Info_Call& info_call = Cur_PU_Feedback->Query_call(wn);
   if (!info_call.freq_entry.Known())
-    return;
+    return cs;
   if (info_call.freq_entry.Value() < freq_threshold)
-    return;
+    return cs;
 
   FB_Info_Icall info_icall = Cur_PU_Feedback->Query_icall(wn);
   if (info_icall.Is_uninit())
-    return;
+    return cs;
 
   if (info_icall.tnv._exec_counter < info_call.freq_entry.Value())
   {
@@ -2166,7 +2267,7 @@ SUMMARIZE<program>::Process_icall (SUMMARY_PROCEDURE * proc, WN * wn,
   const UINT64 callee_addr    = info_icall.tnv._values[0];
 
   if (exec_counter == 0 || callee_counter == 0)
-    return;
+    return cs;
 
   // For now, we have decided to proceed with ICALL transformation for
   // this icall, IPA will finally decide whether to actually transform it.
@@ -2177,7 +2278,7 @@ SUMMARIZE<program>::Process_icall (SUMMARY_PROCEDURE * proc, WN * wn,
   // prototype. Since this ST is just for temporary use in summary data, we
   // do not try to be accurate here.
 
-  SUMMARY_CALLSITE * cs = New_callsite();
+  cs = New_callsite();
   cs->Set_callsite_id (proc->Get_callsite_count());
   cs->Set_loopnest (loopnest);
   cs->Set_probability (probability);
@@ -2220,6 +2321,7 @@ SUMMARIZE<program>::Process_icall (SUMMARY_PROCEDURE * proc, WN * wn,
 
   proc->Incr_callsite_count ();
   proc->Incr_call_count ();
+  return cs;
 } // SUMMARIZE::Process_icall
 #endif // KEY && !(_STANDALONE_INLINER) && !(_LIGHTWEIGHT_INLINER)
 
@@ -2292,10 +2394,6 @@ SUMMARIZE<program>::Process_callsite (WN *w, INT id, INT loopnest, float probabi
 	    break;
 	}
 
-#if 0
-	if (!INLINE_Enable_Copy_Prop)
-	    return;
-#endif
     } else {
 
 	/* ipl case */
@@ -2331,9 +2429,9 @@ SUMMARIZE<program>::Process_callsite (WN *w, INT id, INT loopnest, float probabi
 
             // if it is a virtual function calll, set its base class and offset 
             if (WN_Call_Is_Virtual(w)) { 
-                callsite->Set_is_virtual_call(); 
                 WN *last = WN_kid(w, WN_kid_count(w)-1); 
 #ifdef TARG_IA64 
+                callsite->Set_is_virtual_call(); 
                 if (WN_operator_is(last, OPR_ADD)) { 
                     FmtAssert(WN_kid_count(last) == 2, ("Incorrect virtual call site.")); 
                     WN *addr = WN_kid0(last); 
@@ -2357,14 +2455,32 @@ SUMMARIZE<program>::Process_callsite (WN *w, INT id, INT loopnest, float probabi
                 } 
 #endif 
 #ifdef TARG_X8664 
-                FmtAssert(WN_operator_is(last, OPR_ILOAD), 
-                          ("Virtual function call does node use ILOAD.")); 
+                // Original WN generated by front end must be OPR_ILOAD. 
+                // The OPR_ILOAD may be optimized to OPR_LDID by WOPT. 
+                FmtAssert(WN_operator_is(last, OPR_ILOAD)|| WN_operator_is(last, OPR_LDID), 
+                              ("Virtual function call does not use ILOAD or LDID.")); 
                 callsite->Set_vtable_offset(WN_load_offset(last)); 
-                WN *vptr = WN_kid0(last); 
-                FmtAssert(WN_operator_is(vptr, OPR_ILOAD) || WN_operator_is(vptr, OPR_LDID), 
-                          ("Virtual function call does not use ILOAD or LDID.")); 
-                callsite->Set_virtual_class(WN_ty(vptr)); 
-                callsite->Set_vptr_offset(WN_load_offset(vptr)); 
+                if (WN_operator_is(last, OPR_LDID)) {
+                    // cannot handle load optimized virtual table ptr yet
+                    // TODO handle virtual function pointer loadded by LDID
+                    //   two cases:
+                    //       1. virtual function ptr stored in temp
+                    //           void * tmp_vfptr = ((*(this+vptr_offset))+vtbl_offset);
+                    //           (tmp_vfptr)(this, arg0, ...);
+                    //       2. virtual function ptr get directly from known vtble
+                    //           (*(vtbl+vtbl_offset))(this, arg0, ...);
+                    // callsite->Set_is_virtual_call(); 
+                    callsite->Set_virtual_class(WN_ty(last)); 
+                    callsite->Set_vptr_offset(0); 
+                }
+                else {
+                    callsite->Set_is_virtual_call(); 
+                    WN *vptr = WN_kid0(last); 
+                    FmtAssert(WN_operator_is(vptr, OPR_ILOAD) || WN_operator_is(vptr, OPR_LDID), 
+                              ("Virtual function call does not use ILOAD or LDID.")); 
+                    callsite->Set_virtual_class(WN_ty(vptr)); 
+                    callsite->Set_vptr_offset(WN_load_offset(vptr)); 
+                }
 #endif 
             } 
 
@@ -2437,6 +2553,10 @@ SUMMARIZE<program>::Process_callsite (WN *w, INT id, INT loopnest, float probabi
 			       OPCODE_name(WN_opcode(w)));
 	    break;
 	}
+
+        CallSiteId cgCSId = WN_MAP_CallSiteId_Get(w);
+        if (cgCSId != 0)
+          callsite->Set_constraint_graph_callsite_id(cgCSId);
     }
 
     // if there are parameters in this routine
@@ -2786,7 +2906,10 @@ SUMMARIZE<program>::Get_symbol_index (const ST *st)
     
   SUMMARY_SYMBOL* sym = New_symbol();
     
-  if (Get_Trace(TKIND_IR, TP_IPL)) {
+  // Using Get_Trace(TKIND_IR, TP_IPL) as the condition in the
+  // if statement below is incorrect, since symbol
+  // names may not be extracted when -tf<n> is supplied.
+  if (Tracing_Enabled) {
     Save_Symbol_Name(st);
   }
     
@@ -3111,6 +3234,282 @@ SUMMARIZE<program>::Record_ty_info_for_type (TY_IDX ty, TY_FLAGS flags)
     ty_info->Set_ty_no_split();
 }
 #endif
+
+
+// Generate constraint graph summary for Nystrom Alias Analyzer
+template <PROGRAM program>
+void
+SUMMARIZE<program>::generateConstraintGraphSummary(WN *w)
+{
+  if (!Alias_Nystrom_Analyzer)
+    return;
+
+  SUMMARY_PROCEDURE *currProc = Get_procedure(Get_procedure_idx());
+
+  NystromAliasAnalyzer *naa = 
+          static_cast<NystromAliasAnalyzer *>(AliasAnalyzer::aliasAnalyzer());
+  // In case we haven't invoked Preopt due to +Olimit, we should still
+  // create the constraint graph so as to perform alias analysis during IPA
+  if (naa == NULL) {
+    ALIAS_CONTEXT ac;
+    AliasAnalyzer::Create_Alias_Analyzer(ac,w);
+    naa = static_cast<NystromAliasAnalyzer *>(AliasAnalyzer::aliasAnalyzer());
+  }
+
+  mUINT32 numNodes = 0;
+  mUINT32 numEdges = 0;
+  mUINT32 numStInfos = 0;
+  mUINT32 numCallSites = 0;
+  mUINT32 numNodeIds = 0;
+
+  ConstraintGraph *cg = naa->constraintGraph();
+  // Iterate over all nodes in the graph
+  for (CGNodeToIdMapIterator iter = cg->lBegin(); iter != cg->lEnd(); iter++) {
+    ConstraintGraphNode *cgNode = iter->first;
+    if (cgNode == ConstraintGraph::blackHole())
+      continue;
+    SUMMARY_CONSTRAINT_GRAPH_NODE *summCGNode = New_constraint_graph_node();
+    ConstraintGraphNode *parent = cgNode->parent();
+    // Set points to set only if it has no representative parent
+    if (parent == cgNode) {
+      summCGNode->repParent(0);
+      processPointsToSet(summCGNode, cgNode->pointsTo(CQ_GBL),
+                         cgNode->pointsTo(CQ_HZ), cgNode->pointsTo(CQ_DN),
+                         numNodeIds);
+    } else
+      summCGNode->repParent(parent->id());
+    summCGNode->cgNodeId(cgNode->id());
+    summCGNode->cg_st_idx(cgNode->cg_st_idx());
+    summCGNode->ty_idx(cgNode->ty_idx());
+    summCGNode->offset(cgNode->offset());
+    summCGNode->flags(cgNode->flags());
+    summCGNode->inKCycle(cgNode->inKCycle());
+    if (cgNode->nextOffset())
+      summCGNode->nextOffset(cgNode->nextOffset()->id());
+    else
+      summCGNode->nextOffset(0);
+    if (cgNode->checkFlags(CG_NODE_FLAGS_COLLAPSED))
+    {
+      CGNodeId cpid = cgNode->collapsedParent();
+      ConstraintGraphNode* cp = cg->cgNode(cpid);
+      while (cp && (cp->checkFlags(CG_NODE_FLAGS_COLLAPSED)))
+      {
+        cpid = cp->collapsedParent();
+        cp = cg->cgNode(cpid);
+      }
+      summCGNode->collapsedParent(cpid);
+    }
+
+    // Add edges
+    const CGEdgeSet &outCopySet = cgNode->outCopySkewEdges();
+    for (CGEdgeSetIterator outCopyIter = outCopySet.begin();
+         outCopyIter != outCopySet.end(); outCopyIter++) {
+      ConstraintGraphEdge *edge = *(outCopyIter);
+      SUMMARY_CONSTRAINT_GRAPH_EDGE *summCGEdge = New_constraint_graph_edge();
+      summCGEdge->etype(edge->edgeType());
+      summCGEdge->qual(edge->edgeQual());
+      summCGEdge->flags(edge->flags());
+      summCGEdge->sizeOrSkew(edge->edgeType() == ETYPE_SKEW ? edge->skew()
+                             : edge->size());
+      summCGEdge->src(edge->srcNode()->id());
+      summCGEdge->dest(edge->destNode()->id());
+      numEdges++;
+    }
+    const CGEdgeSet &outLdSet = cgNode->outLoadStoreEdges();
+    for (CGEdgeSetIterator outLdIter = outLdSet.begin();
+         outLdIter != outLdSet.end(); outLdIter++)  {
+      ConstraintGraphEdge *edge = *(outLdIter);
+      SUMMARY_CONSTRAINT_GRAPH_EDGE *summCGEdge = New_constraint_graph_edge();
+      summCGEdge->etype(edge->edgeType());
+      summCGEdge->qual(edge->edgeQual());
+      summCGEdge->flags(edge->flags());
+      summCGEdge->sizeOrSkew(edge->edgeType() == ETYPE_SKEW ? edge->skew()
+                             : edge->size());
+      summCGEdge->src(edge->srcNode()->id());
+      summCGEdge->dest(edge->destNode()->id());
+      numEdges++;
+    }
+    numNodes++;
+  }
+
+  // Add StInfos.
+  CGStInfoMap& stInfos = cg->stInfoMap();
+  for (CGStInfoMapIterator stiter = stInfos.begin(); stiter != stInfos.end();
+       stiter++) {
+    CG_ST_IDX cg_st_idx = stiter->first;
+    StInfo *s = stiter->second;
+    if (s->firstOffset() == ConstraintGraph::blackHole())
+      continue;
+    SUMMARY_CONSTRAINT_GRAPH_STINFO *summStInfo = New_constraint_graph_stinfo();
+    summStInfo->cg_st_idx(cg_st_idx);
+    summStInfo->flags(s->flags());
+    summStInfo->varSize(s->varSize());
+    summStInfo->ty_idx(s->ty_idx());
+    if (s->checkFlags(CG_ST_FLAGS_MODRANGE)) {
+      UINT32 modRangeIdx = processModRange(s->modRange());
+      summStInfo->modulus(modRangeIdx);
+    } else
+      summStInfo->modulus(s->mod());
+    summStInfo->firstOffset(s->firstOffset() ? s->firstOffset()->id() : 0);
+    numStInfos++;
+  }
+
+  // Add Callsites
+  CallSiteMap& callSites = cg->callSiteMap();
+  for (CallSiteIterator citer = callSites.begin(); citer != callSites.end();
+       citer++) {
+    CallSite *cs = citer->second;
+    SUMMARY_CONSTRAINT_GRAPH_CALLSITE *summCallSite = 
+                                       New_constraint_graph_callsite();
+    summCallSite->id(cs->id());
+    summCallSite->flags(cs->flags());
+    summCallSite->actualModeled(cs->actualModeled());
+    if (cs->checkFlags(CS_FLAGS_VIRTUAL))
+      summCallSite->virtualClass(cs->virtualClass());
+    if (cs->isDirect() && !cs->isIntrinsic())
+      summCallSite->st_idx(cs->st_idx());
+    else if (cs->isIndirect())
+      summCallSite->cgNodeId(cs->cgNodeId());
+    else if (cs->isIntrinsic())
+      summCallSite->intrinsic(cs->intrinsic());
+    // Process params
+    list<CGNodeId> parms = cs->parms();
+    UINT32 pcount = 0;
+    list<CGNodeId>::iterator iter;
+    for (iter = parms.begin(); iter != parms.end(); iter++) {
+      CGNodeId id = *iter;
+      INT new_idx = _constraint_graph_node_ids.Newidx();
+      _constraint_graph_node_ids[new_idx] = id;
+      pcount++;
+    }
+    summCallSite->numParms(pcount);
+    summCallSite->parmNodeIdx(_constraint_graph_node_ids.Lastidx() - 
+                              pcount + 1);
+    summCallSite->returnId(cs->returnId());
+    numCallSites++;
+    numNodeIds += pcount;
+  }
+
+  // Formal parameters/returns
+  list<CGNodeId>::iterator iter;
+  list<CGNodeId> parameters = cg->parameters();
+  list<CGNodeId> returns = cg->returns();
+  // Add the cgnode ids of formal parameters
+  mUINT32 pcount = 0;
+  for (iter = parameters.begin(); iter != parameters.end(); iter++) {
+    INT new_idx = _constraint_graph_node_ids.Newidx();
+    _constraint_graph_node_ids[new_idx] = *iter;
+    pcount++;
+  }
+  currProc->Set_constraint_graph_formal_parm_count(pcount);
+  currProc->Set_constraint_graph_formal_parm_idx(
+                            _constraint_graph_node_ids.Lastidx() - pcount + 1);
+  // Add the cgnode ids of formal returns
+  mUINT32 rcount = 0;
+  for (iter = returns.begin(); iter != returns.end(); iter++) {
+    INT new_idx = _constraint_graph_node_ids.Newidx();
+    _constraint_graph_node_ids[new_idx] = *iter;
+    rcount++;
+  }
+  currProc->Set_constraint_graph_formal_ret_count(rcount);
+  currProc->Set_constraint_graph_formal_ret_idx( 
+                            _constraint_graph_node_ids.Lastidx() - rcount + 1);
+  numNodeIds += pcount + rcount;
+
+  currProc->Set_constraint_graph_nodes_count(numNodes);
+  currProc->Set_constraint_graph_nodes_idx(_constraint_graph_nodes.Lastidx() -
+                                           numNodes + 1);
+
+  currProc->Set_constraint_graph_edges_count(numEdges);
+  currProc->Set_constraint_graph_edges_idx(_constraint_graph_edges.Lastidx() -
+                                           numEdges + 1);
+
+  currProc->Set_constraint_graph_stinfos_count(numStInfos);
+  currProc->Set_constraint_graph_stinfos_idx(
+                          _constraint_graph_stinfos.Lastidx() - numStInfos + 1);
+
+  currProc->Set_constraint_graph_callsites_count(numCallSites);
+  currProc->Set_constraint_graph_callsites_idx(
+                      _constraint_graph_callsites.Lastidx() - numCallSites + 1);
+
+  currProc->Set_constraint_graph_node_ids_count(numNodeIds);
+  currProc->Set_constraint_graph_node_ids_idx(
+                      _constraint_graph_node_ids.Lastidx() - numNodeIds + 1);
+}
+
+template <PROGRAM program>
+UINT32
+SUMMARIZE<program>::processModRange(ModulusRange *mr)
+{
+  SUMMARY_CONSTRAINT_GRAPH_MODRANGE *summMR = New_constraint_graph_modrange();
+  INT idx = Get_constraint_graph_modranges_idx();
+  summMR->startOffset(mr->startOffset());
+  summMR->endOffset(mr->endOffset());
+  summMR->modulus(mr->mod());
+  summMR->ty_idx(mr->ty_idx());
+  if (mr->child()) {
+    INT cidx = processModRange(mr->child());
+    // Get the summMR, since after a realloc of the underlying DYN_ARRAY
+    // the above summMR ptr may not be valid
+    summMR = Get_constraint_graph_modrange(idx);
+    summMR->childIdx(cidx);
+  }
+  if (mr->next()) {
+    INT nidx = processModRange(mr->next());
+    // Get the summMR, since after a realloc of the underlying DYN_ARRAY
+    // the above summMR ptr may not be valid
+    summMR = Get_constraint_graph_modrange(idx);
+    summMR->nextIdx(nidx);
+  }
+  return idx;
+}
+
+// Since the pts-to-set is a sparse set, we store the CGNodeIds in the set
+// in a separate array. And for each SUMMARY_CONSTRAINT_GRAPH_NODE
+// store the number of elements start index into the array of the 
+// corresponding pts-to-set
+template <PROGRAM program>
+void
+SUMMARIZE<program>::processPointsToSet(SUMMARY_CONSTRAINT_GRAPH_NODE *sumCGNode,
+                                       const PointsTo &gbl,
+                                       const PointsTo &hz,
+                                       const PointsTo &dn,
+                                       mUINT32 &numNodeIds)
+{
+  // Process GBLs
+  UINT32 numGBLids = 0;
+  for (PointsTo::SparseBitSetIterator iter(&gbl, 0); iter != 0; ++iter) {
+    CGNodeId id = *iter;
+    if (id == ConstraintGraph::blackHole()->id())
+      continue;
+    INT new_idx = _constraint_graph_node_ids.Newidx();
+    _constraint_graph_node_ids[new_idx] = id;
+    numGBLids++;
+  }  
+  sumCGNode->numBitsPtsGBL(numGBLids);
+  sumCGNode->ptsGBLidx(_constraint_graph_node_ids.Lastidx() - numGBLids + 1);
+  // Process HZs
+  UINT32 numHZids = 0;
+  for (PointsTo::SparseBitSetIterator iter(&hz, 0); iter != 0; ++iter) {
+    CGNodeId id = *iter;
+    INT new_idx = _constraint_graph_node_ids.Newidx();
+    _constraint_graph_node_ids[new_idx] = id;
+    numHZids++;
+  }  
+  sumCGNode->numBitsPtsHZ(numHZids);
+  sumCGNode->ptsHZidx(_constraint_graph_node_ids.Lastidx() - numHZids + 1);
+  // Process DNs
+  UINT32 numDNids = 0;
+  for (PointsTo::SparseBitSetIterator iter(&dn, 0); iter != 0; ++iter) {
+    CGNodeId id = *iter;
+    INT new_idx = _constraint_graph_node_ids.Newidx();
+    _constraint_graph_node_ids[new_idx] = id;
+    numDNids++;
+  }  
+  sumCGNode->numBitsPtsDN(numDNids);
+  sumCGNode->ptsDNidx(_constraint_graph_node_ids.Lastidx() - numDNids + 1);
+  numNodeIds += numGBLids + numHZids + numDNids;
+}
 
 #endif // ipl_summarize_template_INCLUDED
 

@@ -45,6 +45,8 @@
 #define REVISION_MISMATCH 0
 #define READER_ERROR -1
 #define ABI_MISMATCH -2
+
+extern BOOL Read_ALIAS_CGNODE_Map;
 				       
 
 struct OFFSET_AND_SIZE
@@ -126,6 +128,7 @@ extern INT WN_get_strtab (void *handle);
 extern INT WN_get_dst (void *handle);
 extern INT WN_get_localmap (void *handle);
 extern INT WN_get_feedback (void* handle, PU_Info*pu, MEM_POOL* pool);    
+extern INT WN_get_SSA (void *handle, PU_Info *pu, MEM_POOL* pool);
 
 /*
  * Read the command line flags used to compile the input file.  The

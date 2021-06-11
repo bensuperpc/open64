@@ -1,4 +1,8 @@
 /*
+ * Copyright (C) 2009 Advanced Micro Devices, Inc.  All Rights Reserved.
+ */
+
+/*
  * Copyright 2004, 2005, 2006 PathScale, Inc.  All Rights Reserved.
  */
 
@@ -2733,8 +2737,12 @@ extern BOOL Move_Adjacent(WN* stmt1, WN* stmt2) {
        }
     }
     Is_True(stmt==stmt2, ("Incorrect order of input in Move_Adjacent()\n"));
-    if (stmt!=stmt2)
+    if (stmt!=stmt2) {
+      CXX_DELETE(sdg,&FUSION_default_pool);
+      WN_MAP_Delete(sdm);
+      MEM_POOL_Pop(&FUSION_default_pool);
       return FALSE;
+    }
   }
 
   if (stmt2) {
@@ -2778,8 +2786,12 @@ extern BOOL Move_Adjacent(WN* stmt1, WN* stmt2) {
        }
     }
     Is_True(stmt==stmt1, ("Incorrect order of input in Move_Adjacent()\n"));
-    if (stmt!=stmt1)
+    if (stmt!=stmt1) {
+      CXX_DELETE(sdg,&FUSION_default_pool);
+      WN_MAP_Delete(sdm);
+      MEM_POOL_Pop(&FUSION_default_pool);
       return FALSE;
+    }
   }
 
   Statement_Dependence_Graph = NULL; 
@@ -4012,7 +4024,7 @@ WN** epilog_loop_out, mINT32 offset_out[])
     sprintf(in_string,"%d %d %d", Srcpos_To_Line(srcpos1),
                       Srcpos_To_Line(srcpos2), fusion_level);
     sprintf(out_string,"%d",Succeeded);
-    Generate_Tlog("LNO","fusion", Srcpos_To_Line(srcpos1),
+    Generate_Tlog("LNO","##Fusion: ", Srcpos_To_Line(srcpos1),
                   ST_name(WN_st(WN_index(in_loop1))),
                   in_string, out_string, "Successfully fused !!");
   }

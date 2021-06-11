@@ -1,41 +1,14 @@
-/*
- * Copyright 2005, 2006 PathScale, Inc.  All Rights Reserved.
- */
-
-/*
-
-  Copyright (C) 2000, 2001 Silicon Graphics, Inc.  All Rights Reserved.
-
-  This program is free software; you can redistribute it and/or modify it
-  under the terms of version 2 of the GNU General Public License as
-  published by the Free Software Foundation.
-
-  This program is distributed in the hope that it would be useful, but
-  WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
-
-  Further, this software is distributed without any warranty that it is
-  free of the rightful claim of any third person regarding infringement 
-  or the like.  Any license provided herein, whether implied or 
-  otherwise, applies only to this software file.  Patent licenses, if 
-  any, provided herein do not apply to combinations of this program with 
-  other software, or any other product whatsoever.  
-
-  You should have received a copy of the GNU General Public License along
-  with this program; if not, write the Free Software Foundation, Inc., 59
-  Temple Place - Suite 330, Boston MA 02111-1307, USA.
-
-  Contact information:  Silicon Graphics, Inc., 1600 Amphitheatre Pky,
-  Mountain View, CA 94043, or:
-
-  http://www.sgi.com
-
-  For further information regarding this notice, see:
-
-  http://oss.sgi.com/projects/GenInfo/NoticeExplan
-
-*/
-
+/********************************************************************\
+|*                                                                  *|   
+|*  Copyright (c) 2006 by SimpLight Nanoelectronics.                *|
+|*  All rights reserved                                             *|
+|*                                                                  *|
+|*  This program is free software; you can redistribute it and/or   *|
+|*  modify it under the terms of the GNU General Public License as  *|
+|*  published by the Free Software Foundation; either version 2,    *|
+|*  or (at your option) any later version.                          *|
+|*                                                                  *|
+\********************************************************************/
 
 /* ====================================================================
  * ====================================================================
@@ -95,18 +68,6 @@ void Em_Write_Reginfo (
     /* A:  no */
     return;
 
-#if 0
-    if (Sixtyfour_Bit) {
-	if (Get_Elf_Target_Machine() == EM_IA_64) {
-	  Elf_IA64_RegInfo reginfo_ia64;
-	  reginfo_ia64.ri_gp_value = gprvalue;
-	  Em_Add_New_Option (ODK_IA64_REGINFO, SHN_UNDEF,0, &reginfo_ia64, sizeof(reginfo_ia64));
-	}
-    }
-    else {
-    	ErrMsg(EC_Assertion, __FILE__, __LINE__, "NYI - n32 reginfo");
-    }
-#endif
 }
 
 /* Add new entry to the .options section. */
@@ -119,24 +80,7 @@ Em_Add_New_Option (
     Elf32_Byte length)
 {
     Elf_Options option;
-#if 0 // don't put out options period. Its not defined in ABI
-    if (Options_Scn == NULL) {
-	Options_Scn = Em_New_Section (IA64_OPTIONS, SHT_IRIX_OPTIONS, 
-			  SHF_ALLOC | SHF_IRIX_NOSTRIP, 0, 
-			  ELF64_FSZ_XWORD);
-    }
-    option.kind = option_kind;
-    option.size = sizeof (Elf_Options);
-    option.section = option_section;
-    option.info = option_info;
-    option.size += Roundup (length, 8);
-    Em_Add_Bytes_To_Scn (Options_Scn, &option, sizeof(option), ELF64_FSZ_WORD);
-    if (length != 0) {
-      Em_Add_Bytes_To_Scn (Options_Scn, buffer, length, ELF64_FSZ_WORD);
-    }
-#else
     return;
-#endif
 }
 
 

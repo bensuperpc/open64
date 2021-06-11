@@ -1,3 +1,7 @@
+/*
+ * Copyright (C) 2008-2010 Advanced Micro Devices, Inc.  All Rights Reserved.
+ */
+
 //-*-c++-*-
 
 /*
@@ -63,13 +67,18 @@
 #define opt_cfg_trans_INCLUDED "opt_cfg_trans.h"
 
 #include <iterator>
-#include <set>
 #include <map>
 #include <functional>
 
 #define USE_STANDARD_TYPE
 #include "opt_defs.h"   // use Is_True
 #include <stdio.h>
+#include "opt_bb.h"
+#include "opt_base.h"
+
+extern "C" {
+#include "bitset.h"
+}
 
 typedef int vertex_id;
 
@@ -358,6 +367,9 @@ inline void reverse_graph(Graph_in& in, Graph_out& out)
 }
 
 
+extern INT32 Current_PU_Count();
+extern char *Current_PU_Name();
+
 template <class Graph, class Vertex_id, class Insert_iterator, class Visited_set>
 void generate_post_order(Graph& g, Vertex_id v, Insert_iterator& ii, Visited_set& visited)
 {
@@ -368,6 +380,7 @@ void generate_post_order(Graph& g, Vertex_id v, Insert_iterator& ii, Visited_set
        ++e) {
     generate_post_order(g, second(*e), ii, visited);
   };
+
   *ii++ = v;
 }
 
@@ -685,7 +698,7 @@ struct less<path_type*> {
 
 extern void print_path_type(path_type *, FILE *);
 extern void print_vertex_set(std::set<vertex_id> *, FILE *);
-
+extern INT32 Current_PU_Count(void);
 
 class COMP_UNIT;  // forward declaration
 

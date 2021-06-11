@@ -84,6 +84,12 @@ endif
 ifeq ($(BUILD_TARGET), NVISA)
 HOSTDEFS += -DTARGET_NAME=\"nvisa\"
 endif
+ifeq ($(BUILD_TARGET), PPC32)
+HOSTDEFS += -DTARGET_NAME=\"ppc32-linux\"
+endif
+ifeq ($(BUILD_TARGET), LOONGSON)
+HOSTDEFS += -DTARGET_NAME=\"loongson-linux\"
+endif
 
 HOSTDEFS += -DLONGLONG
 HOSTDEFS += -DFRONT_END
@@ -154,6 +160,13 @@ ifeq ($(BUILD_TARGET), NVISA)
 GNU_TARG_DIR = $(GNU_DIR)/i386
 GNU_CONFIG_TARG_DIR = $(GNU_CONFIG_DIR)/i386
 endif
+ifeq ($(BUILD_TARGET), PPC32)
+GNU_CONFIG_TARG_DIR = $(GNU_CONFIG_DIR)/rs6000
+endif
+ifeq ($(BUILD_TARGET), LOONGSON)
+GNU_TARG_DIR = $(GNU_DIR)/loongson
+GNU_CONFIG_TARG_DIR = $(GNU_CONFIG_DIR)/loongson
+endif
 
 TARG_COMUTIL_DIR	= $(TARGDIR)/libcomutil
 TARG_CMPLRS_DIR		= $(TARGDIR)/libcmplrs
@@ -171,6 +184,7 @@ SRC_DIRS =		\
   $(COMMON_TARG_INFO_ACCESS_DIR)
 INC_DIRS =		\
   $(INCLUDE_DIR)	\
+  $(TARGDIR)/include	\
   $(COMMON_COM_DIR)	\
   $(COMMON_COM_TARG_DIR)\
   $(COMMON_UTIL_DIR)	\
@@ -313,7 +327,12 @@ endif
 LLDLIBS = $(GNU_OBJS) $(COMUTIL_OBJS) $(LIBIBERTY_OBJS)
 LLDLIBS += -lm $(CMPLRS_OBJS)
 
-default: first $(TARGETS) last
+.PHONY: default first last install
+
+default:
+	$(MAKE) first
+	$(MAKE) $(TARGETS)
+	$(MAKE) last
 
 #----------------------------------------------------------------------
 #  The commands in this section are done BEFORE any other target is 
@@ -321,10 +340,12 @@ default: first $(TARGETS) last
 #----------------------------------------------------------------------
 first:
 	$(call submake,$(TARG_GNU_DIR))
-ifneq ($(BUILD_TARGET), NVISA)
+ifndef SKIP_DEP_BUILD
+ ifneq ($(BUILD_TARGET), NVISA)
 	$(call submake,$(TARG_CMPLRS_DIR))
-endif
+ endif
 	$(call submake,$(TARG_COMUTIL_DIR))
+endif
 
 #----------------------------------------------------------------------
 #  The commands in this section are done AFTER every other target is 

@@ -1,4 +1,8 @@
 /*
+ * Copyright (C) 2009-2010 Advanced Micro Devices, Inc.  All Rights Reserved.
+ */
+
+/*
  *  Copyright (C) 2006. QLogic Corporation. All Rights Reserved.
  */
 
@@ -289,6 +293,7 @@ CODEREP::Copy(const CODEREP &cr)
     }
     Reset_isop_flags();
     Set_temp_id(0);
+    Set_Num_MinMax(cr.Num_MinMax());
 
     switch (Opr()) {
     case OPR_ARRAY:
@@ -334,6 +339,7 @@ CODEREP::Copy(const CODEREP &cr)
     Set_ivar_defstmt(cr.Ivar_defstmt());
     Set_ivar_mu_node(cr.Ivar_mu_node());
     Set_mload_size(cr.Mload_size());
+    Set_Num_MinMax(cr.Num_MinMax());
   }
   else if (kind == CK_CONST) {
     Set_const_val( cr.Const_val() );
@@ -474,26 +480,8 @@ CODEREP::Match(CODEREP* cr, INT32 mu_vsym_depth, OPT_STAB *sym)
     else
       return FALSE;
 
-#if 0	// CK_VAR nodes never need to be matched
-  case CK_VAR:
-    if (Aux_id() == cr->Aux_id() &&  Version() == cr->Version() &&
-	! Is_var_volatile())
-      return TRUE;
-    else
-      return FALSE;
-#endif
 
   case CK_OP:
-#if 0
-    if (OPCODE_commutative_op(Op()) == Op()) {
-      // commutative ops must have only 2 kids
-      // TODO: handle opcodes that are commutative with different opcode
-      //       e.g. a <= b becoming b >= a
-      return Get_opnd(0) == cr->Get_opnd(0) && Get_opnd(1) == cr->Get_opnd(1)
-        || Get_opnd(1) == cr->Get_opnd(0) && Get_opnd(0) == cr->Get_opnd(1);
-    }
-    else
-#endif
     if (Op() == cr->Op() && Kid_count() == cr->Kid_count()) {
       for (INT i = 0; i < Kid_count(); i++)
 	if (Get_opnd(i) != cr->Get_opnd(i))
@@ -607,14 +595,6 @@ CODEREP::Match(CODEREP* cr, INT32 mu_vsym_depth, OPT_STAB *sym)
 	    return FALSE;
 	  if (TY_kind(cr_addr_ty) != KIND_POINTER)
 	    return FALSE;
-#if 0
-	  // These code below cause some problems in some Fortran Cases and 416.gamess
-	  //   at -O3 with SIMD Opt. Some SIMD tys have the same type but diff align
-	  // With these code, the two cr will be different, which may cayse problems
-	  //   in EPRE or CG
-	  if (Ilod_ty() != cr->Ilod_ty())
-	    return FALSE;
-#endif
 	  if (TY_align_exp(TY_pointed(ivar_addr_ty)) !=
 	      TY_align_exp(TY_pointed(cr_addr_ty)))
 	    return FALSE;
@@ -939,9 +919,6 @@ CODEREP::Print_node(INT32 indent, FILE *fp) const
       fprintf(fp, " (vol)");
     break;
   case CK_IVAR:
-#if 0 //TODO: put in after ilod is recognized CSE
-    if (Op_defstmt() == NULL) fprintf(fp, " (no-def)");
-#endif
     if (Is_ivar_volatile()) 
       fprintf(fp, " (vol)");
     break;
@@ -1120,12 +1097,14 @@ Operand_type( OPCODE op, INT which_kid, INT num_kids )
 	return MTYPE_F4;
       else if ( rtype == MTYPE_C8 )
 	return MTYPE_F8;
-#if defined(TARG_IA64)
+#if defined(TARG_IA64) || defined(TARG_X8664)
       else if ( rtype == MTYPE_C10 )
 	return MTYPE_F10;
 #endif
       else if ( rtype == MTYPE_CQ )
 	return MTYPE_FQ;
+      else if ( rtype == MTYPE_C16 )
+	return MTYPE_F16;
       else {
 	FmtAssert( FALSE, 
 		   ("CODEREP::Operand_type: unknown type %d", rtype) );
@@ -1141,12 +1120,14 @@ Operand_type( OPCODE op, INT which_kid, INT num_kids )
 	return MTYPE_C4;
       else if ( rtype == MTYPE_F8 )
 	return MTYPE_C8;
-#if defined(TARG_IA64)
+#if defined(TARG_IA64) || defined(TARG_X8664)
       else if ( rtype == MTYPE_F10 )
 	return MTYPE_C10;
 #endif
       else if ( rtype == MTYPE_FQ )
 	return MTYPE_CQ;
+      else if ( rtype == MTYPE_F16 )
+	return MTYPE_C16;
       else {
 	FmtAssert( FALSE, 
 		   ("CODEREP::Operand_type: unknown type %d", rtype) );
@@ -1300,7 +1281,6 @@ CODEREP::Create_cpstmt(CODEREP *a, MEM_POOL*p)
   STMTREP *cpstmt = CXX_NEW(STMTREP,p);
   IncUsecnt();
 
-#if 1
   // The dsctyp is wrong.
   Is_True(a->Dsctyp() != MTYPE_UNKNOWN || Dsctyp() != MTYPE_UNKNOWN
 	  || Kind() == CK_CONST || Kind() == CK_RCONST || Kind() == CK_LDA,
@@ -1326,14 +1306,6 @@ CODEREP::Create_cpstmt(CODEREP *a, MEM_POOL*p)
   cpstmt->Init(a, this, OPCODE_make_op(a->Bit_field_valid() ? 
 				OPR_STBITS : OPR_STID, MTYPE_V, a->Dsctyp()));
 
-#else
-
-  // for testing
-  Warn_todo("Create_cpstmt has the wrong dsctype.");
-  cpstmt->Init(a, this, OPCODE_make_op(a->Bit_field_valid() ?
-				OPR_STBITS : OPR_STID, MTYPE_V, MTYPE_U8));
-
-#endif
 
   // NOTE:  we can set the mu/chi lists to null here because this store
   // is guaranteed not to have side-effects.  If there other stores
@@ -2063,7 +2035,8 @@ CODEMAP::Canon_add_sub(WN       *wn,
       ccr->Set_tree(kid1.Tree());
     else
       ccr->Set_tree(Add_unary_node(
-           OPCODE_make_op(OPR_NEG, OPCODE_rtype(op), MTYPE_V), kid1.Tree()));
+                        OPCODE_make_op(OPR_NEG, OPCODE_rtype(op), MTYPE_V), 
+                        kid1.Tree()));
     return propagated;
   }
   if (kid1.Tree() == NULL) {
@@ -2105,6 +2078,35 @@ CODEMAP::Canon_neg(WN       *wn,
   return propagated;
 }
 
+
+// This routine is a helper used by CODEMAP::Canon_mpy to prevent
+// constant folding across unsigned conversions, be they explicit
+// or implicit.  NOTE: This routine will not prevent folding across
+// conversions from signed types as the behavior of signed types
+// with respect to integer overflow is undefined.
+static BOOL 
+Prevent_fold_across_cvt(CANON_CR *ccr, WN *wn, MTYPE &from_type)
+{
+   BOOL prevent_folding = FALSE;
+   if (MTYPE_is_unsigned(ccr->Tree()->Dtyp()))
+   {
+      if (ccr->Tree()->Dtyp() != WN_rtype(wn))
+      {
+         prevent_folding = TRUE;
+         from_type = ccr->Tree()->Dtyp();
+      }
+      else if (ccr->Tree()->Kind() == CK_OP &&
+               ccr->Tree()->Opr() == OPR_CVT &&
+               MTYPE_is_unsigned(ccr->Tree()->Dsctyp()))
+      {
+         prevent_folding = TRUE;
+         from_type = ccr->Tree()->Dsctyp();
+      }
+   }
+   return prevent_folding;
+}
+
+
 BOOL
 CODEMAP::Canon_mpy(WN       *wn,
                    OPT_STAB *opt_stab,
@@ -2137,10 +2139,32 @@ CODEMAP::Canon_mpy(WN       *wn,
       ccr->Set_scale(0);
       return propagated+propagated1;
       }
+    
+    MTYPE from_type;
+    if (Prevent_fold_across_cvt(ccr,wn,from_type))
+    {
+      // If we have decided not to propagate the extracted constant,
+      // i.e. ccr->Scale() up to the parent we must rematerialize
+      // the original CODEREP including the constant.  Here we make
+      // sure that any necessary cvt operation is injected after
+      // we add the constant back into the expression.  Note we
+      // we are propragating no constant up to the parent expression
+      // so we set the ccr->Scale(0). 
+      cr->Set_opnd(0,ccr->Convert2cr(ccr->Tree()->Dtyp(),OPR_CVT,
+                                     OPCODE_make_op(OPR_CVT,
+                                                    WN_rtype(wn),
+                                                    from_type),
+                                     this,propagated));
+      cr->Set_opnd(1,Add_const(WN_rtype(wn),kid1.Scale()));
+      ccr->Set_scale(0);
+    }
+    else 
+    {
     // materialize the constant part of ccr into tree
     cr->Set_opnd(0, ccr->Tree());
     cr->Set_opnd(1, Add_const(WN_rtype(wn), kid1.Scale()));
     ccr->Set_scale(ccr->Scale() * kid1.Scale());
+    }
     }
   else if (ccr->Tree() == NULL && !kid1.Tree()->Has_volatile_content()) {
     if (ccr->Scale() == 0) {	// mult by 0; fold to 0
@@ -2149,10 +2173,31 @@ CODEMAP::Canon_mpy(WN       *wn,
       ccr->Set_scale(0);
       return propagated+propagated1;
       }
+    MTYPE from_type;
+    if (Prevent_fold_across_cvt(&kid1,wn,from_type))
+    {
+      // If we have decided not to propagate the extracted constant,
+      // i.e. ccr->Scale() up to the parent we must rematerialize
+      // the original CODEREP including the constant.  Here we make
+      // sure that any necessary cvt operation is injected after
+      // we add the constant back into the expression.  Note we
+      // we are propragating no constant up to the parent expression
+      // so we set the ccr->Scale(0). 
+      cr->Set_opnd(0, Add_const(WN_rtype(wn), ccr->Scale()));
+      cr->Set_opnd(1,kid1.Convert2cr(kid1.Tree()->Dtyp(),OPR_CVT,
+                                     OPCODE_make_op(OPR_CVT,
+                                                    WN_rtype(wn),
+                                                    from_type),
+                                     this,propagated));
+      ccr->Set_scale(0);
+    }
+    else
+    {
     // materialize the constant part of ccr into tree
     cr->Set_opnd(0, Add_const(WN_rtype(wn), ccr->Scale()));
     cr->Set_opnd(1, kid1.Tree());
     ccr->Set_scale(ccr->Scale() * kid1.Scale());
+    }
   }
   else {
     // both ccr and kid1 has tree
@@ -2208,7 +2253,7 @@ CODEMAP::Canon_cvt(WN       *wn,
   }
 #endif
 
-#ifdef TARG_MIPS
+#if defined (TARG_MIPS) && !defined (TARG_SL)
   // U8I4CVT and I8I4CVT are nops so return kid, MIPS III and above
   // since U8I4CVT is required to preserve the type of its type for
   // Fix_var_type at emitter time, we do not delete U8I4CVT #329096
@@ -2224,7 +2269,7 @@ CODEMAP::Canon_cvt(WN       *wn,
     return propagated;
 
   if ( WOPT_Enable_Cvt_Folding && 
-#if defined(TARG_X8664) || defined(TARG_NVISA) // bug 5851
+#if defined(TARG_X8664) || defined(TARG_NVISA) || defined (TARG_SL) // bug 5851
        ! Is_Target_32bit() &&
 #endif
       (op == OPC_I8U4CVT || op == OPC_U8U4CVT) && 
@@ -2316,16 +2361,16 @@ CODEMAP::Add_def(IDTYPE st, mINT16 version, STMTREP *stmt,
       Delay_U64_Lowering) {
 
     // Fix 777333.   Also add CVT for I8I4LDID.
-    if ( dtyp == MTYPE_U8 && dsctyp == MTYPE_U4 ) {
+    if ( dtyp == MTYPE_U8 && MTYPE_byte_size(dsctyp) <= 4 ) {
       // make U8U4LDID into U8U4CVT(U4U4LDID)
       if ( ! is_store ) 
-        need_cvt = Need_type_conversion(dsctyp, dtyp, &opc);
+        need_cvt = Need_type_conversion(MTYPE_U4, dtyp, &opc);
       dtyp = MTYPE_U4;
     }
-    if ( dtyp == MTYPE_I8 && dsctyp == MTYPE_I4 ) {
+    if ( dtyp == MTYPE_I8 && MTYPE_byte_size(dsctyp) <= 4 ) {
       // make I8I4LDID into I8I4CVT(I4I4LDID)
       if ( ! is_store ) 
-        need_cvt = Need_type_conversion(dsctyp, dtyp, &opc);
+        need_cvt = Need_type_conversion(MTYPE_I4, dtyp, &opc);
       dtyp = MTYPE_I4;
     }
   }
@@ -2777,14 +2822,19 @@ CODEMAP::Add_tcon(TCON_IDX tc)
 
     case MTYPE_F4:
     case MTYPE_F8:
-#if defined(TARG_IA64)
+#if defined(TARG_IA64) || defined(TARG_X8664)
     case MTYPE_F10:
     case MTYPE_C10:
 #endif
     case MTYPE_FQ:
     case MTYPE_C4:
     case MTYPE_C8:
+#ifdef TARG_X8664
+    case MTYPE_V16C8:
+#endif
     case MTYPE_CQ:
+    case MTYPE_F16:
+    case MTYPE_C16:
       {
         ST *new_sym = New_Const_Sym(tc, MTYPE_To_TY(mtype));
 	cr->Init_rconst(mtype, new_sym);
@@ -3051,8 +3101,8 @@ CODEMAP::Add_expr(WN *wn, OPT_STAB *opt_stab, STMTREP *stmt, CANON_CR *ccr,
       if (WOPT_Enable_Input_Prop && !copyprop->Disabled()) {
         CODEREP *newtree = copyprop->Prop_var(retv_var, stmt->Bb(), TRUE, TRUE,TRUE/*in_array*/, no_complex_preg);
         if (newtree) {
-	  if (retv->Kind() == CK_VAR) 
-	    retv = newtree;
+	  if (retv->Kind() == CK_VAR)
+             retv = newtree;
 	  else {
 	    CODEREP *cr = Alloc_stack_cr(0);
 	    newtree->IncUsecnt();
@@ -3097,7 +3147,14 @@ CODEMAP::Add_expr(WN *wn, OPT_STAB *opt_stab, STMTREP *stmt, CANON_CR *ccr,
 #endif
             if (WOPT_Enable_CRSIMP &&
                 (opr == OPR_ADD || opr == OPR_SUB) &&
-                retv_op->Get_opnd(1)->Kind() == CK_CONST) {
+                retv_op->Get_opnd(1)->Kind() == CK_CONST 
+#ifdef TARG_X8664
+                // Don't fold constants across implicit unsigned conversions,
+                // we must preserve the modulo behavior of unsigned arithmetic
+                && !(MTYPE_is_unsigned(retv->Dtyp()) &&
+                     MTYPE_size_reg(WN_rtype(wn)) != MTYPE_size_reg(retv->Dtyp()))   
+#endif
+               ) {
                   CODEREP *cr = retv_op->Get_opnd(0);
 #ifdef TARG_NVISA
                   if (retv->Opr() == OPR_CVT) {
@@ -3428,9 +3485,9 @@ CODEMAP::Add_expr(WN *wn, OPT_STAB *opt_stab, STMTREP *stmt, CANON_CR *ccr,
 #ifdef KEY // bug 10577
     			    , TRUE
 #endif
-			    );
+                           );
+
     /* CVTL-RELATED start (correctness) */
-#if 1
     // Attempt of fix 370390.  However, this breaks testn32/test_overall/longs.c
     // Because no CVT was inserted between the PARM node and LDID.
     cr->Init_ivar( op, WN_rtype(wn),
@@ -3439,14 +3496,6 @@ CODEMAP::Add_expr(WN *wn, OPT_STAB *opt_stab, STMTREP *stmt, CANON_CR *ccr,
                    kid/*lbase*/,
                    NULL/*sbase*/, WN_flag(wn)/*ofst*/, 0/*base_ty*/,
 		   0/*field_id*/ );
-#else
-    cr->Init_ivar( op, kid->Dtyp(),
-                   opt_stab->Get_occ(wn)/*occ*/, 
-                   MTYPE_V/*dsctyp*/, WN_ty(wn)/*ldty*/,
-                   kid/*lbase*/,
-                   NULL/*sbase*/, WN_flag(wn)/*ofst*/, NULL/*base_ty*/,
-		   0/*field_id*/);
-#endif
     /* CVTL-RELATED finish */
 
     MU_NODE *mnode = opt_stab->Get_mem_mu_node(wn);
@@ -3781,20 +3830,6 @@ STMTREP::Enter_rhs(CODEMAP *htable, OPT_STAB *opt_stab, COPYPROP *copyprop, EXC 
     // WN_st is not converted to ver_stab index!
     Set_rhs(htable->Add_expr(WN_kid0(Wn()),
 			     opt_stab, this, &proped, copyprop));
-#if 0 // not needed because same call done in Add_expr, and if calling
-      // Fold_Expr again, will undo the canonicalization of compare (492340)
-    // simplifies 1 < 10 type expressions
-    if (WOPT_Enable_Input_Prop && proped) {
-      FOLD ftmp;
-      CODEREP *retv;
-      if (WOPT_Enable_Fast_Simp)
-	retv = ftmp.Fold_Expr(Rhs()); // look at top stmt
-      else
-	retv = ftmp.Fold_Tree(Rhs()); // look at whole RHS
-      if (retv != NULL)
-	Set_rhs(retv);
-    }
-#endif
     Set_label_number(WN_label_number(Wn()));
     break;
 
@@ -3808,10 +3843,6 @@ STMTREP::Enter_rhs(CODEMAP *htable, OPT_STAB *opt_stab, COPYPROP *copyprop, EXC 
 #ifdef KEY // since its value may consist of MAX, prevent its copy propagation
       if (htable->Phase() == MAINOPT_PHASE && cr->Kind() == CK_VAR)
         cr->Set_flag(CF_DONT_PROP);
-#endif
-#if 0
-      STMTREP *defstmt = cr->Defstmt();
-      defstmt->Set_volatile_stmt();
 #endif
       copyprop->Reset_disabled();
     }
@@ -4755,8 +4786,27 @@ BOOL
 CODEREP::Can_be_speculated(OPT_STAB *opt_stab) const
 {
   switch (Kind()) {
-  case CK_VAR:
+  case CK_VAR: {
+    TY_IDX var_type = Lod_ty();
+    if (var_type != 0 && IEEE_Arithmetic < 2)
+    {
+      // we have to disallow speculated code motion when the variable type is
+      // floating point and the IEEE_Arithmetic level is set at "strict"
+      if (TY_kind(var_type) == KIND_SCALAR &&
+          MTYPE_is_float(TY_mtype(var_type)))
+        return FALSE;
+      if (TY_kind(var_type) == KIND_POINTER &&
+          TY_kind(TY_pointed(var_type)) == KIND_SCALAR &&
+          MTYPE_is_float(TY_mtype(TY_pointed(var_type))))
+        return FALSE;
+      if (TY_kind(var_type) == KIND_POINTER &&
+          TY_kind(TY_pointed(var_type)) == KIND_ARRAY &&
+          TY_kind(TY_AR_etype(TY_pointed(var_type))) == KIND_SCALAR &&
+          MTYPE_is_float(TY_mtype(TY_AR_etype(TY_pointed(var_type)))))
+        return FALSE;
+    }
     return opt_stab->Safe_to_speculate(Aux_id());
+    }
   case CK_IVAR: {
     CODEREP *base = Ilod_base() ? Ilod_base() : Istr_base();
     if (! base->Can_be_speculated(opt_stab))
@@ -5052,8 +5102,11 @@ CODEREP::Check_if_result_is_address(OPT_STAB *opt_stab) const
       if (res0 == ADDRESSABILITY_UNKNOWN)
 	return ADDRESSABILITY_UNKNOWN;
       res1 = Opnd(1)->Check_if_result_is_address(opt_stab); 
-      if (res1 == ADDRESSABILITY_UNKNOWN)
+      if (res1 == ADDRESSABILITY_UNKNOWN) {
+	if (res0 == ADDRESSABILITY_IS_ADDRESS)
+	  return res0;
 	return ADDRESSABILITY_UNKNOWN;
+      }
       if (res0 == res1) {
         if (res0 == ADDRESSABILITY_IS_ADDRESS)
           return ADDRESSABILITY_NOT_ADDRESS;
@@ -5116,7 +5169,12 @@ STMTREP::Print(FILE *fp) const
   fprintf(fp, " b=%s",Print_bit());
   fprintf(fp, " flags:0x%x", _flags&0x1f );
   fprintf(fp, " pj%d", Proj_op_uses());
-  fprintf(fp, " Sid%d\n", Stmt_id());
+  fprintf(fp, " Sid%d", Stmt_id());
+  if (OPERATOR_is_call (_opr) && OPERATOR_has_sym (_opr)) {
+    ST* st = St();
+    if (st && ST_name (*st)) { fprintf (fp, " #%s", ST_name (*st)); }
+  }
+  fprintf (fp, "\n");
 
   if (Has_chi()) {
     CHI_NODE *cnode;
@@ -5387,7 +5445,9 @@ CODEMAP::Print(FILE *fp) const
   AUX_STAB_ITER aux_stab_iter(Sym());
   FOR_ALL_NODE(i, aux_stab_iter, Init()) {
     AUX_STAB_ENTRY *aux = Sym()->Aux_stab_entry(i);
-    fprintf(fp, "----aux_id %d\n", i);
+    fprintf(fp, "----aux_id %d Type:%d ST:%s\n", i,
+            aux->Stype(),
+            aux->St() == NULL ? "" : ST_name(aux->St()) );
     FOR_ALL_NODE(cr, cr_iter, Init(aux->Cr_list())) {
       Print_CR(cr, fp);
       count++;
@@ -5439,6 +5499,46 @@ CODEMAP::Reset_DCE_visited_flags()
   }
 }
 
+// Find the number if MIN/MAX/MINMAX in this CODEREP
+//
+INT32
+CODEREP::Count_MinMax()
+{
+  INT32 count = Num_MinMax();
+  if (count != -1)
+    return count;
+
+  count = 0;
+  switch (Kind())
+  {
+    case CK_OP:
+      {
+        if (Opr() == OPR_MIN ||
+            Opr() == OPR_MAX ||
+            Opr() == OPR_MINMAX)
+          count = 1;
+
+        for (INT32 i=0; i < Kid_count(); i++)
+        {
+          count += Opnd(i)->Count_MinMax();
+        }
+      }
+      break;
+
+    case CK_IVAR: // must be iload
+      {
+        CODEREP *base = Ilod_base();
+        count = base->Count_MinMax();
+      }
+      break;
+
+    default:
+      break;
+  }
+
+  Set_Num_MinMax(count);
+  return count;
+}
 
 
 // ====================================================================
@@ -5668,6 +5768,11 @@ void STMTREP::Clone(STMTREP *sr, CODEMAP *htable, MEM_POOL *pool)
     }
     Reset_has_zver();
   }
+
+  // For a call, set the call site id for the Nystrom alias analyzer
+  // so as to restore it during CODEMAP -> WHIRL translation
+  if (OPERATOR_is_call(sr->Opr()))
+    Set_constraint_graph_callsite_id(sr->Get_constraint_graph_callsite_id());
 }
 
 BOOL CODEREP::Has_volatile_content(void) const
@@ -5973,7 +6078,6 @@ MEMOP_ANNOT_CR_SR_MGR::Discard_offline_annot
   (WN* root, const ALIAS_MANAGER* am, BOOL trace) {
 
   WN_MEMOP_ANNOT_MGR* wn_annot_mgr = WN_MEMOP_ANNOT_MGR::WN_mem_annot_mgr(); 
-  Is_True (wn_annot_mgr == NULL, ("Annotation manager is supposed to be NULL"));
 
   if (trace) {
     fprintf (TFile, "Discard offline annotations:\n");

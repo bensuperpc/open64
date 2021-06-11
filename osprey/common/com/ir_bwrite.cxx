@@ -99,14 +99,17 @@
 #include "tracing.h"                /* TEMPORARY FOR ROBERT'S DEBUGGING */
 
 #ifdef BACK_END
+#include "wssa_io.h"
 #include "glob.h"
 #include "pf_cg.h"
 #include "instr_reader.h"
 #include "fb_whirl.h"			// for feedback stuff
+#include "ipa_be_write.h"
 
 BOOL Write_BE_Maps = FALSE;
 BOOL Write_AC_INTERNAL_Map = FALSE;
 BOOL Write_ALIAS_CLASS_Map = FALSE;
+BOOL Write_ALIAS_CGNODE_Map = FALSE;
 
 extern WN **prefetch_ldsts;
 extern INT num_prefetch_ldsts;
@@ -115,6 +118,10 @@ extern INT max_num_prefetch_ldsts;
 extern WN **alias_classes;
 extern INT num_alias_class_nodes;
 extern INT max_alias_class_nodes;
+
+extern WN **alias_cgnodes;
+extern INT num_alias_cgnode_nodes;
+extern INT max_alias_cgnode_nodes;
 
 extern WN **ac_internals;
 extern INT num_ac_internal_nodes;
@@ -224,7 +231,7 @@ ir_bwrite_signal_handler (int sig, int err_num)
 /* Elf-related routines */
 #define DEFAULT_NUM_OF_SECTIONS 8	
 
-static Section *
+Section *
 get_section (Elf64_Word sh_info, const char *name, Output_File *fl)
 {
     register INT i;
@@ -576,6 +583,15 @@ WN_write_tree (PU_Info *pu, WN_MAP off_map, Output_File *fl)
       max_alias_class_nodes = 0;
     }
 
+    if (Write_ALIAS_CGNODE_Map) {
+      /* globals used to record nodes with cgnode id information for
+       * nystrom alias analyzer
+       */
+      alias_cgnodes = NULL;
+      num_alias_cgnode_nodes = 0;
+      max_alias_cgnode_nodes = 0;
+    }
+
     if (Write_AC_INTERNAL_Map) {
       /* globals used to record nodes with alias classification's
        * internal information for indirect memops
@@ -625,6 +641,16 @@ WN_write_tree (PU_Info *pu, WN_MAP off_map, Output_File *fl)
       alias_classes[num_alias_class_nodes] = NULL;
       Set_PU_Info_alias_class_ptr(pu, alias_classes);
       Set_PU_Info_state(pu, WT_ALIAS_CLASS, Subsect_InMem);
+    }
+
+    if (Write_ALIAS_CGNODE_Map) {
+      if (num_alias_cgnode_nodes > 0) {
+        alias_cgnodes[num_alias_cgnode_nodes] = NULL;
+        Set_PU_Info_alias_cgnode_ptr(pu, alias_cgnodes);
+        Set_PU_Info_state(pu, WT_ALIAS_CGNODE, Subsect_InMem);
+      } else {
+        Set_PU_Info_state(pu, WT_ALIAS_CGNODE, Subsect_Missing);
+      }
     }
 
     if (Write_AC_INTERNAL_Map && num_ac_internal_nodes > 0) {
@@ -990,6 +1016,9 @@ WN_write_feedback (PU_Info* pu, Output_File* fl)
  *  Write out the IPA summary information.
  */
 
+
+// This routine is used to write the old mod_ref_info.  The output
+// file in this case is symtab.I
 void
 IPA_write_summary (void (*IPA_irb_write_summary) (Output_File*),
 		   Output_File *fl)
@@ -1045,6 +1074,43 @@ WN_write_depgraph (PU_Info *pu, WN_MAP off_map, Output_File *fl)
 
 } /* WN_write_depgraph */
 
+/*
+ *  Note: write the SSA info into file
+ */
+void
+WN_write_SSA(PU_Info *pu, Output_File *fl)
+{
+    Section *cur_section = fl->cur_section;
+
+    if (PU_Info_state(pu, WT_SSA) == Subsect_Missing)
+	return;
+
+    if (strcmp(cur_section->name, MIPS_WHIRL_PU_SECTION) != 0 ||
+	PU_Info_state(pu, WT_SSA) != Subsect_InMem)
+	ErrMsg (EC_IR_Scn_Write, "WHIRL SSA info", fl->file_name);
+
+    WSSA::WHIRL_SSA_MANAGER *wssa_mgr = PU_Info_ssa_ptr(pu);
+    if (!wssa_mgr->Is_stat_OK()) {
+      Set_PU_Info_state(pu, WT_SSA, Subsect_Missing);
+      PU_Info_subsect_size(pu, WT_SSA) = 0;
+      PU_Info_subsect_offset(pu, WT_SSA) = fl->file_size - cur_section->shdr.sh_offset;
+      delete wssa_mgr;
+      return;
+    }
+    
+    fl->file_size = ir_b_align(fl->file_size, sizeof(mINT32), 0);
+    off_t wssa_base = fl->file_size;
+
+    WSSA::WHIRL_SSA_IO wssa_io(wssa_mgr);
+    wssa_io.Write_To_Output_File(fl);
+
+    Set_PU_Info_state(pu, WT_SSA, Subsect_Written);
+    PU_Info_subsect_size(pu, WT_SSA) = fl->file_size - wssa_base;
+    PU_Info_subsect_offset(pu, WT_SSA) = wssa_base - cur_section->shdr.sh_offset;
+
+    // wssa_mgr is no longer needed
+    delete wssa_mgr;
+} 
 
 /*
  * Write out the prefetch pointer mapping. The prefetch mappings are written
@@ -1443,7 +1509,7 @@ Write_PU_Info (PU_Info *pu)
     if (PU_Info_state (pu, WT_FEEDBACK) == Subsect_InMem)
 	WN_write_feedback (pu, ir_output);
 
-    if (Write_BE_Maps || Write_ALIAS_CLASS_Map) {
+    if (Write_BE_Maps || Write_ALIAS_CLASS_Map || Write_ALIAS_CGNODE_Map) {
 	Current_Map_Tab = PU_Info_maptab(pu);
 	MEM_POOL_Push(MEM_local_nz_pool_ptr);
 	off_map = WN_MAP32_Create(MEM_local_nz_pool_ptr);
@@ -1453,7 +1519,11 @@ Write_PU_Info (PU_Info *pu)
     WN_write_tree (pu, off_map, ir_output);
 
 #ifdef BACK_END
-    if (Write_BE_Maps || Write_ALIAS_CLASS_Map) {
+    /*write out the whirl ssa info*/
+    if (PU_Info_state(pu, WT_SSA) == Subsect_InMem)
+        WN_write_SSA(pu, ir_output);
+
+    if (Write_BE_Maps || Write_ALIAS_CLASS_Map || Write_ALIAS_CGNODE_Map) {
 	if (Write_BE_Maps) {
 	    WN_write_depgraph(pu, off_map, ir_output);
 	    
@@ -1464,6 +1534,11 @@ Write_PU_Info (PU_Info *pu)
 	if (Write_ALIAS_CLASS_Map) {
 	  WN_write_INT32_map(pu, off_map, ir_output, WT_ALIAS_CLASS,
 			     WN_MAP_ALIAS_CLASS, "alias class map");
+	}
+
+	if (Write_ALIAS_CGNODE_Map) {
+	  WN_write_INT32_map(pu, off_map, ir_output, WT_ALIAS_CGNODE,
+			     WN_MAP_ALIAS_CGNODE, "alias cgnode map");
 	}
 
 	WN_MAP_Delete(off_map);

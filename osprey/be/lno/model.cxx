@@ -1,4 +1,8 @@
 /*
+ * Copyright (C) 2010 Advanced Micro Devices, Inc.  All Rights Reserved.
+ */
+
+/*
 
   Copyright (C) 2000, 2001 Silicon Graphics, Inc.  All Rights Reserved.
 
@@ -319,7 +323,6 @@
  * ====================================================================
  */
 
-#define __STDC_LIMIT_MACROS
 #include <stdint.h>
 #ifdef USE_PCH
 #include "lno_pch.h"
@@ -351,8 +354,11 @@ const static char *rcs_id = "$Source: ../../be/lno/SCCS/s.model.cxx $ $Revision:
 
 typedef HASH_TABLE<WN*,INT> WN2INT;
 
-#ifdef TARG_MIPS
+#if defined(TARG_MIPS) || defined(TARG_LOONGSON)
 #define Reserved_Int_Regs	9	// $0, $26-$29, loop ub, fudge (3)
+#endif
+#ifdef TARG_PPC32
+#define Reserved_Int_Regs	9	// TODO:verify this number later
 #endif
 #ifdef TARG_IA64
 #define Reserved_Int_Regs	10	// r0, r1, r12, r13, loop ub, fudge (5)
@@ -519,22 +525,6 @@ LOOP_MODEL::Model(WN* wn,
   WN *tmp = wn;
   _blocking_disabled = LNO_Blocking == 0;
 
-#if 0
-  //bug 11567 comments out this. This is because blocking is not the direct
-  //reason that prevents vectorizing an innermost loop except that the block
-  //size may be small in some cases. Instead, the culprit is the interchange.
-#ifdef TARG_X8664
-  // Bug 2456 - if the innerloop is vectorizable then disable blocking for
-  // thae loop.
-  // TODO: If the innerloop overflows the cache then it may still be good to
-  // cache-block. We need a model for estimating the trade-off between 
-  // vectorization and cache-blocking. For now, we may shut this off 
-  // by preventing cache-blocking only under -LNO:simd=2. Need to come across
-  // a case yet. (That case is bug 4672.)
-  //  if (Is_Vectorizable_Loop(wn) && Is_Vectorization_Beneficial(WN_do_body(wn)))
-  //    _blocking_disabled = TRUE;
-#endif
-#endif
 
 #ifdef TARG_X8664
    // Bug 5880: if this loop contains a vectorizable intrinsic, and the user
@@ -680,6 +670,20 @@ LOOP_MODEL::Model(WN* wn,
     _base_fp_regs = 16;
     _num_mem_units = 2.0;
 #endif
+#ifdef TARG_PPC32
+#define Is_Target_PPC() (1)
+  } else if (Is_Target_PPC()) {
+    //TODO: verify the parameters for PPC32
+    _issue_rate = 4.0;
+    _base_fp_regs = 18;
+    _num_mem_units = 2.0;
+#endif
+#ifdef TARG_LOONGSON
+  }else if (Is_Target_Loongson()) {
+    _issue_rate = 4.0;
+    _base_fp_regs = 14;
+    _num_mem_units = 1.0;
+#endif
   } else {
     Lmt_DevWarn(1, ("TODO: LNO machine model parameters are just wild guesses"));
     _issue_rate = 4.0;
@@ -773,18 +777,6 @@ LOOP_MODEL::Model(WN* wn,
   }
   if (LNO_Verbose) {
     printf("Evaluated %d combinations\n",_num_evaluations);
-#if 0   // the snl code prints this out later in an easier to read format
-    printf("And the results are:\n");
-    printf("Transform<loop,reg> = (");
-    for (INT b=0; b<num_good+num_bad; b++) 
-      printf("<%d,%d>", _new_order[b], _block_number[b]);
-    if (_nstrips > 0) {
-      printf("cblk(sd=%d)=",_stripdepth);
-      for (INT s=0; s<_nstrips; s++)
-        printf("(%d,%d)",_iloop[s],_stripsz[s]);
-    }
-    printf(")\n");
-#endif
     if (_OP_resource_count==NULL)
       printf("Couldn't accurately evaluate ops\n");
     else if (_num_fp_regs > Target_FPRs)
@@ -1698,7 +1690,7 @@ LOOP_MODEL::OP_Resources_R(WN* wn,
     // regular floating point
     else if (desc  == MTYPE_F4 || 
              desc  == MTYPE_F8 ||
-#if defined(TARG_IA64)
+#if defined(TARG_IA64) || defined(TARG_X8664)
              desc  == MTYPE_F10 ||
              rtype  == MTYPE_F10 ||
 #endif
@@ -1826,6 +1818,10 @@ LOOP_MODEL::OP_Resources_R(WN* wn,
         case OPR_SELECT:
           *num_instr += LNOTARGET_Int_Select_Res(resource_count, rtype);
           break;
+#elif defined(TARG_LOONGSON)
+        case OPR_SELECT:
+          *num_instr += LNOTARGET_Int_Select_Res(resource_count, double_word);
+	break;
 #else
         case OPR_SELECT:
           *num_instr += LNOTARGET_Int_Select_Res(resource_count);
@@ -1835,6 +1831,8 @@ LOOP_MODEL::OP_Resources_R(WN* wn,
 #ifdef TARG_X8664
           *num_instr += LNOTARGET_Int_Cvtl_Res(resource_count, rtype, 
 					       WN_cvtl_bits(wn));
+#elif defined(TARG_LOONGSON)
+          *num_instr += LNOTARGET_Int_Cvtl_Res(resource_count, desc, rtype);
 #else
           *num_instr += LNOTARGET_Int_Cvtl_Res(resource_count);
 #endif /* TARG_X8664 */
@@ -1843,7 +1841,11 @@ LOOP_MODEL::OP_Resources_R(WN* wn,
           *num_instr += LNOTARGET_Int_Neg_Res(resource_count, double_word);
           break;
         case OPR_ABS:
+#ifdef TARG_LOONGSON
+          *num_instr += LNOTARGET_Int_Abs_Res(resource_count, double_word, rtype);
+#else
           *num_instr += LNOTARGET_Int_Abs_Res(resource_count, double_word);
+#endif //TARG_LOONGSON
           break;
         case OPR_PAREN: 
           break;
@@ -1985,7 +1987,7 @@ LOOP_MODEL::OP_Resources_R(WN* wn,
           break;
 #else
         case OPR_DIV: 
-#ifndef TARG_MIPS
+#if !(defined(TARG_MIPS) || defined(TARG_PPC32))
           *num_instr += LNOTARGET_Int_Div_Res(resource_count, double_word);
 #else
           *num_instr += LNOTARGET_Int_Div_Res(resource_count, double_word, 
@@ -2004,8 +2006,13 @@ LOOP_MODEL::OP_Resources_R(WN* wn,
         case OPR_MAX:
         case OPR_MIN:
         case OPR_MINMAX:
+#ifdef TARG_LOONGSON
+          *num_instr += LNOTARGET_Int_Min_Max_Res(resource_count,
+                                                  oper == OPR_MINMAX, double_word);
+#else
           *num_instr += LNOTARGET_Int_Min_Max_Res(resource_count,
                                                   oper == OPR_MINMAX);
+#endif //TARG_LOONGSON
           break;
         case OPR_BAND: 
           *num_instr += LNOTARGET_Int_Band_Res(resource_count);
@@ -3371,10 +3378,6 @@ LAT_DIRECTED_GRAPH16::Add_Vertices_Op_Edges_Rec(VINDEX16 store,
            !OPERATOR_is_load(oper) &&
            oper != OPR_CONST) {
     // an fp expression
-    if (desc == MTYPE_FQ || rtype == MTYPE_FQ) {
-      return -1;
-    } 
-    // an fp expression
     if (desc  == MTYPE_FQ || 
         desc  == MTYPE_CQ || 
         rtype == MTYPE_FQ ||
@@ -3384,7 +3387,7 @@ LAT_DIRECTED_GRAPH16::Add_Vertices_Op_Edges_Rec(VINDEX16 store,
     // regular floating point
     else if (desc  == MTYPE_F4 || 
              desc  == MTYPE_F8 ||
-#if defined(TARG_IA64)
+#if defined(TARG_IA64) || defined(TARG_X8664)
              desc  == MTYPE_F10 ||
              rtype  == MTYPE_F10 ||
 #endif
@@ -4107,7 +4110,7 @@ WN2INT *se_needed, ARRAY_REF *ar)
           (*num_scalar_refs)++;
           Enter(&symb, is_store, 1);
         } else if ((type == MTYPE_C4) || (type==MTYPE_C8) ||
-#if defined(TARG_IA64)
+#if defined(TARG_IA64) || defined(TARG_X8664)
 		   (type == MTYPE_F10) ||
 #endif
                    (type == MTYPE_FQ)) {
@@ -4115,8 +4118,8 @@ WN2INT *se_needed, ARRAY_REF *ar)
           (*num_scalar_refs)+=2;
           Enter(&symb, is_store, 2);
         } else if (type == MTYPE_CQ
-#if defined(TARG_IA64)
-	    || type == MTYPE_CQ
+#if defined(TARG_IA64) || defined(TARG_X8664)
+	    || type == MTYPE_C10
 #endif
 	      ) {
           SYMBOL symb(wn);
@@ -4203,14 +4206,14 @@ void SYMBOL_TREE::Enter_Scalar_Refs(WN *wn, ARRAY_REF *ar,
         Enter(&symb, is_store, 1);
         (*num_scalar_refs)++;
       } else if ((type == MTYPE_C4) || (type==MTYPE_C8) || 
-#if defined(TARG_IA64)
+#if defined(TARG_IA64) || defined(TARG_X8664)
       	(type == MTYPE_F10) ||
 #endif
       	(type == MTYPE_FQ)) {
         Enter(&symb, is_store, 2);
         (*num_scalar_refs)+=2;
       } else if (type == MTYPE_CQ
-#if defined(TARG_IA64)
+#if defined(TARG_IA64) || defined(TARG_X8664)
       	|| type == MTYPE_C10
 #endif
       	) {
@@ -4346,6 +4349,14 @@ REGISTER_MODEL::Evaluate(WN* inner,
     Lmt_DevWarn(1, ("TODO: Tune LNO machine model parameters for IA-64"));
     issue_rate = 6;  // 2 bundles with 3 instructions each
     base_fp_regs = 32; // (8+1)*2+6
+    num_mem_units = 2;
+#endif
+#ifdef TARG_PPC32
+#define Is_Target_PPC() (1)
+  } else if (Is_Target_PPC()) {
+    //TODO: verify the parameters for PPC32
+    issue_rate = 4;
+    base_fp_regs = 18;
     num_mem_units = 2;
 #endif
   } else {
@@ -4532,7 +4543,7 @@ REGISTER_MODEL::Count_Op(WN* wn)
     TYPE_ID ti2 = OPCODE_desc(opcode);
     if ((ti == MTYPE_C4) || (ti == MTYPE_C8) || (ti == MTYPE_CQ) ||
         (ti2 == MTYPE_C4) || (ti2 == MTYPE_C8) || (ti2 == MTYPE_CQ) ||
-#if defined(TARG_IA64)
+#if defined(TARG_IA64) || defined(TARG_X8664)
 	ti == MTYPE_C10 || ti2 == MTYPE_C10 ||
         ti == MTYPE_F10 || ti2 == MTYPE_F10 ||
 #endif

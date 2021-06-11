@@ -1,4 +1,8 @@
 /*
+ * Copyright (C) 2008-2010 Advanced Micro Devices, Inc.  All Rights Reserved.
+ */
+
+/*
  *  Copyright (C) 2006, 2007. QLogic Corporation. All Rights Reserved.
  */
 
@@ -72,7 +76,6 @@
 static char *rcs_id = "$Source: /proj/osprey/CVS/open64/osprey1.0/common/com/config.cxx,v $ $Revision: 1.1.1.1 $";
 #endif /* _KEEP_RCS_ID */
 
-#define __STDC_LIMIT_MACROS
 #include <stdint.h>
 #ifdef FRONT_END	/* For setting fullwarn, woff in front end */
 #ifndef FRONT_F90
@@ -394,6 +397,8 @@ BOOL SIMD_ZMask = TRUE;
 BOOL SIMD_OMask = TRUE;
 BOOL SIMD_UMask = TRUE;
 BOOL SIMD_PMask = TRUE;
+BOOL SIMD_AMask = FALSE;
+BOOL SIMD_FMask = FALSE;
 /* -msseregparm */
 BOOL Use_Sse_Reg_Parm = FALSE;
 /* -mregparm= */
@@ -457,8 +462,6 @@ static OPTION_DESC Options_TENV[] = {
   { OVK_BOOL,	OV_INTERNAL,	FALSE, "large_stack",		NULL,
     0, 0, 0,	&Force_Large_Stack_Model, NULL,
     "Generate code assuming >32KB stack frame" },
-  { OVK_NAME,   OV_VISIBLE,         FALSE, "tls-model",            NULL,
-    0, 0, 0,    &TLS_Model_Name, NULL },
 #ifdef TARG_X8664
   { OVK_BOOL,	OV_INTERNAL,	FALSE, "frame_pointer",		NULL,
     0, 0, 0,	&Force_Frame_Pointer, &Force_Frame_Pointer_Set,
@@ -490,6 +493,12 @@ static OPTION_DESC Options_TENV[] = {
   { OVK_BOOL,	OV_INTERNAL,	FALSE, "simd_pmask",		NULL,
     0, 0, 0,	&SIMD_PMask, NULL,
     "Unmask SIMD precision exception" },
+  { OVK_BOOL,	OV_INTERNAL,	FALSE, "simd_amask",		NULL,
+    0, 0, 0,	&SIMD_AMask, NULL,
+    "Enable SIMD Denormalized as zero behavour" },
+  { OVK_BOOL,	OV_INTERNAL,	FALSE, "simd_fmask",		NULL,
+    0, 0, 0,	&SIMD_FMask, NULL,
+    "Enable SIMD flush to zero behavour" },
   { OVK_BOOL,	OV_INTERNAL,	FALSE, "msseregparm",		NULL,
     0, 0, 0,	&Use_Sse_Reg_Parm, NULL,
     "Use sse register parameters at -m32" },
@@ -668,10 +677,6 @@ static OPTION_DESC Options_LANG[] = {
       0, 0, 0,	&CXX_Exceptions_On,	&CXX_Exceptions_Set,
       "C++: enable exceptions" },
 #endif // !KEY
-#if 0 // remove it till we have a robust design 
-    { OVK_BOOL, OV_SHY,		FALSE, "alias_const",		"",
-      0, 0, 0,  &CXX_Alias_Const,       &CXX_Alias_Const_Set },
-#endif
     { OVK_BOOL, OV_VISIBLE,	FALSE, "recursive",		"",
       0, 0, 0,	&LANG_Recursive,	&LANG_Recursive_Set,
       "FORTRAN: program contains recursion" },
@@ -898,6 +903,7 @@ BOOL Idict_Commutable_Match = FALSE;
 BOOL Scalar_Formal_Ref = TRUE;		/* for fortran scalar formal refs */
 BOOL Non_Scalar_Formal_Ref = FALSE;	/* for fortran non_scalar formal refs */
 
+BOOL Emulate_memset = TRUE;             /* for intrinsic expansion of memset */
 BOOL CG_mem_intrinsics = TRUE;		/* for memory intrinsic expansion */
 #ifdef TARG_NVISA
 INT32 CG_memmove_inst_count = 128;	/* for intrinsic expansion of bzero etc */
@@ -918,6 +924,8 @@ BOOL CG_memmove_nonconst = FALSE;	/* expand mem intrinsics unknown size */
 /***** Miscellaneous GOPT options *****/
 INT32 Opt_Level = DEF_OPT_LEVEL;
 INT32 OPT_unroll_times = 4;		/* but see Configure_Target() */
+INT32 OPT_unroll_level = 1;
+BOOL OPT_keep_extsyms = FALSE;
 BOOL OPT_unroll_times_overridden = FALSE;
 INT32 OPT_unroll_size = 40;		/* but see Configure_CG_Options() */
 BOOL OPT_unroll_size_overridden = FALSE;
@@ -960,8 +968,6 @@ char *Emit_Global_Data = NULL;	/* only emit global data */
 char *Read_Global_Data = NULL;	/* only read global data */
 
 char *Library_Name = NULL;      /* -TENV:io_library=xxx */
-
-char *TLS_Model_Name = NULL;		/* -TENV:tls-model=xxx  */
 
 /* -foptimize-regions implies this internal variable,
  * which is used in cgdwarf_targ.cxx to close emit .restore directive
@@ -1018,7 +1024,7 @@ char *Inline_Path = 0;                    /* path to inline.so */
 #if defined(BACK_END) || defined(QIKKI_BE)
 char *Targ_Path = 0;		    /* path to targ_info .so */
 #endif /* defined(BACK_END) || defined(QIKKI_BE) */
-
+
 /* ====================================================================
  *
  * Preconfigure
@@ -1189,6 +1195,11 @@ Configure_Ofast ( void )
     WOPT_Enable_Estr_FB_Injury_Set = TRUE;
   }
 
+  if ( ! WOPT_Enable_Loop_Multiver_Set ) {
+    WOPT_Enable_Loop_Multiver = TRUE;
+    WOPT_Enable_Loop_Multiver_Set = TRUE;
+  }
+
   /* Get platform and its associated options: */
   Configure_Platform ( Ofast );
 }
@@ -1230,6 +1241,14 @@ Configure (void)
     }
   }
 
+  if ( Get_Trace( TP_MISC, 0x200 ) ) {
+     IR_dump_wn_addr = TRUE;
+  }
+  if ( Get_Trace( TP_MISC, 0x400 ) ) {
+     IR_dump_wn_id = TRUE;
+  }
+  
+
 #ifdef KEEP_WHIRLSTATS
   atexit(whirlstats);
 #endif
@@ -1238,7 +1257,7 @@ Configure (void)
   /* Configure the alias options first so the list is processed and
    * we can tell for -OPT:Ofast below what overrides have occurred:
    */
-  Configure_Alias_Options ( Alias_Option );
+  Configure_Alias_Options ();
 
   /* Check the -TARG:platform option (subordinate to Ofast): */
   if ( Platform_Name != NULL && *Platform_Name != 0 ) {
@@ -1302,6 +1321,31 @@ Configure (void)
     Vcast_Complex = TRUE;
 #endif
 }
+
+/* ====================================================================
+ *
+ * Configure_IPA
+ *
+ * Configure IPA options based on flag values.
+ *
+ * ====================================================================
+ */
+
+void
+Configure_IPA (void)
+{
+  if ( Get_Trace( TP_MISC, 0x40 ) && ! DevWarn_Enabled()) {
+    DevWarn_Toggle();
+  }
+
+  if ( Get_Trace( TP_MISC, 0x200 ) ) {
+     IR_dump_wn_addr = TRUE;
+  }
+  if ( Get_Trace( TP_MISC, 0x400 ) ) {
+     IR_dump_wn_id = TRUE;
+  }
+}
+
 
 /* ====================================================================
  *
@@ -1458,11 +1502,15 @@ Configure_Source ( char	*filename )
    */
   if ( ! Cfold_Aggr_Set )
     Enable_Cfold_Aggressive = TRUE;
-
+  
+#if defined(TARG_PPC32)
+  Enable_CVT_Opt = FALSE;
+#else
 #ifndef TARG_NVISA // nvisa wants to preserve 32<->64 conversions
   if (!Enable_CVT_Opt_Set)
     Enable_CVT_Opt = ( Opt_Level > 0);
 #endif
+#endif  
 
   CSE_Elim_Enabled = Opt_Level > 0;
 
@@ -1483,10 +1531,6 @@ Configure_Source ( char	*filename )
       OPT_unroll_size = 20;
     /* reduce caller+callee "size" limit for inlining */
     INLINE_Max_Pu_Size=1000;
-#if 0 /* not ready for this yet. */
-    /* don't inline divide expansions */
-    if (!OPT_Inline_Divide_Set) OPT_Inline_Divide = FALSE;
-#endif
 
 #ifdef BACK_END
     /* LNO options to be turned off for SPACE */
@@ -1560,12 +1604,12 @@ Configure_Source ( char	*filename )
   /* IEEE arithmetic options: */
   if ( IEEE_Arithmetic > IEEE_ACCURATE ) {
     /* Minor roundoff differences for inexact results: */
-#if !defined(TARG_IA64) && !defined(TARG_X8664)
+#if !defined(TARG_IA64) && !defined(TARG_X8664) && !defined(TARG_LOONGSON)
     // facerec fails at -O3 if Recip_Allowed is true
     if ( ! Recip_Set )
       Recip_Allowed = IEEE_Arithmetic >= IEEE_INEXACT;
 #endif
-#if !defined(TARG_IA64) && !defined(TARG_X8664)
+#if !defined(TARG_IA64) && !defined(TARG_X8664) && !defined(TARG_LOONGSON)
     // apsi fails at -O3 because Rsqrt_Allowed is true
     if ( ! Rsqrt_Set )
       Rsqrt_Allowed = IEEE_Arithmetic >= IEEE_INEXACT;
@@ -1580,7 +1624,7 @@ Configure_Source ( char	*filename )
 #ifndef KEY
     Roundoff_Level = ROUNDOFF_ASSOC;
 #else
-#ifdef TARG_IA64
+#if defined(TARG_IA64) || defined(TARG_LOONGSON)
     Roundoff_Level = ROUNDOFF_ASSOC;
 #else
     Roundoff_Level = ROUNDOFF_SIMPLE;
@@ -1628,16 +1672,6 @@ Configure_Source ( char	*filename )
 #endif
   }
 
-#if 0
-  /* Set the relational operator folding in simplifier based on the optimizer
-     setting of Allow_wrap_around_opt */
-  if (!Simp_Unsafe_Relops_Set && Allow_wrap_around_opt_Set) {
-     Simp_Unsafe_Relops = Allow_wrap_around_opt;
-  }
-  if (!Allow_wrap_around_opt_Set && Simp_Unsafe_Relops_Set ) {
-     Allow_wrap_around_opt = Simp_Unsafe_Relops;
-  }
-#endif
 #if !defined(TARG_NVISA) // NVISA needs to avoid overflow arithmetic
   if (!Simp_Unsafe_Relops_Set && Opt_Level > 2) {
      Simp_Unsafe_Relops = TRUE;
@@ -1727,10 +1761,12 @@ Configure_Source ( char	*filename )
  */
 
 void
-Configure_Alias_Options( OPTION_LIST *olist )
+Configure_Alias_Options()
 {
+  if (!Alias_Option) return;
+
   OPTION_LIST *ol;
-  for (ol = olist; ol != NULL; ol = OLIST_next(ol)) {
+  for (ol = Alias_Option; ol != NULL; ol = OLIST_next(ol)) {
     char *val = OLIST_val(ol);
     INT len = strlen (val);
     if (strncasecmp( val, "any", len) == 0) {
@@ -1792,6 +1828,8 @@ Configure_Alias_Options( OPTION_LIST *olist )
       Alias_F90_Pointer_Unaliased = TRUE;
     } else if (strncasecmp( val, "f90_pointer_alias", len) == 0) {
       Alias_F90_Pointer_Unaliased = FALSE;
+    } else if (strncasecmp( val, "nystrom", len) == 0) {
+      Alias_Nystrom_Analyzer = TRUE;
     } else {
       ErrMsg ( EC_Inv_OPT, "alias", val );
     }
@@ -1934,25 +1972,8 @@ Build_Skiplist ( OPTION_LIST *olist )
 	ol != NULL;
 	++count, ol = OLIST_next(ol) )
   {
-#if 0
-    if ( !strncmp ( "skip_a", OLIST_opt(ol), 6 ) ||
-	 !strncmp ( "region_skip_a", OLIST_opt(ol), 13 ) ||
-	 !strncmp ( "goto_skip_a", OLIST_opt(ol), 11 ) 
-#if defined(TARG_SL)
-	 || !strncmp ( "ddb_skip_a", OLIST_opt(ol), 10 )
-#endif
-	 ) {
-      Set_SKIPLIST_kind ( sl, count, SK_AFTER );
-    } else if ( !strncmp ( "skip_b", OLIST_opt(ol), 6 ) ||
-	        !strncmp ( "region_skip_b", OLIST_opt(ol), 13 ) ||
-	        !strncmp ( "goto_skip_b", OLIST_opt(ol), 11 ) 
-#if defined(TARG_SL)
-	     || !strncmp ( "ddb_skip_b", OLIST_opt(ol), 10 )
-#endif
-		) {
-#endif
     // ignore goto/region/ddb prefix of skip name
-    char *opt_name = strstr(OLIST_opt(ol), "skip");
+    const char *opt_name = strstr(OLIST_opt(ol), "skip");
     if ( !strncmp ( "skip_a", opt_name, 6 )) {
       Set_SKIPLIST_kind ( sl, count, SK_AFTER );
     } else if ( !strncmp ( "skip_b", opt_name, 6 )) {
@@ -2135,8 +2156,14 @@ Process_Trace_Option ( char *option )
 	break;
     
     case 'r':
-	Set_Trace (TKIND_IR,
-		   Get_Trace_Phase_Number ( &cp, option ) );
+	if (strcmp(cp, "a") == 0) {
+	  Set_All_Trace( TKIND_IR );
+	  cp++;
+	}
+	else {
+	  Set_Trace (TKIND_IR,
+		     Get_Trace_Phase_Number ( &cp, option ) );
+	}
 	break;
 
     case 's':

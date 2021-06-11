@@ -123,8 +123,14 @@ ARITH_SRC += \
 	native.c \
 	test_ar_intrin.c
 else
+ifeq ($(BUILD_TARGET), LOONGSON)
+ARITH_SRC += \
+	native.c \
+	test_ar_intrin.c
+else
 ARITH_SRC += \
 	simulate.c
+endif
 endif
 endif
 endif
@@ -197,8 +203,33 @@ FFILES= \
 	fintrin_irix_tmp.f
 endif
 
+ifeq ($(BUILD_TARGET), LOONGSON)
+#
+# these files have the routines stubed out.
+# When we can fold these and compile with f90
+# we will use the regular files.
+#
+FFILES= \
+        fintrin_dc_irix_tmp.f \
+        fintrin_irix_tmp.f
+endif
 
-default: $(TARGETS) last
+
+
+FC_COMPILER = $(shell echo $(FC) | awk '{print $$1}' )
+WHICH_FC = $(shell basename `which $(FC_COMPILER) 2>/dev/null` 2>/dev/null )
+
+ifneq (X$(WHICH_FC), X)
+default:
+	$(MAKE)  $(TARGETS)
+	$(MAKE)  last
+else
+default:
+	@echo "--------------------------------------------"
+	@echo "Warning: arith is not build!"
+	@echo "  Can not find the $(FC_COMPILER)"
+	@echo "--------------------------------------------"
+endif
 
 exports: default
 	$(INSTALL) $(STD_INSTALL_READ_MASK) -F $(STD_LIBRARY_LOC) $(TARGETS)

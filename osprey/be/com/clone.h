@@ -480,9 +480,6 @@ public:
 
   // Extern interface 
   void Set_Entry_Point (WN *, WN *, ST *); // Set node as entry point
-#if 0
-  void Set_Entry_Point (WN *, WN *);       // Set node as entry point
-#endif
 
   // Actual copying of the tree
   WN *Clone_Tree (WN *, ST *clone_st = NULL); 
@@ -500,6 +497,7 @@ public:
 
   char *Get_Func_Name () { return ST_name(WN_st(_cloned_pu)); };
 
+  WN_MAP_TAB *Get_Orig_maptab()    { return _orig_map_tab; }
   WN_MAP_TAB *Get_Cloned_maptab () { return _cloned_map_tab; };
 
   WN_MAP Get_parent_map () { return _parent_map; };

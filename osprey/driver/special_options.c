@@ -1,4 +1,8 @@
 /*
+ * Copyright (C) 2009 Advanced Micro Devices, Inc.  All Rights Reserved.
+ */
+
+/*
  *  Copyright (C) 2007 PathScale, LLC.  All Rights Reserved.
  */
 
@@ -100,17 +104,21 @@ set_defaults (void)
 	  }
 	}
 	if (endian == UNDEFINED) {
-#ifdef TARG_MIPS
+#if defined(TARG_MIPS)
+#if !defined(TARG_SL)
 		/* Default to little-endian -JMB */
 		toggle(&endian, ENDIAN_LITTLE);
 		prepend_option_seen(O_EL);
 		prepend_option_seen(O_mlittle_endian);
-#else
+#endif
+#else 
 #ifdef LITTLE_ENDIAN_HOST
 		toggle(&endian, ENDIAN_LITTLE);
 #else
 		toggle(&endian, ENDIAN_BIG);
+#if !defined(TARG_PPC32)
 		prepend_option_seen(O_EB);
+#endif
 #endif
 #endif
 	}
@@ -156,6 +164,11 @@ set_defaults (void)
 		toggle(&use_ftpp, 0);
 	}
 
+#ifndef BUILD_GNU3
+    // Always use the GCC 4.2 FE.
+    toggle(&gnu_major_version, 4);
+    toggle(&gnu_minor_version, 2);
+#else
 	// Use the system's GCC version to select -gnu3/-gnu4 as the default.
 	// Bug 11426.
 	if (!is_toggled(gnu_major_version)) {
@@ -171,6 +184,8 @@ set_defaults (void)
 	      error("no support for GCC version %d", gnu_major_version);
 	  }
 	}
+#endif
+
 #endif
 #if defined(TARG_NVISA)
 	/* stop after assembly */
@@ -294,20 +309,6 @@ add_special_options (void)
 	prepend_option_seen (flag);
 #endif
 
-#ifdef KEY
-	// Pass -fopenmp instead of -mp to GNU 4.2 or later C/C++ front-end.
-	// Bug 12824.
-	if (mpkind == NORMAL_MP &&
-	    gnu_major_version == 4 &&
-	    gnu_minor_version >= 2 &&
-	    (invoked_lang == L_cc ||
-	     invoked_lang == L_CC)) {
-	  set_option_unseen(O_mp);
-	  set_option_unseen(O_openmp);
-	  add_option_seen(O_fopenmp);
-	}
-#endif
-
 #ifndef KEY	// Bug 4406.
 	if (mpkind == CRAY_MP) {
 		Process_Cray_Mp();
@@ -367,7 +368,11 @@ add_special_options (void)
 			toggle(&gnum,8);
 		}
 		sprintf(buf, "%d", gnum);
+#ifdef TARG_SL
+		flag = add_string_option(O_G8, buf);
+#else
 		flag = add_string_option(O_G__, buf);
+#endif
 		prepend_option_seen(flag);
 	}
 
@@ -432,10 +437,6 @@ add_special_options (void)
 	if (Gen_feedback && ipa == TRUE) {
 		turn_off_ipa ("-IPA -fbgen combination not allowed, replaced with -fbgen");
 	}
-	/* Fix for BUG 451 */
-	if (glevel > 1 && ipa == TRUE) {
-		turn_off_ipa ("-IPA -g combination not allowed, replaced with -g");
-	}
 	if (ipa == TRUE) {
 #ifdef KEY // bug 8130
             if (option_was_seen (O_fprofile_arcs))
@@ -451,11 +452,11 @@ add_special_options (void)
 	    /*
 	     * Determine which back end phase(s) need to be run.
 	     *
-	     *			-O0/-O1	-O2		-O3
-	     *			===========================
-	     *		.B,.I:	cg	wopt/cg		lno/wopt/cg
-	     *		.N:	cg	wopt/cg		wopt/cg
-	     *		.O:	cg	cg		cg
+	     *				-O0/-O1	-O2		-O3
+	     *				===========================
+	     *		.B,.I,.P:	cg	wopt/cg		lno/wopt/cg
+	     *		.N:		cg	wopt/cg		wopt/cg
+	     *		.O:		cg	cg		cg
 	     */
 	    if (source_kind == S_O)
 		warning("compiles of WOPT-generated .O files will usually fail due to missing state information");

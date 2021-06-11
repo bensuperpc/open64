@@ -1,37 +1,14 @@
-/*
-
-  Copyright (C) 2000, 2001 Silicon Graphics, Inc.  All Rights Reserved.
-
-  This program is free software; you can redistribute it and/or modify it
-  under the terms of version 2 of the GNU General Public License as
-  published by the Free Software Foundation.
-
-  This program is distributed in the hope that it would be useful, but
-  WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
-
-  Further, this software is distributed without any warranty that it is
-  free of the rightful claim of any third person regarding infringement 
-  or the like.  Any license provided herein, whether implied or 
-  otherwise, applies only to this software file.  Patent licenses, if 
-  any, provided herein do not apply to combinations of this program with 
-  other software, or any other product whatsoever.  
-
-  You should have received a copy of the GNU General Public License along
-  with this program; if not, write the Free Software Foundation, Inc., 59
-  Temple Place - Suite 330, Boston MA 02111-1307, USA.
-
-  Contact information:  Silicon Graphics, Inc., 1600 Amphitheatre Pky,
-  Mountain View, CA 94043, or:
-
-  http://www.sgi.com
-
-  For further information regarding this notice, see:
-
-  http://oss.sgi.com/projects/GenInfo/NoticeExplan
-
-*/
-
+/********************************************************************\
+|*                                                                  *|   
+|*  Copyright (c) 2006 by SimpLight Nanoelectronics.                *|
+|*  All rights reserved                                             *|
+|*                                                                  *|
+|*  This program is free software; you can redistribute it and/or   *|
+|*  modify it under the terms of the GNU General Public License as  *|
+|*  published by the Free Software Foundation; either version 2,    *|
+|*  or (at your option) any later version.                          *|
+|*                                                                  *|
+\********************************************************************/
 
 //
 // Group TOPS with similar packing format together. 
@@ -125,7 +102,8 @@ main()
 			 TOP_mthi, 0x000000ff,
 			 TOP_mtlo, 0x000000ff,
 #if defined(TARG_SL)	
-                         TOP_loop,      0x000000ff,
+			 TOP_smult,     0x000000ff,
+			 TOP_loop,      0x000000ff,
 			 TOP_mc_z_eq,   0x000000ff,
 			 TOP_mc_z_ne,   0x000000ff,
 			 TOP_mc_z_gt,   0x000000ff,
@@ -193,143 +171,73 @@ main()
                          TOP_xor16_i,   0x000000ff,
                          TOP_br16_eqz,0x000000ff,
                          TOP_br16_nez,0x000000ff,
+        		 TOP_c3_aadda, 0x000000ff,
+			 TOP_c3_bitr, 0x000000ff,
+                         TOP_c3_cs, 0x000000ff,
+                         TOP_c3_dadd, 0x000000ff,
+                         TOP_c3_dmac, 0x000000ff,
+                         TOP_c3_dmacn, 0x000000ff,
+                         TOP_c3_dmac_a, 0x000000ff,
+                         TOP_c3_dmacn_a, 0x000000ff,
+                         TOP_c3_dmula, 0x000000ff,
+                         TOP_c3_dmulan, 0x000000ff,
+                         TOP_c3_dmula_a, 0x000000ff,
+                         TOP_c3_dmulan_a, 0x000000ff,
+                         TOP_c3_dshll_i, 0x000000ff,
+                         TOP_c3_dshrl_i, 0x000000ff,
+                         TOP_c3_dsub, 0x000000ff,
+                         TOP_c3_ffe, 0x000000ff,
+                         TOP_c3_fftld, 0x000000ff,
+                         TOP_c3_fftst, 0x000000ff,
+                         TOP_c3_ld, 0x000000ff,
+                         TOP_c3_lead, 0x000000ff,
+                         TOP_c3_mac, 0x000000ff,
+                         TOP_c3_mac_a, 0x000000ff,
+                         TOP_c3_mac_ar, 0x000000ff,
+                         TOP_c3_mac_i, 0x000000ff,
+                         TOP_c3_macn, 0x000000ff,
+                         TOP_c3_macn_a, 0x000000ff,
+                         TOP_c3_macn_ar, 0x000000ff,
+                         TOP_c3_macn_i, 0x000000ff,
+                         TOP_c3_mula, 0x000000ff,
+                         TOP_c3_mula_a, 0x000000ff,
+                         TOP_c3_mula_ar, 0x000000ff,
+                         TOP_c3_mula_i, 0x000000ff,
+                         TOP_c3_mulan, 0x000000ff,
                          TOP_c3_muls, 0x000000ff,
                          TOP_c3_mulus, 0x000000ff,
-                         //dsp thread
-         TOP_c3_bitc, 0x000000ff,
-        TOP_c3_bitr, 0x000000ff,
-        TOP_c3_dadd, 0x000000ff,
-        TOP_c3_dmac, 0x000000ff,
-        TOP_c3_dmacn, 0x000000ff,
-        TOP_c3_dmac_a, 0x000000ff,
-        TOP_c3_dmacn_a, 0x000000ff,
-        TOP_c3_dmula, 0x000000ff,
-        TOP_c3_dmulan, 0x000000ff,
-        TOP_c3_dmula_a, 0x000000ff,
-        TOP_c3_dmulan_a, 0x000000ff,
-        TOP_c3_dshll_i, 0x000000ff,
-        TOP_c3_dshrl_i, 0x000000ff,
-        TOP_c3_dsub, 0x000000ff,
-        TOP_c3_ld, 0x000000ff,
-        TOP_c3_lead, 0x000000ff,
-        TOP_c3_mac, 0x000000ff,
-        TOP_c3_mac_a, 0x000000ff,
-        TOP_c3_mac_ar, 0x000000ff,
-        TOP_c3_mac_i, 0x000000ff,
-        TOP_c3_macci, 0x000000ff,
-        TOP_c3_maccr, 0x000000ff,
-        TOP_c3_macd, 0x000000ff,
-        TOP_c3_macn, 0x000000ff,
-        TOP_c3_macn_a, 0x000000ff,
-        TOP_c3_macn_ar, 0x000000ff,
-        TOP_c3_macn_i, 0x000000ff,
-        TOP_c3_mula, 0x000000ff,
-        TOP_c3_mula_a, 0x000000ff,
-        TOP_c3_mula_ar, 0x000000ff,
-        TOP_c3_mula_i, 0x000000ff,
-        TOP_c3_mulaci, 0x000000ff,
-        TOP_c3_mulacr, 0x000000ff,
-        TOP_c3_mulan, 0x000000ff,
-        TOP_c3_muls, 0x000000ff,
-        TOP_c3_mulus, 0x000000ff,
-        TOP_c3_mvfs, 0x000000ff,
-        TOP_c3_mvfacc, 0x000000ff,
-        TOP_c3_mvfadd, 0x000000ff,
-        TOP_c3_mvfadds, 0x000000ff,
-        TOP_c3_mvts, 0x000000ff,
-        TOP_c3_mvtacc, 0x000000ff,
-        TOP_c3_mvtadd, 0x000000ff,
-        TOP_c3_mvtadds, 0x000000ff,
-        TOP_c3_revb, 0x000000ff,
-        TOP_c3_round, 0x000000ff,
-        TOP_c3_saadd_a, 0x000000ff,
-        TOP_c3_saaddh_a, 0x000000ff,
-        TOP_c3_saadds, 0x000000ff,
-        TOP_c3_saaddsh, 0x000000ff,
-        TOP_c3_saddha, 0x000000ff,
-        TOP_c3_saddha_a, 0x000000ff,
-        TOP_c3_samulh_a, 0x000000ff,
-        TOP_c3_samulsh, 0x000000ff,
-        TOP_c3_sashllh, 0x000000ff,
-        TOP_c3_sasub_a, 0x000000ff,
-        TOP_c3_sasubh_a, 0x000000ff,
-        TOP_c3_sasubs, 0x000000ff,
-        TOP_c3_sasubsh, 0x000000ff,
-        TOP_c3_st, 0x000000ff,
-        TOP_c3_trback,  0x000000ff,
-        TOP_c3_viterbi, 0x000000ff,
-        TOP_c3_fft, 0x000000ff,
-        TOP_c3_fftld, 0x000000ff,
-        TOP_c3_fftst, 0x000000ff,
-        // new c3 instruction version
-        TOP_C3_aadda, 0x000000ff,
-        TOP_C3_bitr, 0x000000ff,
-        TOP_C3_cs, 0x000000ff,
-        TOP_C3_dadd, 0x000000ff,
-        TOP_C3_dmac, 0x000000ff,
-        TOP_C3_dmacn, 0x000000ff,
-        TOP_C3_dmac_a, 0x000000ff,
-        TOP_C3_dmacn_a, 0x000000ff,
-        TOP_C3_dmula, 0x000000ff,
-        TOP_C3_dmulan, 0x000000ff,
-        TOP_C3_dmula_a, 0x000000ff,
-        TOP_C3_dmulan_a, 0x000000ff,
-        TOP_C3_dshll_i, 0x000000ff,
-        TOP_C3_dshrl_i, 0x000000ff,
-        TOP_C3_dsub, 0x000000ff,
-        TOP_C3_ffe, 0x000000ff,
-        TOP_C3_fftld, 0x000000ff,
-        TOP_C3_fftst, 0x000000ff,
-        TOP_C3_ld, 0x000000ff,
-        TOP_C3_lead, 0x000000ff,
-        TOP_C3_mac, 0x000000ff,
-        TOP_C3_mac_a, 0x000000ff,
-        TOP_C3_mac_ar, 0x000000ff,
-        TOP_C3_mac_i, 0x000000ff,
-        TOP_C3_macn, 0x000000ff,
-        TOP_C3_macn_a, 0x000000ff,
-        TOP_C3_macn_ar, 0x000000ff,
-        TOP_C3_macn_i, 0x000000ff,
-        TOP_C3_mula, 0x000000ff,
-        TOP_C3_mula_a, 0x000000ff,
-        TOP_C3_mula_ar, 0x000000ff,
-        TOP_C3_mula_i, 0x000000ff,
-        TOP_C3_mulan, 0x000000ff,
-        TOP_C3_muls, 0x000000ff,
-        TOP_C3_mulus, 0x000000ff,
-        TOP_C3_mvfs, 0x000000ff,
-        TOP_C3_mvts, 0x000000ff,
-        TOP_C3_revb, 0x000000ff,
-        TOP_C3_round, 0x000000ff,
-        TOP_C3_saadd_a, 0x000000ff,
-        TOP_C3_saaddh_a, 0x000000ff,
-        TOP_C3_saadds, 0x000000ff,
-        TOP_C3_saaddsh, 0x000000ff,
-        TOP_C3_sadda, 0x000000ff,
-        TOP_C3_sadda_a, 0x000000ff,
-        TOP_C3_samulh_a, 0x000000ff,
-        TOP_C3_samulsh, 0x000000ff,
-        TOP_C3_sasub_a, 0x000000ff,
-        TOP_C3_sasubh_a, 0x000000ff,
-        TOP_C3_sasubs, 0x000000ff,
-        TOP_C3_sasubsh, 0x000000ff,
-        TOP_C3_shav, 0x000000ff,
-        TOP_C3_shlafa_i, 0x000000ff,
-        TOP_C3_shlata_i, 0x000000ff,
-        TOP_C3_shla_i, 0x000000ff,
-        TOP_C3_shrafa_i, 0x000000ff,
-        TOP_C3_shrata_i, 0x000000ff,
-        TOP_C3_shra_i, 0x000000ff,
-        TOP_C3_st, 0x000000ff,
-        TOP_C3_subc,  0x000000ff,
-        TOP_C3_nega,  0x000000ff,
-        TOP_C3_mvfacc, 0x000000ff,
-        TOP_C3_mvfaddr, 0x000000ff,
-        TOP_C3_mvfadds, 0x000000ff,
-        TOP_C3_mvtacc, 0x000000ff,
-        TOP_C3_mvtaddr, 0x000000ff,
-        TOP_C3_mvtadds, 0x000000ff,
-        // end c3 instruction version
+                         TOP_c3_mvfs, 0x000000ff,
+                         TOP_c3_mvts, 0x000000ff,
+                         TOP_c3_revb, 0x000000ff,
+                         TOP_c3_round, 0x000000ff,
+                         TOP_c3_saadd_a, 0x000000ff,
+                         TOP_c3_saaddh_a, 0x000000ff,
+                         TOP_c3_saadds, 0x000000ff,
+                         TOP_c3_saaddsh, 0x000000ff,
+                         TOP_c3_sadda, 0x000000ff,
+                         TOP_c3_sadda_a, 0x000000ff,
+                         TOP_c3_samulh_a, 0x000000ff,
+                         TOP_c3_samulsh, 0x000000ff,
+                         TOP_c3_sasub_a, 0x000000ff,
+                         TOP_c3_sasubh_a, 0x000000ff,
+                         TOP_c3_sasubs, 0x000000ff,
+                         TOP_c3_sasubsh, 0x000000ff,
+                         TOP_c3_shav, 0x000000ff,
+                         TOP_c3_shlafa_i, 0x000000ff,
+                         TOP_c3_shlata_i, 0x000000ff,
+                         TOP_c3_shla_i, 0x000000ff,
+                         TOP_c3_shrafa_i, 0x000000ff,
+                         TOP_c3_shrata_i, 0x000000ff,
+                         TOP_c3_shra_i, 0x000000ff,
+                         TOP_c3_st, 0x000000ff,
+                         TOP_c3_subc,  0x000000ff,
+                         TOP_c3_nega,  0x000000ff,
+                         TOP_c3_mvfacc, 0x000000ff,
+                         TOP_c3_mvfaddr, 0x000000ff,
+                         TOP_c3_mvfadds, 0x000000ff,
+                         TOP_c3_mvtacc, 0x000000ff,
+                         TOP_c3_mvtaddr, 0x000000ff,
+                         TOP_c3_mvtadds, 0x000000ff,
 #endif					 
 			 TOP_movf, 0x000000ff,
 			 TOP_movn, 0x000000ff,

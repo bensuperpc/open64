@@ -1,3 +1,7 @@
+/*
+ * Copyright (C) 2008-2010 Advanced Micro Devices, Inc.  All Rights Reserved.
+ */
+
 //-*-c++-*-
 // ====================================================================
 // ====================================================================
@@ -28,6 +32,7 @@
 
 #include <vector>
 #include <algorithm>
+#include <stack>
 using namespace std;
 
 #include "tracing.h"
@@ -36,11 +41,17 @@ using idmap::ID_MAP;
 
 #include "be_util.h"
 #include "bb_node_set.h"
+#include "glob.h"
 #include "opt_alias_rule.h"
 #include "opt_main.h"  // for COMP_UNIT
 #include "opt_lmv.h"
+#include "opt_ivr.h"
 
 const INT LMV_HEURISTIC::_low_trip_count = 40; 
+const INT LMV_HEURISTIC::_max_access_vectors = 6;
+const INT LMV_HEURISTIC::_max_write_vectors = 3;
+const INT LMV_HEURISTIC::_min_write_vectors = 1;
+
 const float _dup_loop_freq_ratio = 0.1f;
 
 extern void Rename_CODEMAP(COMP_UNIT *);
@@ -53,25 +64,32 @@ extern void Rename_CODEMAP(COMP_UNIT *);
 //====================================================================
 //====================================================================
 
-// Figure out pair of memory access ranges; with the assumption 
-// of the no-alias of these two memory ranges, the performance of 
-// the loop in question is supposed to be improved quite a lot.
-//
+// Attempts to determine the benefit of applying loop multiversioning
+// given a group of memory access ranges.  The assumption being that
+// by asserting non-alias between all pairs, the performance of the
+// loop in question will be improved significantly and overcome the
+// cost of the runtime checks necessary to assert non-alias.
 // return FALSE iff no such pairs are found.
-// 
-// TODO: Current heuristic looks like a toy. It is just used to make
-//  the loop-multiversioning for a loop in LBM@spec2k6 and make other
-//  components of the loop-multiversioning works. 
+//
+// At present, the heuristic is targeted to specific code sequences,
+// however more aggressive experimentation is possible with the
+// -WOPT:loop_multiver_aggr=on option.  The multiversioning transformation
+// has been well testing under that option, so as to allow this to
+// serve as a test bed for identifying future opportunities.
+//
+// Currently LMV focuses on alias, however one may also wish to multiversion
+// around a number of different attributed, e.g. loop trip count and tailor
+// code generation appropriately for those versions.
 //
 // The better heuristics that is planed to be experimented soon are:
 // 
-//   - examine in what degree a critical lenth in loop in shorten 
+//   - Examine in what degree a critical length in loop in shorten
 //     with assumed no-alias
 //   
-//   - examine how many redundant expressions will be eliminated with 
+//   - Examine how many redundant expressions will be eliminated with
 //     assumed no-alias.
 // 
-//   - evalute the profitability that will be obtained by assuming the 
+//   - Evaluate the profitability that will be obtained by assuming the
 //     some quantities (say, trip-counter) to be loop invariant. 
 //
 typedef struct {
@@ -85,87 +103,40 @@ struct less_weight {
 };
 
 BOOL
-LMV_HEURISTIC::Figureout_assumed_noalias_mem_ranges 
-   (MEM_ACCESS_VECT& mem_grp1, MEM_ACCESS_VECT& mem_grp2,
-    MEM_RANGE* r1, MEM_RANGE* r2) {
+LMV_HEURISTIC::Apply(MEM_GROUP_VECT &groups)
+{
+  if (WOPT_Enable_Loop_Multiver_Aggressive)
+    return TRUE;
 
-  r1->Init ();
-  r2->Init ();
+  INT n_vect = 0;
+  INT n_write_vect = 0;
+  INT n_read = 0;
+  INT n_write = 0;
+  for (MEM_GROUP_VECT_CITER iter = groups.begin();
+        iter != groups.end(); iter++) {
+    MEM_GROUP *grp = *iter;
+    if (grp->Write())
+      n_write_vect++;
+    n_vect++;
 
-  MA_PTR_MGR& ptr_mgr = _maa->_ptr_mgr;
-  if (ptr_mgr.Ptr_sum() < 2) {
-    // there is no more than one group of mem-ops. No chance for 
-    // multiversioning.
-    return FALSE;
+    MEM_ACCESS_VECT& v = grp->Mem_accesses();
+    for (MEM_ACCESS_VECT_ITER iter = v.begin ();
+        iter != v.end (); iter++) {
+      MEM_ACCESS *ma = (*iter);
+      if (ma->Is_read())
+        n_read++;
+      else if (ma->Is_write())
+        n_write++;
+    }
   }
 
-  // current toy heuristic is: 
-  //  - group memoy access according to their pointer it use (e.g p[i] 
-  //    and p[2] are of same group). The weight of a group is measured 
-  //    by the number of memory access in that group. 
-  //
-  //  - Sort the groups in an order of decreasing weight. 
-  //
-  //  - if the top 2 groups dorminate the memory access in the loop and
-  //    they are array access via pointer, they are profitable for loop
-  //    multi-versioning.
-
-  PTR_INFO* ptr_info = TYPE_MEM_POOL_ALLOC_N(PTR_INFO, _mp, 
-                                             ptr_mgr.Next_ptr_id()+1);
-  
-  MA_PTR_VECT& vect = ptr_mgr.All_ptrs ();
-  INT idx = 0;
-  INT total_weight = 0;
-  for (MA_PTR_VECT_ITER iter = vect.begin (); 
-       iter != vect.end(); iter++, idx++) {
-    MA_POINTER* ptr = *iter;  
-    ptr_info[idx].ptr_id = ptr->Id();
-    ptr_info[idx].weight = ptr->Ld_cnt() + ptr->St_cnt();
-    total_weight += ptr->Ld_cnt() + ptr->St_cnt();
-  }
-  sort (ptr_info, ptr_info+idx-1, less_weight());
-  
-  MA_POINTER* p1 = ptr_mgr.Get_pointer (ptr_info[0].ptr_id);
-  MA_POINTER* p2 = ptr_mgr.Get_pointer (ptr_info[1].ptr_id);
-
-  MEM_ACCESS_VECT& v1 = p1->All_mem_access();   
-  MEM_ACCESS_VECT& v2 = p2->All_mem_access();   
-  if (!_alias_rule->Aliased_Memop (v1[0]->Points_to(_opt_stab), 
-                 v2[0]->Points_to(_opt_stab), (TY_IDX)0, (TY_IDX)0)) {
-    return FALSE;
-  }
-
-  // compute the range of p1
-  MA_OFFSET ofst1, ofst2;
-  ofst1.Set_fixed_ofst (0);
-  ofst2.Set_fixed_ofst (0);
-
-  INT sz1, sz2;
-  sz1 = sz2 = 0;
-
-  for (MEM_ACCESS_VECT_ITER iter = v1.begin (); iter != v1.end (); iter++) {
-    ofst1.Union (&(*iter)->Ofst(), _loopinfo);
-    sz1 = MAX(sz1, (*iter)->Byte_size());
-  }
-
-  r1->Set_base_ptr (p1);
-  r1->Set_access_range (&ofst1, _loopinfo, sz1);
-  if (!r1->Access_range().low.Is_const () || !r1->Access_range().high.Is_const ())
+  if (n_write_vect < Min_write_vectors())
     return FALSE;
 
-  for (MEM_ACCESS_VECT_ITER iter = v2.begin (); iter != v2.end (); iter++) {
-    ofst2.Union (&(*iter)->Ofst(), _loopinfo);
-    sz2 = MAX(sz2, (*iter)->Byte_size());
-  }
-  r2->Set_base_ptr (p2);
-  r2->Set_access_range (&ofst2, _loopinfo, sz2);
-  if (!r2->Access_range().low.Is_const () || !r2->Access_range().high.Is_const ())
-    return FALSE;
+  if (n_write_vect == Max_write_vectors())
+    return TRUE;
 
-  mem_grp1 = v1;
-  mem_grp2 = v2;
-
-  return TRUE;
+  return FALSE;
 }
 
 //====================================================================
@@ -351,6 +322,27 @@ LOOP_MULTIVER::Evaluate_stmt (const STMTREP* stmt) {
   return TRUE;
 }
 
+///////////////////////////////////////////////////////////////////////////
+//
+// Helper function of Gen_test_cond(), it returns the CODEREP
+// holding value "<ptr1> + val".
+//
+////////////////////////////////////////////////////////////////////////////
+//
+CODEREP*
+LOOP_MULTIVER::Gen_add_expr (CODEREP* ptr, CODEREP *val) {
+
+  CODEREP* tmp_cr = Alloc_stack_cr(2/*at most 2 kids*/+IVAR_EXTRA_NODE_CNT);
+
+  OPCODE opcode = (MTYPE_byte_size(ptr->Dtyp()) == 8) ? OPC_U8ADD : OPC_U4ADD;
+  tmp_cr->Init_op(opcode, 2);
+  tmp_cr->Set_opnd(0, ptr);
+  tmp_cr->Set_opnd(1, val);
+
+  ptr->IncUsecnt();
+  val->IncUsecnt();
+  return _htable->Hash_Op (tmp_cr);
+}
 
 ////////////////////////////////////////////////////////////////////////////
 //
@@ -370,13 +362,78 @@ LOOP_MULTIVER::Gen_add_expr (CODEREP* ptr, INT ofst) {
   tmp_cr->Init_const (ofst > 0 ? MTYPE_U4 : MTYPE_I4, (INT64)ofst);
   ofst_cr = _htable->Hash_Const (tmp_cr); 
    
-  OPCODE opcode = (MTYPE_byte_size(ptr->Dtyp()) == 8) ? OPC_U8ADD : OPC_U4ADD;
-  tmp_cr->Init_op(opcode, 2);
-  tmp_cr->Set_opnd(0, ptr);
-  tmp_cr->Set_opnd(1, ofst_cr);
+  return Gen_add_expr(ptr,ofst_cr);
+}
 
-  ptr->IncUsecnt();
-  return _htable->Hash_Op (tmp_cr);
+////////////////////////////////////////////////////////////////////////////
+//
+// Helper function of Gen_test_cond(), it returns the CODEREP
+// that contains the result of disambiguating <ar1> and <ar2>
+//
+////////////////////////////////////////////////////////////////////////////
+//
+CODEREP*
+LOOP_MULTIVER::Gen_range_expr (CODEREP *ptr1, const ADDR_LINEAR_EXPR_RANGE &ar1,
+                               CODEREP *ptr2, const ADDR_LINEAR_EXPR_RANGE &ar2)
+{
+  CODEREP *ptr1_high, *ptr2_high;
+  CODEREP *ptr1_low  = Gen_add_expr (ptr1, ar1.low.Const_val());
+  CODEREP *ptr2_low  = Gen_add_expr (ptr2, ar2.low.Const_val());
+  if (ar1.high.Is_const())
+    ptr1_high = Gen_add_expr (ptr1, ar1.high.Const_val());
+  else
+  {
+    CODEREP *ptr1_tmp = Gen_add_expr(ar1.high.cr(),ar1.high.Const_part());
+    ptr1_high = Gen_add_expr(ptr1,ptr1_tmp);
+  }
+  if (ar2.high.Is_const())
+    ptr2_high = Gen_add_expr (ptr2, ar2.high.Const_val());
+  else
+  {
+    CODEREP *ptr2_tmp = Gen_add_expr(ar2.high.cr(),ar2.high.Const_part());
+    ptr2_high = Gen_add_expr(ptr2,ptr2_tmp);
+  }
+
+  // generate the expr : (p1h < p2l || p2h < p1l)
+  CODEREP* tmp_cr = Alloc_stack_cr(2/*2 kids */);
+  BOOL use_8_bytes = (MTYPE_byte_size(ptr1_low->Dtyp()) == 8);
+
+  CODEREP* cr_1; // generate "p1h < p2l"
+  tmp_cr->Init_op (use_8_bytes ? OPC_I4U8LT : OPC_I4U4LT, 2);
+  tmp_cr->Set_opnd (0, ptr1_high);
+  tmp_cr->Set_opnd (1, ptr2_low);
+  cr_1 = _htable->Hash_Op (tmp_cr);
+
+  CODEREP* cr_2; // generate "p2h < p1l"
+  tmp_cr->Init_op (use_8_bytes ? OPC_I4U8LT : OPC_I4U4LT, 2);
+  tmp_cr->Set_opnd (0, ptr2_high);
+  tmp_cr->Set_opnd (1, ptr1_low);
+  cr_2 = _htable->Hash_Op (tmp_cr);
+
+  tmp_cr->Init_op (OPC_I4CIOR, 2);
+  tmp_cr->Set_opnd (0, cr_1);
+  tmp_cr->Set_opnd (1, cr_2);
+
+  CODEREP* cr = _htable->Hash_Op (tmp_cr);
+  return cr;
+}
+
+CODEREP *
+LOOP_MULTIVER::Gen_range_and_expr(CODEREP *range1, CODEREP *range2)
+{
+  Is_True(range1 != NULL || range2 != NULL,("Expected a non-NULL coderep"));
+  if (range1 == NULL)
+    return range2;
+  else if (range2 == NULL)
+    return range1;
+
+  CODEREP *tmp_cr = Alloc_stack_cr(2/* 2 kids */);
+  tmp_cr->Init_op(OPC_I4CAND, 2);
+  tmp_cr->Set_opnd(0,range1);
+  tmp_cr->Set_opnd(1,range2);
+
+  CODEREP *cr = _htable->Hash_Op(tmp_cr);
+  return cr;
 }
 
 ////////////////////////////////////////////////////////////////////////////
@@ -392,70 +449,93 @@ LOOP_MULTIVER::Gen_add_expr (CODEREP* ptr, INT ofst) {
 CODEREP*
 LOOP_MULTIVER::Gen_test_cond (LMV_CANDIDATE* cand) {
 
-  const MEM_RANGE& r1 = cand->Mem_range_1 ();
-  const MEM_RANGE& r2 = cand->Mem_range_2 ();
+  if (_tracing)
+    fprintf(TFile,"Mem Groups for candidate at BB%d\n",
+        cand->Loop()->Header()->Id());
+  // Do these checkes need to be moved earlier, i.e. during
+  // the heuristic check when computing memory ranges?
+  const MEM_GROUP_VECT &mem_groups = cand->Mem_groups();
+  for (MEM_GROUP_VECT_CITER val_iter = mem_groups.begin();
+      val_iter != mem_groups.end(); val_iter++) {
+    MEM_GROUP *grp = *val_iter;
 
-  const ADDR_LINEAR_EXPR_RANGE ar1 = r1.Access_range();
-  const ADDR_LINEAR_EXPR_RANGE ar2 = r2.Access_range();
+    if (_tracing)
+      grp->Print(TFile);
 
-  // TODO: Handle non-constant range
-  Is_True (ar1.low.Is_const () && ar1.high.Is_const() &&
-           ar2.low.Is_const() && ar2.high.Is_const(), 
-           ("currently cannot handle non-constant range"));
+    const MEM_RANGE &mr = *grp->Mem_range();
+    const ADDR_LINEAR_EXPR_RANGE &r = mr.Access_range();
+    // TODO: Handle non-constant lower bound
+    Is_True(r.low.Is_const(),
+        ("cannot handle non-const lower bound for now"));
 
-  // TODO: Handle this case
-  if (r1.Base_is_symbol() || r2.Base_is_symbol()) {
-    return NULL;
+    // TODO: Handle this case
+    if ( mr.Base_is_symbol())
+      return NULL;
+
+    if (mr.Base_ptr()->Kind() != MA_PTR_PREG &&
+        mr.Base_ptr()->Kind() != MA_PTR_SYM)
+      return NULL;
+
+    // TODO: Handle non-loop-invariant cases
+    CODEREP* ptr = mr.Base_ptr()->Coderep();
+    if (!cand->Loop()->Invariant_cr(ptr))
+      return NULL;
+
   }
-  
-  MA_POINTER *p1, *p2;
-  p1 = r1.Base_ptr ();
-  p2 = r2.Base_ptr ();
+  if (_tracing)
+    fprintf(TFile,"End Mem Groups\n");
 
-  if (p1->Kind () != MA_PTR_PREG && p1->Kind() != MA_PTR_SYM ||
-      p2->Kind () != MA_PTR_PREG && p2->Kind() != MA_PTR_SYM) {
-    return NULL;
+  // Map of access ranges containing a write that have all ready
+  // been checked against all other writes.  This prevents redundant
+  // runtime checks amongst the write access ranges.
+  // Essentially, this is a visited set.  Is there a cheaper way?
+  ID_MAP<INT,MEM_GROUP*> write_checked(32,0,&_mp,FALSE);
+  write_checked.Init();
+  CODEREP *prev_range_chk = NULL;
+
+  for (MEM_GROUP_VECT_CITER iter = mem_groups.begin();
+      iter != mem_groups.end(); iter++) {
+    MEM_GROUP *grp1 = *iter;
+    if (grp1->Write()){
+      for (MEM_GROUP_VECT_CITER iter2 = mem_groups.begin();
+          iter2 != mem_groups.end(); iter2++) {
+        MEM_GROUP *grp2 = *iter2;
+        if (!_alias_rule->Aliased_Memop
+            ((grp1->Mem_accesses())[0]->Points_to(_opt_stab),
+             (grp2->Mem_accesses())[0]->Points_to(_opt_stab),
+             (TY_IDX)0, (TY_IDX)0))
+          continue;
+
+        if(grp1 != grp2 && write_checked.Lookup(grp2) == 0) {
+          const MEM_RANGE& r1 = *grp1->Mem_range();
+          const MEM_RANGE& r2 = *grp2->Mem_range();
+
+          const ADDR_LINEAR_EXPR_RANGE ar1 = r1.Access_range();
+          const ADDR_LINEAR_EXPR_RANGE ar2 = r2.Access_range();
+
+          // TODO: Handle non-constant range
+          Is_True (ar1.low.Is_const () && ar2.low.Is_const(),
+              ("currently cannot handle non-constant lower bound"));
+
+          MA_POINTER *p1, *p2;
+          p1 = r1.Base_ptr ();
+          p2 = r2.Base_ptr ();
+
+          CODEREP* ptr1 = p1->Coderep();
+          CODEREP* ptr2 = p2->Coderep();
+          CODEREP *range_chk = Gen_range_expr(ptr1,ar1,ptr2,ar2);
+          prev_range_chk = Gen_range_and_expr(prev_range_chk,range_chk);
+        }
+      }
+      write_checked.Insert(grp1,1);
+    }
   }
-
-  CODEREP* ptr1 = p1->Coderep();
-  CODEREP* ptr2 = p2->Coderep();
-  if (!cand->Loop()->Invariant_cr (ptr1) || 
-      !cand->Loop()->Invariant_cr (ptr2)) {
-    // TODO:: Handle non-loop-invariant cases
-    return NULL;    
-  }
-  
-  CODEREP *ptr1_low  = Gen_add_expr (ptr1, ar1.low.Const_val());
-  CODEREP *ptr1_high = Gen_add_expr (ptr1, ar1.high.Const_val());
-  CODEREP *ptr2_low  = Gen_add_expr (ptr2, ar2.low.Const_val());
-  CODEREP *ptr2_high = Gen_add_expr (ptr2, ar2.high.Const_val());
-
-  // generate the expr : (p1h < p2l || p2h < p1l)   
-  CODEREP* tmp_cr = Alloc_stack_cr(2/*2 kids */);
-  BOOL use_8_bytes = (MTYPE_byte_size(ptr1_low->Dtyp()) == 8); 
-
-  CODEREP* cr_1; // generate "p1h < p2l"
-  tmp_cr->Init_op (use_8_bytes ? OPC_I4U8LE : OPC_I4U4LE, 2);
-  tmp_cr->Set_opnd (0, ptr1_high);
-  tmp_cr->Set_opnd (1, ptr2_low);
-  cr_1 = _htable->Hash_Op (tmp_cr);
-
-  CODEREP* cr_2; // generate "p2h < p1l"
-  tmp_cr->Init_op (use_8_bytes ? OPC_I4U8LE : OPC_I4U4LE, 2);
-  tmp_cr->Set_opnd (0, ptr2_high);
-  tmp_cr->Set_opnd (1, ptr1_low);
-  cr_2 = _htable->Hash_Op (tmp_cr);
-
-  tmp_cr->Init_op (OPC_I4CIOR, 2);
-  tmp_cr->Set_opnd (0, cr_1);
-  tmp_cr->Set_opnd (1, cr_2);
-
-  CODEREP* cr = _htable->Hash_Op (tmp_cr);
+  Is_True(prev_range_chk,("Non-NULL range check CODEREP tree expected"));
   if (_tracing) {
     fprintf (TFile, "The precondition predicate (kid of true-branch) is:\n");
-    cr->Print (0, TFile);
+    prev_range_chk->Print (0, TFile);
   }
-  return cr;
+  return prev_range_chk;
 }
 
 //////////////////////////////////////////////////////////////////////////////////
@@ -471,14 +551,6 @@ LOOP_MULTIVER::Not_applicable (BB_LOOP* loop) {
   if (loop->Child()) {
     if (_tracing) {
       fprintf (TFile, "Not innermost loop, give up\n");
-    }
-    return TRUE;
-  }
-
-  if (loop->Parent ()) {
-    if (_tracing) {
-      // The concern is not interfere LNO.
-      fprintf (TFile, "Currently, it is not ready for loop-nest");
     }
     return TRUE;
   }
@@ -511,8 +583,9 @@ LOOP_MULTIVER::Pass_initial_screen (const BB_LOOP* loop) {
   CODEREP* iv;
   if (_agg_mode && (iv = loop->Iv()) && iv->Kind() == CK_CONST && 
      iv->Const_val () < LMV_HEURISTIC::Low_trip_count_threshold ()) {
-    fprintf (TFile, "The trip count is %d smaller than the threshold %d\n", 
-             (INT)iv->Const_val(), (INT)LMV_HEURISTIC::Low_trip_count_threshold ());
+    if (_tracing)
+      fprintf(TFile, "The trip count is %d smaller than the threshold %d\n",
+          (INT)iv->Const_val(), (INT)LMV_HEURISTIC::Low_trip_count_threshold ());
     return FALSE;
   }
 
@@ -583,6 +656,7 @@ LOOP_MULTIVER::Pass_initial_screen (const BB_LOOP* loop) {
   // Take a closer look of each block by examining each statement to see 
   // whether it is appropriate for multiversioning 
   //
+  _stmt_num = _expr_num = _ld_num = _st_num = 0;
   FOR_ALL_ELEM (blk, iter, Init(loop->True_body_set())) {
    
     STMTREP_CONST_ITER stmt_iter (blk->Stmtlist());
@@ -645,29 +719,28 @@ LOOP_MULTIVER::Pass_initial_screen (const BB_LOOP* loop) {
 void
 LOOP_MULTIVER::Identify_candidate (BB_LOOP* loop) {
 
+
   MEM_POOL_Popper lmp (_local_mp);
 
-  LMV_LOOP_INFO* loopinfo = CXX_NEW(LMV_LOOP_INFO(loop, &_mp), &_mp);
-
+  IVR ivr(_comp_unit,FALSE);
+  LMV_LOOP_INFO* loopinfo =
+      CXX_NEW(LMV_LOOP_INFO(loop, &_mp,ivr,_tracing), &_mp);
+  
   MEM_ACCESS_ANALYZER* maa = 
     CXX_NEW (MEM_ACCESS_ANALYZER(_opt_stab, loopinfo, &_mp, _tracing), &_mp);
   maa->Analyze_mem_access ();
- 
-  LMV_HEURISTIC heur(_local_mp, this, loopinfo, _opt_stab, maa,
+
+  MEM_GROUP_VECT mem_groups(&_mp);
+  if (!maa->Assemble_aliased_mem_groups(_alias_rule,mem_groups))
+    return;
+
+  LMV_HEURISTIC heur(&_mp, this, loopinfo, _opt_stab, maa,
                     _alias_rule, _tracing);
-
-  MEM_RANGE r1, r2;
-  MEM_ACCESS_VECT mem_grp1 (_local_mp);
-  MEM_ACCESS_VECT mem_grp2 (_local_mp);
-
-  if (heur.Figureout_assumed_noalias_mem_ranges 
-       (mem_grp1, mem_grp2, &r1, &r2)) {
-
+  if (heur.Apply(mem_groups)) {
     LMV_CANDIDATE* cand = CXX_NEW (LMV_CANDIDATE(&_mp), &_mp);
     cand->Set_mem_access_analyzer (maa);
-    cand->Set_range (r1, r2);
+    cand->Set_mem_groups(mem_groups);
     cand->Set_loop (loop);
-    cand->Set_mem_group (mem_grp1, mem_grp2);
     _candidates.push_back (cand);
   }
 }
@@ -688,14 +761,29 @@ LOOP_MULTIVER::Identify_candidates (void) {
   BB_LOOP* loop;
 
   // go through all innermost loops 
-  FOR_ALL_NODE (loop, loop_iter, Init()) {
+  stack<BB_LOOP*> loop_nest;
+  loop_nest.push(loop_list);
+  while (!loop_nest.empty()) {
+    BB_LOOP *cur_loop = loop_nest.top();
+    loop_nest.pop();
 
-    if (Not_applicable (loop) || !Pass_initial_screen (loop)) {
-      // The loop is not eligible for multiversioning
-      continue;
+    // Visit all nodes at this nesting level
+    BB_LOOP_ITER loop_nest_iter(cur_loop);
+    FOR_ALL_NODE(loop,loop_nest_iter,Init()) {
+      if (loop->Child())
+        loop_nest.push(loop->Child());
+
+      if (_tracing) {
+        fprintf(TFile,"Examining Loop with header BB%d\n",
+            loop->Header()->Id());
+      }
+      if (Not_applicable(loop) || !Pass_initial_screen (loop)) {
+        // The loop is not eligible for multiversioning
+        continue;
+      }
+
+      Identify_candidate (loop);
     }
-
-    Identify_candidate (loop);  
   }
 
   if (_tracing) {
@@ -738,33 +826,50 @@ LOOP_MULTIVER::Annotate_alias_group_helper
 }
 
 void
-LOOP_MULTIVER::Annotate_alias_group (LMV_CANDIDATE* cand) {
+LOOP_MULTIVER::Annotate_alias_group (LMV_CANDIDATE* cand)
+{
+  INT grp_num = 1;
+  const MEM_GROUP_VECT &mem_groups = cand->Mem_groups();
+  for (MEM_GROUP_VECT_CITER iter = mem_groups.begin();
+      iter != mem_groups.end(); iter++) {
+    const MEM_ACCESS_VECT &memops = (*iter)->Mem_accesses();
+    LMV_ALIAS_GROUP alias_grp =
+        Gen_LMV_alias_group(cand->Loop()->Header()->Id(),grp_num++);
+    Annotate_alias_group_helper(memops,alias_grp);
+  }
 
-  const MEM_ACCESS_VECT& memops1 = cand->Mem_op_group1 ();
-  LMV_ALIAS_GROUP alias_grp1 = 
-    Gen_LMV_alias_group (cand->Loop()->Header()->Id(), 1);
-  Annotate_alias_group_helper (memops1, alias_grp1);
-
-  const MEM_ACCESS_VECT& memops2 = cand->Mem_op_group2 ();
-  LMV_ALIAS_GROUP alias_grp2 = 
-    Gen_LMV_alias_group (cand->Loop()->Header()->Id(), 2);
-  Annotate_alias_group_helper (memops2, alias_grp2);
+  // Now that we have attached alias groups to the memory
+  // references in the original loop, flag the loop to indicate same.
+  // We do this by setting a flag on the LOOP_INFO.  If none exists
+  // we will manufacture one to be consumed if this loop is raised
+  // to a do loop.
+  BB_LOOP *loop = cand->Loop();
+  BB_NODE *body = loop->Body();
+  WN *loop_info = body->Label_loop_info();
+  if (loop_info)
+    WN_Set_Multiversion_Alias(loop_info);
+  else {
+    loop_info = WN_CreateLoopInfo(NULL,loop->Wn_trip_count(),
+        0,loop->Depth(),0);
+    WN_Set_Multiversion_Alias(loop_info);
+    body->Set_label_loop_info(loop_info);
+  }
 }
 
 /////////////////////////////////////////////////////////////////////////
 //
-//   As its name suggests, this function is the perform transoformation 
-// for given candidate. 
+//   As its name suggests, this function is to perform transoformation 
+// on given candidate. 
 //
 /////////////////////////////////////////////////////////////////////////
 //
-void
+BOOL
 LOOP_MULTIVER::Perform_transformation (LMV_CANDIDATE* cand) {
   
   CODEREP* precond = Gen_test_cond (cand);
   if (!precond) {
     // it is possible because currently we cannot handle some cases.
-    return;
+    return FALSE;
   }
 
   // We feel more comfortable to have code generation done by CFG in that 
@@ -777,7 +882,8 @@ LOOP_MULTIVER::Perform_transformation (LMV_CANDIDATE* cand) {
   LMV_CFG_ADAPTOR adaptor(&_mp, _cfg, _tracing, cand->Loop(), precond);
   _cfg->LMV_clone_loop (&adaptor);
 
-  Annotate_alias_group (cand); 
+  Annotate_alias_group (cand);
+  return TRUE;
 }
 
 ///////////////////////////////////////////////////////////////////////////
@@ -787,8 +893,8 @@ LOOP_MULTIVER::Perform_transformation (LMV_CANDIDATE* cand) {
 ///////////////////////////////////////////////////////////////////////////
 //
 void
-LOOP_MULTIVER::Perform_loop_multiversioning (void) {
-
+LOOP_MULTIVER::Perform_loop_multiversioning (void)
+{
   if (_tracing) {
     fprintf (TFile, 
              "Begin Loop Multiversioning for PU:%d %s\n%s\n", 
@@ -801,17 +907,22 @@ LOOP_MULTIVER::Perform_loop_multiversioning (void) {
   }
   
   Identify_candidates ();
-  if (_candidates.size () == 0) return ;
+  if (_candidates.size () == 0) return;
 
   for (LMV_CAND_VECT_ITER iter = _candidates.begin ();
        iter != _candidates.end(); iter++) {
     LMV_CANDIDATE* cand = *iter; 
-    Perform_transformation (cand);
+    BOOL xform = Perform_transformation (cand);
+
+    if (xform && _tracing)
+      fprintf(TFile,"Multiversioned loop file: %s, line %d\n",
+          Orig_Src_File_Name,
+          Srcpos_To_Line(WN_Get_Linenum(cand->Loop()->Orig_wn())));
   }
 
   // reconstruct the CFG 
   _cfg->Invalidate_loops();
-  _cfg->Invalidate_and_update_aux_info();
+  _cfg->Invalidate_and_update_aux_info(TRUE);
   _cfg->Analyze_loops();
 
   if (_tracing) {
@@ -827,7 +938,29 @@ LOOP_MULTIVER::Perform_loop_multiversioning (void) {
 }
 
 
+//====================================================================
+//====================================================================
+//
+//   Implementation of LMV_CFG_ADAPTOR 
+//
+//====================================================================
+//====================================================================
+//
+void
+LMV_CFG_ADAPTOR::Get_all_src_bb (std::list<BB_NODE*>& bb_list) const {
 
+    bb_list.clear ();
+
+    const std::map<IDTYPE, IDTYPE>& map = _old_to_new_blk;
+    for (std::map<IDTYPE, IDTYPE>::const_iterator iter = map.begin (),
+         iter_end = map.end (); iter != iter_end; iter++) {
+        
+        IDTYPE src_id = (*iter).first;
+        Is_True (src_id != 0 && (*iter).second != 0, ("Invalid map entry"));
+
+        bb_list.push_back (_cfg->Get_bb (src_id));
+    }
+}
 
 
 //====================================================================
@@ -982,11 +1115,20 @@ BB_NODE*
 CFG::LMV_clone_block (const BB_NODE* src, LMV_CFG_ADAPTOR* adaptor) {
 
   BB_NODE* clone = Create_and_allocate_bb (src->Kind()); 
-  Clone_bb (src->Id(), clone->Id()); 
+  Clone_bb (src->Id(), clone->Id(), FALSE); 
   clone->Set_loopdepth (src->Loopdepth());
   clone->Set_rid_id (src->Rid_id());
+  clone->Set_rid(src->Rid());
+  clone->Set_layout_id(src->layout_Id());
   clone->Set_flag (src->Flag());
-  clone->Set_kind (src->Kind());
+  // When cloning a 'DO' loop we lower the loop back to a while loop
+  // because we cannot manufacture (yet) all the state contained in
+  // the BB_LOOP structure for a 'DO' loop.  The loop should be
+  // raised again during "emit".
+  if ( src->Kind() == BB_DOEND )
+    clone->Set_kind(BB_WHILEEND);
+  else if ( src->Kind() == BB_DOSTEP )
+    clone->Set_kind(BB_GOTO);
 
   // DCE requires non-null PHI-list to transfer dead phi functions
   // from one block to another.
@@ -1000,6 +1142,10 @@ CFG::LMV_clone_block (const BB_NODE* src, LMV_CFG_ADAPTOR* adaptor) {
   if (src->Labnam() != 0) {
     clone->Add_label (this);
     adaptor->Map_cloned_label (src->Labnam(), clone->Labnam());
+    BB_NODE* t = const_cast<BB_NODE*>(src);
+    if (t->Label_stmtrep ()) {
+      clone->Add_label_stmtrep (Mem_pool ());
+    }
   }
 
   return clone;
@@ -1013,6 +1159,8 @@ CFG::LMV_create_alike_block (BB_KIND kind, BB_NODE* model) {
   BB_NODE* new_bb = Create_and_allocate_bb (kind);
   new_bb->Set_loopdepth (model->Loopdepth());
   new_bb->Set_rid_id (model->Rid_id());
+  new_bb->Set_rid(model->Rid());
+  new_bb->Set_layout_id(model->layout_Id());
   new_bb->Set_flag (model->Flag());
 
   // DCE requires non-null PHI-list to transfer dead phi functions
@@ -1082,7 +1230,7 @@ void
 CFG::LMV_clone_loop_body (LMV_CFG_ADAPTOR* adaptor) {
 
   // Clone the body by traversing the prev/next list from header
-  // all way down to the merge block. This traversal style enables us:
+  // all the way down to the merge block. This traversal style enables us:
   //  - to check whether header is the first block in the prev/next list.
   //  - whether there is a "hole" in the loop body in the prev/next list
   //  - ease the work of cloning the prev/next relationship.
@@ -1104,9 +1252,9 @@ CFG::LMV_clone_loop_body (LMV_CFG_ADAPTOR* adaptor) {
     prev_clone_blk = clone_blk;
   } while (src_blk && src_loop_body->MemberP (src_blk));
 
-  // if this assertion should be trigged, check out 
-  // CFG::LMV_eligible_for_multiversioning() to see how come this case 
-  // is not prevent. 
+  // If this assertion should be trigged, check out 
+  // CFG::LMV_eligible_for_multiversioning() to see why this case 
+  // was not prevented earlier.
   //
   Is_True (clone_cnt == src_loop_body->Size(), 
            ("Some blocks in the source loop body are not cloned which suggest "
@@ -1160,12 +1308,15 @@ CFG::LMV_update_internal_labels (LMV_CFG_ADAPTOR* adaptor) {
   BB_NODE* bb;
   FOR_ALL_ELEM(bb, bbs_iter, Init(src_loop->True_body_set())) {
     STMTREP* br = bb->Branch_stmtrep();
-    if (!br) continue;
+    if (!br || !OPERATOR_has_label (br->Opr())) {
+      // HINT: <br> could be a call.
+      continue;
+    }
+
     INT lab = br->Label_number();
     if (lab == 0) continue;
 
-    INT new_lab = adaptor->Get_cloned_label (lab);
-    if (new_lab) {
+    if (INT new_lab = adaptor->Get_cloned_label (lab)) {
       STMTREP* new_br = adaptor->Get_cloned_bb (bb)->Branch_stmtrep(); 
       new_br->Set_label_number (new_lab); 
     }
@@ -1198,7 +1349,8 @@ CFG::LMV_update_internal_labels (LMV_CFG_ADAPTOR* adaptor) {
 
     BB_NODE* clone_pred = adaptor->Get_cloned_bb (bb);
     STMTREP* br = clone_pred->Branch_stmtrep();
-    if (br || br->Label_number() == src_loop->Merge()->Labnam()) {
+    if (br && OPERATOR_has_label (br->Opr()) && 
+        br->Label_number() == src_loop->Merge()->Labnam()) {
       INT t = adaptor->Cloned_loop_merge()->Labnam();
       Is_True (t != 0, 
           ("Label of new merge block BB:%d of source loop BB:%d is not "
@@ -1210,62 +1362,131 @@ CFG::LMV_update_internal_labels (LMV_CFG_ADAPTOR* adaptor) {
   }
 }
 
+BB_LOOP*
+CFG::LMV_clone_BB_LOOP (LMV_CFG_ADAPTOR* adaptor, BB_LOOP* model) {
+
+    BB_LOOP* clone = CXX_NEW (BB_LOOP (NULL,
+                                 adaptor->Get_cloned_bb (model->Start ()),
+  					             adaptor->Get_cloned_bb (model->End ()),
+  					             adaptor->Get_cloned_bb (model->Body ()),
+  					             adaptor->Get_cloned_bb (model->Step ()),
+  					             adaptor->Get_cloned_bb (model->Merge ())),
+  				               Mem_pool());
+  
+    clone->Set_flag (model->Flags());
+  
+    // set flag "well-formed"
+    //
+    clone->Reset_well_formed ();
+    if (model->Well_formed ()) { clone->Set_well_formed (); }
+
+    // set flag "has-entry-guard"
+    //
+    clone->Reset_has_entry_guard();
+    if (model->Has_entry_guard()) { clone->Set_has_entry_guard(); }
+
+    // set flag "Valid_doloop"
+    clone->Reset_valid_doloop ();
+    if (model->Valid_doloop ()) { clone->Set_valid_doloop (); }
+      
+    clone->Set_test_at_entry (model->Test_at_entry ());
+    clone->Set_test_at_exit (model->Test_at_exit ());
+    clone->Set_exit_early (model->Exit_early ());
+
+    if (model->Promoted_do()) { clone->Set_promoted_do(); }
+
+    clone->Set_header_pred_count (model->Header_pred_count ());
+
+    if (WN* idx = model->Index ()) {
+        clone->Set_index (WN_COPY_Tree_With_Map (idx));
+    }
+
+    clone->Set_orig_wn (model->Orig_wn());
+
+    BB_NODE* prehdr = (prehdr = model->Preheader ()) ? 
+                      adaptor->Get_cloned_bb (prehdr) : NULL; 
+    clone->Set_preheader (prehdr);
+
+    BB_NODE* header = (header = model->Header()) ? 
+                      adaptor->Get_cloned_bb (header) : NULL; 
+    clone->Set_header (header);
+
+    BB_NODE* tail = (tail = model->Tail ()) ? 
+                     adaptor->Get_cloned_bb (tail) : NULL;
+    clone->Set_tail (tail);
+  
+    return clone;
+}
+
 /////////////////////////////////////////////////////////////////////////////
 //
-//  Create BB_LOOP for the cloned loop; update chind/parent/sibling of 
-// related BB_LOOPs; associate some cloned blocks with newly created BB_LOOP.
+//  Create BB_LOOPs for the cloned loop nest and return the BB_LOOP corresponding
+// the outmost src loop.
 // 
 /////////////////////////////////////////////////////////////////////////////
 //
 BB_LOOP*
-CFG::LMV_clone_BB_LOOP (LMV_CFG_ADAPTOR* adaptor) {
+CFG::LMV_clone_BB_LOOPs (LMV_CFG_ADAPTOR* adaptor) {
 
-  BB_LOOP* src_loop = adaptor->Src_loop();
-  WN* idx = src_loop->Index();
-  BB_NODE* start = src_loop->Start ();
-  BB_NODE* end   = src_loop->End ();
-  BB_NODE* body  = src_loop->Body ();
-  BB_NODE* step  = src_loop->Step ();
+  // step 1: clone BB_LOOPs for the cloned loop nest. 
+  //
+  std::list<BB_NODE*> src_blks;
+  adaptor->Get_all_src_bb (src_blks);
 
-  if (start) start = adaptor->Get_cloned_bb (start);
-  if (end)   end   = adaptor->Get_cloned_bb (end);
-  if (body)  body  = adaptor->Get_cloned_bb (body);
-  if (step)  step  = adaptor->Get_cloned_bb (step);
+  typedef std::map<BB_LOOP*, BB_LOOP*> BB_LOOP_MAP;
+  BB_LOOP_MAP bb_loop_map;
 
-  BB_LOOP* dup_loop = CXX_NEW (BB_LOOP(idx, start, end, body, step, 
-                               adaptor->Cloned_loop_merge()), 
-                               Mem_pool());
+  for (std::list<BB_NODE*>::iterator iter = src_blks.begin (), 
+       iter_end = src_blks.end ();
+       iter != iter_end; iter++) {
 
-  BB_NODE_SET* t = CXX_NEW (BB_NODE_SET(Last_bb_id(), this, Mem_pool(), 
-                            BBNS_EMPTY), Mem_pool());
-  dup_loop->Set_true_body_set (t);
- 
-  dup_loop->Set_parent (src_loop->Parent());
-  dup_loop->Set_loopstmt (src_loop->Loopstmt());
-  dup_loop->Set_wn_trip_count (src_loop->Wn_trip_count());
-  dup_loop->Set_flag (src_loop->Flags());
-  dup_loop->Set_orig_wn (src_loop->Orig_wn());
-
-  if (src_loop->Promoted_do()) { dup_loop->Set_promoted_do(); }
-  if (src_loop->Well_formed()) { dup_loop->Set_well_formed(); }
-  if (src_loop->Has_entry_guard()) { dup_loop->Set_has_entry_guard(); }
-  if (src_loop->Valid_doloop()) { dup_loop->Set_valid_doloop(); }
-
-  dup_loop->Set_header (adaptor->Cloned_loop_header ());
-  dup_loop->Set_preheader (adaptor->Cloned_loop_preheader ());
-  dup_loop->Set_size_estimate (src_loop->Size_estimate());
-
-  // associate the cloned BB_LOOP with some blocks 
-  BB_NODE_SET_ITER bb_iter;
-  BB_NODE* bb;
-  FOR_ALL_ELEM(bb, bb_iter, Init(src_loop->True_body_set ())) {
-    if (bb->Loop()) {
-      BB_NODE* blk = adaptor->Get_cloned_bb (bb);
-      blk->Set_loop (dup_loop); 
+    BB_NODE* src_blk = *iter;
+    if (BB_LOOP* loop = src_blk->Loop ()) {
+      BB_LOOP* cloned_loop = bb_loop_map[loop];
+      if (!cloned_loop) {
+        bb_loop_map[loop] = cloned_loop = LMV_clone_BB_LOOP (adaptor, loop);
+      }
+      adaptor->Get_cloned_bb (src_blk)->Set_loop (cloned_loop); 
     }
   }
 
-  return dup_loop;
+  // step 2: Fix cloned BB_LOOPs; clone BB_LOOP hierarchy 
+  //
+  for (BB_LOOP_MAP::iterator iter = bb_loop_map.begin (),
+       iter_end = bb_loop_map.end (); 
+       iter != iter_end; iter++) {
+
+    BB_LOOP* src = (*iter).first;
+    BB_LOOP* dest = (*iter).second;
+
+    // HINT: loop-merge block of outermost look is likely not cloned, 
+    //    they are shared with src outmost loop.
+    //
+    if (!dest->Merge () && src->Merge ()) {
+      dest->Set_merge (src->Merge ());
+    }
+
+    if (BB_LOOP* parent = src->Parent ()) {
+      BB_LOOP_MAP::iterator iter = bb_loop_map.find (parent); 
+      dest->Set_parent (iter != bb_loop_map.end () ? (*iter).second : parent);
+    }
+
+    if (BB_LOOP* child = src->Child ()) {
+      BB_LOOP_MAP::iterator iter = bb_loop_map.find (child); 
+      dest->Set_child (iter != bb_loop_map.end () ? (*iter).second : child);
+    }
+
+    if (BB_LOOP* sibling = src->Next ()) {
+      BB_LOOP_MAP::iterator iter = bb_loop_map.find (sibling); 
+      // if <iter> is null, it means the <src> is the outmost loop we are 
+      // cloning, set the sibling to NULL. The laber CFG::Analyze_loops() will
+      // reestablish the prev/next link.
+      //
+      dest->Set_Next (iter != bb_loop_map.end () ? (*iter).second : NULL);
+    }
+  }
+
+  return bb_loop_map[adaptor->Src_loop()];
 }
 
 void
@@ -1278,6 +1499,8 @@ CFG::LMV_clone_BB_IFINFO (LMV_CFG_ADAPTOR* adaptor) {
     if (bb->Kind() != BB_LOGIF) { continue ; }
 
     BB_IFINFO* ifinfo = bb->Ifinfo();
+    if (!ifinfo) { continue; }
+
     BB_NODE *cond_blk, *then_blk, *else_blk, *merge_blk;
     cond_blk = adaptor->Get_cloned_bb (ifinfo->Cond());
     then_blk = adaptor->Get_cloned_bb (ifinfo->Then());
@@ -1346,10 +1569,20 @@ CFG::LMV_gen_precondioning_stuff (LMV_CFG_ADAPTOR* adaptor) {
   BB_NODE* t;
   FOR_ALL_ELEM (t, pred_iter, Init(orig_merge->Pred())) {
     t->Replace_succ (orig_merge, new_merge);
+    if (OPT_FEEDBACK* fb = Feedback ()) {
+      fb->Add_node (new_merge->Id ());
+      fb->Move_edge_dest (t->Id(), orig_merge->Id(), new_merge->Id());
+    }
   }
+
   new_merge->Set_pred (orig_merge->Pred());
   orig_merge->Set_pred (NULL);
   Connect_predsucc (new_merge, orig_merge);
+  if (OPT_FEEDBACK* fb = Feedback ()) {
+    fb->Add_edge (new_merge->Id(), orig_merge->Id(), 
+                  FB_EDGE_OUTGOING,
+                  fb->Get_node_freq_in (new_merge->Id()));
+  }
 
   // update the labels of branches of merge block's predecessors.
   //
@@ -1359,7 +1592,8 @@ CFG::LMV_gen_precondioning_stuff (LMV_CFG_ADAPTOR* adaptor) {
     INT new_lab = new_merge->Labnam();
     FOR_ALL_ELEM (t, pred_iter, Init(new_merge->Pred())) {
       STMTREP* br = t->Branch_stmtrep();
-      if (br && br->Label_number () == lab) {
+      if (br && OPERATOR_has_label (br->Opr()) && 
+          br->Label_number () == lab) {
         br->Set_label_number (new_lab);
       }
     }
@@ -1372,7 +1606,9 @@ CFG::LMV_gen_precondioning_stuff (LMV_CFG_ADAPTOR* adaptor) {
   // step 2: create and insert preconditioning 
   //
   BB_NODE* orig_phdr = src_loop->Preheader();
-  BB_NODE* precond = Create_and_allocate_bb (BB_LOGIF);
+  BB_NODE* precond = LMV_create_alike_block(BB_LOGIF,orig_phdr);
+  precond->Set_flag(0);
+  adaptor->Set_precond_blk (precond);
 
   // splice into pred/next list and permute the precond right before 
   // original preheader.
@@ -1382,10 +1618,40 @@ CFG::LMV_gen_precondioning_stuff (LMV_CFG_ADAPTOR* adaptor) {
   BB_NODE* pred;
   FOR_ALL_ELEM (pred, pred_iter, Init(orig_phdr->Pred())) {
     pred->Replace_succ (orig_phdr, precond); 
+    if (OPT_FEEDBACK* fb = Feedback ()) {
+      fb->Add_node (precond->Id ());  
+      fb->Move_edge_dest (pred->Id(), orig_phdr->Id(), precond->Id());
+    }
+
+    // If the preheader is the then/else of a lowered IF/THEN/ELSE
+    // construct then we must update the BB_IFINFO on the predecessor
+    if (pred->Kind()==BB_LOGIF) {
+      if (pred->If_then() == orig_phdr)
+        pred->Ifinfo()->Set_then(precond);
+      else if (pred->If_else() == orig_phdr)
+        pred->Ifinfo()->Set_else(precond);
+    }
   }
   precond->Set_pred (orig_phdr->Pred ());
   orig_phdr->Set_pred (NULL);
   Connect_predsucc (precond, orig_phdr);
+
+  // Likewise if the preheader is the merge point of a lowered IF/THEN/ELSE
+  // then we must update the merge point on the immediate dominator
+  BB_NODE *idom = orig_phdr->Idom();
+  while (idom) {
+    if (idom->Kind()==BB_LOGIF && idom->If_merge() == orig_phdr) {
+      idom->Ifinfo()->Set_merge(precond);
+      break;
+    }
+    idom = idom->Idom();
+  }
+
+  // If the original preheader is the body of the parent loop we need
+  // to make the precond block the new body
+  BB_LOOP *parent_loop = src_loop->Parent();
+  if (parent_loop && parent_loop->Body() == orig_phdr)
+    parent_loop->Set_body(precond);
 
   // Append the preconditioning branch 
   
@@ -1443,12 +1709,110 @@ CFG::LMV_gen_precondioning_stuff (LMV_CFG_ADAPTOR* adaptor) {
   orig_merge->Set_prev (adaptor->Cloned_loop_merge ());
   adaptor->Cloned_loop_merge ()->Set_next (orig_merge);
    
+  // step 5: update merge block of cloned BB_LOOP
+  // 
+  if (adaptor->Cloned_loop ()) {
+    adaptor->Cloned_loop ()->Set_merge (adaptor->Cloned_loop_merge ());
+  }
+
   if (adaptor->Trace()) {
     fprintf (TFile, "Preconditioning block is BB:%d\n", precond->Id());
     fprintf (TFile, "New merge for source loop is BB:%d\n", new_merge->Id());
   }
 }
 
+void
+CFG::LMV_clone_frequency (LMV_CFG_ADAPTOR* adaptor) {
+
+  OPT_FEEDBACK* fb = Feedback ();
+  if (fb == NULL) return;
+   
+  BB_LOOP* src_loop = adaptor->Src_loop ();
+  std::list<BB_NODE*> all_src_blk;
+  std::map<BB_NODE*, BB_NODE*> clone_map;
+
+  // step 1: collect all src blocks
+  //
+  {
+    BB_NODE_SET* body = src_loop->True_body_set(); 
+    BB_NODE* blk;
+    BB_NODE_SET_ITER iter;
+    FOR_ALL_ELEM (blk, iter, Init (body)) {
+      all_src_blk.push_back (blk);
+      clone_map[blk] = adaptor->Get_cloned_bb (blk);
+    }
+
+    blk = src_loop->Preheader ();
+    all_src_blk.push_back (blk);
+    clone_map[blk] = adaptor->Cloned_loop_preheader ();
+
+    blk = src_loop->Merge ();
+    all_src_blk.push_back (blk);
+    clone_map[blk] = adaptor->Cloned_loop_merge ();
+  }
+
+  // step 2: allocate a feedback block for each newly created 
+  //
+  for (std::map<BB_NODE*, BB_NODE*>::iterator iter = clone_map.begin (), 
+       iter_e = clone_map.end (); iter != iter_e; iter++) {
+    BB_NODE* blk = (*iter).second;  
+    fb->Add_node (blk->Id());
+  }
+
+  // step 3: clone edge frequency.
+  //
+  for (std::list<BB_NODE*>::iterator iter = all_src_blk.begin (), 
+       iter_e = all_src_blk.end (); iter != iter_e; iter++) {
+
+    BB_NODE* blk = *iter;    
+    BB_NODE* cloned = clone_map[blk];
+    BB_NODE* succ;
+    BB_NODE* cloned_succ;
+    BB_LIST_ITER succ_iter;
+	FOR_ALL_ELEM (succ, succ_iter, Init (blk->Succ())) {
+      cloned_succ = clone_map[succ];
+      if (!cloned_succ) {
+        Is_True (blk == src_loop->Merge(), ("internal inconsistency"));
+        cloned_succ = succ;
+      }
+
+      if (fb->Edge_has_freq (blk->Id(), succ->Id())) {
+        fb->Clone_edge (blk->Id(), succ->Id(), cloned->Id(), 
+                        cloned_succ->Id(), 0.5f);
+      }
+    }
+  }
+
+  // step 4: set precondition outgoing edge freq
+  //
+  {
+    FB_FREQ freq = fb->Get_edge_freq (src_loop->Preheader()->Id(), 
+                                      src_loop->Header()->Id ());
+    BB_NODE* precond = adaptor->Precond_blk();
+    BB_NODE* succ = precond->Nth_succ(0);
+    IDTYPE src_id, dst_id;
+    src_id = precond->Id();
+    dst_id = succ->Id();
+
+    fb->Delete_edge (src_id, dst_id);
+    fb->Add_edge (src_id, dst_id, 
+                  precond->Next () != succ ? 
+                  FB_EDGE_BRANCH_TAKEN : FB_EDGE_BRANCH_NOT_TAKEN, freq);
+
+    succ = precond->Nth_succ(1);
+    dst_id = succ->Id();
+    fb->Delete_edge (src_id, dst_id);
+    fb->Add_edge (src_id, dst_id, 
+                  precond->Next () != succ ? 
+                  FB_EDGE_BRANCH_TAKEN : FB_EDGE_BRANCH_NOT_TAKEN, freq);
+  }
+}
+
+// I don't remember all reasons for not reusing CFG::Clone_bbs(). I recall 
+// that CFG::Clone_bbs() is bit awkward as it requires that the source BBs must
+// be linked with next/prev field. This requirement may not be satisfied 
+// in our case.
+//
 void
 CFG::LMV_clone_loop (LMV_CFG_ADAPTOR* adaptor) {
  
@@ -1465,9 +1829,11 @@ CFG::LMV_clone_loop (LMV_CFG_ADAPTOR* adaptor) {
   LMV_clone_loop_body (adaptor);
 
   // step 2. Clone the preheader
-  //
-  BB_NODE* new_phdr = LMV_create_alike_block (BB_GOTO, src_loop->Preheader());
-  Clone_bb (src_loop->Preheader()->Id(), new_phdr->Id());
+  BB_NODE *new_phdr = LMV_clone_block(src_loop->Preheader(),adaptor);
+  // The loop preheader is lowered to a GOTO. If the loop is a DO loop
+  // all of the DO* blocks will be lowered.  This is done because we cannot
+  // properly manufacture a new BB_LOOP for a DO loop.
+  new_phdr->Set_kind(BB_GOTO);
   adaptor->Set_cloned_loop_preheader (new_phdr);
 
   // prepend to the prev/next list
@@ -1481,7 +1847,8 @@ CFG::LMV_clone_loop (LMV_CFG_ADAPTOR* adaptor) {
   new_merge->Set_flag (0);
   adaptor->Set_cloned_loop_merge (new_merge);
   if (src_loop->Merge()->Labnam()) {
-    new_merge->Add_label (this);
+    new_merge->Add_label(this);
+    adaptor->Map_cloned_label(src_loop->Merge()->Labnam(),new_merge->Labnam());
   }
 
   // append to the prev/next list
@@ -1505,7 +1872,7 @@ CFG::LMV_clone_loop (LMV_CFG_ADAPTOR* adaptor) {
 
   // step 6: Generate a BB_LOOP structure for the cloned loop.
   //
-  BB_LOOP* dup_BB_LOOP = LMV_clone_BB_LOOP (adaptor);
+  BB_LOOP* dup_BB_LOOP = LMV_clone_BB_LOOPs (adaptor);
   adaptor->Set_cloned_loop (dup_BB_LOOP);
 
   // step 7: update BB_IFINFO associated with block of kind BB_LOGIF 
@@ -1514,4 +1881,9 @@ CFG::LMV_clone_loop (LMV_CFG_ADAPTOR* adaptor) {
   // step 8: Generate preconditiong block and splic then/else clause in the CFG.
   //
   LMV_gen_precondioning_stuff (adaptor);
+
+  // step 9: copy freq feedback
+  if (Feedback ()) {
+    LMV_clone_frequency (adaptor);
+  }
 }

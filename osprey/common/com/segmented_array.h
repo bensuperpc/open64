@@ -1,3 +1,7 @@
+/*
+ * Copyright (C) 2010 Advanced Micro Devices, Inc.  All Rights Reserved.
+ */
+
 /* -*- c++ -*-
  *
  * Copyright 2003, 2004, 2005, 2006 PathScale, Inc.  All Rights Reserved.
@@ -359,9 +363,9 @@ SEGMENTED_ARRAY<T,block_size>::Update_Map(T    *marker,
 {
   do {
     map.push_back(std::pair<T*, BOOL>(marker, own_memory));
-    // own_memory = FALSE;
     new_size -= block_size;
     marker += block_size;
+    own_memory = FALSE;
   } while (new_size);
 } // SEGMENTED_ARRAY<T,block_size>::Update_Map
 
@@ -535,25 +539,6 @@ For_all_entries (SEGMENTED_ARRAY<T, block_size>& array, const OP &op,
 // The following function is ifdefed out because, until we have
 // partial ordering of function templates, the compiler will flag it
 // as ambiguous.
-#if 0
-
-template <class T, UINT block_size, class OP>
-inline void
-For_all_entries (const SEGMENTED_ARRAY<T, block_size>& array, const OP &op,
-		 UINT32 first = 0)
-{
-    UINT last = array.size ();
-
-    while (first < last) {
-	const T *block = &array[first];
-	UINT size = array.Get_block_size (first);
-	for (UINT j = 0; j < size; ++j, ++block)
-	    op (first + j, block);
-	first += size;
-    }
-}
-
-#endif
 
 template <class T, UINT block_size, class OP>
 inline void

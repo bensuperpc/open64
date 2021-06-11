@@ -37,7 +37,6 @@
 */
 
 
-#define __STDC_LIMIT_MACROS
 #include <stdint.h>
 #include <alloca.h>
 
@@ -64,7 +63,7 @@ static void Get_IPA_Object_Name(){
 
   int i;
   for(i=0; bname[i] != '\0'; i++) {
-    if ( bname[i] == '-' ) IPA_Object_Name[i] = '_';
+    if ( !isalnum(bname[i]) ) IPA_Object_Name[i] = '_';
     else IPA_Object_Name[i] = bname[i];
   }
   IPA_Object_Name[i] = '\0';

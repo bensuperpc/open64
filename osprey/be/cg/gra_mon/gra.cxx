@@ -1,4 +1,8 @@
 /*
+ * Copyright (C) 2008-2009 Advanced Micro Devices, Inc.  All Rights Reserved.
+ */
+
+/*
 
   Copyright (C) 2000, 2001 Silicon Graphics, Inc.  All Rights Reserved.
 
@@ -434,4 +438,29 @@ GRA_Allocate_Global_Registers( BOOL is_region )
   GRA_pu_num++;
 
   Stop_Timer ( T_GRA_CU );
+}
+
+/////////////////////////////////////
+void
+GRU_Fuse_Global_Spills( BOOL is_region )
+/////////////////////////////////////
+//  See interface description.
+/////////////////////////////////////
+{
+#ifdef TARG_X8664
+  Set_Error_Phase ("Fuse Global Spills");
+  Start_Timer (T_GRU_CU);
+
+  // Dump out OPs before GRA
+  if (Get_Trace(TKIND_IR, TP_GRA, REGION_First_BB))
+    Trace_IR(TP_GRU, "GRU0", NULL);
+
+  GRU_Fuse();      // Actually try to remove some spills.
+
+  // Dump out OPs after GRA
+  if (Get_Trace(TKIND_IR, TP_GRU, REGION_First_BB))
+    Trace_IR(TP_GRU, "GRU", NULL);
+
+  Stop_Timer ( T_GRU_CU );
+#endif
 }

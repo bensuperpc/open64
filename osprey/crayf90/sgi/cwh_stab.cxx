@@ -1,4 +1,10 @@
 /*
+ * Copyright (C) 2010 Advanced Micro Devices, Inc.  All Rights Reserved.
+ */
+/*
+ * Copyright (C) 2008. PathScale, LLC. All Rights Reserved.
+ */
+/*
  *  Copyright (C) 2006. QLogic Corporation. All Rights Reserved.
  */
 
@@ -393,10 +399,6 @@ fei_proc_def(char         *name_string,
     }
   }
 
-#if 0
-  if (sym_class == Fort_Blockdata)
-    DevWarn(("TODO_NEW_SYMTAB: blockdata"));
-#endif
 
   if (sym_class == F90_Module) {
      cwh_add_to_module_files_table(name_string);
@@ -553,8 +555,8 @@ fei_arith_con(TYPE type, SLONG *start)
   TYPE_ID bt;
   TCON    tcon;
   QUAD_TYPE q,q1 ;
-  float   * f ; 
-  double  * d ;
+  float   *f;
+  double  *d;
 #ifdef KEY /* Bug 10177 */
   STB_pkt * r = 0;
 #else /* KEY Bug 10177 */
@@ -608,14 +610,14 @@ fei_arith_con(TYPE type, SLONG *start)
       tcon = Host_To_Targ_Quad(q);
       break ; 
 
-    case MTYPE_C4 :  
-      f  = (float *) start ;
-      tcon = Host_To_Targ_Complex_4 ( bt, *f, *(f + 1));
+    case MTYPE_C4 : 
+      f = (float *)start;
+      tcon = Host_To_Targ_Complex_4 ( bt, *f, *(f+1) );
       break ;
 
     case MTYPE_C8 :  
-      d  = (double *) start ;
-      tcon = Host_To_Targ_Complex( bt, *d, *(d + 1));
+      d = (double *) start;
+      tcon = Host_To_Targ_Complex( bt, *d, *(d+1) );
       break ;
 
     case MTYPE_CQ :  
@@ -960,9 +962,6 @@ fei_object(char * name_string,
   /* into ptr TY of FUNCTION returning  ty  */
      
   if ((sym_class == Dummy_Procedure) || 
-#ifdef KEY /* Bug 14150 */
-      test_flag(flag_bits, FEI_OBJECT_PASS_BY_VALUE) ||
-#endif /* KEY Bug 14150 */
       (sym_class == Hosted_Dummy_Procedure))  {
 
     Set_ST_is_value_parm(st);
@@ -997,6 +996,10 @@ fei_object(char * name_string,
     Set_ST_is_const_var(st);
   }
 
+  if (test_flag(flag_bits,FEI_SEG_THREADPRIVATE)) {
+     Set_ST_is_thread_private(st);
+  }
+
   /* if dummy, name is the address. CQ, array, character results  */
   /* are addresses. Struct temp addresses should be values if 16B */
   /* or less and are converted here rather than FE                */
@@ -1006,6 +1009,9 @@ fei_object(char * name_string,
 #endif /* KEY Bug 11574 */
   if (ST_sclass(st) == SCLASS_FORMAL) {
     BOOL formal = TRUE;
+    if (test_flag(flag_bits, FEI_OBJECT_PASS_BY_VALUE)) {
+      Set_ST_is_value_parm(st);
+    }
 
     if (test_flag(flag_bits,FEI_OBJECT_RESULT_TEMP)) {
 
@@ -1949,7 +1955,7 @@ cwh_stab_adjust_name(ST * st)
   } else {
 
     c = '.' ;
-    p = strchr(s,c);
+    p = (char*)strchr(s,c);
     
     if (p != NULL) {
 

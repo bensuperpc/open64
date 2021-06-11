@@ -1,5 +1,7 @@
 # -*- Makefile -*-
 #
+#  Copyright (C) 2009 Advanced Micro Devices, Inc.  All Rights Reserved.
+#
 #  Copyright (C) 2000, 2001 Silicon Graphics, Inc.  All Rights Reserved.
 #
 #  This program is free software; you can redistribute it and/or modify it
@@ -231,14 +233,21 @@ LLDOPTS = -Wl,--export-dynamic
 endif
 LLDLIBS = 
 
-default: first $(TARGETS) last
+.PHONY: default first last install
+
+default:
+	$(MAKE) first
+	$(MAKE) $(TARGETS)
+	$(MAKE) last
 
 #----------------------------------------------------------------------
 #  The commands in this section are done BEFORE any other target is
 #  built.
 #----------------------------------------------------------------------
 first:
+ifndef SKIP_DEP_BUILD
 	$(call submake,$(TARG_BE_DIR))
+endif
 
 #----------------------------------------------------------------------
 #  The commands in this section are done AFTER every other target is
@@ -260,7 +269,7 @@ endif
 
 ifneq ($(BUILD_VARIANT), STATIC)
 lw_inline: $(IPA_OBJS) $(IPA_CXX_OBJS)
-	if ! test -a be.so; then ln -sf $(TARG_BE_DIR)/be.so .; fi
+	if ! test -e be.so; then ln -sf $(TARG_BE_DIR)/be.so .; fi
 	$(link.c++f) -o $@ $(IPA_OBJS) $(IPA_CXX_OBJS) be.so  $(LDFLAGS)
 else
 lw_inline: $(IPA_OBJS) $(IPA_CXX_OBJS) $(TARG_BE_DIR)/libbe.a

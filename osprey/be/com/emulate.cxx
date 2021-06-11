@@ -1,5 +1,13 @@
 /*
- *  Copyright (C) 2006. QLogic Corporation. All Rights Reserved.
+ * Copyright (C) 2008-2011 Advanced Micro Devices, Inc.  All Rights Reserved.
+ */
+
+/*
+ * Copyright (C) 2007, 2008 PathScale, LLC.  All Rights Reserved.
+ */
+
+/*
+ *  Copyright (C) 2006, 2007. QLogic Corporation. All Rights Reserved.
  */
 
 /*
@@ -73,6 +81,7 @@
 #include "fb_whirl.h"
 #include "be_symtab.h"
 #include "intrn_info.h"
+#include "alias_analyzer.h"
 
 
 #if (__GNUC__ == 2)
@@ -147,6 +156,11 @@ typedef enum
   EM_Q_LT,		/* quad less than */
   EM_SNGL_Q,		/* convert quad to single */
   EM_DBLE_Q,		/* convert quad to double */
+#ifdef TARG_LOONGSON
+  EM_Q_NEG,             /* quad negate */
+  EM_KU_QINT,		/* convert quad to unsigned 64 bits int */
+  EM_JU_QINT,		/* convert quad to unsigned 32 bits int */
+#endif
   EM_KI_QINT,		/* convert quad to 64 bits int */
   EM_JI_QINT,		/* convert quad to 32 bits int */
   EM_Q_EXT,		/* convert float to quad */
@@ -280,6 +294,37 @@ const EM_ROUTINES em_routines[]=
   EM_D_TRUNC_LL_D,  "__d_trunc_ll_d",PURE_NSE,  COERCE_none,
   EM_LL_BIT_EXTRACT,"__ll_bit_extract",PURE_NSE,COERCE_none,
   EM_LL_BIT_INSERT, "__ll_bit_insert",PURE_NSE, COERCE_none,
+#ifdef TARG_LOONGSON
+  EM_Q_ABS,         "fabsl",         PURE_NSE,  COERCE_none,
+  EM_Q_SQRT,        "__qsqrt",       PURE_NSE,  COERCE_none,
+  EM_Q_ADD,         "__addtf3",      PURE_NSE,  COERCE_none,
+  EM_Q_SUB,         "__subtf3",      PURE_NSE,  COERCE_none,
+  EM_Q_MPY,         "__multf3",      PURE_NSE,  COERCE_none,
+  EM_Q_DIV,         "__divtf3",      PURE_NSE,  COERCE_none,
+  EM_Q_MAX1,        "__q_max1",      PURE_NSE,  COERCE_none,
+  EM_Q_MIN1,        "__q_min1",      PURE_NSE,  COERCE_none,
+  EM_Q_EQ,          "__eqtf2",       PURE_NSE,  COERCE_none,
+  EM_Q_NE,          "__netf2",       PURE_NSE,  COERCE_none,
+  EM_Q_GE,          "__getf2",       PURE_NSE,  COERCE_none,
+  EM_Q_GT,          "__gttf2",       PURE_NSE,  COERCE_none,
+  EM_Q_LE,          "__letf2",       PURE_NSE,  COERCE_none,
+  EM_Q_LT,          "__lttf2",       PURE_NSE,  COERCE_none,
+  EM_SNGL_Q,        "__trunctfsf2",  PURE_NSE,  COERCE_none,
+  EM_DBLE_Q,        "__trunctfdf2",  PURE_NSE,  COERCE_none,
+  EM_Q_NEG,         "__negtf2",      PURE_NSE,  COERCE_none,
+  EM_KU_QINT,       "__fixunstfdi",  PURE_NSE,  COERCE_none,
+  EM_JU_QINT,       "__fixunstfsi",  PURE_NSE,  COERCE_none,
+  EM_KI_QINT,       "__fixtfdi",     PURE_NSE,  COERCE_none,
+  EM_JI_QINT,       "__fixtfsi",     PURE_NSE,  COERCE_none,
+  EM_Q_EXT,         "__extendsftf2", PURE_NSE,  COERCE_none,
+  EM_Q_EXTD,        "__extenddftf2", PURE_NSE,  COERCE_none,
+  EM_Q_FLOTK,       "__floatditf",   PURE_NSE,  COERCE_none,
+  EM_Q_FLOTKU,      "__floatunditf", PURE_NSE,  COERCE_none,
+  EM_Q_FLOTJ,       "__floatsitf",   PURE_NSE,  COERCE_none,
+  EM_Q_FLOTJU,      "__floatunsitf", PURE_NSE,  COERCE_none,
+  EM_KIQNNT,        "__kiqnnt",      PURE_NSE,  COERCE_none,
+  EM_JIQNNT,        "__jiqnnt",      PURE_NSE,  COERCE_none,
+#else  
   EM_Q_ABS,         "__qabs",        PURE_NSE,  COERCE_none,
   EM_Q_SQRT,        "__qsqrt",       PURE_NSE,  COERCE_none,
   EM_Q_ADD,         "__q_add",       PURE_NSE,  COERCE_none,
@@ -304,6 +349,7 @@ const EM_ROUTINES em_routines[]=
   EM_Q_FLOTKU,      "__q_flotku",    PURE_NSE,  COERCE_none,
   EM_Q_FLOTJ,       "__q_flotj",     PURE_NSE,  COERCE_none,
   EM_Q_FLOTJU,      "__q_flotju",    PURE_NSE,  COERCE_none,
+#endif
   EM_KIQNNT,        "__kiqnnt",      PURE_NSE,  COERCE_none,
   EM_JIQNNT,        "__jiqnnt",      PURE_NSE,  COERCE_none,
   EM_C4_SQRT,       "__csqrt",       PURE_NSE,  COERCE_split_complex,
@@ -546,7 +592,7 @@ static TY_IDX aux_compute_alignment(WN *tree);
  * ====================================================================
  */
 static INT32 em_exp_int_max = 256;
-
+static struct ALIAS_MANAGER *alias_manager = NULL;
 #define MAX_INTRINSIC_ARGS      20
 
 
@@ -580,6 +626,11 @@ TYPE_ID INTR_return_mtype(INTRINSIC id)
   case IRETURN_C4:	return MTYPE_C4;
   case IRETURN_C8:	return MTYPE_C8;
   case IRETURN_CQ:	return MTYPE_CQ;
+#if defined(TARG_X8664)
+  case IRETURN_M8I1:    return MTYPE_M8I1;
+  case IRETURN_M8I2:    return MTYPE_M8I2;
+  case IRETURN_M8I4:    return MTYPE_M8I4;
+#endif
   case IRETURN_V:	return MTYPE_V;
   case IRETURN_PV:
   case IRETURN_PU1:
@@ -682,12 +733,17 @@ static EMULATION WN_emulation(WN *tree)
       case OPR_SELECT:
       case OPR_LDID:
       case OPR_CONST:
+#ifndef TARG_LOONGSON
       case OPR_NEG:
+#endif    
 	break;
 
       case OPR_ABS:	return EM_Q_ABS;
       case OPR_ADD:	return EM_Q_ADD;
       case OPR_SUB:	return EM_Q_SUB;
+#ifdef TARG_LOONGSON
+      case OPR_NEG:	return EM_Q_NEG;
+#endif
       case OPR_MPY:	return EM_Q_MPY;
       case OPR_DIV:	return EM_Q_DIV;
       case OPR_MAX:	return EM_Q_MAX1;
@@ -731,6 +787,10 @@ static EMULATION WN_emulation(WN *tree)
 	{
 	case MTYPE_I4:	return EM_JI_QINT;
 	case MTYPE_I8:	return EM_KI_QINT;
+#ifdef TARG_LOONGSON
+	case MTYPE_U4:	return EM_JU_QINT;
+	case MTYPE_U8:	return EM_KU_QINT;
+#endif
 	}
 	break;
       case OPR_CEIL:
@@ -790,10 +850,25 @@ static WN *checkForZero(WN *block, TYPE_ID type, PREG_NUM xN, WN *if_else, WN *v
 
     Is_True(MTYPE_is_float(type), ("unexpected type"));
 
-    cond =  WN_EQ(type, 
+#ifdef TARG_X8664
+    if (type != MTYPE_V16C8)
+      cond =  WN_EQ(type, 
 		  WN_LdidPreg(type, xN),
 		  WN_Zerocon(type));
+    else
+    {
+      cond = WN_LAND( 
+        WN_EQ(MTYPE_F8, WN_Unary(OPR_FIRSTPART, MTYPE_F8, 
+          WN_LdidPreg(type, xN)), WN_Zerocon(MTYPE_F8)), 
+        WN_EQ(MTYPE_F8, WN_Unary(OPR_SECONDPART, MTYPE_F8, 
+          WN_LdidPreg(type, xN)), WN_Zerocon(MTYPE_F8))); 
+    }
+#else
+    cond =  WN_EQ(type, 
+ 		  WN_LdidPreg(type, xN),
+ 		  WN_Zerocon(type));
 
+#endif
     IF = WN_CreateIf(cond, if_then, if_else);
     WN_INSERT_BlockLast(block, IF);
   }
@@ -1273,6 +1348,12 @@ static WN *em_exp_float(WN *block, WN *x, WN *pow, TYPE_ID type)
 	return NULL;
       }
     }
+
+    /* Workaround for bug 688.
+     */
+    if (MTYPE_is_vector(type))
+      return NULL;
+
     n = Targ_To_Host_Float(con);
     sqrt = rsqrt = FALSE;
 #ifdef KEY
@@ -1320,15 +1401,9 @@ static WN *em_exp_float(WN *block, WN *x, WN *pow, TYPE_ID type)
       else
 	sqrt_75 = TRUE;
 
-      // non-constant float x could be negative; 
-      // so it could be error to fold the INTRN_EXPEXPR to sqrt 
-#define FLOAT_CANNOT_BE_FOLDED(x) (!Is_Constant (x) || Targ_To_Host_Float (Const_Val (x)))
-      if (FLOAT_CANNOT_BE_FOLDED(x))
-        return NULL; 
-
       x_copy = WN_COPY_Tree(x);
     }    
-#if !defined (TARG_MIPS) && !defined (TARG_IA64)
+#if !defined (TARG_MIPS) && !defined (TARG_IA64) && !defined(TARG_PPC32) && !defined(TARG_LOONGSON)
     else if (ABS((trunc(n)+1.0/3) - n) < .0000001 && 
              ! (Is_Target_64bit() && !Is_Target_Anyx86() && OPT_Fast_Math))
     { // the pow in fast_math is faster than cbrt, so no point converting
@@ -1447,9 +1522,6 @@ static WN *em_exp_float(WN *block, WN *x, WN *pow, TYPE_ID type)
 	return NULL;
 #endif 
 
-      if (FLOAT_CANNOT_BE_FOLDED(x_copy))
-	return NULL;
-
       if (tree)
       {
 	/*
@@ -1521,7 +1593,7 @@ static WN *em_exp_int(WN *block, WN *x, WN *pow, TYPE_ID type)
     INT32	absN = ABS(n);
     WN		*exp=  NULL;
 
-    if (em_exp_int_max < absN)
+    if (em_exp_int_max < absN || absN < 0) //in case absN == 0x80000000
       return NULL;
 
     switch(n) {
@@ -2107,7 +2179,8 @@ static WN *em_complex_exp(WN *block, WN *x)
 {
   TYPE_ID	type = WN_rtype(x);
   TYPE_ID	rtype = Mtype_complex_to_real(type);
-  PREG_NUM	zN, expN;
+  PREG_NUM	zN, expN, iN;
+  BOOL		paired_input = FALSE;
   WN		*cosine,*sine;
   WN		*exp;
   WN		*realpart, *imagpart ;
@@ -2119,11 +2192,16 @@ static WN *em_complex_exp(WN *block, WN *x)
    case MTYPE_F8: expID = INTRN_F8EXP; cosID = INTRN_F8COS; sinID = INTRN_F8SIN; break;
    case MTYPE_FQ: expID = INTRN_FQEXP; cosID = INTRN_FQCOS; sinID = INTRN_FQSIN; break;
   }
-  
-  zN = AssignExpr(block, x, type);
+  if (WN_operator(x) == OPR_PAIR && rtype == MTYPE_F8)
+  {
+    paired_input = TRUE;
+    iN = AssignExpr(block, WN_COPY_Tree(WN_kid1(x)), rtype);
+  } else
+    zN = AssignExpr(block, x, type);
   exp= Intrinsic(rtype,
 		 expID,
 		 1,
+		 paired_input? WN_COPY_Tree(WN_kid0(x)) :
 		 WN_Realpart(rtype,WN_LdidPreg(type, zN)), NULL);
   
   expN = AssignExpr(block, exp, rtype);
@@ -2131,11 +2209,13 @@ static WN *em_complex_exp(WN *block, WN *x)
   cosine = Intrinsic(rtype,
 		     cosID,
 		     1,
+		     paired_input?WN_LdidPreg(rtype, iN):
 		     WN_Imagpart(rtype,WN_LdidPreg(type, zN)), NULL);
   
   sine = Intrinsic(rtype,
 		   sinID,
 		   1,
+		   paired_input?WN_LdidPreg(rtype, iN):
 		   WN_Imagpart(rtype,WN_LdidPreg(type, zN)), NULL);
   /*
    *	cis  =  cos(iz) + i*sin(iz);
@@ -2143,6 +2223,11 @@ static WN *em_complex_exp(WN *block, WN *x)
    *	real =  e**(rz) * REAL(cis);
    *	imag =  e**(rz) * IMAG(cis);
    */
+  /* it is a performance hack that sincos is not called directly, WOPT 
+   * would combine them. The gain is that as the imagine part is used 
+   * twice(fakely), so that the expression would be not evaluated 
+   * between the two calls. Virtually reduce load/store, as all xmm 
+   * registers are not saved by callee.  * */
   realpart = WN_Mpy(rtype,
 		    WN_LdidPreg(rtype, expN),
 		    cosine);
@@ -2341,8 +2426,10 @@ static WN *em_complex_sin(WN *block, WN *x)
  *  If (Fast_Complex_Allowed == FALSE) will generate more accurate code
  *  but divide by zero for xN and yN both zero !!!
  *
+ * Mod: xN and yN is not PREG anymore, as some of the following code 
+ * can not deal with PREG
  * ==================================================================== */
-static WN *em_preg_hypot(WN *block, TYPE_ID type, PREG_NUM xN, PREG_NUM yN)
+static WN *em_preg_hypot(WN *block, TYPE_ID type, WN *xT, WN *yT)
 {
   if (Fast_Complex_Allowed)
   {
@@ -2353,12 +2440,12 @@ static WN *em_preg_hypot(WN *block, TYPE_ID type, PREG_NUM xN, PREG_NUM yN)
     WN	*x2, *y2, *add, *hypot;
     
     x2 = WN_Mpy(type,
-		WN_LdidPreg(type, xN),
-		WN_LdidPreg(type, xN));
+		WN_COPY_Tree(xT),
+		WN_COPY_Tree(xT));
 
     y2 = WN_Mpy(type,
-		WN_LdidPreg(type, yN),
-		WN_LdidPreg(type, yN));
+		WN_COPY_Tree(yT),
+		WN_COPY_Tree(yT));
 
     add = WN_Add(type, x2, y2);
  
@@ -2386,11 +2473,11 @@ static WN *em_preg_hypot(WN *block, TYPE_ID type, PREG_NUM xN, PREG_NUM yN)
     WN	*cond, *w, *z, *div, *mpy, *add, *sqrt, *hypot, *az;
     
     axN = AssignExpr(block,
-		     WN_Abs(type, WN_LdidPreg(type, xN)),
+		     WN_Abs(type, WN_COPY_Tree(xT)),
 		     type);
     
     ayN = AssignExpr(block,
-		     WN_Abs(type, WN_LdidPreg(type, yN)),
+		     WN_Abs(type, WN_COPY_Tree(yT)),
 		     type);
     
    /*
@@ -2405,8 +2492,8 @@ static WN *em_preg_hypot(WN *block, TYPE_ID type, PREG_NUM xN, PREG_NUM yN)
 
     w = WN_Select(type,
 		  cond,
-		  WN_LdidPreg(type, yN),
-		  WN_LdidPreg(type, xN));
+		  WN_COPY_Tree(yT),
+		  WN_COPY_Tree(xT));
 
     cond = WN_GT(type,
 		 WN_LdidPreg(type, axN),
@@ -2414,8 +2501,8 @@ static WN *em_preg_hypot(WN *block, TYPE_ID type, PREG_NUM xN, PREG_NUM yN)
 
     z = WN_Select(type,
 		  cond,
-		  WN_LdidPreg(type, xN),
-		  WN_LdidPreg(type, yN));
+		  WN_COPY_Tree(xT),
+		  WN_COPY_Tree(yT));
 
     zN = AssignExpr(block, z, type);
 
@@ -2453,14 +2540,10 @@ static WN *em_preg_hypot(WN *block, TYPE_ID type, PREG_NUM xN, PREG_NUM yN)
 static WN *em_hypot(WN *block, WN *x, WN *y) 
 {
   TYPE_ID	type = WN_rtype(x);
-  PREG_NUM	xN, yN;
 
   Is_True((type == WN_rtype(y)), ("em_hypot(): type mismatch"));
 
-  xN = AssignExpr(block, x, type);
-  yN = AssignExpr(block, y, type);
-
-  return em_preg_hypot(block, type, xN, yN);
+  return em_preg_hypot(block, type, x, y); 
 }
 
 /* ====================================================================
@@ -2598,7 +2681,7 @@ static WN *em_complex_sqrt_preg(WN *block, TYPE_ID type, PREG_NUM zN_in)
     */
     WN	*norm, *add, *mpy, *sqrt;
 
-    norm = em_preg_hypot(block, rtype, zN, ziN);
+    norm = em_preg_hypot(block, rtype, WN_LdidPreg(rtype, zN), WN_LdidPreg(rtype, ziN));
 
     absN = AssignExpr(block, norm, rtype);
 
@@ -2760,9 +2843,18 @@ static WN *em_alog10(WN *block, WN *x)
 		   WN_Floatconst(type, M_LOG10),
 		   log);
   } else {
+#ifdef TARG_LOONGSON
+     TCON t_log10;
+     t_log10.vals.qval.qval[0]=  0x555f5a68;
+     t_log10.vals.qval.qval[1] =  0xe32a6ab7;
+     t_log10.vals.qval.qval[2] =  0xb1526e50;
+     t_log10.vals.qval.qval[3] =  0x3ffdbcb7;
+     mpy = WN_Mpy(type, Make_Const(t_log10), log);
+#else
      mpy =  WN_Mpy(type, 
 		   Make_Const(Host_To_Targ_Quad(M_LOG10Q)),
 		   log);
+#endif
   }
   return mpy;
 }
@@ -3577,45 +3669,6 @@ static BOOL check_size(WN *size, WN *src, WN *dst)
 
 static void aux_memory_msg(const char *msg, WN *tree, WN *mstore)
 {
-#if 0
-  char	buff[120];
-  INT32 n;
-
-  // This is a pretty pointless thing to do, as it's awfully noisy
-
-  // If the size is 0, we inline expansion is empty. So we don't
-  // get a MSTORE. Check for that case.
-  if (WN_operator(mstore) != OPR_MSTORE) {
-    sprintf (buff, "inlined %s on line %d, size = 0", 
-			msg, Srcpos_To_Line(WN_Get_Linenum(tree)));
-    DevWarn (buff);
-    return;
-  }
-
-  WN *load = 	WN_kid0(mstore);
-  WN *size = 	WN_kid2(mstore);
-
-  n= sprintf(buff, "inlined %s on line %d, dst align=%d",
-	     msg,
-	     Srcpos_To_Line(WN_Get_Linenum(tree)),
-	     TY_align(TY_pointed(WN_ty(mstore))));
-
-  if (WN_opcode(load) == OPC_MLOAD)
-  {
-    n += sprintf(&buff[n], ", src align=%d", TY_align(TY_pointed(WN_ty(load))));
-  }
-
-  if (Is_Integer_Constant(size))
-  {
-    n += sprintf(&buff[n], ", size = %lld", WN_const_val(size));
-  }
-  else
-  {
-    n += sprintf(&buff[n], "size = unknown");
-  }
-  
-  DevWarn(buff);
-#endif
 }
 
 static WN *aux_memset(WN *var, WN *con, WN *size)
@@ -3639,7 +3692,14 @@ static WN *aux_memset(WN *var, WN *con, WN *size)
 
   TY_IDX ptr_ty = Make_Pointer_Type (align);
   mstore = aux_CreateMstore(0, ptr_ty, newcon, var, size);
-
+  // Attempts to call Copy_alias_info() lead to problems when 'src'
+  // has Id() == preg_id().  This seems to lead to a segfault during
+  // CG emit.  However, both Copy_alias_info() and Duplicate_alias_info()
+  // happily propagate the Id() to the target WN.  For now I copy
+  // the AliasTag directly to make forward progress.
+  AliasAnalyzer *aa = AliasAnalyzer::aliasAnalyzer();
+  if (aa)
+    aa->transferAliasTag(mstore,var);
   return mstore;
 }
 
@@ -3665,11 +3725,23 @@ static WN *aux_memcpy(WN *src, WN *dst, WN *size)
   else srcTY_ptr = Make_Pointer_Type(srcTY);
 
   mload = WN_CreateMload(0, srcTY_ptr, src, size);
+  // Attempts to call Copy_alias_info() lead to problems when 'src'
+  // has Id() == preg_id().  This seems to lead to a segfault during
+  // CG emit.  However, both Copy_alias_info() and Duplicate_alias_info()
+  // happily propagate the Id() to the target WN.  For now I copy
+  // the AliasTag directly to make forward progress.
+  //if (alias_manager)
+    //Copy_alias_info(alias_manager,src,mload);
+  AliasAnalyzer *aa = AliasAnalyzer::aliasAnalyzer();
+  if (aa)
+    aa->transferAliasTag(mload,src);
 
   dstTY = aux_compute_alignment(dst);
 
   dstTY_ptr = Make_Pointer_Type(dstTY);
   mstore = aux_CreateMstore(0, dstTY_ptr, mload, dst, WN_COPY_Tree(size));
+  if (aa)
+    aa->transferAliasTag(mstore,dst);
   return mstore;
 }
 
@@ -3798,10 +3870,6 @@ static WN *em_x8664_va_start(WN *block, WN *ap)
     Is_True(TY_kind(ty_idx) == KIND_POINTER,
 	    ("em_x8664_va_start: argument not of pointer type"));
     ty_idx = TY_pointed(ty_idx);
-#if 0 // bug 10098
-    Is_True(TY_kind(ty_idx) == KIND_ARRAY && TY_size(ty_idx) == 24,
-	("em_x8664_va_start: argument pointer does not point to type va_list"));
-#endif
     direct = TRUE;
     // va_list_struct_ty = TY_etype(ty_idx);
   }
@@ -4353,6 +4421,10 @@ extern WN *intrinsic_runtime(WN *block, WN *tree)
      *  This is known in the FE as RSTYLE_VIA_FIRST_ARG
      *  The parameter is by reference
      */
+#ifdef TARG_X8664
+    if (WN_rtype(tree) == MTYPE_V16C8)
+      WN_set_rtype(tree, MTYPE_C8);
+#endif
     TYPE_ID	rtype = WN_rtype(tree);
 
     switch(rtype)
@@ -4459,23 +4531,37 @@ extern WN *intrinsic_runtime(WN *block, WN *tree)
     /* Do the following conversion if either of -ffast-math or -OPT:fast_math
        are specified.
        
-       cos -> fastcos
-       exp -> fastexp
-       expf -> fastexpf
-       log -> fastlog
-       logf -> fastlogf
-       pow -> fastpow
-       powf -> fastpowf
-       sin -> fastsin
-       sincos -> fastsincos
+       acos -> fastacos, acosf -> fastacosf
+       asin -> fastasin, asinf -> fastasinf
+       atan -> fastatan, atanf -> fastatanf
+       atan2 -> fastatan2, atan2f -> fastatan2f
+       cos -> fastcos, cosf -> fastcosf
+       cosh -> fastcosh, coshf -> fastcoshf
+       exp -> fastexp, expf -> fastexpf
+       log -> fastlog, logf -> fastlogf
+       pow -> fastpow, powf -> fastpowf
+       sin -> fastsin, sinf -> fastsinf
+       sinh -> fastsinh, sinhf -> fastsinhf
+       sincos -> fastsincos, sincosf -> fastsincosf
+       tan -> fasttan, tanf -> fasttanf
+       tanh -> fasttanh, tanhf -> fasttanhf
 
-       (Bug 4680)	
     */
     if( Is_Target_64bit() &&
-        // !Is_Target_EM64T() &&
 	!Is_Target_Anyx86() &&
 	OPT_Fast_Math &&
-	( WN_intrinsic(tree) == INTRN_F8COS ||
+	( WN_intrinsic(tree) == INTRN_F8ACOS ||
+	  WN_intrinsic(tree) == INTRN_F4ACOS ||
+	  WN_intrinsic(tree) == INTRN_F8ASIN ||
+	  WN_intrinsic(tree) == INTRN_F4ASIN ||
+	  WN_intrinsic(tree) == INTRN_F8ATAN ||
+	  WN_intrinsic(tree) == INTRN_F4ATAN ||
+	  WN_intrinsic(tree) == INTRN_F8ATAN2 ||
+	  WN_intrinsic(tree) == INTRN_F4ATAN2 ||
+	  WN_intrinsic(tree) == INTRN_F8COS ||
+	  WN_intrinsic(tree) == INTRN_F4COS ||
+	  WN_intrinsic(tree) == INTRN_F8COSH ||
+	  WN_intrinsic(tree) == INTRN_F4COSH ||
 	  WN_intrinsic(tree) == INTRN_F8EXP ||
 	  WN_intrinsic(tree) == INTRN_F4EXP ||
 	  WN_intrinsic(tree) == INTRN_F8LOG ||
@@ -4483,7 +4569,15 @@ extern WN *intrinsic_runtime(WN *block, WN *tree)
 	  WN_intrinsic(tree) == INTRN_F8EXPEXPR ||
 	  WN_intrinsic(tree) == INTRN_F4EXPEXPR ||
 	  WN_intrinsic(tree) == INTRN_F8SIN ||
+	  WN_intrinsic(tree) == INTRN_F4SIN ||
+	  WN_intrinsic(tree) == INTRN_F8SINH ||
+	  WN_intrinsic(tree) == INTRN_F4SINH ||
 	  WN_intrinsic(tree) == INTRN_SINCOS ||
+	  WN_intrinsic(tree) == INTRN_SINCOSF ||
+	  WN_intrinsic(tree) == INTRN_F8TAN ||
+	  WN_intrinsic(tree) == INTRN_F4TAN ||
+	  WN_intrinsic(tree) == INTRN_F8TANH ||
+	  WN_intrinsic(tree) == INTRN_F4TANH ||
 	  WN_intrinsic(tree) == INTRN_F8VSIN ||
 	  WN_intrinsic(tree) == INTRN_F8VCOS ||
 	  WN_intrinsic(tree) == INTRN_F8VEXP ||
@@ -4492,7 +4586,18 @@ extern WN *intrinsic_runtime(WN *block, WN *tree)
 	  WN_intrinsic(tree) == INTRN_F8VLOG ) ) {
       BOOL vector_call_check_constant_stride = FALSE;
       switch (WN_intrinsic(tree)) {
+      case INTRN_F8ACOS:   st = Gen_Intrinsic_Function(ty, "fastacos"); break;
+      case INTRN_F4ACOS:   st = Gen_Intrinsic_Function(ty, "fastacosf"); break;
+      case INTRN_F8ASIN:   st = Gen_Intrinsic_Function(ty, "fastasin"); break;
+      case INTRN_F4ASIN:   st = Gen_Intrinsic_Function(ty, "fastasinf"); break;
+      case INTRN_F8ATAN:   st = Gen_Intrinsic_Function(ty, "fastatan"); break;
+      case INTRN_F4ATAN:   st = Gen_Intrinsic_Function(ty, "fastatanf"); break;
+      case INTRN_F8ATAN2:  st = Gen_Intrinsic_Function(ty, "fastatan2"); break;
+      case INTRN_F4ATAN2:  st = Gen_Intrinsic_Function(ty, "fastatan2f"); break;
       case INTRN_F8COS:    st = Gen_Intrinsic_Function(ty, "fastcos"); break;
+      case INTRN_F4COS:    st = Gen_Intrinsic_Function(ty, "fastcosf"); break;
+      case INTRN_F8COSH:   st = Gen_Intrinsic_Function(ty, "fastcosh"); break;
+      case INTRN_F4COSH:   st = Gen_Intrinsic_Function(ty, "fastcoshf"); break;
       case INTRN_F8EXP:    st = Gen_Intrinsic_Function(ty, "fastexp"); break;
       case INTRN_F4EXP:    st = Gen_Intrinsic_Function(ty, "fastexpf"); break;
       case INTRN_F8LOG:    st = Gen_Intrinsic_Function(ty, "fastlog"); break;
@@ -4500,7 +4605,15 @@ extern WN *intrinsic_runtime(WN *block, WN *tree)
       case INTRN_F8EXPEXPR:st = Gen_Intrinsic_Function(ty, "fastpow"); break;
       case INTRN_F4EXPEXPR:st = Gen_Intrinsic_Function(ty, "fastpowf"); break;
       case INTRN_F8SIN:    st = Gen_Intrinsic_Function(ty, "fastsin"); break;
-      case INTRN_SINCOS: st = Gen_Intrinsic_Function(ty, "fastsincos");break;
+      case INTRN_F4SIN:    st = Gen_Intrinsic_Function(ty, "fastsinf"); break;
+      case INTRN_F8SINH:   st = Gen_Intrinsic_Function(ty, "fastsinh"); break;
+      case INTRN_F4SINH:   st = Gen_Intrinsic_Function(ty, "fastsinhf"); break;
+      case INTRN_SINCOS:   st = Gen_Intrinsic_Function(ty, "fastsincos");break;
+      case INTRN_SINCOSF:  st = Gen_Intrinsic_Function(ty, "fastsincosf");break;
+      case INTRN_F8TAN:    st = Gen_Intrinsic_Function(ty, "fasttan"); break;
+      case INTRN_F4TAN:    st = Gen_Intrinsic_Function(ty, "fasttanf"); break;
+      case INTRN_F8TANH:   st = Gen_Intrinsic_Function(ty, "fasttanh"); break;
+      case INTRN_F4TANH:   st = Gen_Intrinsic_Function(ty, "fasttanhf"); break;
 
       case INTRN_F8VSIN: 
 	st = Gen_Intrinsic_Function(ty, "vrda_sin");	
@@ -4546,10 +4659,51 @@ extern WN *intrinsic_runtime(WN *block, WN *tree)
 	  argC = 3;
 	}
       }
+    }
 
+#if defined(TARG_X8664)
+    // Rename memcpy to the amd optimized memcpy.
+    else if (WN_intrinsic(tree) == INTRN_MEMCPY &&
+	       OPT_Fast_Stdlib &&
+	       Is_Target_64bit()) {
+      if (Is_Target_Barcelona() || Is_Target_Orochi()) {
+        WN *child = WN_arg(tree, 2);
+        if (Is_Integer_Constant(child)) {
+          int memcpy_len = WN_const_val(child);
+          if (((memcpy_len % 32) == 0) || 
+              ((memcpy_len % 64) == 0)) {
+            int exact = ((memcpy_len % 64) == 0);
+            int strideval = memcpy_len / 64; 
+            if ((memcpy_len <= 256) && (memcpy_len >= 96)) {
+              WN *exact_arg = WN_CreateIntconst (OPC_I4INTCONST, exact);
+              args[ argC++] = exact_arg;
+              WN_const_val(child) = strideval;
+	      st = Gen_Intrinsic_Function(ty, "__fastcopy_stride64_gp");
+            } else if (memcpy_len > 256) {
+              WN *exact_arg = WN_CreateIntconst (OPC_I4INTCONST, exact);
+              args[ argC++] = exact_arg;
+              WN_const_val(child) = strideval;
+	      st = Gen_Intrinsic_Function(ty, "__fastcopy_stride64_gh");
+            } else {
+              /* if we do not match we default to the non intrinsic form */ 
+              st = Gen_Intrinsic_Function(ty, function);
+            }
+          } else {
+            /* if we do not match we default to the non intrinsic form */ 
+            st = Gen_Intrinsic_Function(ty, function);
+          }
+        } else {
+          /* if we do not match we default to the non intrinsic form */ 
+          st = Gen_Intrinsic_Function(ty, function);
+        }
+      } else {
+        st = Gen_Intrinsic_Function(ty, function);
+      }
+    }
+#endif
 #if defined(TARG_X8664) && !defined(OSP_OPT)
     // Rename memset to the PathScale optimized memset.
-    } else if (WN_intrinsic(tree) == INTRN_MEMSET &&
+    else if (WN_intrinsic(tree) == INTRN_MEMSET &&
 	       OPT_Fast_Stdlib &&
 	       Is_Target_64bit()) {
       if (Is_Target_EM64T() || Is_Target_Core() || Is_Target_Wolfdale())
@@ -4565,8 +4719,9 @@ extern WN *intrinsic_runtime(WN *block, WN *tree)
 	st = Gen_Intrinsic_Function(ty, "__memcpy_pathscale_em64t");
       else
 	st = Gen_Intrinsic_Function(ty, "__memcpy_pathscale_opteron");
+    }
 #endif
-    } else if (WN_intrinsic(tree) == INTRN_POPCOUNT &&
+    else if (WN_intrinsic(tree) == INTRN_POPCOUNT &&
     	       MTYPE_byte_size(WN_rtype(WN_kid0(tree))) <= 4 &&
                Is_Target_32bit()) {
       st = Gen_Intrinsic_Function(ty, "__popcountsi2");
@@ -4582,14 +4737,6 @@ extern WN *intrinsic_runtime(WN *block, WN *tree)
     }
 #elif defined(TARG_MIPS) && !defined(TARG_SL)
 
-#if 0  // Using __popcountsi2 fails at link-time on cross-compiler.
-    ST *st = NULL;
-    if (WN_intrinsic(tree) == INTRN_POPCOUNT &&
-	MTYPE_byte_size(WN_rtype(WN_kid0(tree))) <= 4) {
-      st = Gen_Intrinsic_Function(ty, "__popcountsi2");
-    } else
-      st = Gen_Intrinsic_Function(ty, function);
-#else
     if (WN_intrinsic(tree) == INTRN_POPCOUNT &&
 	MTYPE_byte_size(WN_rtype(WN_kid0(tree))) <= 4) {
       // Zero extend U4 to U8
@@ -4600,7 +4747,6 @@ extern WN *intrinsic_runtime(WN *block, WN *tree)
 			       MTYPE_To_TY( MTYPE_U8 ), WN_PARM_BY_VALUE );
     }
     ST *st = Gen_Intrinsic_Function(ty, function);
-#endif
 
 #else
     ST	*st = Gen_Intrinsic_Function(ty, function);
@@ -5110,10 +5256,21 @@ static WN *emulate_intrinsic_op(WN *block, WN *tree)
     break;
 
   case INTRN_MEMSET:
-#if !defined(KEY) || defined(TARG_SL) || defined(TARG_NVISA)	// Don't emulate memset; call PathScale memset instead.
-    if (CG_mem_intrinsics)
+#if defined(KEY) && !defined(TARG_SL) && !defined(TARG_NVISA)	// Emulate memset; don't call PathScale memset.
+    if (CG_mem_intrinsics && Emulate_memset)
     {
-      return em_memset(block, tree, WN_arg(tree, 0), WN_arg(tree, 1), WN_arg(tree, 2));
+      WN * con = WN_arg(tree, 1);
+      WN * size = WN_arg(tree, 2);
+      if (Is_Integer_Constant(size) && Is_Integer_Constant(con)) {
+	int n = (int) WN_const_val(size);
+	int mod;
+	if(Is_Target_64bit())
+	  mod = 8;
+	else
+	  mod = 4;
+ 	if (((n % mod) == 0) && (n <= (mod * 16)))
+	  return em_memset(block, tree, WN_arg(tree, 0), WN_arg(tree, 1), WN_arg(tree, 2));
+      }
     }
 #endif
     break;
@@ -5161,9 +5318,10 @@ static WN *emulate_intrinsic_op(WN *block, WN *tree)
 }
 
 
-extern WN *emulate(WN *block, WN *tree)
+extern WN *emulate(WN *block, WN *tree, struct ALIAS_MANAGER *alias)
 {
   WN		*wn = NULL;
+  alias_manager = alias;
 
   if (OPCODE_is_intrinsic(WN_opcode(tree)))
   {
@@ -5176,12 +5334,14 @@ extern WN *emulate(WN *block, WN *tree)
   {
     switch(WN_operator(tree))
     {
+#ifndef TARG_LOONGSON
     case OPR_NEG:
       if (MTYPE_is_quad(WN_rtype(tree)))
       {
 	wn = em_quad_neg(block, tree);
       }
       break;
+#endif
 
     case OPR_SELECT:
       if (MTYPE_is_quad(WN_rtype(tree)))
@@ -5209,11 +5369,12 @@ extern WN *emulate(WN *block, WN *tree)
     }
   }
  
+  alias_manager = NULL;
   return wn;
 }
 
 #ifdef KEY // bug 6938
-extern WN *emulate_fast_exp(WN *block, WN *tree)
+extern WN *emulate_fast_exp(WN *block, WN *tree, struct ALIAS_MANAGER *alias)
 {
   if (! Inline_Intrinsics_Allowed)
     return NULL;

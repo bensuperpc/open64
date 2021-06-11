@@ -1,4 +1,8 @@
 /*
+ * Copyright (C) 2008-2010 Advanced Micro Devices, Inc.  All Rights Reserved.
+ */
+
+/*
  *  Copyright (C) 2006. QLogic Corporation. All Rights Reserved.
  */
 
@@ -112,6 +116,7 @@
 #include "opt_bb.h"
 #include "be_symtab.h"
 #include "id_map.h"
+#include "wssa_defs.h"
 
 extern "C" {
 #include "bitset.h"
@@ -281,17 +286,18 @@ class AUX_STAB_ENTRY
   friend class OPT_STAB;  // allow OPT_STAB to access this fields directly.
   friend class SSU;	  // SSU needs to get at St_group
   friend class WOVP;	  // WOVP needs to modify Aux_stab_entry
+  friend class WHIRL_SSA_EMITTER; // need access ST,Version in emitter 
   // Alias information
 
 private:
   mINT8   stype;                      // Type of the symbol
   UINT8  _more_flags;	      // overflow field for flags field (AUXF2_FLAGS)
   UINT8  _mclass;                  // mtype class, e.g. INT, FLOAT, COMPLEX
-  mTYPE_ID _mtype;                    // mtype 
+  mTYPE_ID _mtype:8;                  // mtype 
   mINT32  _flags;                     // flags field (AUXF_FLAGS)
   ST      *st;                        // ST *
   mINT64  _st_ofst;                   // Offset from ST.
-
+  WSSA::WST_IDX wst_idx;              // wssa_st_idx.used in wssa
   AUX_ID    st_chain;                 // chain of aux_sym pointing to
 				      // the same ST. used at OPT_STAB
 				      // build time to search for the
@@ -416,6 +422,8 @@ private:
   void     Set_synonym(AUX_ID i)      { u.synonym = i; }
   void     Set_aux_id_list(AUX_ID_LIST *a) 
     { _aux_id_list = a; }
+  void     Set_wst_idx(WSSA::WST_IDX idx) { wst_idx = idx;  }
+  WSSA::WST_IDX    Get_wst_idx() const    { return wst_idx; }
 
   // various flags
   void     Clear_flags(void)          { _flags = 0; _more_flags = 0; }
@@ -1019,6 +1027,8 @@ public:
 #endif
   OPT_PU_POINTS_TO_SUMMARIZER* Points_to_summarizer (void) 
                                          { return &_pt_sum; }
+  void     check_ipa_mod_ref_info (const ST * , const ST * , INT *, INT *);
+  void     check_ipa_same_entry_exit_value_or_1_info(const ST *, const ST *, INT *);
   MEM_POOL *Occ_pool(void)               { return &_occ_pool; }
   MEM_POOL* Ver_pool(void)               { return &_ver_pool; }
   CFG      *Cfg(void) const              { return _cfg; }
@@ -1256,6 +1266,7 @@ public:
 
   //  Alias analysis and update
   BOOL     Transfer_alias_class_to_occ_and_aux(RID *, WN *);
+  void     Transfer_alias_tag_to_occ_and_aux(RID *, WN *);
   void     Compute_FFA(RID *);		// Flow free alias analysis
   void     Compute_FFA_for_copy(WN *, BB_NODE *, BOOL);// FFA for i=i copy
   void     Compute_FSA(void);		// Flow sensitive alias analysis

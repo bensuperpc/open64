@@ -1,4 +1,8 @@
 /*
+ * Copyright (C) 2009-2010 Advanced Micro Devices, Inc.  All Rights Reserved.
+ */
+
+/*
  *  Copyright (C) 2007. Pathscale, LLC. All Rights Reserved.
  */
 
@@ -90,6 +94,10 @@ void Initialize_Targ_Info(void)
     proc = PROCESSOR_barcelona;
     break;
 
+  case TARGET_orochi:
+    proc = PROCESSOR_orochi;
+    break;
+
   case TARGET_pentium4:
   case TARGET_xeon:
   case TARGET_em64t:
@@ -106,5 +114,5 @@ void Initialize_Targ_Info(void)
     /*NOTREACHED*/
   }
 
-  TI_Initialize(abi, isa, proc, Targ_Path);
+  TI_Initialize(abi, isa, proc);
 }

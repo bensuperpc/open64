@@ -1,4 +1,8 @@
 /*
+ * Copyright (C) 2009-2010 Advanced Micro Devices, Inc.  All Rights Reserved.
+ */
+
+/*
  * Copyright 2003, 2004, 2005, 2006 PathScale, Inc.  All Rights Reserved.
  */
 
@@ -72,7 +76,6 @@
  * ====================================================================
  */
 
-#define __STDC_LIMIT_MACROS
 #include <stdint.h>
 #ifdef USE_PCH
 #include "lno_pch.h"
@@ -406,16 +409,21 @@ static void Mark_Code(WN *wn, WN *func_nd, DOLOOP_STACK *stack,
     dli = (DO_LOOP_INFO *) WN_MAP_Get(LNO_Info_Map,wn);
     if (!dli) {
       dli = (DO_LOOP_INFO *) 
-       CXX_NEW(DO_LOOP_INFO(&LNO_default_pool,NULL,NULL,NULL,FALSE,FALSE,
+       CXX_NEW(DO_LOOP_INFO(&LNO_default_pool,NULL,NULL,NULL,FALSE,FALSE,FALSE,
         FALSE,FALSE,FALSE,FALSE,TRUE), &LNO_default_pool);
       dli->Depth = depth;
       dli->Is_Backward = Do_Loop_Is_Backward(wn); 
+      WN *loop_info = WN_do_loop_info(wn);
+      if (loop_info) {
+        dli->Multiversion_Alias = (WN_Loop_Multiversion_Alias(loop_info) != 0);
+      }
       WN_MAP_Set(LNO_Info_Map,wn,(void *)dli);
     } else {
       dli->Has_Calls=FALSE;
       dli->Has_Unsummarized_Calls=FALSE;
       dli->Has_Gotos_This_Level=FALSE;
       dli->Has_Exits=FALSE;
+      dli->Has_EH_Regions=FALSE;
       dli->Is_Inner=TRUE;
     }
     WN* wn_region = LWN_Get_Parent(LWN_Get_Parent(wn));
@@ -482,9 +490,12 @@ static void Mark_Code(WN *wn, WN *func_nd, DOLOOP_STACK *stack,
       while (pwn) {
 	if (WN_opcode(pwn) == OPC_DO_LOOP) {
 	  DO_LOOP_INFO *dli = Get_Do_Loop_Info(pwn);
-	  if (dli && dli->Mp_Info) {
-	    // must be a parallel loop
-	    dli->Mp_Info->Disable_Plowering();
+	  if (dli) {
+            dli->Has_EH_Regions = TRUE;
+            if (dli->Mp_Info) {
+              // must be a parallel loop
+              dli->Mp_Info->Disable_Plowering();
+            }
 	  }
 	}
 	pwn = LWN_Get_Parent(pwn);
@@ -1456,12 +1467,12 @@ static void Promote_Pointer(WN *wn, INT kid_num, INT load_size)
         case MTYPE_I4 : case MTYPE_U4: case MTYPE_F4: load_size=4; break;
         case MTYPE_I8 : case MTYPE_U8: case MTYPE_F8: case MTYPE_C4:
 	  load_size = 8; break;
-#ifdef TARG_IA64
+#if defined(TARG_IA64) || defined(TARG_X8664)
 	case MTYPE_F10: load_size = 16; break;
 #endif
         case MTYPE_C8 : case MTYPE_FQ: 
 	  load_size = 16; break;
-#if defined(TARG_IA64)
+#if defined(TARG_IA64) || defined(TARG_X8664)
         case MTYPE_C10:
 #endif
         case MTYPE_CQ :
@@ -1546,7 +1557,7 @@ static void Promote_Pointer(WN *wn, INT kid_num, INT load_size)
 
 #ifdef KEY // Bug 2565
   if (
-#ifdef TARG_X8664
+#if defined(TARG_X8664) || defined(TARG_LOONGSON)
       Is_Target_64bit() &&
 #endif
       (addr_oper == OPR_ADD || addr_oper == OPR_SUB)) {

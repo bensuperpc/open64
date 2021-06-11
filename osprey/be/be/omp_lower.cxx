@@ -1,4 +1,8 @@
 /*
+ * Copyright (C) 2009-2011 Advanced Micro Devices, Inc.  All Rights Reserved.
+ */
+
+/*
  * Copyright 2004, 2005, 2006 PathScale, Inc.  All Rights Reserved.
  */
 
@@ -54,7 +58,6 @@
  * OMP_Prelower() : Transform Open MP pragmas to same form as MP ones
  * ==================================================================== */
 
-#define __STDC_LIMIT_MACROS
 #include <stdint.h>
 #include <sys/types.h>
 #if ! defined(BUILD_OS_DARWIN)
@@ -293,17 +296,31 @@ WN *OMP_Prelower(PU_Info *current_pu, WN *pu)
   Is_True(rename_common_stack.Elements() == 1,
           ("OMP_Prelower(): rename_common_stack.Elements() != 1"));
 
-# ifdef KEY
   RENAMING_SCOPE rename_common(NULL, &omp_pool);
-  RENAMING_SCOPE rename_common_blk(NULL, &omp_pool);
+
+  // Note that rename_common_blk renaming scope needs to provide
+  // mappings that are valid through the entire compilation.
+  static RENAMING_SCOPE *rename_common_blk;
+  if (rename_common_blk == NULL) {
+    rename_common_blk = CXX_NEW(RENAMING_SCOPE(NULL, Malloc_Mem_Pool),
+				Malloc_Mem_Pool);
+  }
+  else {
+    std::list<ST*>::const_iterator cit = rename_common_blk->local_mappings.begin();
+
+    // Remove any mappings local symbols for previously processed PU.
+    for( ; cit != rename_common_blk->local_mappings.end(); cit++ )
+      rename_common_blk->map.Remove(*cit);
+    rename_common_blk->local_mappings.clear();
+  }
+
   RENAMING_STACK rename_scope_stack(&omp_pool);
   rename_scope_stack.Push(CXX_NEW(RENAMING_SCOPE(NULL, &omp_pool),
                                    &omp_pool));
   Rename_Threadprivate_COMMON(pu, pu, pu, 
                              &rename_scope_stack, 
                              &rename_common,
-                             &rename_common_blk);
-# endif
+                             rename_common_blk);
 
     // create parent map
   Omp_Parent_Map = WN_MAP_Create(&omp_pool);
@@ -1618,11 +1635,11 @@ static void Convert_SL2_Section_To_Pdo(WN *sections, WN *pragma)
   if((WN_PRAGMA_ID) WN_pragma(pragma) == WN_PRAGMA_SL2_MINOR_PSECTION_BEGIN) 
 // minor thread
   {
-    WN_Set_is_compgoto_for_minor(cgoto);	
+     WN_Set_is_compgoto_for_minor(cgoto, TRUE);	
   }
   else if((WN_PRAGMA_ID) WN_pragma(pragma) == WN_PRAGMA_SL2_MAJOR_PSECTION_BEGIN ) //main thread
   {
-      WN_Set_is_compgoto_para(cgoto); 
+     WN_Set_is_compgoto_para(cgoto, TRUE); 
   }	  
 
   WN_Set_Linenum(cgoto,WN_Get_Linenum(sections));
@@ -1768,7 +1785,7 @@ static void Atomic_Using_Critical(WN *atomic, WN *store)
   WN *parent = Get_Parent(atomic);
   INT64 line = WN_Get_Linenum(atomic);
 
-  char name[25];
+  char name[128];
   switch (WN_desc(store)) {
     case MTYPE_I1: 
       sprintf(name,"%s","__OMP_CRITICAL_ATOMIC_I1");
@@ -1800,9 +1817,12 @@ static void Atomic_Using_Critical(WN *atomic, WN *store)
     case MTYPE_F8: 
       sprintf(name,"%s","__OMP_CRITICAL_ATOMIC_F8");
       break;
-#ifdef TARG_IA64
+#if defined(TARG_IA64) || defined(TARG_X8664)
     case MTYPE_F10: 
       sprintf(name,"%s","__OMP_CRITICAL_ATOMIC_F10");
+      break;
+    case MTYPE_C10:
+      sprintf(name,"%s","__OMP_CRITICAL_ATOMIC_C10");
       break;
 #endif
     case MTYPE_FQ: 
@@ -1814,11 +1834,6 @@ static void Atomic_Using_Critical(WN *atomic, WN *store)
     case MTYPE_C8: 
       sprintf(name,"%s","__OMP_CRITICAL_ATOMIC_C8");
       break;
-#ifdef TARG_IA64
-    case MTYPE_C10:
-      sprintf(name,"%s","__OMP_CRITICAL_ATOMIC_C10");
-      break;
-#endif
     case MTYPE_CQ: 
       sprintf(name,"%s","__OMP_CRITICAL_ATOMIC_CQ");
       break;
@@ -1826,7 +1841,6 @@ static void Atomic_Using_Critical(WN *atomic, WN *store)
       sprintf(name,"%s","__OMP_CRITICAL_ATOMIC_??");
       break;
   }
-  name[24] = 0;
   TCON tc = Host_To_Targ_String ( MTYPE_STRING, name,strlen(name));
   ST *string = Gen_String_Sym (&tc, MTYPE_To_TY(MTYPE_STRING), FALSE );
   WN *critical1 = WN_CreatePragma(WN_PRAGMA_CRITICAL_SECTION_BEGIN,string,0,0);
@@ -2269,10 +2283,10 @@ Atomic_Using_Swap(WN *atomic, WN *store, WN *operation, WN *parent,
   WN *c_s;
   if (swap_type == MTYPE_I4) {
     c_s=WN_Create_Intrinsic(OPC_U4INTRINSIC_CALL,
-		    INTRN_COMPARE_AND_SWAP_I4,3,kids);
+		    INTRN_BOOL_COMPARE_AND_SWAP_I4,3,kids);
   } else {
     c_s=WN_Create_Intrinsic(OPC_U8INTRINSIC_CALL,
-		    INTRN_COMPARE_AND_SWAP_I8,3,kids);
+		    INTRN_BOOL_COMPARE_AND_SWAP_I8,3,kids);
   }
   WN_Set_Call_Parm_Mod(c_s);
   WN_Set_Call_Parm_Ref(c_s);
@@ -2441,8 +2455,8 @@ Get_ATOMIC_Update_LDA(WN *wn)
   case INTRN_FETCH_AND_OR_I8:
   case INTRN_FETCH_AND_XOR_I8:
       // from Atomic_Using_Swap()
-  case INTRN_COMPARE_AND_SWAP_I4:
-  case INTRN_COMPARE_AND_SWAP_I8:
+  case INTRN_BOOL_COMPARE_AND_SWAP_I4:
+  case INTRN_BOOL_COMPARE_AND_SWAP_I8:
     break;
   default:
     return NULL;
@@ -2639,12 +2653,11 @@ ATOMIC_Lowering_Class WN_ATOMIC_STORE_Lowering_Class(WN *store)
 #endif
       break;
 
-#ifdef TARG_IA64
+#if defined(TARG_IA64) || defined(TARG_X8664)
     case MTYPE_F10:
+    case MTYPE_C10:
 	alclass = ALCLASS_CRITICAL;	/* XXX - ALCLASS_SWAP? */
 	break;
-
-    case MTYPE_C10:
 #endif
     case MTYPE_U1: case MTYPE_U2: case MTYPE_I1: case MTYPE_I2:
     case MTYPE_C4: case MTYPE_C8: case MTYPE_CQ: case MTYPE_FQ:
@@ -3523,9 +3536,10 @@ This reprivatization is safe.
     if (first && WN_opcode(first) == OPC_PRAGMA &&
         WN_pragma(first) == WN_PRAGMA_PDO_BEGIN &&
 	WN_pragma_arg1(first) == 0) {
-      if (enclosing_pdo)
-        Fail_FmtAssertion("Privatize_Index_Vars_And_Check_Final_Scopes(): "
-	                  "nested orphaned PDOs!");
+// gcc frontend has issued a warning, and we ignore this issue.
+//      if (enclosing_pdo)
+//        Fail_FmtAssertion("Privatize_Index_Vars_And_Check_Final_Scopes(): "
+//	                  "nested orphaned PDOs!");
       enclosing_pdo = WN_region_pragmas(wn);
     }
   }

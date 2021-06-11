@@ -1,4 +1,7 @@
 /*
+ * Copyright (C) 2008, 2009. PathScale, LLC. All Rights Reserved.
+ */
+/*
  *  Copyright (C) 2006. QLogic Corporation. All Rights Reserved.
  */
 
@@ -1860,6 +1863,12 @@ cwh_addr_address_ST(ST * st, OFFSET_64 off, TY_IDX ty)
 
     DevAssert((TY_kind(ty) == KIND_POINTER),("formal & non-pointer"));
 
+    if (ST_is_value_parm(st) && !ST_auxst_is_rslt_tmp(st) &&
+       !BY_VALUE(ty)) {
+       wn = cwh_addr_lda(st,off,ty);
+       return wn;
+    }
+
     wn = cwh_addr_ldid(st,0,ty);
     if (off != 0)
       wn = cwh_expr_bincalc(OPR_ADD,wn,WN_Intconst(Pointer_Mtype,off));
@@ -2645,12 +2654,6 @@ cwh_addr_f90_pointer_reference(WN * addr)
        return (FALSE);
        
     case OPR_LDA:
-#if 0
-       st = WN_st(addr);
-       if (ST_class(st) == CLASS_VAR) {
-	  return (ST_auxst_is_f90_pointer(st));
-       }
-#endif
        return (FALSE);
        
     case OPR_ILOAD:

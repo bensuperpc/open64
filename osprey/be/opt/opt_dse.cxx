@@ -1,3 +1,7 @@
+/*
+ * Copyright (C) 2009 Advanced Micro Devices, Inc.  All Rights Reserved.
+ */
+
 //-*-c++-*-
 
 /*
@@ -161,7 +165,8 @@ class DSE {
                 else
                   return FALSE;
               }
-    void Set_Required_Imp_VSE( VER_ID vid, BOOL real_use) const;
+    //OSP_468, remove all Set_Required_Imp_VSE()
+    //void Set_Required_Imp_VSE( VER_ID vid, BOOL real_use) const;
     BOOL Mem_WN_equiv_rec(WN *wn1, WN *wn2) const;
     BOOL Mem_WN_equiv(WN *wn1, WN* wn2) const;
     BOOL Same_memloc( WN* store1, WN* store2) const;
@@ -516,75 +521,24 @@ DSE::Set_Required_MU( MU_NODE *mu, BOOL real_use ) const
 {
   VER_STAB_ENTRY *ver = Opt_stab()->Ver_stab_entry(mu->Opnd());
   Set_last_store(ver->Aux_id(), NULL);
+
+  // there may be implied mu-nodes, so that we need to traverse the alias set 
+  const BS      *alias_set = Opt_stab()->Rule()->Alias_Set_Indirect( Opt_stab());
+  for (AUX_ID idx = BS_Choose( alias_set );
+    idx != (AUX_ID) BS_CHOOSE_FAILURE;
+    idx = BS_Choose_Next ( alias_set, idx )) {
+  
+    // Volatile do not appear in any mu and chi
+    if (!Opt_stab()->Aux_stab_entry(idx)->Is_volatile() ||
+      Opt_stab()->Aux_stab_entry(idx)->Is_virtual() ){
+      Set_last_store(idx, NULL);
+    }
+  }
+  
   Set_Required_VSE( ver, real_use, NULL );
 }
 
-void 
-DSE::Set_Required_Imp_VSE( VER_ID vid, BOOL real_use) const
-{
-  VER_STAB_ENTRY *vse = Opt_stab()->Ver_stab_entry(vid);
-  AUX_ID vaid = vse->Aux_id();
 
-  STMT_TYPE vtype = vse->Type();
-  switch ( vtype ) {
-    case WHIRL_STMT: 
-    case CHI_STMT:
-      {
-        WN *wn;
-	if (vtype  == WHIRL_STMT)
-	  wn = vse->Wn();
-	else
-	  wn = vse->Chi_wn();
-
-        CHI_LIST *chi_list = Opt_stab()->Get_generic_chi_list(wn);
-        FmtAssert(OPERATOR_is_scalar_store ( WN_operator(wn) ) || chi_list, 
-                          ("DSE::Set_Required_Implicit_Use: chi list is null."));
-        if(chi_list == NULL) 
-          break;
-        CHI_LIST_ITER chi_iter;
-        CHI_NODE *cnode;
-        FOR_ALL_NODE( cnode, chi_iter, Init(chi_list)) {
-          AUX_ID caid = cnode->Aux_id();
-          if(caid != vaid && Aliased_aux(caid, vaid)) {
-            FmtAssert( vid != cnode->Result(), ("DSE::Set_Required_Imp_VSE: confused version"));
-            VER_STAB_ENTRY *cvse = Opt_stab()->Ver_stab_entry(cnode->Result());
-            Set_last_store(caid, NULL); //from a implicit use, so reset last store
-            Set_Required_VSE(cvse, real_use, NULL);
-          }
-        }
-      }
-      break;
-
-    case PHI_STMT:
-      {
-	BB_NODE *bb = Opt_stab()->Ver_stab_entry(vid)->Bb();
-	PHI_LIST_ITER phi_iter;
-	PHI_NODE *phi;
-	FOR_ALL_ELEM (phi, phi_iter, Init(bb->Phi_list())) {
-          AUX_ID paid = phi->Aux_id();
-          if( paid != vaid && Aliased_aux(paid, vaid)) {
-            FmtAssert( vid != phi->Result(), ("DSE::Set_Required_Imp_VSE: confused version"));
-            VER_STAB_ENTRY *pvse = Opt_stab()->Ver_stab_entry(phi->Result());
-            Set_last_store(paid, NULL); //from a implicit use, so reset last store
-            Set_Required_VSE(pvse, real_use, NULL);
-          }
-	}
-      }
-      break;
-
-    case ENTRY_STMT:
-      // no need to handle
-      break;
-
-    case MU_STMT:   // mu could not define anything
-    case NO_STMT:
-    default:
-      ErrMsg( EC_Misc_Int, "DSE::Set_Required_Implicit_Use invalid type", vse->Type() );
-      break;
-  }
-  return;
-
-}
 
 static bool Is_identity_asgn(WN *wn, OPT_STAB *opt_stab)
 {
@@ -817,7 +771,8 @@ DSE::Set_Required_WN( WN *wn ) const
   if ( WN_has_ver(wn) ) {
     VER_STAB_ENTRY *sym = Opt_stab()->Ver_stab_entry(WN_ver(wn));
     if(OPERATOR_is_scalar_load( WN_operator(wn) )) {
-      Set_Required_Imp_VSE(WN_ver(wn), TRUE);
+      //OSP_468
+      //Set_Required_Imp_VSE(WN_ver(wn), TRUE);
       Set_last_store(sym->Aux_id(), NULL);
     }
     Set_Required_VSE( sym, TRUE, wn );
@@ -865,7 +820,8 @@ DSE::Set_Required_WN( WN *wn ) const
       }
     } else  {
       Set_Required_MU( occ->Mem_mu_node(), mu_reqd || mu_of_parm);
-      Set_Required_Imp_VSE(occ->Mem_mu_node()->Opnd(), mu_reqd || mu_of_parm);
+      //OSP_468
+      //Set_Required_Imp_VSE(occ->Mem_mu_node()->Opnd(), mu_reqd || mu_of_parm);
     }
   }
 }
@@ -1057,7 +1013,17 @@ DSE::Propagate_vsym_bb( BB_NODE *bb ) const
           CHI_NODE *chi;
           FOR_ALL_NODE( chi, chi_iter, Init(chi_list)) {
           // propagate into the chi node's operand
-            chi->Set_opnd( Prop_vsym_new_result( chi->Opnd() ));
+          //
+          // only do this for a non-dead chi; otherwise, we can have
+          // live-range overlap when we resurrenct this dead chi:
+          // resurrecting only updates along the def chain, not the
+          // use chain. 
+          // not updating the dead chi here is ok since all the uses
+          // below this should be dead (or we have an overlapped
+          // live range already).
+          //
+            if (chi->Live())
+              chi->Set_opnd( Prop_vsym_new_result( chi->Opnd() ));
           }
         }
       }

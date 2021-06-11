@@ -1,4 +1,8 @@
 /*
+ * Copyright (C) 2008-2010 Advanced Micro Devices, Inc.  All Rights Reserved.
+ */
+
+/*
  * Copyright 2003, 2004, 2005, 2006 PathScale, Inc.  All Rights Reserved.
  */
 
@@ -618,6 +622,7 @@ REGION_LEVEL RID_preopt_level(INT phase)
     case PREOPT_IPA0_PHASE:	return RL_IPA_PREOPT;
     case PREOPT_IPA1_PHASE:	return RL_IPA_PREOPT;
     case PREOPT_LNO_PHASE:	return RL_LNO_PREOPT;
+    case PREOPT_LNO1_PHASE:     return RL_LNO1_PREOPT;
     case PREOPT_DUONLY_PHASE:	return RL_DU_PREOPT;
     case PREOPT_PHASE:		return RL_PREOPT;
     case MAINOPT_PHASE:		return RL_MAINOPT;
@@ -698,7 +703,7 @@ BOOL REGION_add_preg_in(RID *rid, PREG_NUM pr, TYPE_ID quad)
   if (npregs == 2) { // quad
     // for quads, put on quad list and pr+1
     // for C4, it actually is two F4's so not a quad
-    if ((quad == MTYPE_FQ || quad == MTYPE_C8) &&
+    if ((quad == MTYPE_FQ || quad == MTYPE_C8 || quad == MTYPE_C10) &&
 	!REGION_search_preg_set(RID_pregs_quad(rid), pr)) {
       RID_pregs_quad(rid) = PREG_LIST_Push(pr, RID_pregs_quad(rid), 
 					   &REGION_mem_pool);
@@ -713,7 +718,7 @@ BOOL REGION_add_preg_in(RID *rid, PREG_NUM pr, TYPE_ID quad)
 		       "PREG %d to in-set, RGN %d\n", pr+1, RID_id(rid)));
     }
   } else if (npregs == 4) { // complex quad
-    Is_True(quad == MTYPE_CQ, ("REGION_add_preg_in, not a complex quad"));
+    Is_True(quad == MTYPE_CQ || quad == MTYPE_C16, ("REGION_add_preg_in, not a complex quad"));
     // for complex quads, put on complex list, and pr, pr+1, pr+2, pr+3
     if (!REGION_search_preg_set(RID_pregs_complex_quad(rid), pr)) {
       RID_pregs_complex_quad(rid) = PREG_LIST_Push(pr,
@@ -793,7 +798,7 @@ BOOL REGION_add_preg_out(RID *rid, INT32 which_set, PREG_NUM pr, TYPE_ID quad)
 		       pr+1, which_set, RID_id(rid)));
     }
   } else if (npregs == 4) { // complex quad
-    Is_True(quad == MTYPE_CQ, ("REGION_add_preg_in, not a complex quad"));
+    Is_True(quad == MTYPE_CQ || quad == MTYPE_C16, ("REGION_add_preg_in, not a complex quad"));
     // for complex quads, put on complex list, and pr, pr+1, pr+2, pr+3
     if (!REGION_search_preg_set(RID_pregs_complex_quad(rid), pr)) {
       RID_pregs_complex_quad(rid) = PREG_LIST_Push(pr,
@@ -1044,6 +1049,7 @@ char *RID_level_str(RID *rid)
     case RL_MP:		strcpy(buff,"RL_MP");		break;
     case RL_RGN_INIT:	strcpy(buff,"RL_RGN_INIT");	break;
     case RL_LNO_PREOPT:	strcpy(buff,"RL_LNO_PREOPT");	break;
+    case RL_LNO1_PREOPT: strcpy(buff,"RL_LNO1_PREOPT");	break;
     case RL_LNO:	strcpy(buff,"RL_LNO");		break;
     case RL_RAIL:	strcpy(buff,"RL_RAIL");		break;
     case RL_RBI:	strcpy(buff,"RL_RBI");		break;
@@ -1332,6 +1338,20 @@ void RID_Tree_Print(FILE *FD, RID *rid)
     for (kid=RID_first_kid(rid); kid; kid=RID_next(kid))
       RID_Tree_Print(FD,kid);
   }
+}
+
+/* =======================================================================
+   RID_is_valid: to check whether rid is valid in the rid tree
+   ====================================================================*/
+bool RID_is_valid(RID *parent, RID *rid)
+{
+    if (parent) {
+        if ( parent == rid) return true;
+        for (RID *kid = RID_first_kid(parent); kid; kid=RID_next(kid))
+            if (RID_is_valid(kid, rid))
+                return true;
+    }        
+    return false;
 }
 
 /* ======================================================================

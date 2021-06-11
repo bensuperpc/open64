@@ -1,4 +1,8 @@
 /*
+ * Copyright (C) 2010 Advanced Micro Devices, Inc.  All Rights Reserved.
+ */
+
+/*
  * Copyright 2003, 2004, 2005, 2006 PathScale, Inc.  All Rights Reserved.
  */
 
@@ -108,7 +112,9 @@ static struct cvt_rule {
   { nop, nop, nop, nop,I1I4,I1I8, nop, nop,I1I4,I1I8},//to I1
   { nop, nop, nop, nop,I2I4,I2I8, nop, nop,I2I4,I1I8},//to I2
   { nop, I4B,I4I1,I4I2, nop,I4I8, nop, nop, nop,U4U8},//to I4
-#ifdef TARG_MIPS
+#ifdef TARG_SL
+  { nop, I8B,I8I1,I8I2,I8I4, nop, I8U1,I8U2,I8U4, nop},//to I8
+#elif defined(TARG_MIPS)
   { nop, nop,I8I1,I8I2, nop, nop, nop, nop,I8U4, nop},//to I8
 #elif defined(TARG_IA32)
   { nop, nop,I8I1,I8I2,I8I4, nop, nop, nop,I8U4, nop},//to I8
@@ -120,14 +126,18 @@ static struct cvt_rule {
   { nop, nop, nop, nop,U1U4,U1U8, nop, nop,U1U4,U1U8},//to U1
   { nop, nop, nop, nop,U2U4,U2U8, nop, nop,U2U4,U2U8},//to U2
   { nop, U4B, nop, nop, nop,U4I8,U4U1,U4U2, nop,U4U8},//to U4
-#ifdef TARG_MIPS
+#ifdef TARG_SL
+  { nop, U8B,U8I1,U8I2,U8I4, nop,U8U1,U8U2,U8U4, nop} //to U8
+#elif defined(TARG_MIPS)
   { nop, nop, nop, nop, nop, nop,U8U1,U8U2,U8U4, nop} //to U8
 #elif defined(TARG_IA32)
   { nop, nop, nop, nop,U8I4, nop,U8U1,U8U2,U8U4, nop} //to U8
 #elif defined(TARG_NVISA)
   { nop, U8B,U8I1,U8I2,U8I4, nop,U8U1,U8U2,U8U4, nop} //to U8
-#else
-  { nop, U8B, nop, nop,U8I4, nop,U8U1,U8U2, nop, nop} //to U8
+#elif defined(TARG_IA64) || defined(TARG_LOONGSON)
+  { nop, U8B, nop, nop,U8U4, nop,U8U1,U8U2,U8U4, nop} //to U8
+#else // TARG_X8664
+  { nop, U8B, nop, nop,U8U4, nop,U8U1,U8U2, nop, nop} //to U8
 #endif
 };
 
@@ -145,9 +155,17 @@ INT Need_type_conversion(TYPE_ID from_ty, TYPE_ID to_ty, OPCODE *opc)
   }
   if ((from_ty == MTYPE_V16C8 && to_ty == MTYPE_V16F8) ||
       (from_ty == MTYPE_V16F8 && to_ty == MTYPE_V16C8)) return NOT_AT_ALL;
+  if ((from_ty == MTYPE_V16C8 && to_ty == MTYPE_C8) ||
+      (from_ty == MTYPE_C8 && to_ty == MTYPE_V16C8)) return NOT_AT_ALL;
 #endif
   if (!(MTYPE_is_integral(from_ty) && MTYPE_is_integral(to_ty))) {
     if (from_ty == to_ty) return NOT_AT_ALL;
+#ifdef TARG_X8664
+  if (MTYPE_is_vector(from_ty) && MTYPE_is_vector(to_ty) &&
+       MTYPE_is_mmx_vector(from_ty) == MTYPE_is_mmx_vector(to_ty)) {
+    return NOT_AT_ALL;
+  }
+#endif
     if (opc != NULL) 
       *opc = OPCODE_make_op(OPR_CVT, to_ty, from_ty);
     return NEED_CVT;

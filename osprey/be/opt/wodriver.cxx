@@ -120,10 +120,6 @@ wopt_main (INT wopt_argc, char **wopt_argv, INT be_argc, char **be_argv)
   /* Construct a skip list from the -WOPT:skip_* options: */
   WOPT_Skip_List = Build_Skiplist ( WOPT_Skip );
   WOPT_Unroll_Skip_List = Build_Skiplist ( WOPT_Unroll_Skip );
-#if 0
-  extern INT32 WOPT_Unroll_Skip;
-  WOPT_Unroll_Skip_List = Build_Skiplist ( WOPT_Unroll_Skip );
-#endif
 } /* wopt_main */
 
 
@@ -184,7 +180,7 @@ Perform_Preopt_Optimization(WN *pu_wn, WN *region_wn)
 
     du_mgr = Create_Du_Manager(MEM_pu_nz_pool_ptr);
 
-    alias_mgr = Create_Alias_Manager(MEM_pu_nz_pool_ptr);
+    alias_mgr = Create_Alias_Manager(MEM_pu_nz_pool_ptr,pu_wn);
     opt_pu = Pre_Optimizer(PREOPT_PHASE, region_wn, du_mgr, alias_mgr);
 
     Delete_Du_Manager(du_mgr,MEM_pu_nz_pool_ptr);

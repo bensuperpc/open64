@@ -1,5 +1,7 @@
 # -*- Makefile -*-
 #
+#  Copyright (C) 2009 Advanced Micro Devices, Inc.  All Rights Reserved.
+#
 #  Copyright (C) 2007. PathScale, LLC. All Rights Reserved.
 #
 #  Copyright (C) 2006. QLogic Corporation. All Rights Reserved.
@@ -109,6 +111,12 @@ endif
 ifeq ($(BUILD_TARGET), NVISA)
 HOSTDEFS += -D__MIPS_AND_IA64_ELF_H
 endif
+ifeq ($(BUILD_TARGET), PPC32)
+HOSTDEFS += -D__MIPS_AND_IA64_ELF_H
+endif
+ifeq ($(BUILD_TARGET), LOONGSON)
+HOSTDEFS += -D__MIPS_AND_IA64_ELF_H
+endif
 
 #----------------------------------------------------------------------
 #  List of directories, and source files of interest
@@ -159,6 +167,7 @@ HEADER_DIRS = \
   $(BE_VHO_DIR)		\
   $(BE_REGION_DIR)      \
   $(TARGDIR)/be         \
+  $(BUILD_SRC_AREA)/be  \
   $(BUILD_TOT)/include
 
 IPA_LOCAL_CXX_SRCS = \
@@ -252,7 +261,12 @@ LDIRT = be.so wopt.so be ipl ii_files
 
 DEP_OBJECTS = $(IPA_OBJS) $(IPA_CXX_OBJS)
 
-default: make_deps
+.PHONY: default first make_deps install
+
+default:
+	$(MAKE) first
+	$(MAKE) make_deps
+
 make_deps: $(TARGETS)
 $(DEP_OBJECTS): $(BUILD_AREA)/be/preg_list.h
 .PHONY: default make_deps
@@ -261,13 +275,12 @@ $(DEP_OBJECTS): $(BUILD_AREA)/be/preg_list.h
 #  Library prerequisites are updated via submake
 #----------------------------------------------------------------------
 
-.PHONY: force
-force: ;
-
-$(TARG_OPT_DIR)/wopt.so: force
-	$(call submake,$(TARG_OPT_DIR),wopt.so)
-$(TARG_BE_DIR)/be.so: force
-	$(call submake,$(TARG_BE_DIR),be.so)
+.PHONY: first
+first:
+ifndef SKIP_DEP_BUILD
+	$(call submake,$(TARG_BE_DIR))
+endif
+	ln -sf $(TARG_BE_DIR)/be.so .
 
 #----------------------------------------------------------------------
 #  The commands in this section are done AFTER every other target is
@@ -299,17 +312,17 @@ endif
 ipl: $(IPA_OBJS) $(IPA_CXX_OBJS) $(IPA_DSOS) \
 		$(TARG_OPT_DIR)/wopt.so $(TARG_BE_DIR)/be.so
 ifeq ($(BUILD_OS_LINUX_OR_DARWIN), TRUE)
-	if ! test -a be.so; then ln -sf $(TARG_BE_DIR)/be.so .; fi
+	if ! test -e be.so; then ln -sf $(TARG_BE_DIR)/be.so .; fi
 endif
 	$(link.c++f) -o $@ $(IPA_OBJS) $(IPA_CXX_OBJS) $(IPA_DSOS) \
 	$(IPL_LINK_DSOS) $(LDFLAGS)
-	if ! test -a wopt.so; then ln -sf $(TARG_OPT_DIR)/wopt.so .; fi
+	if ! test -e wopt.so; then ln -sf $(TARG_OPT_DIR)/wopt.so .; fi
 
 ipl.so: $(IPA_OBJS) $(IPA_CXX_OBJS) $(LINK_DSOS) \
 		$(BE_BE_DIR)/so_locations $(IPA_LOCAL_DIR)/Exported
 	$(link.c++f) -o $@  $(STD_DSO_LOADOPTS) $(EXPORT_LIST)	\
 		$(IPA_OBJS) $(IPA_CXX_OBJS) $(LINK_DSOS) $(LLDLIBS)
-	if ! test -a ipl ; then ln -sf ../be/be ipl; fi
+	if ! test -e ipl ; then ln -sf ../be/be ipl; fi
 
 #----------------------------------------------------------------------
 #  Include the usual commonrules

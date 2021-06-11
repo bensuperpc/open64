@@ -1,4 +1,8 @@
 /*
+ * Copyright (C) 2009-2010 Advanced Micro Devices, Inc.  All Rights Reserved.
+ */
+
+/*
  * Copyright 2003, 2004, 2005, 2006 PathScale, Inc.  All Rights Reserved.
  */
 
@@ -101,7 +105,11 @@ typedef INT64 LOWER_ACTIONS;
 #define LOWER_TO_MEMLIB           0x040000000000ll
 #define LOWER_FAST_EXP            0x080000000000ll
 #define LOWER_EARLY_MLOAD         0x100000000000ll
+#define LOWER_SIMPLIFY_BIT_OP     0x200000000000ll
 #define LOWER_TO_CG		  0x800000000000ll
+#if defined(TARG_SL)
+#define LOWER_FP_EMULATE  0x400000000000ll
+#endif
 
 
 /* 
@@ -161,6 +169,8 @@ extern FLD_HANDLE FLD_And_Offset_From_Field_Id (TY_IDX  struct_ty_idx,
 
 extern WN *WN_Lower(WN *tree, LOWER_ACTIONS actions, struct ALIAS_MANAGER *alias, const char *msg);
 
+//xur
+extern WN *Lower_Memlib(WN *block, WN *tree, LOWER_ACTIONS actions, struct ALIAS_MANAGER *alias=NULL);
 /*
  * lower an scf node but not things underneath it 
  */

@@ -1,4 +1,7 @@
 /*
+ * Copyright (C) 2011 Advanced Micro Devices, Inc.  All Rights Reserved.
+ */
+/*
  * Copyright 2004, 2005, 2006 PathScale, Inc.  All Rights Reserved.
  */
 
@@ -80,6 +83,7 @@
 #include "cxx_hash.h"
 #endif
 
+#include <list>
 
 typedef HASH_TABLE<ST *, ST *> RENAMING_MAP;
 
@@ -96,6 +100,8 @@ public:
   ST_SET ignore;  // ST's that don't need to be renamed
   HASH_TABLE<WN *, BOOL> old_prags; // original PRIVATE pragmas in priv_list
                                     // for STs that must be renamed
+  std::list<ST*> local_mappings;    // Local symtab table mappings, which need
+                                    // to be removed when processing a new PU.
   RENAMING_SCOPE(WN *_priv_list, MEM_POOL *_pool)
     : priv_list(_priv_list), pool(_pool), map(NUM_HASH_ELEMENTS, _pool),
       ignore(NUM_HASH_ELEMENTS, _pool), old_prags(NUM_HASH_ELEMENTS, _pool)
@@ -120,6 +126,11 @@ ST_Source_COMMON_Block(ST *st, ST **split, BOOL want_st = FALSE);
 
 extern ST *
 ST_Source_COMMON_Block(ST *st, ST **split);
+#endif
+
+#ifdef TARG_LOONGSON
+extern BOOL
+ST_Is_Common_Block (ST *st);
 #endif
 
 #endif  // #ifndef privatize_common_INCLUDED

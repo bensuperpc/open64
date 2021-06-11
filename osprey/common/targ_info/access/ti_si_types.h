@@ -1,4 +1,8 @@
 /*
+ * Copyright (C) 2010 Advanced Micro Devices, Inc.  All Rights Reserved.
+ */
+
+/*
  * Copyright (C) 2007 PathScale, LLC.  All Rights Reserved.
  */
 /*
@@ -50,7 +54,7 @@ extern "C" {
 
 typedef enum topcode TOPCODE;
 
-#include <topcode.h>
+#include "topcode.h"
 
 /****************************************************************************
  ****************************************************************************/
@@ -66,7 +70,7 @@ enum { SI_BAD_II_SET_MAX=127 };
 
 typedef UINT SI_RESOURCE_ID;
 
-typedef const struct {
+typedef struct {
   const char* name;
   SI_RESOURCE_ID id;
   mUINT8 avail_per_cycle;
@@ -89,7 +93,7 @@ typedef mUINT64 SI_RRW;
 /****************************************************************************
  ****************************************************************************/
 
-typedef const struct {
+typedef struct {
   const char* name;
   mINT32 skew;
   mINT32 avail_per_cycle;
@@ -98,8 +102,8 @@ typedef const struct {
 /****************************************************************************
  ****************************************************************************/
 
-typedef const struct {
-  SI_RESOURCE* resource;
+typedef struct {
+  const SI_RESOURCE* resource;
   mINT32 total_used;
 } SI_RESOURCE_TOTAL;
 
@@ -112,18 +116,17 @@ typedef const SI_RRW* SI_RR;
  ****************************************************************************/
 typedef UINT SI_ID;
 
-typedef const struct {
+typedef struct {
+#ifdef Is_True_On
   const char* name;
-  SI_ID id;
+#endif
   const mUINT8 *operand_access_times;
   const mUINT8 *result_available_times;
   mINT32 load_access_time;
   mINT32 last_issue_cycle;
   mINT32 store_available_time;
   SI_RR rr;
-#if defined(TARG_SL)
   SI_RR alter_rr;
-#endif
   const SI_RESOURCE_ID_SET *resources_used;
   mUINT32 ii_info_size;
   const SI_RR *ii_rr;
@@ -132,9 +135,18 @@ typedef const struct {
   mINT32 valid_issue_slot_count;
   SI_ISSUE_SLOT * const *valid_issue_slots;
   mINT32 resource_total_vector_size;
-  SI_RESOURCE_TOTAL *resource_total_vector;
+  const SI_RESOURCE_TOTAL *resource_total_vector;
   mUINT8 write_write_interlock;
 } SI;
+
+typedef struct {
+  const char *name;
+  const int SI_issue_slot_count;
+  const SI_ISSUE_SLOT * const * si_issue_slots;
+  const int SI_ID_count;
+  const int *SI_ID_si;
+  const int *SI_top_si;
+} SI_MACHINE;
 
 /****************************************************************************
  ****************************************************************************/

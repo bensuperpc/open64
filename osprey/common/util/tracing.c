@@ -1,4 +1,8 @@
 /*
+ * Copyright (C) 2008-2009 Advanced Micro Devices, Inc.  All Rights Reserved.
+ */
+
+/*
  * Copyright 2004 PathScale, Inc.  All Rights Reserved.
  */
 
@@ -160,6 +164,7 @@ static PDESC Phases[] = {
 
   /* Front end phases: */
   { TP_SEMANTICS,	"SEM",	"Semantic analyzer" },
+  { TP_WGEN,            "WGN",  "WGEN GIMPLE to WHIRL bridge" },
   { TP_IRB,		"IRB",	"IR (WHIRL) builder" },
 
   /* Intermediate/utility phases: */
@@ -216,6 +221,8 @@ static PDESC Phases[] = {
 
   { TP_TEMP,		"TMP",	"Temporary use" },
   { TP_IPISR,		"ISR",	"Interprocedural ISR register allocation" },
+
+  { TP_WSSA,		"WSA",	"WHIRL SSA" },
 
   /* This one must be last: */
   { TP_COUNT,		NULL,  NULL }
@@ -397,6 +404,24 @@ Set_Trace ( INT func, INT arg )
       return;
   }
 }
+
+/* ====================================================================
+ *
+ * Set_All_Trace
+ *
+ * Set a trace flag in all phases.
+ *
+ * ====================================================================
+ */
+void
+Set_All_Trace ( INT func )
+{
+  int i;
+
+  for (i = TP_MIN; i < TP_LAST; i++)
+    Set_Trace ( func, i );
+}
+
 
 /* Set current PU for pu tracing */
 #define RID_CREATE_NEW_ID -1	/* see be/region/region_util.h */
@@ -645,6 +670,7 @@ Set_Trace_File (
     TFile_internal = fopen ( filename, "w" );	/* Truncate */
 #endif
     if ( TFile_internal != NULL ) {
+      setvbuf(TFile_internal,NULL,_IONBF,0);
       TFile_Name = filename;
       Non_stdout_TFile = TRUE;
       Set_Error_Trace (TFile_internal);

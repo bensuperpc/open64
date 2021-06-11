@@ -1,38 +1,14 @@
-
-/*
-
-  Copyright (C) 2000, 2001 Silicon Graphics, Inc.  All Rights Reserved.
-
-  This program is free software; you can redistribute it and/or modify it
-  under the terms of version 2 of the GNU General Public License as
-  published by the Free Software Foundation.
-
-  This program is distributed in the hope that it would be useful, but
-  WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
-
-  Further, this software is distributed without any warranty that it is
-  free of the rightful claim of any third person regarding infringement 
-  or the like.  Any license provided herein, whether implied or 
-  otherwise, applies only to this software file.  Patent licenses, if 
-  any, provided herein do not apply to combinations of this program with 
-  other software, or any other product whatsoever.  
-
-  You should have received a copy of the GNU General Public License along
-  with this program; if not, write the Free Software Foundation, Inc., 59
-  Temple Place - Suite 330, Boston MA 02111-1307, USA.
-
-  Contact information:  Silicon Graphics, Inc., 1600 Amphitheatre Pky,
-  Mountain View, CA 94043, or:
-
-  http://www.sgi.com
-
-  For further information regarding this notice, see:
-
-  http://oss.sgi.com/projects/GenInfo/NoticeExplan
-
-*/
-
+/********************************************************************\
+|*                                                                  *|   
+|*  Copyright (c) 2006 by SimpLight Nanoelectronics.                *|
+|*  All rights reserved                                             *|
+|*                                                                  *|
+|*  This program is free software; you can redistribute it and/or   *|
+|*  modify it under the terms of the GNU General Public License as  *|
+|*  published by the Free Software Foundation; either version 2,    *|
+|*  or (at your option) any later version.                          *|
+|*                                                                  *|
+\********************************************************************/
 
 /*
  * This defines the ABI subprogram interface,
@@ -84,14 +60,16 @@ SIM SIM_Info[] = {
 	SIM_FLT_AFTER_INT | SIM_COORD_MEM_REG | SIM_COORD_INT_FLT 
 	| SIM_REG_STRUCTS | SIM_FLT_RTN_COMPLEX | SIM_DBL_REG_FIELDS ,
 #if defined(TARG_SL)
+    // float/double use integer-register actually which is special 
+    // treated in Get_Parameter_Location, no change in SIM_INFO
 	{I0+4,I0+11,1}, {F0+6,F0+9,1}, {F0+6,F0+9,1},
 #else
 	{I0+4,I0+11,1}, {F0+12,F0+19,1}, {F0+12,F0+19,1},
 #endif
-	{I0+2,I0+3,1},  {F0,F0+1,2}, {F0,F0+1,2},
+	{I0+2,I0+3,1},  {I0+2, I0+3, 1}, {I0+2, I0+3,2},
 	MTYPE_I4, MTYPE_F8, MTYPE_F8,
 	0, 64, -64, 
-	-1, 128, I0+2, I0+25
+	-1, 64, I0+2, I0+25
   },
   { /* ABI_N64 */
 	SIM_FLT_AFTER_INT | SIM_COORD_MEM_REG | SIM_COORD_INT_FLT 
@@ -277,29 +255,32 @@ Get_Return_Info (TY_IDX rtype, Mtype_Return_Level level)
     case MTYPE_I1:
     case MTYPE_I2:
     case MTYPE_I4:
-    case MTYPE_I8:
     case MTYPE_U1:
     case MTYPE_U2:
     case MTYPE_U4:
-    case MTYPE_U8:
-    case MTYPE_A4:
-    case MTYPE_A8:
+    case MTYPE_A4:        
+    case MTYPE_F4:
 
       info.count = 1;
       info.mtype [0] = mtype;
       info.preg  [0] = PR_first_reg(SIM_INFO.int_results);
       break;
 
-    case MTYPE_F4:
+    case MTYPE_I8:
+    case MTYPE_U8:
+    case MTYPE_A8:
+        
     case MTYPE_F8:
-
       info.count = 1;
       info.mtype [0] = mtype;
-      info.preg  [0] = PR_first_reg(SIM_INFO.flt_results);
+      info.preg  [0] = PR_first_reg(SIM_INFO.int_results);
+      //info.mtype [1] = mtype;
+      //info.preg  [1] = PR_first_reg(SIM_INFO.int_results)
+      //               + PR_skip_value(SIM_INFO.flt_results);
       break;
 
     case MTYPE_FQ:
-
+      FmtAssert(FALSE, ("Unsupported type"));
       if (level == No_Simulated) {
 
         info.count     = 2;
@@ -321,6 +302,7 @@ Get_Return_Info (TY_IDX rtype, Mtype_Return_Level level)
     case MTYPE_C4:
     case MTYPE_C8:
 
+      FmtAssert(FALSE, ("Unsupported type"));
       if (level == Use_Simulated) {
 
         info.count     = 1;
@@ -341,6 +323,7 @@ Get_Return_Info (TY_IDX rtype, Mtype_Return_Level level)
 
     case MTYPE_CQ:
 
+      FmtAssert(FALSE, ("Unsupported type"));
       info.count = 4;
       for (INT32 i = 0; i < 4; i++) {
 
@@ -365,12 +348,13 @@ Get_Return_Info (TY_IDX rtype, Mtype_Return_Level level)
                     / MTYPE_RegisterSize(SIM_INFO.int_type);
             PREG_NUM reg = PR_first_reg(SIM_INFO.int_results);
 
-            info.return_via_first_arg = FALSE;
-            info.count = n;
-            for (int i = 0; i < n; i++) {
-
-              info.mtype [i] = SIM_INFO.int_type;
-              info.preg  [i] = reg++;
+            if (n <= MAX_NUMBER_OF_REGISTERS_FOR_RETURN) {
+              info.return_via_first_arg = FALSE;
+              info.count = n;
+              for (int i = 0; i < n; i++) {
+                info.mtype [i] = SIM_INFO.int_type;
+                info.preg  [i] = reg++;
+              }
             }
         }
       }
@@ -488,44 +472,33 @@ Get_Parameter_Location (TY_IDX ty, BOOL is_output)
     case MTYPE_I4:
     case MTYPE_U4:
     case MTYPE_A4:
+    case MTYPE_F4:
       if (Target_Byte_Sex == BIG_ENDIAN) {
-	/* want to right-justify the object */
-	ploc.start_offset += (MTYPE_RegisterSize(SIM_INFO.int_type) -
-			      ploc.size);
+        /* want to right-justify the object */
+        ploc.start_offset += (MTYPE_RegisterSize(SIM_INFO.int_type) -
+            ploc.size);
       }
       else {
-	/* Pad to doubleword; leave address alone   */
-          rpad = (MTYPE_RegisterSize(SIM_INFO.int_type) - ploc.size);
+        /* Pad to doubleword; leave address alone   */
+        rpad = (MTYPE_RegisterSize(SIM_INFO.int_type) - ploc.size);
       }
-	ploc.reg = Get_Current_Preg_Num (SIM_INFO.int_args);
-	break;
-	
+      ploc.reg = Get_Current_Preg_Num (SIM_INFO.int_args);
+      break;
+
     case MTYPE_I8:
     case MTYPE_U8:
     case MTYPE_A8:
-	ploc.reg = Get_Current_Preg_Num (SIM_INFO.int_args);
-	if (MTYPE_size_reg(SIM_INFO.int_type) < MTYPE_size_reg(pmtype)) {
-	    Current_Param_Num++;
-	    /* adjust Last_Fixed_Param in varargs case */
-	    if (Last_Fixed_Param < INT_MAX)
-	  	++Last_Fixed_Param;
-	}
-	break;
-	
-    case MTYPE_F4:
     case MTYPE_F8:
-	/* want to left-justify the object */
-	rpad = MTYPE_RegisterSize(SIM_INFO.flt_type) - ploc.size;
-	if (Current_Param_Num > Last_Fixed_Param && !SIM_varargs_floats) {
-	    /* varargs causes float args to be int regs */
-	    ploc.reg = Get_Current_Preg_Num (SIM_INFO.int_args);
-	} else {
-	    ploc.reg = Get_Current_Float_Preg_Num (SIM_INFO.flt_args);
-	    ploc.vararg_reg = Get_Current_Preg_Num (SIM_INFO.int_args);
-	}
-	break;
+      ploc.reg = Get_Current_Preg_Num (SIM_INFO.int_args);
+      Current_Param_Num++;
+      /* adjust Last_Fixed_Param in varargs case */
+      if (Last_Fixed_Param < INT_MAX)
+        ++Last_Fixed_Param;
+      break;
 	
-    case MTYPE_FQ:
+      case MTYPE_FQ:
+	  	
+	FmtAssert(FALSE, ("Unsupported type"));
 	if (Current_Param_Num > Last_Fixed_Param && !SIM_varargs_floats) {
 	    /* varargs causes float args to be int regs */
 	    ploc.reg = Get_Current_Preg_Num (SIM_INFO.int_args);
@@ -542,6 +515,8 @@ Get_Parameter_Location (TY_IDX ty, BOOL is_output)
     case MTYPE_C4:
     case MTYPE_C8:
     case MTYPE_CQ:
+		
+	FmtAssert(FALSE, ("Unsupported type"));
 	ploc.reg = Get_Current_Float_Preg_Num (SIM_INFO.flt_args);
 	Current_Param_Num++;
 	/* adjust Last_Fixed_Param in varargs case */
@@ -568,13 +543,13 @@ Get_Parameter_Location (TY_IDX ty, BOOL is_output)
 	    /* adjust Last_Fixed_Param in varargs case */
 	    if (Last_Fixed_Param < INT_MAX)
 	    	Last_Fixed_Param += RETURN_INFO_count(info) - 1;
-	  } else {
-	    ploc.reg = Get_Current_Preg_Num (SIM_INFO.int_args);
-	    Current_Param_Num += psize - 1;
-	    /* adjust Last_Fixed_Param in varargs case */
-	    if (Last_Fixed_Param < INT_MAX)
-	    	Last_Fixed_Param += psize - 1;
-	  }
+          } else {
+            ploc.reg = Get_Current_Preg_Num (SIM_INFO.int_args);
+            Current_Param_Num += psize - 1;
+            /* adjust Last_Fixed_Param in varargs case */
+            if (Last_Fixed_Param < INT_MAX)
+              Last_Fixed_Param += psize - 1;
+          }
 	}
 	break;
 	

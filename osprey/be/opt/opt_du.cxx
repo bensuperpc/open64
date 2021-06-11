@@ -1,4 +1,8 @@
 /*
+ * Copyright (C) 2008-2009 Advanced Micro Devices, Inc.  All Rights Reserved.
+ */
+
+/*
  * Copyright 2005-2007 NVIDIA Corporation.  All rights reserved.
  */
 
@@ -361,10 +365,8 @@ DU_MANAGER::Ud_Add_Def(WN *use, WN *def)
 	!OPCODE_is_stmt(WN_opcode(use)))
     {
       if (!Aliased(_alias_mgr, use, def)) {
-	ErrMsg(EC_Development_Warning, "DU_MANAGER::Ud_Add_Def",
-	   "Use and Def are not aliased");
-	dump_wn(def);
-	dump_wn(use);
+	DevWarn("DU_MANAGER::Ud_Add_Def: Use %d [%p] and Def %d [%p] are not aliased",
+		WN_map_id(use), use, WN_map_id(def), def);
       }
     }
   }
@@ -399,6 +401,7 @@ void
 DU_MANAGER::Add_Def_Use( WN *def, WN *use )
 {
   if ((_opt_phase == PREOPT_PHASE || _opt_phase == PREOPT_LNO_PHASE ||
+       _opt_phase == PREOPT_LNO1_PHASE ||
        _opt_phase == PREOPT_DUONLY_PHASE) &&
       OPERATOR_is_scalar_iload (WN_operator(use)) &&
       !OPERATOR_is_scalar_store (WN_operator(def)))
@@ -1197,7 +1200,8 @@ EMITTER::Compute_use_def(DU_MANAGER *du_mgr)
   }
 
   // do not generate info for LNO if no loops
-  if (du_mgr->Opt_phase() == PREOPT_LNO_PHASE && 
+  if ((du_mgr->Opt_phase() == PREOPT_LNO_PHASE
+       || du_mgr->Opt_phase() == PREOPT_LNO1_PHASE) &&
       !Has_do_loop() &&
       !PU_mp_needs_lno(Get_Current_PU())
       )

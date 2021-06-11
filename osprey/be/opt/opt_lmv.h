@@ -1,3 +1,7 @@
+/*
+ * Copyright (C) 2009-2010 Advanced Micro Devices, Inc.  All Rights Reserved.
+ */
+
 //-*-c++-*-
 // ====================================================================
 // ====================================================================
@@ -28,6 +32,8 @@
 
 #ifndef opt_lmv_INCLUDED
 #define opt_lmv_INCLUDED
+
+#include <list>
 
 #include "defs.h"
 #include "opt_defs.h"
@@ -104,12 +110,16 @@ private:
   void Gen_precondioning_br (CODEREP* cond, BOOL falsebr);
   void Connect_dup_blocks (void);
   void Clone_BB_LOOP (void);
+  CODEREP* Gen_add_expr(CODEREP* ptr, CODEREP *val);
   CODEREP* Gen_add_expr (CODEREP* ptr, INT ofst);
+  CODEREP* Gen_range_expr(CODEREP *, const ADDR_LINEAR_EXPR_RANGE &,
+                          CODEREP *, const ADDR_LINEAR_EXPR_RANGE &);
+  CODEREP* Gen_range_and_expr(CODEREP *range1, CODEREP *range2);
   CODEREP* Gen_test_cond (LMV_CANDIDATE*);
   void Gen_precondioning_stuff (CODEREP*);
   void Annotate_alias_group (LMV_CANDIDATE*);
   void Annotate_alias_group_helper (const MEM_ACCESS_VECT&, LMV_ALIAS_GROUP); 
-  void Perform_transformation (LMV_CANDIDATE*);
+  BOOL Perform_transformation (LMV_CANDIDATE*);
   
   // Misc
   // 
@@ -147,6 +157,7 @@ private:
   BB_NODE* _new_header;
   BB_NODE* _new_preheader;
   BB_NODE* _new_merge;
+  BB_NODE* _precond; // the block hosting precondition
 
   // The first/last block of the prev/next list of the cloned loop, 
   // After the duplication is done, the head and tail should be the 
@@ -165,10 +176,10 @@ private:
 public:
   LMV_CFG_ADAPTOR (MEM_POOL* mp, CFG* cfg, BOOL trace, 
                    BB_LOOP* src, CODEREP* predicate)
-    :_mp(mp), _src_loop(src), _cfg(cfg) {
+    :_mp(mp), _cfg(cfg), _src_loop(src) {
 
     _cloned_loop = NULL;
-    _new_header = _new_preheader = _new_merge = NULL;
+    _new_header = _new_preheader = _new_merge = _precond = NULL;
     _dup_loop_body = 
       CXX_NEW (BB_NODE_SET((INT)(_cfg->Last_bb()->Id()*1.5), 
                _cfg, _mp, BBNS_EMPTY), _mp);
@@ -191,15 +202,21 @@ public:
   void Set_cloned_loop_merge (BB_NODE* merge)
     { _new_merge = merge; }
 
+  BB_NODE* Precond_blk (void) const { return _precond; }
+  void Set_precond_blk (BB_NODE* b) { _precond = b; }
+
   void Map_cloned_bb (const BB_NODE* src, const BB_NODE* clone)
     { _old_to_new_blk[src->Id()] = clone->Id(); }
 
   BB_NODE* Get_cloned_bb (const BB_NODE* src) const {
+      if (src == NULL) return NULL;
       std::map<IDTYPE, IDTYPE>::const_iterator iter;
       iter = _old_to_new_blk.find (src->Id());
       return iter != _old_to_new_blk.end() ? 
              _cfg->Get_bb ((*iter).second) : NULL;
     }
+
+  void Get_all_src_bb (std::list<BB_NODE*>& bb_list) const;
 
   void Map_cloned_label (INT src, INT clone) 
     { _old_to_new_lab[src] = clone; }

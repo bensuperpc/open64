@@ -1,4 +1,8 @@
 /*
+ * Copyright (C) 2008-2010 Advanced Micro Devices, Inc.  All Rights Reserved.
+ */
+
+/*
  * Copyright 2002, 2003, 2004, 2005, 2006 PathScale, Inc.  All Rights Reserved.
  */
 
@@ -501,10 +505,6 @@ extern BOOL Enable_Copy_Propagate;
 /***** Put all-zero initialized file-level data in the BSS section? *****/
 extern BOOL Zeroinit_in_bss;
 
-
-/***** Thread-Local_Storage options *****/
-extern char* TLS_Model_Name;
-
 /***** IEEE 754 options *****/
 typedef enum {
   IEEE_STRICT = 0,	/* Conform strictly */
@@ -578,6 +578,8 @@ extern BOOL GCM_Eager_Null_Ptr_Deref_Set; /* ... option seen? */
 #define DEF_OPT_LEVEL	1
 extern INT32 Opt_Level;		/* -On level */
 extern INT32 OPT_unroll_times;
+extern INT32 OPT_unroll_level;
+extern BOOL OPT_keep_extsyms;
 extern BOOL OPT_unroll_times_overridden;
 extern INT32 OPT_unroll_size;
 extern BOOL OPT_unroll_size_overridden;
@@ -589,6 +591,7 @@ extern INT32 Olimit;	/* stop optimization or use regions at this limit */
 extern BOOL Olimit_opt;	/* FALSE => stop optimization if Olimit reached;
 			 * TRUE  => use regions to optimize if Olimit reached */
 extern BOOL CG_mem_intrinsics;
+extern BOOL Emulate_memset;
 extern INT32 CG_memmove_inst_count;
 extern BOOL CG_memmove_inst_count_overridden;
 extern BOOL CG_bcopy_cannot_overlap;
@@ -778,6 +781,8 @@ extern BOOL SIMD_ZMask;
 extern BOOL SIMD_OMask;
 extern BOOL SIMD_UMask;
 extern BOOL SIMD_PMask;
+extern BOOL SIMD_AMask;
+extern BOOL SIMD_FMask;
 
 extern BOOL Use_Sse_Reg_Parm;
 extern INT32 Use_Reg_Parm;
@@ -867,11 +872,14 @@ extern void Configure_Olegacy (BOOL in_FE);
 /***** Perform configuration functions after flag processing *****/
 extern void Configure (void);
 
+/***** Perform configuration functions after flag processing for IPA *****/
+extern void Configure_IPA (void);
+
 /***** Perform configuration functions for each source file *****/
 extern void Configure_Source ( char *filename );
 
 /***** Perform configuration functions for the alias analysis options *****/
-extern void Configure_Alias_Options (struct option_list *);
+extern void Configure_Alias_Options (void);
 
 extern void Configure_Feedback_Options (struct option_list *);
 
@@ -941,6 +949,27 @@ extern void List_Compile_Options (
 #define Is_Target_ISA_I1Plus()	(0)
 #endif
 
+#ifndef STRTOK
+#define STRTOK(a,b)     strtok(a,b)
+#endif
+#ifndef STRDUP
+#define STRDUP(a)       strdup(a)
+#endif
+#ifndef STRCMP
+#define STRCMP(a,b)     strcmp(a,b)
+#endif
+#ifndef STRCASECMP
+#define STRCASECMP(a,b) strcasecmp(a,b)
+#endif
+#ifndef STRLEN
+#define STRLEN(a)       strlen(a)
+#endif
+#ifndef STRTOL
+#define STRTOL(a,b,c)   strtol(a,b,c)
+#endif
+#ifndef STRCHR
+#define STRCHR(a,b)     strchr(a,b)
+#endif
 #ifdef __cplusplus
 }
 #endif

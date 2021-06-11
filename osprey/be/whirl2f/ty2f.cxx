@@ -1,4 +1,8 @@
 /*
+ * Copyright (C) 2010 Advanced Micro Devices, Inc.  All Rights Reserved.
+ */
+
+/*
  * Copyright 2003, 2004 PathScale, Inc.  All Rights Reserved.
  */
 
@@ -1102,12 +1106,16 @@ TY2F_scalar(TOKEN_BUFFER decl_tokens, TY_IDX ty_idx)
       
    case MTYPE_F4:
    case MTYPE_F8:
+   case MTYPE_F10:
+   case MTYPE_F16:
    case MTYPE_FQ:
       base_name = "REAL";
       break;
       
    case MTYPE_C4:
    case MTYPE_C8:
+   case MTYPE_C10:
+   case MTYPE_C16:
    case MTYPE_CQ:
       base_name = "COMPLEX";
       break;
@@ -1282,9 +1290,6 @@ TY2F_pointer(TOKEN_BUFFER decl_tokens, TY_IDX ty)
 
       if (TY2F_Pointer_To_Dope(ty))
       {
-#if 0
-	Prepend_Token_String(decl_tokens,",POINTER ::");
-#endif
 	TY2F_translate(decl_tokens,Be_Type_Tbl(Pointer_Mtype));
       } 
       else
@@ -1293,10 +1298,6 @@ TY2F_pointer(TOKEN_BUFFER decl_tokens, TY_IDX ty)
 
 	if (TY_kind(TY_pointed(ty)) == KIND_STRUCT)
 	{
-#if 0
-	  Prepend_Token_String(decl_tokens,",POINTER ::");
-	  Prepend_Token_String(decl_tokens,W2CF_Symtab_Nameof_Ty(TY_pointed(ty)));
-#endif
  	  TY2F_translate(decl_tokens,Be_Type_Tbl(Pointer_Mtype));
 
 	} else

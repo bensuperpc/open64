@@ -1,4 +1,8 @@
 /*
+ * Copyright (C) 2010 Advanced Micro Devices, Inc.  All Rights Reserved.
+ */
+
+/*
  *  Copyright (C) 2006, 2007. QLogic Corporation. All Rights Reserved.
  */
 
@@ -1827,22 +1831,6 @@ boolean read_line (boolean	cc_continuation_line)
       }
 
 
-# if 0
-
-      /* LRR:  The following code to issue message 55 is being #ifdef'd out   */
-      /* because we can think of no reason for it being here, but I don't     */
-      /* want to lose it entirely in case in the future we do find a need for */
-      /* it.  It does nothing to fix the file anyway.  The newline has already*/
-      /* been inserted by code above this.  And if message 55 ever does get   */
-      /* issued, the message handler can't process it correctly because it    */
-      /* hits the EOF before it increments its line counter which makes it    */
-      /* look like it could not find the source line.  See SPR 84130.	      */
-
-      if (ch == EOF) { /* File line does not end with newline. */
-	 PRINTMSG (curr_glb_line, 55, Warning, 0);
-      }
-
-# endif
 
 
    }
@@ -3439,7 +3427,6 @@ static void free_get_stmt (void)
                      break;
 
                   case Pound_Include_Exit_Line:
-                     include_complete = TRUE;
                      nxt_line_type         = Comment_Line;
                      curr_glb_line--;
                      SRC_STK_FILE_LINE(src_stk_idx)--;
@@ -3467,7 +3454,9 @@ static void free_get_stmt (void)
 		     if (open_include_file (FALSE))
 #endif /* KEY Bug 10151 */
 		     {
-		        include_found  = TRUE;		/* flag begin of file */
+                        if( nxt_line_type == Include_Line ) {
+		          include_found  = TRUE;		/* flag begin of file */
+                        }
 		        include_switch = TRUE;		/* flag file switch   */
 		     }
 		     break;
@@ -3641,6 +3630,7 @@ START:
                ch =  nxt_line[++PP_IDX];
             }
             include_file[idx] = '\0';
+            char_delim = 0;
 
             ch =  nxt_line[++PP_IDX];
             while (ch == blank | ch == tab) {
@@ -4445,6 +4435,8 @@ START:
    }  /* else */
 
    if (PP_LINE_TYPE != Comment_Line && 
+       PP_LINE_TYPE != Pound_Include_Enter_Line &&
+       PP_LINE_TYPE != Pound_Include_Exit_Line &&
        PP_LINE_TYPE != Cond_Comp_Line &&
        PP_LINE_TYPE != Dir_Line) {
       PP_EXPECTED_LINE = Regular_Line;
@@ -4465,9 +4457,11 @@ START:
    /* count.                                             */
 
 
-   if (PP_LINE_TYPE == Regular_Line          | 
-       PP_LINE_TYPE == Dir_Line              |
-       PP_LINE_TYPE == Dir_Continuation_Line |
+   if (PP_LINE_TYPE == Regular_Line          || 
+       PP_LINE_TYPE == Dir_Line              ||
+       PP_LINE_TYPE == Dir_Continuation_Line ||
+       PP_LINE_TYPE == Pound_Include_Enter_Line || 
+       PP_LINE_TYPE == Pound_Include_Exit_Line || 
        PP_LINE_TYPE == Continuation_Line)    {
 
       if (PP_LINE_TYPE != Continuation_Line      &&
@@ -4881,10 +4875,6 @@ static boolean open_include_file (boolean pound_include_line)
    int		src_stk_i;
    char		str[MAX_PATH_NAME_SIZE+10];
 
-# if 0
-   int		full_include_name_len;
-   int		prev_include_idx;
-# endif
 
 
    TRACE (Func_Entry, "open_include_file", NULL);
@@ -5049,76 +5039,6 @@ static boolean open_include_file (boolean pound_include_line)
    stmt_start_col  = save_stmt_start_col;
 
 
-# if 0
-
-   /*
-    * Although the following code that ensures that a single File Name record
-    * is produced no matter how many times the name appears in INCLUDE lines
-    * is the "correct" thing to do (this is the way it's documented), it is
-    * commented out for now because we use the file id as the Source Position
-    * record source id and this makes the source id *not* unique.  That is,
-    * we end up with multiple Source Position records with the same source
-    * id.  When all the visual tools get upgraded to CIF Version 3, then 
-    * they'll start using the Source Position records (which means the source
-    * position ids will come from a counter separate from the file ids) and
-    * we can go back to using this code.  That will mean that several Source
-    * Position records (with unique source position ids) will point to the 
-    * same file id (back to a unique File Name record).
-    * So for now, go back to the old lazy way of just slamming out a File Name
-    * record each time a file name is seen.
-   */
-   
-
-   /* If this fully expanded INCLUDE file name has not been encountered       */
-   /* before then call cif_file_name_rec in order to get the next CIF file    */
-   /* id.  Otherwise, use the file id already assigned to this file.          */
-   /* It's saved away (farther below) in the source stack so that buffered    */
-   /* message processing can use it at the end of the compilation.	      */
-
-   full_include_name_len = include_path_len + include_file_len;
-   include_idx           = full_include_name_idx;
-   prev_include_idx      = NULL_IDX;
-
-   while (include_idx != NULL_IDX) {
-
-      if (FP_NAME_LEN(include_idx) == full_include_name_len  &&
-          EQUAL_STRS(include_path, FP_NAME_PTR(include_idx))) {
-         break;
-      }
-      else {
-         prev_include_idx = include_idx;
-         include_idx      = FP_NEXT_FILE_IDX(include_idx);
-      }
-   }
-
-   if (include_idx == NULL_IDX) {
-      TBL_REALLOC_CK(file_path_tbl, 1);
-      CLEAR_TBL_NTRY(file_path_tbl, file_path_tbl_idx);
-
-      if (full_include_name_idx == NULL_IDX) {
-         full_include_name_idx = file_path_tbl_idx;
-      }
-      else {
-         FP_NEXT_FILE_IDX(prev_include_idx) = file_path_tbl_idx;
-      }
-
-      FP_NAME_IDX(file_path_tbl_idx) = str_pool_idx + 1;
-      FP_NAME_LEN(file_path_tbl_idx) = full_include_name_len;
-
-      TBL_REALLOC_CK(str_pool, WORD_LEN(full_include_name_len));
-
-      str_pool[str_pool_idx].name_long = 0;            /* Zero out last word. */
-
-      strcpy(FP_NAME_PTR(file_path_tbl_idx), include_path);
-
-      cif_file_id = cif_file_name_rec(include_path, include_file);
-      FP_CIF_ID(file_path_tbl_idx) = cif_file_id;
-   }
-   else {
-      cif_file_id = FP_CIF_ID(include_idx);
-   }
-
-# endif
 
    /* Delete the following line when the above code is reinstated.            */
 

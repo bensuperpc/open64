@@ -1,32 +1,14 @@
-/*
- * Copyright 2003, 2004 PathScale, Inc.  All Rights Reserved.
- *
- * This program is free software; you can redistribute it and/or modify it
- * under the terms of version 2 of the GNU General Public License as
- * published by the Free Software Foundation.
- *
- * This program is distributed in the hope that it would be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
- *
- * Further, this software is distributed without any warranty that it is
- * free of the rightful claim of any third person regarding infringement 
- * or the like.  Any license provided herein, whether implied or 
- * otherwise, applies only to this software file.  Patent licenses, if 
- * any, provided herein do not apply to combinations of this program with 
- * other software, or any other product whatsoever.  
- *
- * You should have received a copy of the GNU General Public License along
- * with this program; if not, write the Free Software Foundation, Inc., 59
- * Temple Place - Suite 330, Boston MA 02111-1307, USA.
- */
-
-/*
-  sas, a stand-alone scheduler, which will perform local instruction scheduling
-  and software pipelining.
-
-  02-04-2003
-*/
+/********************************************************************\
+|*                                                                  *|   
+|*  Copyright (c) 2006 by SimpLight Nanoelectronics.                *|
+|*  All rights reserved                                             *|
+|*                                                                  *|
+|*  This program is free software; you can redistribute it and/or   *|
+|*  modify it under the terms of the GNU General Public License as  *|
+|*  published by the Free Software Foundation; either version 2,    *|
+|*  or (at your option) any later version.                          *|
+|*                                                                  *|
+\********************************************************************/
 
 #include "cgir.h"
 #include "glob.h"
@@ -468,27 +450,6 @@ void KEY_SCH::Emit_Src_DDG() const
       fprintf(t, " ");
     }
     
-#if 0
-    /* print flags */
-    if (OP_glue(op)) fprintf (t, " glue");
-    if (OP_no_alias(op)) fprintf (t, " noalias");
-    if (OP_copy(op)) fprintf (t, " copy");
-    if (OP_volatile(op)) fprintf (t, " volatile");
-    if (OP_side_effects(op)) fprintf (t, " side_effects");
-    if (OP_hoisted(op)) fprintf (t, " hoisted");
-    if (OP_cond_def(op)) fprintf (t, " cond_def");
-    if (OP_end_group(op)) fprintf (t, " end_group");
-    if (OP_tail_call(op)) fprintf (t, " tail_call");
-    if (OP_no_move_before_gra(op)) fprintf (t, " no_move");
-    if (OP_spadjust_plus(op)) fprintf (t, " spadjust_plus");
-    if (OP_spadjust_minus(op)) fprintf (t, " spadjust_minus");
-    
-    if (OP_unrolling(op)) {
-      uint16_t unr = OP_unrolling(op);
-      fprintf(t, " %d%s unrolling", unr,
-	      unr == 1 ? "st" : unr == 2 ? "nd" : unr == 3 ? "rd" : "th");
-    }
-#endif
     fprintf( t, " {" );
     
     // Print succs
@@ -529,7 +490,7 @@ void KEY_SCH::Schedule_DDG()
   static char* solver = NULL;
 
   if( solver == NULL ){
-    (void*)solver = (char*)malloc( sizeof(solver[0]) * 256 );
+    solver = (char*)malloc( sizeof(solver[0]) * 256 );
 
     if( CG_Path == NULL ){
       char* path = getenv( "LD_LIBRARY_PATH" );
@@ -546,13 +507,6 @@ void KEY_SCH::Schedule_DDG()
     }
   }
 
-#if 0
-  if( system( solver ) < 0 ){
-    FmtAssert( false, ("") );
-  }
-
-  return;
-#else
   pid_t childpid;
 
   /* Call the solver. */
@@ -576,7 +530,6 @@ void KEY_SCH::Schedule_DDG()
       Is_True( false, ("KEY_SAS FAILED to SCHEDULE %s", ddg_file) );
     }
   }
-#endif
 }
 
 
@@ -668,13 +621,6 @@ void KEY_SCH::Collect_Sched_Info()
     p = strstr( p, "order" );
     FmtAssert( p != NULL, ("") );
     OP_info_order( op ) = atoi( &p[5] );
-#if 0
-    if( trace ){
-      fprintf( TFile, "op%d: cycle%d stage%d order%d\n",
-	       OP_info_indx(op), OP_info_cycle(op),
-	       OP_info_stage(op), OP_info_order(op) );
-    }
-#endif
     FmtAssert( OP_info_indx(op) == indx, ("") );
     op = OP_next( op );
     indx++;
@@ -1008,7 +954,7 @@ void KEY_SCH::Schedule_Kernel()
   }
 
   OP_info_size = max_indx + 1 + 1;  // for the new br_op at Preconditioning
-  (void*)op_info = (OP_info *)MEM_POOL_Alloc( mem_pool, ( sizeof(op_info[0]) * OP_info_size ) );
+  op_info = (OP_info *)MEM_POOL_Alloc( mem_pool, ( sizeof(op_info[0]) * OP_info_size ) );
   OP_info_reset();
   max_indx = 0;
   FOR_ALL_BB_OPs( kernel, op ){
@@ -1254,14 +1200,6 @@ void KEY_SCH::register_allocation_init()
       }
 
       fprintf( TFile, "\n" );
-#if 0
-      REGISTER_SET_Print( avail_reg_set[rc], TFile );
-      fprintf( TFile, "\n\tAvail(Registers):" );
-      REGISTER reg;
-      FOR_ALL_REGISTER_SET_members( avail_reg_set[rc], reg ){
-	fprintf( TFile, " %s", REGISTER_name( rc, reg ) );
-      }
-#endif
     }
 
     if( avail_reg_num < reg_num_required[rc] ){
@@ -1669,21 +1607,6 @@ void KEY_SCH::Gen_PKE( CG_LOOP& cl )
 	VECTOR_Add_Element( kernel_vec, new_op );
 	Set_OP_unroll_bb( new_op, kernel );
 	OP_scycle( new_op ) = scycle - ( sc - 1 ) * mii;
-#if 0
-	// We have to expose a kernel-defined TN, except for fcc, to GRA.
-	if( OP_results( new_op ) == 1 ){
-	  TN* body_tn = OP_result( new_op, 0 );
-
-	  if( REGISTER_CLASS_can_store( TN_register_class( body_tn ) ) &&
-	      CG_LOOP_Backpatch_Find_Non_Body_TN( prolog, body_tn, 0 ) == NULL ){
-	    TN* non_body_tn = Build_TN_Like( body_tn );
-	    Set_TN_register_and_class( non_body_tn,
-				       TN_register_and_class( body_tn ) );
-	    Set_TN_is_dedicated( non_body_tn );
-	    CG_LOOP_Backpatch_Add( prolog, non_body_tn, body_tn, 0 );
-	  }
-	}
-#endif
       } else {
 	VECTOR_Add_Element( epilog_vec, new_op );
 	Set_OP_unroll_bb( new_op, epilog );
@@ -1730,12 +1653,6 @@ void KEY_SCH::Gen_PKE( CG_LOOP& cl )
   extend_epilog( cl.Loop() );
   epilog = CG_LOOP_epilog;
 
-#if 0
-  Create_Region( prolog );
-  Set_BB_reg_alloc( prolog );
-  Create_Region( epilog );
-  Set_BB_reg_alloc( epilog );
-#endif
 
   // Sort the ops inside PKE_vec.
 
@@ -1978,31 +1895,6 @@ void KEY_SCH::Peeling_For_Unknown_Trip( CG_LOOP& cl, TN* trip_count_tn )
   if( trace )
     CG_LOOP_Trace_Loop( cl.Loop(), "**** After Loop Pre-conditioning ****" );
 
-#if 0
-  // Since the trip count >= Kmin + sc - 1, we don't need it any more.
-  // Generate kernel guard.
-  TN* remainder_trip_count = Build_TN_Like(trip_count_tn);
-
-  OPS_Remove_All( &ops );
-
-  // Check whether the loop is emtpy after being peeled Kmin times
-  if( is_power_of_two( Kmin ) ){
-    Exp_OP2( trip_size == 4 ? OPC_I4ASHR : OPC_I8ASHR,
-	     remainder_trip_count,
-	     trip_count_tn,
-	     Gen_Literal_TN( log2(Kmin), trip_size ),
-	     &ops );
-  } else {
-    Exp_OP2( trip_size == 4 ? OPC_U4DIV : OPC_U8DIV,
-	     remainder_trip_count,
-	     trip_count_tn,
-	     Gen_Literal_TN( Kmin, trip_size ),
-	     &ops );
-  }
-
-  BB_Append_Ops( prolog, &ops );
-  Unroll_Do_Loop_guard( cl.Loop(), info, remainder_trip_count );
-#endif
 
   prolog = CG_LOOP_prolog;
   epilog = CG_LOOP_epilog;
@@ -2076,19 +1968,6 @@ void KEY_SCH::Loop_Preconditioning( CG_LOOP& cl )
     Peeling_For_Unknown_Trip( cl, trip_count_tn );
   }
 
-#if 0
-  /* Add a preconditioning note for the assembly listing to replace the
-     remainder loop note generated by Unroll_Make_Remainder_Loop(). */
-  NOTE_SWP_HEAD* note = TYPE_MEM_POOL_ALLOC( NOTE_SWP_HEAD, &MEM_pu_nz_pool );
-  if( TN_is_constant(trip_count_tn) ){
-    note->const_trip = true;
-    note->ntimes = TN_value(trip_count_tn) % ntimes;
-  } else {
-    note->const_trip = false;
-    note->ntimes = ntimes;
-  }
-  NOTE_Add_To_BB( prolog, preconditioning_head_note_handler, (NOTE_INFO*)note );
-#endif
 
   // Otherwise, OP_info will be messed up.
   Is_True( kernel == cl.Loop_header(), ("") );
@@ -2211,12 +2090,6 @@ KEY_SCH::KEY_SCH( CG_LOOP& cl, BB* _prolog, BB* _epilog, bool trace )
     }
   }
 
-#if 0
-  if( max_omega > 1 &&
-      max_omega <= SWP_Options.Max_Unroll_Times ){
-    Loop_Unrolling( cl, max_omega );
-  }
-#endif
 
   CG_LOOP_Remove_Notations( cl.Loop(), prolog, epilog );
   Delete_Backpatches();

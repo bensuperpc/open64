@@ -1,4 +1,8 @@
 /*
+ * Copyright (C) 2008-2010 Advanced Micro Devices, Inc.  All Rights Reserved.
+ */
+
+/*
  *  Copyright (C) 2007. Pathscale LLC. All Rights Reserved.
  */
 
@@ -60,7 +64,6 @@
  * ====================================================================
  */
 
-#define __STDC_LIMIT_MACROS
 #include <stdint.h>
 
 #include <errno.h>
@@ -117,7 +120,7 @@
 #include "cgdriver.h"
 #include "register.h"
 #include "pqs_cg.h"
-#ifdef TARG_IA64
+#if defined(TARG_IA64) || defined(TARG_LOONGSON)
 #include "ipfec_options.h"
 #endif
 #ifdef KEY
@@ -284,6 +287,10 @@ static OPTION_DESC Options_GRA[] = {
   { OVK_INT32,	OV_INTERNAL, TRUE, "local_forced_max", "local_forced_max",
     4, 0, 16,	&GRA_local_forced_max, &GRA_local_forced_max_set,
     "How many locals to force allocate (out of the number requested by LRA) [Default 4]"
+  },
+  { OVK_BOOL,	OV_INTERNAL, TRUE, "unspill", "",
+    0,0,0,	&GRA_unspill_enable, NULL,
+    "Enable/disable fusing of GRA spills and restores back to registers [Default FALSE]"
   },
 #else
   { OVK_INT32,	OV_INTERNAL, TRUE, "local_forced_max", "",
@@ -455,6 +462,20 @@ static OPTION_DESC Options_CG[] = {
     0, 0, 0,	&CG_skip_local_swp, NULL },
   { OVK_BOOL,	OV_INTERNAL, TRUE, "skip_local_ebo", "",
     0, 0, 0,	&CG_skip_local_ebo, NULL },
+#ifdef TARG_X8664
+  { OVK_BOOL,	OV_VISIBLE, TRUE, "cmp_peep", "",
+    0, 0, 0,	&CG_cmp_load_exec, NULL },
+  { OVK_BOOL,	OV_VISIBLE, TRUE, "fma4_peep", "",
+    0, 0, 0,	&CG_fma4_load_exec, NULL },
+  { OVK_BOOL,	OV_VISIBLE, TRUE, "dsched", "",
+    0, 0, 0,	&CG_dispatch_schedule, NULL },
+  { OVK_BOOL,	OV_VISIBLE, TRUE, "unalign_st", "",
+    0, 0, 0,	&CG_128bitstore, NULL },
+  { OVK_BOOL,	OV_VISIBLE, TRUE, "brfuse", "",
+    0, 0, 0,	&CG_branch_fuse, NULL },
+  { OVK_BOOL,   OV_VISIBLE, TRUE, "strcmp_expand", "",
+    0, 0, 0,    &CG_strcmp_expand, NULL },
+#endif
   { OVK_BOOL,	OV_INTERNAL, TRUE, "skip_local_sched", "",
     0, 0, 0,	&CG_skip_local_sched, NULL },
 #endif //TARG_NVISA
@@ -516,6 +537,8 @@ static OPTION_DESC Options_CG[] = {
     0, 0, 0,	&CG_loadbw_execute, NULL },
   { OVK_BOOL,   OV_INTERNAL, TRUE, "valgrind_friendly", "valgrind",
     0, 0, 0,    &CG_valgrind_friendly, NULL },
+  { OVK_BOOL,   OV_INTERNAL, TRUE, "movext_icmp", "movext_icmp",
+    0, 0, 0,    &CG_Movext_ICMP, NULL },
 #endif
 
   // CG Dependence Graph related options.
@@ -633,6 +656,15 @@ static OPTION_DESC Options_CG[] = {
     INT32_MAX, 0, INT32_MAX, &CG_zdl_skip_a, NULL },
   { OVK_INT32, OV_INTERNAL, TRUE, "zdl_skip_b", "",
     INT32_MAX, 0, INT32_MAX, &CG_zdl_skip_b, NULL },
+  { OVK_BOOL,  OV_INTERNAL, TRUE, "opt_condmv", "",
+    0, 0, 0,   &CG_enable_opt_condmv, NULL},
+  { OVK_BOOL,  OV_INTERNAL, TRUE, "CBUS_workaround", "",
+    0, 0, 0,   &CG_enable_CBUS_workaround, NULL},
+  { OVK_BOOL,  OV_INTERNAL, TRUE, "LD_NOP_workaround", "",
+    0, 0, 0,   &CG_enable_LD_NOP_workaround, NULL},
+  { OVK_BOOL,  OV_INTERNAL, TRUE, "C3_AR_dependence_workaround", "",
+    0, 0, 0,   &CG_enbale_C3_AR_dependence_workaround, NULL},
+
   /* For SL2, I need a options to tell what application I'm comping.
    * So I can get the right LUT file
    */
@@ -651,6 +683,8 @@ static OPTION_DESC Options_CG[] = {
     0, 0, 0, &CG_LOOP_unroll_fully, NULL },
   { OVK_BOOL,	OV_INTERNAL, TRUE,"unroll_remainder_fully", "unroll_remainder_full",
     0, 0, 0, &CG_LOOP_unroll_remainder_fully, NULL },
+  { OVK_BOOL,	OV_VISIBLE, TRUE,"unroll_fb_req", "",
+    0, 0, 0, &CG_LOOP_unroll_fb_required, NULL },
 
   // Cross Iteration Loop Optimization options.
 
@@ -662,7 +696,7 @@ static OPTION_DESC Options_CG[] = {
     0, 0, 0, &CIO_enable_write_removal, NULL },
   { OVK_BOOL,	OV_INTERNAL, TRUE, "cio_cse_removal", "",
     0, 0, 0, &CIO_enable_cse_removal, NULL },
-  { OVK_INT32,	OV_INTERNAL, TRUE, "cio_rw_max_omega", "",
+  { OVK_INT32, OV_INTERNAL, TRUE, "cio_rw_max_omega", "",
     8, 0, INT32_MAX, &CIO_rw_max_omega, NULL },
 
   // Control flow optimizations (CFLOW) options.
@@ -737,6 +771,8 @@ static OPTION_DESC Options_CG[] = {
 
   // Whirl2ops / Expander options.
 
+  { OVK_BOOL,	OV_VISIBLE, TRUE, "divrem_opt", "",
+    0, 0, 0,	&CG_divrem_opt, NULL },
   { OVK_NAME,	OV_INTERNAL, TRUE,"fdiv_algorithm", "fdiv",
     0, 0, 0, &CGEXP_fdiv_algorithm, NULL },
   { OVK_NAME,	OV_INTERNAL, TRUE,"sqrt_algorithm", "sqrt",
@@ -764,6 +800,12 @@ static OPTION_DESC Options_CG[] = {
   { OVK_BOOL,	OV_INTERNAL, TRUE,"float_div_by_const", "",
     0, 0, 0, &CGEXP_opt_float_div_by_const, NULL },
 
+#ifdef TARG_LOONGSON
+  { OVK_BOOL,   OV_VISIBLE, TRUE,"use_loongson2e_multdivmod", "",
+    0, 0, 0, &CGEXP_use_Loongson2e_MultDivMod, NULL },
+  { OVK_BOOL,   OV_INTERNAL, TRUE,"float_use_madd", "",
+    0, 0, 0, &CGEXP_float_use_madd, NULL },
+#endif
   { OVK_NAME,	OV_INTERNAL, TRUE,"lfhint_L1", "",
     0, 0, 0, &CGEXP_lfhint_L1, NULL },
   { OVK_NAME,	OV_INTERNAL, TRUE,"lfhint_L2", "",
@@ -1167,6 +1209,10 @@ static OPTION_DESC Options_CG[] = {
     0, 0, 0, &CG_use_short_form, NULL },
   { OVK_BOOL,	OV_INTERNAL, TRUE, "p2align", "p2align",
     0, 0, 0,	&CG_p2align, NULL },
+  { OVK_BOOL,	OV_INTERNAL, TRUE, "loop32", "loop32",
+    0, 0, 0,	&CG_loop32, NULL },
+  { OVK_BOOL,	OV_INTERNAL, TRUE, "compute_to", "compute_to",
+    0, 0, 0,	&CG_compute_to, NULL },
   { OVK_UINT64,	OV_INTERNAL, TRUE, "p2align_freq", "",
     0, 0, UINT64_MAX>>1, &CG_p2align_freq, NULL, "freq threshold for .p2align" },
   { OVK_UINT32,	OV_INTERNAL, TRUE,"p2align_max_skip_bytes", "",
@@ -1206,6 +1252,44 @@ static OPTION_DESC Options_CG[] = {
     "Store x87 floating point variables to memory after each computation, in order to reduce the variable's precision from 80 bits to 32/64 bits.  Default off."
   },
 #endif
+#ifdef TARG_LOONGSON
+  { OVK_BOOL,   OV_VISIBLE,     TRUE, "opt_useless_mem_op",
+    "opt_useless_mem_op", 0, 0, 0,    &CG_Enable_Opt_Mem_OP, NULL,
+    "Remove useless st/ld op after EBO last time"
+  },
+  { OVK_BOOL,   OV_VISIBLE,     TRUE, "opt_useless_st_in_loop",
+    "opt_useless_st_in_loop", 0, 0, 0, &CG_Enable_Opt_St_In_Loop, NULL,
+    "Remove useless st/ld op after EBO last time"
+  },
+  { OVK_BOOL,   OV_VISIBLE,     TRUE, "enable_enhanced_lra",
+    "enable_enhanced_lra", 0, 0, 0,    &CG_Enable_Enhanced_LRA, NULL,
+    "Enable use another algorithm for LRA"
+  },
+  { OVK_BOOL,   OV_VISIBLE,     TRUE, "enable_force_enhanced_lra",
+    "enable_force_enhanced_lra", 0, 0, 0,    &CG_Enable_Force_Enhanced_LRA, NULL,
+    "force to do another algorithm for LRA"
+  },
+  { OVK_BOOL,   OV_VISIBLE,     TRUE, "enable_opt_ld_after_lra",
+    "enable_opt_ld_after_lra", 0, 0, 0,    &CG_Enable_Opt_Ld_After_LRA, NULL,
+    "Enable opt ld after EBO"
+  },
+  { OVK_INT32,   OV_VISIBLE,     TRUE, "enable_opt_entry_ra_reg",
+    "enable_opt_entry_ra_reg", 0, 0, INT32_MAX,    &CG_Enable_RA_OPT, NULL,
+    "Enable opt copy of RA reg in entry"
+  },
+  { OVK_BOOL,   OV_VISIBLE,     TRUE, "enable_sorted_gra",
+    "enable_sorted_gra", 0, 0, 0,    &CG_Enable_Sorted_GRA, NULL,
+    "Enable opt copy of RA reg in entry"
+  },
+  { OVK_BOOL,   OV_VISIBLE,     TRUE, "ftz",
+    "ftz", 0, 0, 0,    &CG_Enable_FTZ, NULL,
+    "Enable masking flush-to-zero bit in Floating-exception control register"
+  },
+  { OVK_BOOL,   OV_VISIBLE,     TRUE, "nosched_div",
+    "nosched_div", 0, 0, 0,    &CG_NoSched_Divmfhimflo, NULL,
+    "not schedule div and mfhi/mflo"
+  },  
+#endif
 #if defined(TARG_SL)
   { OVK_BOOL ,  OV_INTERNAL, TRUE, "instr16","",
      0, 0, 0,	  &CG_Gen_16bit, NULL},
@@ -1235,6 +1319,8 @@ static OPTION_DESC Options_CG[] = {
      0, 0, 0,     &CG_round_spreg, NULL},
   { OVK_BOOL,  OV_INTERNAL, TRUE, "check_packed", "",
      0, 0, 0,     &CG_check_packed, NULL},
+  { OVK_BOOL ,  OV_INTERNAL, TRUE, "br_taken","",
+     0, 0, 0,	  &CG_branch_taken, NULL},
   { OVK_BOOL,   OV_INTERNAL, TRUE,  "sl2", "",
      0, 0, 0,        &CG_sl2, NULL },
 // sl2 specific peephole optimization 
@@ -1305,7 +1391,7 @@ static OPTION_DESC Options_CG[] = {
   { OVK_COUNT }
 };
 
-#ifdef TARG_IA64
+#if defined(TARG_IA64) || defined(TARG_LOONGSON)
 /* Ipfec related options: */
 //The &IPFEC_... flags are changed into &ORC_... flags.
 static OPTION_DESC Options_IPFEC[] = {
@@ -1333,9 +1419,11 @@ static OPTION_DESC Options_IPFEC[] = {
   { OVK_BOOL,   OV_VISIBLE,     TRUE, "force_if_conv", "", 
     0, 0, 0,    &ORC_Force_If_Conv, NULL, 
     "Use Ipfec if-convertor without profitablity consideration" },
+#ifndef TARG_LOONGSON
   { OVK_BOOL,   OV_VISIBLE,     TRUE, "relaxed_if_conv", "",
     0, 0, 0,    &ORC_Relaxed_If_Conv, NULL,
     "Use Ipfec if-convertor with relaxed profability consideration" }, 
+#endif
   { OVK_BOOL,   OV_VISIBLE,     TRUE, "combine_exit", "", 
     0, 0, 0,    &ORC_Combine_Exit, NULL, 
     "Enable the combine exits with identical targets" },
@@ -1375,12 +1463,14 @@ static OPTION_DESC Options_IPFEC[] = {
   { OVK_BOOL,	OV_VISIBLE,	TRUE, "spec", "", 
     0, 0, 0,	&ORC_Enable_Speculation, NULL, 
     "Enable speculation" },
+#ifndef TARG_LOONGSON
   { OVK_BOOL,	OV_VISIBLE,	TRUE, "fpld_spec", "", 
     0, 0, 0,	&ORC_Enable_FP_Ld_Speculation, NULL, 
     "Enable floating-point load speculation" },
   { OVK_BOOL,	OV_VISIBLE,	TRUE, "dsra", "", 
     0, 0, 0,	&ORC_Enable_Data_Spec_Res_Aware, NULL, 
     "Enable data speculation resource awareness" },
+#endif
   { OVK_BOOL,	OV_VISIBLE,	TRUE, "data_spec", "", 
     0, 0, 0,	&ORC_Enable_Data_Speculation, NULL, 
     "Enable data speculation" },
@@ -1736,6 +1826,9 @@ OPTION_GROUP Cg_Option_Groups[] = {
   { "VT", ':', '=', Options_VT },
   { "SKIP", ':', '=', Options_SKIP },
 #endif
+#ifdef TARG_LOONGSON
+  { "IPFEC", ':', '=', Options_IPFEC },
+#endif
   { NULL }		/* List terminator -- must be last */
 };
 
@@ -1928,6 +2021,7 @@ Configure_CG_Options(void)
   }
   CG_LOOP_unroll_times_max = OPT_unroll_times;
   CG_LOOP_unrolled_size_max = OPT_unroll_size;
+  CG_LOOP_unroll_level = OPT_unroll_level;
 
   CG_LOOP_ooo_unroll_heuristics = PROC_is_out_of_order();
 
@@ -2084,7 +2178,8 @@ Configure_CG_Options(void)
   if (OPT_Space && !CG_use_xortozero_Set)	// Bug 9717
     CG_use_xortozero = TRUE;
 
-  if (Target == TARGET_barcelona && ! CG_push_pop_int_saved_regs_Set)
+  if (((Target == TARGET_barcelona) || (Target == TARGET_orochi)) && 
+      !CG_push_pop_int_saved_regs_Set)
     CG_push_pop_int_saved_regs = TRUE;
 #endif
 }
@@ -2314,11 +2409,6 @@ Prepare_Source (void)
 #endif
     }
 
-#if 0
-    /* already called by main */
-    /* Configure internal options for this source file */
-    Configure_Source ( NULL );
-#endif
 }
 
 static void
@@ -2506,7 +2596,7 @@ CG_Init (void)
     /* this has to be done after LNO has been loaded to grep
      * prefetch_ahead fromn LNO */
     Configure_prefetch_ahead();
-#if defined(KEY) && !defined(TARG_SL) && !defined(TARG_NVISA)
+#if defined(KEY) && !defined(TARG_SL) && !defined(TARG_NVISA) && !defined(TARG_LOONGSON)
     if (flag_test_coverage || profile_arcs)
       CG_Init_Gcov();
 
@@ -2521,6 +2611,14 @@ CG_Init (void)
 			" conflicts with -CG:local_sched_alg\n");
       }
     }
+#ifdef TARG_X8664
+    if (Is_Target_Orochi()) {
+      // TODO: add CG_dispatch_schedule set to TRUE once
+      //       we have binutils support
+      if (CG_loop32 == FALSE)
+        CG_loop32 = TRUE; 
+    }
+#endif //TARG_X8664
 #endif // KEY
 } /* CG_Init */
 
@@ -2531,7 +2629,7 @@ extern void CG_End_Final();
 void
 CG_Fini (void)
 {
-#if defined(KEY) && !defined(TARG_NVISA)
+#if defined(KEY) && !defined(TARG_NVISA) && !defined(TARG_LOONGSON)
     extern BOOL profile_arcs;
     if (profile_arcs)
         CG_End_Final();

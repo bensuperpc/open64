@@ -1,3 +1,7 @@
+/*
+ * Copyright (C) 2008-2010 Advanced Micro Devices, Inc.  All Rights Reserved.
+ */
+
 //-*-c++-*-
 
 /*
@@ -132,6 +136,9 @@ static char *opt_cfgrcs_id =	opt_cfg_INCLUDED"$Revision: 1.7 $";
 #ifndef opt_bb_INCLUDED
 #include "opt_bb.h"
 #endif
+#ifndef opt_proactive_INCLUDED
+#include "opt_proactive.h"
+#endif
 #ifndef opt_fb_INCLUDED
 #include "opt_fb.h"
 #endif
@@ -155,10 +162,12 @@ class MOD_PHI_BB_CONTAINER;
 class OPT_STAB;
 class OPT_TAIL;
 class LMV_CFG_ADAPTOR; 
+class LOOP_UNROLL_UTIL;
 
 class CFG {
 friend class EXITBB_ITER;
 friend class OPT_TAIL;
+friend class LOOP_UNROLL_UTIL;
 private:
   BOOL		_trace;		// -ttOPT:0x0008 or 0x0004
 
@@ -179,6 +188,7 @@ private:
   INT32        _pdo_vec_sz;    // the number of entries in it
   MEM_POOL    *_mem_pool;      // permenant memory pool
   MEM_POOL    *_loc_pool;      // local memory pool
+  MEM_POOL    * _sc_pool;      // SC nodes and trees pool
   BB_NODE     *_entry_bb;      // assume _entry_bb dominate all bbs.
   BB_NODE     *_exit_bb;       // assume exit_bb post dominate all bbs.
   BB_NODE     *_first_bb;      // in source order, excluding the fake entry/exit
@@ -187,6 +197,14 @@ private:
   BB_NODE     *_fake_exit_bb;  // the fake exit BB
   BB_LOOP     *_loops;         // the loop structure used in mainopt
   BOOL         _loops_valid;   // the loop structure are valid
+  SC_NODE *    _sc_root;        // the root SC_NODE for the funtion
+  IDTYPE       _last_sc_id;     // ID for last-allocated SC node
+  STACK<SC_NODE *> * _sc_parent_stack; // a stack of parent SC_NODEs. Used during SC
+                                      // tree construction.
+  MAP         *_sc_map;               // map from BB_NODE Id to SC_NODE *. Used during
+                                      // SC tree construction.
+  MAP         *_clone_map;            // map from original block id to cloned block id. 
+                                      // scratch field
   EXC         *_exc;           // handle to the exception handling
   INT32        _last_stmt_id;  // stmt_id
 
@@ -208,6 +226,8 @@ private:
   STACK<MP_TY> _mp_type;        // the mp region type
   STACK<RID *> _mp_rid;         // the rid of the region
   STACK<BB_REGION *> _bb_region;// the BB_REGION of the parent (not just mp)
+  STACK<RID *> _eh_rid;         // the stack of eh_region's rid
+  
 #if defined(TARG_SL) //PARA_EXTENSION
   STACK<SL2_PARA_TY> _sl2_para_type;  // the sl2_para region type
   STACK<RID *> _sl2_para_rid;   // the rid of the region
@@ -216,6 +236,7 @@ private:
   REGION_LEVEL _rgn_level;	// context for cfg: preopt/mainopt/rvi
   BOOL         _has_regions;	// does the cfg have region nodes?
   INT32        _dohead_cnt;     // number of DOHEAD block, for PRE
+  BOOL         _allow_clone_calls; // allow clone block having calls
 
   BB_NODE_SET *_bb_set;         // A scratch bb set for temporary use
   BB_NODE_SET *_non_true_body_set; // scratch bb set for use in Compute_true_loop_body_set
@@ -228,6 +249,15 @@ private:
 			{ if (!p->Succ()->Contains(s)) {
 			    p->Append_succ(s,_mem_pool);
 			    s->Append_pred(p,_mem_pool);
+			  } else {
+			    Is_True(s->Pred()->Contains(p), 
+			      ("Bad CFG preds and succs"));
+			  }
+			}
+  void       Prepend_predsucc (BB_NODE *p, BB_NODE *s)
+			{ if (!p->Succ()->Contains(s)) {
+			    p->Prepend_succ(s,_mem_pool);
+			    s->Prepend_pred(p,_mem_pool);
 			  } else {
 			    Is_True(s->Pred()->Contains(p), 
 			      ("Bad CFG preds and succs"));
@@ -256,6 +286,27 @@ private:
 			  tmp->Set_kind(k);
 			  return tmp;
 			}
+  // SC tree manipulation routines.
+  SC_NODE *   Add_sc(BB_NODE * bb, SC_TYPE type);
+  SC_NODE *   Unlink_sc(BB_NODE *bb);
+  SC_NODE    *Get_sc_from_bb(BB_NODE * bb) const
+  {
+    return (SC_NODE *) _sc_map->Get_val((POINTER) bb->Id());
+  }
+
+  void        Add_sc_map (BB_NODE * bb, SC_NODE *sc)
+  {
+    _sc_map->Add_map((POINTER) bb->Id(), (POINTER)sc);
+  }
+
+  void Remove_sc_map (BB_NODE * bb, SC_NODE *sc) {
+    MAP_LIST * map_lst = _sc_map->Find_map_list((POINTER) bb->Id());
+    if (map_lst->Val() == (POINTER) sc)
+      map_lst->Set_val(NULL);
+  }
+
+  void        SC_init();
+  void        Fix_WN_label(WN *);
 
   // attach the block to the cfg, and make it the current block
   void         Append_bb( BB_NODE *bb )
@@ -266,6 +317,8 @@ private:
 			  }
 			  _last_bb = bb;
 			  _current_bb = bb;
+			  if (Do_pro_loop_trans())
+                              Add_sc(bb, SC_BLOCK);
 			}
 
   void         Set_current_bb(BB_NODE *b)
@@ -324,6 +377,10 @@ private:
   void         Lower_while_do(WN *wn, END_BLOCK *ends_bb );
   INT	       Is_simple_expr(WN *wn);
   void         Lower_if_stmt(WN *wn, END_BLOCK *ends_bb );
+  WN          *if_convert(WN *wn);
+  BOOL         wn_is_assign(WN *wn);
+  BOOL         wn_is_assign_return(WN *wn);
+  BOOL         wn_is_return_convert(WN *wn);
   // add various high-level construct statements to CFG so they can
   // later be raised back up (mostly preopt phase)
   void         Add_one_io_stmt(WN *wn, END_BLOCK *ends_bb);
@@ -364,12 +421,14 @@ private:
   void	       Compute_true_loop_body_set(BB_LOOP *loop);
   BOOL         Loop_itself_is_empty(BB_LOOP *loop);
   BB_LOOP     *Get_last_loop(BB_LOOP *loop);
+  void         Remove_loop_construct (BB_LOOP *);
 
   // screen out those BBs originally assigned to the 'loop' but
   // actually does not belong to the 'loop'.
   void         Screen_out_false_loopnest(BB_LOOP *loop, BB_LOOP *sibling);
 
   void         Ident_mp_regions(void);
+  void         Ident_eh_regions(void);
 #if defined(TARG_SL) //PARA_EXTENSION
   void         Ident_sl2_para_regions(void);
 #endif
@@ -380,10 +439,14 @@ private:
   void         LMV_clone_pred_succ_relationship (LMV_CFG_ADAPTOR*); 
   void         LMV_clone_loop_body (LMV_CFG_ADAPTOR*); 
   void         LMV_update_internal_labels (LMV_CFG_ADAPTOR*);
-  BB_LOOP*     LMV_clone_BB_LOOP (LMV_CFG_ADAPTOR*);
+  BB_LOOP*     LMV_clone_BB_LOOPs (LMV_CFG_ADAPTOR*);
+  BB_LOOP*     LMV_clone_BB_LOOP (LMV_CFG_ADAPTOR*, BB_LOOP*);
   void         LMV_gen_precondioning_stuff (LMV_CFG_ADAPTOR*);
   void         LMV_clone_BB_IFINFO (LMV_CFG_ADAPTOR* );
+  void         LMV_clone_frequency (LMV_CFG_ADAPTOR*);
 
+  //bottom test loop check
+  BOOL bottom_test_loop(WN* while_do);
 
   // From here on, all are public access functions
 public:
@@ -406,7 +469,8 @@ public:
 		      REGION_LEVEL rgn_level,  // caller level:
   		      			// preopt/mainopt/rvi
 		      OPT_STAB *opt_stab,// optimizer symbol table
-		      BOOL do_tail);	// do tail recursion?
+		      BOOL do_tail, // do tail recursion?
+		      MEM_POOL * sc_pool);  // pool for SC nodes and trees
 
   void         Compute_dom_tree          // compute dominator tree or
                      (BOOL build_dom);   // post-dominator tree
@@ -417,6 +481,7 @@ public:
 
   MEM_POOL    *Mem_pool(void)       const{ return _mem_pool; }
   MEM_POOL    *Loc_pool(void)       const{ return _loc_pool; }
+  MEM_POOL    *SC_pool(void)        const{ return _sc_pool; }
   CODEMAP     *Htable(void)         const{ return _htable; }
   void         Set_htable(CODEMAP *h)    { _htable = h; }
   IDTYPE       First_bb_id(void)    const{ return _first_bb_id; }
@@ -513,6 +578,12 @@ public:
   void         Clear_mp_type(void)       { _mp_type.Clear(); }
   void         Clear_mp_rid(void)        { _mp_rid.Clear(); }
 
+  void         Push_eh_rid(RID *rid)     { _eh_rid.Push(rid); }
+  RID         *Pop_eh_rid(void)          { return _eh_rid.Pop(); }
+  RID         *Top_eh_rid(void) const    { return _eh_rid.Top(); }
+  void         Clear_eh_rid(void)        { _eh_rid.Clear(); }
+  BOOL         Null_eh_rid(void) const   { return _eh_rid.Is_Empty(); }
+
   BOOL         Inside_mp_do(void)        { return !NULL_mp_type() &&
                                              Top_mp_type() != MP_REGION;
                                          }
@@ -604,7 +675,7 @@ public:
 
   // Rebuild or mark for rebuilding all auxilliary data structures:
   // dom/pdom trees, _dpo_vec, _po_vec...
-  void         Invalidate_and_update_aux_info(void);
+  void         Invalidate_and_update_aux_info(BOOL);
 
   // Remove critical edge: add a BB_NODE to each CFG edge where the
   // source BB has more than one successors and the sink BB has more
@@ -636,6 +707,8 @@ public:
 
   BOOL         Verify_tree(WN *);
   BOOL         Verify_cfg(void);
+  BOOL         Verify_label(void);
+  
 
   // find cyclic regions in the cfg, and attempt to convert them to
   // higher-level loops by changing their block kinds and setting the
@@ -650,7 +723,27 @@ public:
 
   void         Delete_empty_BB();
 
-  void         Clone_bb(IDTYPE source, IDTYPE dest);
+  BOOL         Allow_clone_calls (void) const { return _allow_clone_calls; }
+  void         Set_allow_clone_calls (BOOL b) { _allow_clone_calls = b; }
+
+  // Clone a BB_NODE
+  void         Clone_bb(IDTYPE source, IDTYPE dest, BOOL clone_wn);
+  // Clone a list of BB_NODEs
+  void         Clone_bbs(BB_NODE *, BB_NODE *, BB_NODE **, BB_NODE **, BOOL clone_wn, float scale);
+  // Clone a BB_IFINFO
+  BB_IFINFO *  Clone_ifinfo(BB_IFINFO *);
+  // Clone a BB_LOOP
+  BB_LOOP *    Clone_loop(BB_LOOP *);
+  // Clone a SC_NODE
+  SC_NODE *    Clone_sc(SC_NODE *, BOOL, float);
+  // Create a SC node 
+  SC_NODE *    Create_sc(SC_TYPE type);
+  void         Freq_propagate(SC_NODE *);
+  void         Freq_scale(SC_NODE *, float scale);
+  void         Freq_scale(BB_NODE *, SC_NODE *, float scale);
+  SC_NODE *    Split(SC_NODE *);
+  SC_NODE *    Insert_block_after(SC_NODE *);
+  void         Fix_info(SC_NODE *);
 
   // Create a new block and allocate it.
   BB_NODE     *Create_and_allocate_bb( BB_KIND k )
@@ -663,11 +756,29 @@ public:
   // code generation for loop multiversioning.
   BOOL         LMV_eligible_for_multiversioning (const BB_LOOP*, BOOL);
   void         LMV_clone_loop (LMV_CFG_ADAPTOR*);
+
+  // for the phase of removing useless store loop
+  BB_NODE * ULSE_insert_bb_and_merge(STMTREP*, BB_NODE*, BB_NODE*);
   BOOL         If_convertible_cond(WN* wn);
-  BOOL         If_conv_criteria_met(WN* wn, WN* else_wn, WN* then_wn, BOOL empty_else, BOOL empty_then);
-  BOOL         Screen_cand(WN* wn, WN* else_wn, WN* then_wn, BOOL empty_else, BOOL empty_then);
+  BOOL         If_conv_criteria_met(WN* wn);
+  BOOL         Cand_is_select(WN *wn);
+  BOOL         Cand_is_return_inside_select(WN *wn);
+  BOOL         Screen_cand(WN* wn);
+#if defined(TARG_SL)
+  BOOL         Is_Sub_ILOAD_Tree(WN *wn, WN *parent_wn, WN * mode_wn);
+#endif
   WN*          Conv_to_select(WN* wn);
 
+  // Obtain root of the SC tree
+  SC_NODE *   SC_root(void)           { return _sc_root; }
+  // Query whether to do proactive loop nest optimization transformations
+  BOOL Do_pro_loop_trans()     { return (_sc_root != NULL); }
+  // Free SC tree and related storages.
+  void Free_sc(void);
+  // Obtain the cloned version of a BB_NODE
+  BB_NODE *  Get_cloned_bb(BB_NODE *);
+  // Create a LABEL WN and add it to the BB_NODE
+  LABEL_IDX  Add_label_with_wn(BB_NODE * bb);
 };
 
 

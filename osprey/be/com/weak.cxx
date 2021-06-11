@@ -1,4 +1,8 @@
 /*
+ * Copyright (C) 2009-2010 Advanced Micro Devices, Inc.  All Rights Reserved.
+ */
+
+/*
  *  Copyright (C) 2006. QLogic Corporation. All Rights Reserved.
  */
 
@@ -134,6 +138,7 @@ WN* (*Perform_Global_Optimization_p) (WN *, WN *, struct ALIAS_MANAGER *);
 
 // from be/opt/optimizer.h
 WN* (*Pre_Optimizer_p) (INT32, WN*, DU_MANAGER*, ALIAS_MANAGER*);
+void (*choose_from_complete_struct_for_relayout_candidates_p)();
 DU_MANAGER* (*Create_Du_Manager_p) (MEM_POOL *);
 void (*Delete_Du_Manager_p) (DU_MANAGER *, MEM_POOL *);
 
@@ -143,10 +148,8 @@ BOOL (*Verify_alias_p) (ALIAS_MANAGER *, WN *);
 // from be/opt/opt_alias_analysis.cxx
 void (*Print_points_to_p) (FILE *fp, POINTS_TO *ptmp);
 
-#if 1
 // from be/opt/opt_wn.h
 AUX_ID (*WN_aux_p) (const WN*);
-#endif
 
 // from be/opt/opt_du.h
 BOOL (DU_MANAGER::*CD_is_br_taken_p) (IDTYPE);
@@ -173,17 +176,6 @@ void (*CG_PU_Finalize_p) ();
 void (*CG_Change_Elf_Symbol_To_Undefined_p) (ST*);
 WN* (*CG_Generate_Code_p) (WN*, ALIAS_MANAGER*, DST_IDX, BOOL);
 void (*CG_Dump_Region_p) (FILE*, WN*);
-#if defined(TARG_SL)  || defined(TARG_MIPS)
-INT *SI_resource_count_p;
-SI_RESOURCE  *(*SI_resources_p)[];
-SI *(*SI_top_si_p)[];
-SI_RRW *SI_RRW_initializer_p;
-SI_RRW *SI_RRW_overuse_mask_p;
-INT *SI_issue_slot_count_p;
-SI_ISSUE_SLOT *(*SI_issue_slots_p)[];
-INT *SI_ID_count_p;
-SI *(*SI_ID_si_p)[];
-#endif
 // from be/cg/eh_region.h
 void (*EH_Generate_Range_List_p) (WN *);
 #if defined(TARG_IA64) || defined(TARG_X8664) 

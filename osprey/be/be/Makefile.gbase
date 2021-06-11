@@ -1,5 +1,7 @@
 # -*- Makefile -*-
 #
+#  Copyright (C) 2009-2010 Advanced Micro Devices, Inc.  All Rights Reserved.
+#
 #  Copyright (C) 2000, 2001 Silicon Graphics, Inc.  All Rights Reserved.
 #
 #  This program is free software; you can redistribute it and/or modify it
@@ -128,6 +130,12 @@ endif
 ifeq ($(BUILD_TARGET), NVISA)
 HOSTDEFS += -D__MIPS_AND_IA64_ELF_H
 endif
+ifeq ($(BUILD_TARGET), PPC32)
+HOSTDEFS += -D__MIPS_AND_IA64_ELF_H
+endif
+ifeq ($(BUILD_TARGET), LOONGSON)
+HOSTDEFS += -D__MIPS_AND_IA64_ELF_H
+endif
 
 ifeq ($(BUILD_OPTIMIZE), DEBUG)
 HOSTDEFS += -DIs_True_On
@@ -146,7 +154,7 @@ BUILD_SKIP_WHIRL2F = TRUE
 endif
 
 TARG_INFO_INC_DIR = $(TARG_TARG_INFO_DIR)
-TARG_INFO_LIB_DIR = $(TARG_TARG_INFO_DIR)
+TARG_INFO_LIB_DIR = $(TARGDIR)/targ_info
 
 #----------------------------------------------------------------------
 #  List of directories, and source files of interest
@@ -178,7 +186,7 @@ COMMON_DIR 		= $(BUILD_TOT)/common
 COMMON_COM_DIR 		= $(COMMON_DIR)/com
 COMMON_UTIL_DIR		= $(COMMON_DIR)/util
 COMMON_COM_TARG_DIR 	= $(COMMON_COM_DIR)/$(BUILD_TARGET_DIR)
-COMMON_TARG_INFO_ACCESS_DIR = $(COMMON_DIR)/targ_info/access
+COMMON_TARG_INFO_ACCESS_DIR = $(TARG_INFO_SRC)/access
 COMMON_UTIL_DIR 	= $(COMMON_DIR)/util
 COMMON_UTIL_TARG_DIR 	= $(COMMON_UTIL_DIR)/$(BUILD_TARGET_DIR)
 COMMON_INSTR_DIR 	= $(BUILD_TOT)/common/instrument
@@ -306,6 +314,7 @@ COMMON_COM_CXX_SRCS = \
   opcode_core.cxx	\
   wutil.cxx		\
   DaVinci.cxx           \
+  comp_decl.cxx
 
 COMMON_COM_PCH_CXX_SRCS = \
   const.cxx		\
@@ -369,6 +378,13 @@ COMMON_TARG_INFO_ACCESS_SRCS = \
   ti_res_res.c
 endif
 
+ifeq ($(BUILD_TARGET), LOONGSON)
+COMMON_TARG_INFO_ACCESS_SRCS = \
+  ti_init.c		\
+  ti_res.c              \
+  ti_res_count.c        \
+  ti_res_res.c
+endif
 
 ifeq ($(BUILD_TARGET), X8664)
 COMMON_UTIL_QUAD_SRCS = \
@@ -418,10 +434,18 @@ else
           quadsim.c
       endif
     else
-      COMMON_UTIL_QUAD_SRCS =
+      ifeq ($(BUILD_TARGET), LOONGSON)
+        COMMON_UTIL_QUAD_SRCS = \
+          softfloat.c           \
+          c_q_to_a.c            \
+          c_qtenscale.c         \
+          c_qwmultu.c           \
+          quadsim.c		
+      else
+        COMMON_UTIL_QUAD_SRCS = 	
+      endif
     endif
   endif
-
 endif
 
 COMMON_UTIL_SRCS =	\
@@ -470,8 +494,19 @@ BE_COM_CXX_SRCS = \
   output_func_start_profiler.cxx        \
   wn_cyg_instrument.cxx \
   wn_instrument.cxx \
+  wn_cfg.cxx            \
   tls.cxx               \
-  be_memop_annot.cxx
+  be_memop_annot.cxx    \
+  wssa_update.cxx       \
+  wssa_utils.cxx        \
+  wssa_defs.cxx         \
+  wssa_sym.cxx          \
+  wssa_mgr.cxx          \
+  wssa_points_to.cxx    \
+  wssa_du.cxx           \
+  wssa_wn.cxx           \
+  wssa_io.cxx           \
+  comp_driver.cxx
 
 ifneq ($(BUILD_SKIP_LNO), TRUE)
 BE_COM_CXX_SRCS += \
@@ -481,13 +516,20 @@ BE_COM_CXX_SRCS += \
 endif
 
 BE_COM_PCH_CXX_SRCS = \
+  alias_analyzer.cxx    \
   be_symtab.cxx		\
+  constraint_graph.cxx	\
+  constraint_graph_solve.cxx \
+  constraint_graph_escanal.cxx \
+  cse_table.cxx         \
   data_layout.cxx	\
   dep_graph.cxx		\
   dvector.cxx		\
   emulate.cxx		\
   fb_cfg.cxx		\
   fb_whirl.cxx		\
+  ipa_be_read.cxx       \
+  nystrom_alias_analyzer.cxx \
   opt_alias_mgr.cxx	\
   opt_alias_rule.cxx	\
   opt_goto.cxx		\
@@ -528,7 +570,6 @@ BE_COM_CXX_SRCS +=	\
   clone.cxx		\
   clone_DST_utils.cxx	\
 
-
 BE_LNO_CXX_SRCS = \
   soe.cxx \
   mat.cxx 
@@ -536,6 +577,7 @@ BE_LNO_CXX_SRCS = \
 COMMON_UTIL_CXX_SRCS = \
   cxx_memory.cxx	\
   errors.cxx		\
+  vcg.cxx               \
   options_stack.cxx
 
 INSTR_COM_CXX_SRCS = \
@@ -565,7 +607,12 @@ ifeq ($(BUILD_TARGET), SL)
 COMMON_UTIL_TARG_AS_SRCS = \
   c_qwmultu.s
 else
+ifeq ($(BUILD_TARGET), LOONGSON)
+COMMON_UTIL_TARG_AS_SRCS = \
+  c_qwmultu.s
+else
 COMMON_UTIL_TARG_AS_SRCS =
+endif
 endif
 endif
 
@@ -673,25 +720,15 @@ endif
 LLDLIBS = 
 LLDLIBS += $(LIBIBERTY_OBJS)
 
-# We need to have one of the target .so's on the link line 
-# while building cg.so . This is needed by the linker on linux.
-# So, arbitrarily pick one of the target .so's to define TARGET_SO.
-ifeq ($(BUILD_TARGET), MIPS)
-TARGET_SO = r10000.so
-endif
-ifeq ($(BUILD_TARGET), IA64)
-TARGET_SO = itanium.so
-endif
-ifeq ($(BUILD_TARGET), IA32)
-TARGET_SO = pentium.so
-endif
-ifeq ($(BUILD_TARGET), X8664)
-TARGET_SO = opteron.so
-endif
-
 VPATH    =  $(SRC_DIRS)
 
-default: first derived_files $(TARGETS) last
+.PHONY: default install first derived_files last
+
+default: 
+	$(MAKE) first
+	$(MAKE) derived_files
+	$(MAKE) $(TARGETS)
+	$(MAKE) last
 
 #----------------------------------------------------------------------
 #  The commands in this section are done BEFORE any other target is
@@ -699,23 +736,25 @@ default: first derived_files $(TARGETS) last
 #----------------------------------------------------------------------
 first:
 ifeq ($(BUILD_OS), LINUX)
+ ifndef SKIP_DEP_BUILD
 	$(call submake,$(BUILD_AREA)/include)
 	$(call submake,$(BUILD_AREA)/libiberty)
-	if ! test -a $(TARGET_SO); then ln -sf $(TARG_TARG_INFO_DIR)/$(TARGET_SO) .; fi
+ endif
 endif
+ifndef SKIP_DEP_BUILD
 ## verify that the targ info stuff is up to date.
 	$(call submake,$(TARG_TARG_INFO_DIR))
-ifeq ($(BUILD_PCH), USE_PCH)
+ ifeq ($(BUILD_PCH), USE_PCH)
 ## build the files in common/com and be/com that can use precompiled headers.
 	($(MAKE) PCH_OPTS="-LANG:create_pch=common_com_pch.pch"  \
 				common_com_pch.pch common_com_pch.o)
 	($(MAKE) PCH_OPTS="-LANG:use_pch=common_com_pch.pch"  \
 				common_com_pch_files )
-
 	($(MAKE) PCH_OPTS="-LANG:create_pch=be_com_pch.pch"  \
 				be_com_pch.pch be_com_pch.o)
 	($(MAKE) PCH_OPTS="-LANG:use_pch=be_com_pch.pch"  \
 				be_com_pch_files )
+ endif
 endif
 
 #----------------------------------------------------------------------
@@ -746,11 +785,11 @@ else
 endif
 
 preg_list.cxx : preg_list.h
-preg_list.h : $(COMMON_UTIL_DIR)/gen_x_list.csh                   \
-$(BE_COM_DIR)/gen_preg_list.csh
-	csh -f	$(BE_COM_DIR)/gen_preg_list.csh $(COMMON_UTIL_DIR)
-#preg_list.h : $(COMMON_UTIL_DIR)/gen_x_list.csh
-#       $(CSH) $(COMMON_UTIL_DIR)/gen_x_list.csh \
+preg_list.h : $(COMMON_UTIL_DIR)/gen_x_list.sh                   \
+$(BE_COM_DIR)/gen_preg_list.sh
+	sh 	$(BE_COM_DIR)/gen_preg_list.sh $(COMMON_UTIL_DIR)
+#preg_list.h : $(COMMON_UTIL_DIR)/gen_x_list.sh
+#       $(CSH) $(COMMON_UTIL_DIR)/gen_x_list.sh \
 #       PREG_NUM PREG preg_list.h
 
 # here's the target that gets made recursively
@@ -780,7 +819,7 @@ wn_fio.o: wn_fio.cxx
 endif
 
 LDIRT += be wopt.so be.so cg.so lno.so whirl2c.so whirl2f.so purple.so prompf_anl.so
-LDIRT += ipl.so inline.so r4000.so r5000.so r8000.so r10000.so itanium.so pentium.so opteron.so
+LDIRT += ipl.so inline.so
 
 
 ifeq ($(BUILD_PCH), USE_PCH)
@@ -798,25 +837,11 @@ be:  $(BE_DRIVER_OBJS) $(LLDLIBS)
 	$(link.c++f) -o be $(BE_DRIVER_OBJS) $(LDFLAGS) -lm
 
 else
-be:  $(BE_DRIVER_OBJS) $(LINK_DSO)
-	if ! test -a be.so; then ln -sf $(TARG_BE_DIR)/be.so .; fi
-	if ! test -a cg.so; then ln -sf $(TARG_CG_DIR)/cg.so .; fi
-	if ! test -a wopt.so; then ln -sf $(TARG_WOPT_DIR)/wopt.so .; fi
-	if ! test -a lno.so; then ln -sf ../lno/lno.so .; fi
-	if ! test -a ipl.so; then ln -sf ../ipl/ipl.so .; fi
-	if ! test -a whirl2c.so; then ln -sf ../whirl2c/whirl2c.so .; fi
-	if ! test -a whirl2f.so; then ln -sf ../whirl2f/whirl2f.so .; fi
-ifeq ($(BUILD_TARGET), IA64)
-	if ! test -a itanium.so; then ln -sf $(TARG_TARG_INFO_DIR)/itanium.so .; fi
-endif
-ifeq ($(BUILD_TARGET), IA32)
-	if ! test -a pentium.so; then ln -sf $(TARG_TARG_INFO_DIR)/pentium.so .; fi
-endif
+be:  $(BE_DRIVER_OBJS) $(LINK_DSO) be.so
 	$(link.c++f) -o be $(BE_DRIVER_OBJS)	\
 		$(LDFLAGS) be.so  $(LINK_DSO_OPTS) $(LINK_DSO) -ldl
 endif
 
-#so_locations : $(BE_BE_DIR)/so_locations
 .PHONY: so_locations
 so_locations : 
 	cp $(BE_BE_DIR)/so_locations so_locations
@@ -839,7 +864,7 @@ be.so:	$(BE_C_OBJS) $(BE_CXX_OBJS) $(BE_AS_OBJS) $(BE_BE_DIR)/so_locations \
 		$(EXPORT_FILE_BE_SO) 
 	$(link.c++f) $(STD_DSO_LOADOPTS) $(EXPORT_LIST_BE_SO) $(BE_C_OBJS) \
 		$(BE_CXX_OBJS) $(BE_AS_OBJS) \
-		$(TARG_INFO_LIB_DIR)/libtarginfo.a $(LINK_TARGET_SO) \
+		$(TARG_INFO_LIB_DIR)/libtarginfo.a \
 		-o $@ $(BE_DSO_OPTS)
 endif
 

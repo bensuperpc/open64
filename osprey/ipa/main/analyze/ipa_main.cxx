@@ -1,4 +1,8 @@
 /*
+ * Copyright (C) 2009 Advanced Micro Devices, Inc.  All Rights Reserved.
+ */
+
+/*
  * Copyright (C) 2007. QLogic Corporation. All Rights Reserved.
  */
 
@@ -42,7 +46,6 @@
 
 
 
-#define __STDC_LIMIT_MACROS
 #include <stdint.h>
 #if defined(BUILD_OS_DARWIN)
 #include <darwin_elf.h>
@@ -81,6 +84,8 @@ extern void (*Preprocess_struct_access_p)(void);
 #define Preprocess_struct_access (*Preprocess_struct_access_p)
 #endif /* KEY */
 #include "ipa_reorder.h"
+
+#include "ipa_nystrom_alias_analyzer.h"
 
 FILE* STDOUT = stdout; 
 
@@ -250,6 +255,8 @@ static void Perform_Inline_Script_Analysis(IPA_CALL_GRAPH* cg, MEM_POOL* pool, M
 
 extern void IPA_struct_opt_legality (void);
 
+extern void IPA_identify_no_return_procs(void);
+
 //-------------------------------------------------------------------------
 // the main analysis phase at work! 
 //-------------------------------------------------------------------------
@@ -312,6 +319,10 @@ Perform_Interprocedural_Analysis ()
     // create and build a  call graph 
     {
 	Temporary_Error_Phase ephase ("IPA Call Graph Construction");
+
+        // Instantiate the Nystrom alias analyzer
+        if (Alias_Nystrom_Analyzer)
+          IPA_NystromAliasAnalyzer::create();
 
 	if ( Get_Trace ( TKIND_ALLOC, TP_IPA ) ) {
 	    fprintf ( TFile,
@@ -548,6 +559,37 @@ Perform_Interprocedural_Analysis ()
 #endif
     }
 
+/*
+on virtual function optimization pass:
+The virtual function optimization pass is invoked here 
+in ipa_main.cxx Perform_Interprocedural_Analysis function after
+Build_Call_Graph.
+this is the psuedo code that describes where the optimization must be 
+placed.
+Perform_Interprocedural_Analysis() { // ipa/main/analyze/ipa_main.cxx
+    ... // Need to have built the call graph prior to my pass
+    Build_Call_Graph ();
+    ...
+        // Note 1: We need a call graph prior to making this function call
+        // Note 2: Uncommenting the following function: IPA_fast_static_analysis_VF
+        // may lead to unknown behavior.
+        // if you want to disable virtual function optimization,
+        // use the BOOL variable in config/config_ipa.cxx,
+        // IPA_Enable_fast_static_analysis_VF. Set it to FALSE to disable 
+        // the pass.
+    IPA_fast_static_analysis_VF () ; //  ipa/main/analyze/ipa_devirtual.cxx 
+
+    ...
+}
+*/
+
+#if defined(KEY) && !defined(_STANDALONE_INLINER) && !defined(_LIGHTWEIGHT_INLINER)
+    if (IPA_Enable_Fast_Static_Analysis_VF == TRUE) {
+        IPA_Fast_Static_Analysis_VF ();
+    }
+#endif // KEY && !(_STANDALONE_INLINER) && !(_LIGHTWEIGHT_INLINER)
+    // Devirtualization using IPA_Enable_Devirtualization enabled path is not used from open64 4.2.2-1. Please use IPA_Enable_Fast_Static_Analysis_VF enabled path for understanding devirtualization.
+
     if (IPA_Enable_Devirtualization) { 
         Temporary_Error_Phase ephase ("IPA Devirtualization"); 
         IPA_Class_Hierarchy = Build_Class_Hierarchy(); 
@@ -559,6 +601,12 @@ Perform_Interprocedural_Analysis ()
       if (Verbose) {
 	  fprintf (stderr, "Alias analysis ...");
 	  fflush (stderr);
+      }
+
+      IPA_NystromAliasAnalyzer *ipa_naa =
+                                    IPA_NystromAliasAnalyzer::aliasAnalyzer();
+      if (ipa_naa) {
+        ipa_naa->solver(IPA_Call_Graph);
       }
 
       IPAA ipaa(NULL);
@@ -663,15 +711,6 @@ Perform_Interprocedural_Analysis ()
         IPA_Call_Graph->Print(TFile);
       }
     
-#if 0
-      // Optionally, we could remove quasi clones without making them real
-      for (cg_iter.First(); !cg_iter.Is_Empty(); cg_iter.Next()) {
-        IPA_NODE* node = (IPA_NODE*) cg_iter.Current();
-        if (node && node->Is_Quasi_Clone()) {
-          IPA_Call_Graph->Remove_Quasi_Clone(node);
-        }
-      }
-#endif
     
       if (IPA_Enable_Common_Const) {
         MEM_POOL_Pop(&local_cprop_pool);
@@ -814,4 +853,5 @@ Perform_Interprocedural_Analysis ()
     CGB_IPA_Terminate();
 #endif
 
+   IPA_identify_no_return_procs();
 }

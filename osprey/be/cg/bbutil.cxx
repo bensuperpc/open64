@@ -1,4 +1,8 @@
 /*
+ * Copyright (C) 2008-2010 Advanced Micro Devices, Inc.  All Rights Reserved.
+ */
+
+/*
  * Copyright 2002, 2003, 2004, 2005, 2006 PathScale, Inc.  All Rights Reserved.
  */
 
@@ -59,7 +63,6 @@
  * ====================================================================
  */
 
-#define __STDC_LIMIT_MACROS
 #include <stdint.h>
 #include <alloca.h>
 #include <stdio.h>
@@ -362,9 +365,6 @@ Append_Region_BBs(BB *prev, RID *rid)
      */
     REGION_First_BB = first_bb;
   }
-#if 0
-  return CGRIN_last_bb( cgrin );
-#endif
   BB *bb;
   for (bb = first_bb; BB_next(bb) != NULL; bb = BB_next(bb))
 	;
@@ -946,6 +946,8 @@ Print_LOOPINFO(LOOPINFO *info)
   if (WN_Loop_Unimportant_Misc(loop_info)) fprintf(TFile, "UNIMPORTANT_MISC ");
   if (WN_Loop_Nz_Trip(loop_info)) fprintf(TFile, "NZ_TRIP ");
   if (WN_Loop_Symb_Trip(loop_info)) fprintf(TFile, "SYMB_TRIP ");
+  if (WN_Loop_Up_Trip(loop_info)) fprintf(TFile, "UP_TRIP ");
+  if (LOOPINFO_multiversion(info)) fprintf(TFile, "LMV");
   fprintf(TFile, "\n");
   if (LOOPINFO_trip_count_tn(info)) {
     fprintf(TFile, "    trip count TN = ");
@@ -1282,6 +1284,29 @@ void dump_bb (BB *bb)
    Set_Trace_File_internal(f);
 }
 
+void dump_bbs (BB *bb)
+{
+   FILE *f;
+   f = TFile;
+   Set_Trace_File_internal(stdout);
+   for (;bb;bb=bb->next)Print_BB_No_Srclines(bb);
+   Set_Trace_File_internal(f);
+}
+
+/* ================================================================= */
+
+void Print_BB_by_id ( mBB_NUM id) 
+{
+  BB *bp;
+
+  for (bp = REGION_First_BB; bp; bp = BB_next(bp)) {
+    if (bp->id == id){
+      Print_BB ( bp );
+      fprintf ( TFile,"\n" );
+      break;
+    }
+  }
+}
 /* ================================================================= */
 
 void Print_All_BBs ( void ) 
@@ -1574,6 +1599,8 @@ BB_Add_Annotation (BB *bb, ANNOTATION_KIND kind, void *info)
     break;
   case ANNOT_ROTATING_KERNEL:
     Set_BB_rotating_kernel(bb);
+    break;
+  case ANNOT_INLINE:
     break;
   default:
     FmtAssert(FALSE, ("unexpected annotation kind: %d", kind));
@@ -2546,7 +2573,7 @@ void Change_Succ(BB *pred, BB *old_succ, BB *new_succ)
   BBLIST_item(succs) = new_succ;
   if (FREQ_Frequencies_Computed()) {
     adjust = BB_freq(pred) * BBLIST_prob(succs);
-#if !defined(TARG_SL)   // embedded systems uses int for feedback
+#if !defined(TARG_SL) && !defined(KEY)   // embedded systems uses int for feedback
     if ((BB_freq(pred) == 0) && (BBLIST_prob(succs) >= 0) && 
 	!(adjust == adjust)) /* the result of NaN compare will always be false */
 	adjust = 0;

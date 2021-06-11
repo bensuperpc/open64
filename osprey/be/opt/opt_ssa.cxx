@@ -603,6 +603,7 @@ void SSA::Construct(CODEMAP *htable, CFG *cfg, OPT_STAB *opt_stab)
 
   OPT_POOL_Pop(&defs_bb_pool, SSA_DUMP_FLAG);
   OPT_POOL_Delete(&defs_bb_pool, SSA_DUMP_FLAG);
+  _opt_stab->Reset_def_bbs();
 
   MEM_POOL rename_pool;
   OPT_POOL_Initialize(&rename_pool, "SSA rename pool", FALSE, SSA_DUMP_FLAG);
@@ -807,10 +808,17 @@ SSA::Find_zero_versions(void)
     v->Set_cr_list(NULL);    // initialize this field unioned with nonzerophis
     }
 #ifdef KEY
-  if ( Get_Trace(TP_GLOBOPT, SSA_DUMP_FLAG)) {
+  if ( Get_Trace(TP_GLOBOPT, SSA_DUMP_FLAG) ) {
+    fprintf(TFile, "ZERO VERSIONING: \n");
+    Print();
+  }
+#endif
+  OPT_POOL_Pop(loc_pool, SSA_DUMP_FLAG);
+}
+
+void SSA::Print() {
     CFG_ITER cfg_iter;
     BB_NODE *bb;
-    fprintf(TFile, "ZERO VERSIONING: \n");
     FOR_ALL_ELEM (bb, cfg_iter, Init(_cfg)){
       if (bb->Phi_list()->Len() > 0) {
         fprintf(TFile, "BB%d: \n", bb->Id());
@@ -819,8 +827,7 @@ SSA::Find_zero_versions(void)
       WN *wn;
       STMT_ITER stmt_iter;
       FOR_ALL_ELEM (wn, stmt_iter, Init(bb->Firststmt(), bb->Laststmt())) {
-        fdump_tree_no_st(TFile, wn);
-        Print_ssa_ver_for_wn(wn);
+        Print_ssa_ver_for_wn(wn, 0);
         if (WN_has_mu(wn, _cfg->Rgn_level())) {
           MU_LIST *mu_list = Opt_stab()->Get_stmt_mu_list(wn);
           if (mu_list)
@@ -833,25 +840,25 @@ SSA::Find_zero_versions(void)
         }
       }
     }
-  }
-#endif
-  OPT_POOL_Pop(loc_pool, SSA_DUMP_FLAG);
 }
+
 #ifdef KEY
-void SSA::Print_ssa_ver_for_wn(WN* wn)
+void SSA::Print_ssa_ver_for_wn(WN* wn, INT indent)
 {
+  for (INT32 i = 0; i < WN_kid_count(wn); i++)
+    Print_ssa_ver_for_wn(WN_kid(wn,i), indent + 1);
   OPCODE opc = WN_opcode(wn);
   OPERATOR opr = OPCODE_operator(opc);
+  for (INT j = 0; j < indent; j++)
+    fprintf(TFile, " ");
+  fdump_wn_no_st(TFile,wn);
   if (WN_has_mu(wn, Cfg()->Rgn_level())) {
     OCC_TAB_ENTRY *occ = Opt_stab()->Get_occ(wn);
     if (occ && !occ->Is_stmt()) {
-      fdump_tree_no_st(TFile,wn);
       MU_NODE *mnode = occ -> Mem_mu_node();
       mnode->Print(TFile);
     }
   }
-  for (INT32 i = 0; i < WN_kid_count(wn); i++)
-    Print_ssa_ver_for_wn(WN_kid(wn,i));
 }
 #endif
 void
@@ -1275,13 +1282,13 @@ void SSA::Value_number(CODEMAP *htable, OPT_STAB *opt_stab, BB_NODE *bb,
     stmt = bb->Add_stmtnode(wn, mem_pool);
 
 #ifdef TARG_SL //fork_joint
-    if(WN_is_compgoto_para(wn)) 
-       stmt->Set_fork_stmt_flags(TRUE);
-    else if(WN_is_compgoto_for_minor(wn)) 
-	stmt -> Set_minor_fork_stmt_flags(TRUE);
+    stmt->Set_fork_stmt_flags(WN_is_compgoto_para(wn));
+    stmt->Set_minor_fork_stmt_flags(WN_is_compgoto_for_minor(wn));
     // mark istore for vbuf automatic expansion 
     if (WN_operator(wn) == OPR_ISTORE && WN_is_internal_mem_ofst(wn))
-      stmt->Set_SL2_internal_mem_ofst(TRUE); 
+      stmt->Set_SL2_internal_mem_ofst(TRUE);
+    else
+      stmt->Set_SL2_internal_mem_ofst(FALSE); 
 #endif 
 
     stmt->Enter_rhs(htable, opt_stab, copyprop, exc);
@@ -1310,31 +1317,6 @@ void SSA::Value_number(CODEMAP *htable, OPT_STAB *opt_stab, BB_NODE *bb,
     }
 #endif
 
-#if 0
-    // Simplification of CVT/CVTL
-    OPERATOR stmt_opr = stmt->Opr();
-    if (stmt_opr == OPR_STID &&
-	ST_class(opt_stab->St(stmt->Lhs()->Aux_id())) != CLASS_PREG ||
-	stmt_opr == OPR_ISTORE ||
-	stmt_opr == OPR_ISTOREX) {
-      CODEREP *rhs_cr = stmt->Rhs();
-      CODEREP *lhs = stmt->Lhs();
-      if (WOPT_Enable_Cvt_Folding &&
-	  rhs_cr->Kind() == CK_OP && 
-	  (rhs_cr->Opr() == OPR_CVT && MTYPE_is_integral(rhs_cr->Dsctyp()) 
-	   || rhs_cr->Opr() == OPR_CVTL) &&
-	  MTYPE_is_integral(rhs_cr->Dtyp()) && 
-	  MTYPE_is_integral(lhs->Dsctyp())
-	  ) {
-	MTYPE actual_type = (rhs_cr->Opr() == OPR_CVT) ? 
-	  rhs_cr->Dsctyp() : Actual_cvtl_type(rhs_cr->Op(),rhs_cr->Offset());
-	if (MTYPE_size_min(lhs->Dsctyp()) <= MTYPE_size_min(actual_type)) {
-	  stmt->Set_rhs(rhs_cr->Get_opnd(0));
-	}
-      }
-    }
-#endif
-    
     INT32 linenum = Srcpos_To_Line(stmt->Linenum());	// for debugging
 
     // should no longer need the Wn
@@ -1344,6 +1326,14 @@ void SSA::Value_number(CODEMAP *htable, OPT_STAB *opt_stab, BB_NODE *bb,
     if (WN_operator(wn) == OPR_CALL && WN_Call_Does_Mem_Free(wn)) {
       set_dont_prop = FALSE;	// see 649340
       WOPT_Enable_Itself_Prop = FALSE; // can cause incorrectness in itself-prop
+    }
+
+    // For a call, set the call site id for the Nystrom alias analyzer
+    // so as to restore it during CODEMAP -> WHIRL translation
+    if (OPERATOR_is_call(WN_operator(wn))) {
+      UINT32 callsite_id = WN_MAP32_Get(WN_MAP_ALIAS_CGNODE, wn);
+      if (callsite_id != 0)
+        stmt->Set_constraint_graph_callsite_id(callsite_id);
     }
 
     // statement has mu only in returns and calls

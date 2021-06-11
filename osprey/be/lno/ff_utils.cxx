@@ -1,4 +1,8 @@
 /*
+ * Copyright (C) 2009-2010 Advanced Micro Devices, Inc.  All Rights Reserved.
+ */
+
+/*
  * Copyright 2003, 2004, 2005, 2006 PathScale, Inc.  All Rights Reserved.
  */
 
@@ -588,6 +592,13 @@ static void Rename_Update_MP(WN *scalar_ref,ST* new_st,
   }
 }
 
+// Return TRUE if the ref is an input to inline assembly.
+static BOOL Is_Asm_Input(WN *ref)
+{
+  WN *parent = LWN_Get_Parent(ref);
+  return parent != NULL && WN_operator(parent) == OPR_ASM_INPUT;
+}
+
 // Renames a variable's name if all of its references are in a given loop
 extern BOOL scalar_rename(WN* ref, HASH_TABLE<WN*,INT>* checked) {
 
@@ -643,6 +654,10 @@ extern BOOL scalar_rename(WN* ref, HASH_TABLE<WN*,INT>* checked) {
       // Bug 1258 - can not promote temporary storing floating point complex 
       // type to pseudo-register.
       else if ((opr == OPR_STID) && MTYPE_is_complex(WN_desc(scalar_ref)))
+        can_rename = FALSE;
+      // Avoid promoting asm input operands to a larger size.
+      else if (opr == OPR_LDID && desc_type != Promote_Type(desc_type) &&
+               Is_Asm_Input(scalar_ref))
         can_rename = FALSE;
 #endif      
     } else
@@ -1031,7 +1046,7 @@ extern void Fission_DU_Update(DU_MANAGER* Du_Mgr, REDUCTION_MANAGER* Red_Mgr,
           }
 
           DEF_LIST* def_list=Du_Mgr->Ud_Get_Def(use);
-          if (def_list->Loop_stmt()==loops[0])
+          if (def_list && def_list->Loop_stmt()==loops[0])
             def_list->Set_loop_stmt(loops[i]);
         }
         if (red_type!=RED_NONE)
@@ -1253,30 +1268,6 @@ static BOOL Generate_Pragma_Dependence_For_Statement_Dependence_Graph(
     VINDEX16 v=sdg->Get_Vertex(wn);
     VINDEX16 v1;
     UINT level = Do_Loop_Depth(parent_loop)+1;
-#if 0
-// do not put in edges between pragmas and stmt before them
-    WN* before=wn;
-    v1=0;
-    do {
-      before=WN_prev(before);
-      if (before)
-        v1=sdg->Get_Vertex(before);
-    } while (before && !v1);
-    if (v1) {
-      EINDEX16 e;
-      if (!(e=sdg->Get_Edge(v1,v))) {
-        e=sdg->Add_Edge(v1,v,level);
-        if (!e)
-          return 0;
-      }
-      sdg->Set_Level_Property(e,HAS_ALL_ZERO);
-      if (!(e=sdg->Get_Edge(v,v1))) {
-        e=sdg->Add_Edge(v,v1,level);
-        if (!e)
-          return 0;
-      }
-    }
-#endif
     WN* after=wn;
     v1=0;
     do {

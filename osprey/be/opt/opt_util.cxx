@@ -1,4 +1,8 @@
 /*
+ * Copyright (C) 2008 Advanced Micro Devices, Inc.  All Rights Reserved.
+ */
+
+/*
  * Copyright 2005-2007 NVIDIA Corporation.  All rights reserved.
  */
 
@@ -65,7 +69,6 @@
 static char *rcs_id = 	opt_util_CXX"$Revision: 1.8 $";
 #endif /* _KEEP_RCS_ID */
 
-#define __STDC_LIMIT_MACROS
 #include <stdarg.h>
 #include <stdio.h>
 #include <strings.h>
@@ -198,6 +201,7 @@ Set_tlog_phase(const INT32 phase)
   switch (phase) {
   case PREOPT_PHASE:
   case PREOPT_LNO_PHASE:
+  case PREOPT_LNO1_PHASE:
   case PREOPT_DUONLY_PHASE:
   case PREOPT_IPA0_PHASE:
   case PREOPT_IPA1_PHASE:
@@ -212,7 +216,6 @@ Set_tlog_phase(const INT32 phase)
 
 
 // ====================================================================
-#if 1
 const INT32    PHASE_STRLEN = 72;
 const INT32    MAX_SUBPHASES = 200;
 static char    phase_name[PHASE_STRLEN];
@@ -307,7 +310,6 @@ INT Report_statistics()
   return 1;
 }
 
-#endif
 
 
 static inline INT32 Sign(INT64 v)

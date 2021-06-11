@@ -1,4 +1,8 @@
 /*
+ * Copyright (C) 2010 Advanced Micro Devices, Inc.  All Rights Reserved.
+ */
+
+/*
  * Copyright 2002, 2003, 2004, 2005 PathScale, Inc.  All Rights Reserved.
  */
 
@@ -45,6 +49,9 @@ extern char *drop_path (char *s);
 /* drops the last component of the path, leaving only the directory */
 extern char *directory_path (char *s);
 
+/* append path separator and component to directory */
+extern char *concat_path (char *d, char *f);
+
 /* check whether file exists */
 extern boolean file_exists (char *path);
 
@@ -53,9 +60,6 @@ extern boolean is_executable (char *path);
 
 /* check whether is a directory */
 extern boolean is_directory (char *path);
-
-/* check whether is a directory */
-extern boolean want_directory (char *path);
 
 /* check whether directory is writable */
 extern boolean directory_is_writable (char *path);

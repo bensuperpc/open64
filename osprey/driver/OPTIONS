@@ -4,6 +4,8 @@
 
 % -*- fundamental -*-
 %
+%  Copyright (C) 2008-2010 Advanced Micro Devices, Inc.  All Rights Reserved.
+%
 %  Copyright (C) 2006, 2007. QLogic Corporation. All Rights Reserved.
 %
 %  Copyright 2002, 2003, 2004, 2005, 2006 PathScale, Inc.  All Rights Reserved.
@@ -168,7 +170,7 @@
 -show-defaults	{show_defaults = TRUE; execute_flag = FALSE;} ALL	NONE	""
 	"Show the default compiler options being used"
 % gcc has -v show version as well as phases, so take that meaning
--v	{show_flag = TRUE; show_version++;} ALL	CPP,as,ld	self "-show"
+-v	{v_flag = TRUE; show_version++;} ALL	CPP,as,ld	self "-show"
 	"show phases and version as they are being invoked"
 -fullwarn toggle(&msglevel,2);		FTN  CPP	"-m2"
 	"give more warnings, especially about missing prototypes"
@@ -213,7 +215,7 @@
 	""
 -I%D		;		ALL	CPP	"-I%D -include=%D"
 	"add following directory to the include search path list"
--iquote%D	;		ALL	CPP	"-iquote=%D"
+-iquote%D	;		ALL	CPP	"-iquote %D"
 	"add following directory to the include search path list"
 -x%-		set_explicit_lang(option_name,optargs);		ALL	NONE	""
 	"Specify explicit language for input files"
@@ -238,8 +240,10 @@ I-include=%D  ;		FTN     ffe,PFA     "-include=%D"
 	"Use faster versions of some standard library functions, when available"
 -fno-fast-stdlib	;	A	anyfe,ld	"-OPT:fast_stdlib=off"
 	"Do not use faster versions of standard library functions"
--nolibpscrt	;	LINK	ld	""
-	"Do not link with libpscrt"
+-nolibopen64rt	;	LINK	ld	""
+	"Do not link with libopen64rt"
+-external-gcc	toggle(&external_gcc,TRUE);	ALL	ipap	self
+	"Do not use internal gcc to preprocess and link"
 %I-split_common	;		LINK	ld	"-split_common"
 %	"check split COMMON for inconsistencies and fix them"
 
@@ -254,10 +258,17 @@ I-include=%D  ;		FTN     ffe,PFA     "-include=%D"
 -s		;		LINK	ld	self
 	"Strip symbol table and relocation information"
 
+#ifdef SL
+-G8	    toggle(&gnum,optargd);		ALL	ffe,be	"-G8"
+	""
+-Gspace8	;		ALL	be	"-TENV:Gspace=8"
+	""
+#else
 -G%d	toggle(&gnum,optargd);		ALL	ffe,be	"-G%d"
 	""
 -Gspace%d	;		ALL	be	"-TENV:Gspace=%d"
 	""
+#endif
 % encourage people to replace -K with -keep
 -keep	keep_flag=TRUE;		ALL	ipap	self
 	"keep intermediate files"
@@ -346,8 +357,14 @@ I-cpp_pic	;		ALL	NONE	"-D_PIC -D__DSO__"
 
 % Basic option groups:
 % See opt_actions.c::Process_Ofast if you change the -OPT: item.
+-OPTIONS    ;       ALL be  "-OPTIONS"
+    "print out all be option usage"
 -OPT:%s		Process_Opt_Group(optargs); 	ALL	CMP,ipap "-OPT:%s"
 	"option group to control optimization"
+-OPT:unroll_level=n ;		ALL	be	""
+	"where n=1,2 controls unrolling, default=1, aggressive=2"
+-OPT:keep_ext=on,off ;	ALL	be	""
+	"where default is off, on means external syms are preserved"
 -DEBUG:%s	;		ALL	GRP	"-DEBUG:%s"
 	"option group to debugging options"
 -TENV:%s	Process_Tenv_Group(optargs);	ALL	GRP	"-TENV:%s"
@@ -358,16 +375,40 @@ I-cpp_pic	;		ALL	NONE	"-D_PIC -D__DSO__"
 	""
 -GRA:%s		;		ALL	be	"-GRA:%s"
 	"option group to control global register allocation"
+#ifdef X8664
+-GRA:unspill=on,off ;		ALL	be	""
+	"when on enables optimal GRA/LRA boundary condition allocations"
+#endif
 -GCM:%s		{warning("-GCM group no longer supported");}	N NONE	""
 	""
 -CG:%s		;		ALL	be	"-CG:%s"
 	"option group to control code generation"
+-CG:unroll_level=n ;		ALL	be	""
+	"where n=0,1,2 controls unrolling, none=0, default=1, aggressive=2"
+-CG:unroll_fb_req=on,off ;		ALL	be	""
+	"when on with FDO disables cold code layout for unrolled loops"
+#ifdef X8664
+-CG:cmp_peep=on,off ;		ALL	be	""
+	"when on load-exec opts include compare instructions"
+-CG:compute_to=on,off ;		ALL	be	""
+	"when on, enables SSE based scheduling/local code motion optimizations"
+#endif
 -PHASE:%s	;		ALL	be,ipl	"-PHASE:%s"
 	""
 -WOPT:%s	;		ALL	be,ipl	"-WOPT:%s"
 	"option group internal-use WOPT options"
 -LNO:%s		;		ALL	be	"-LNO:%s"
 	"option group to control loop nest optimization"
+-HP:%s		Process_Hugepage_Group(optargs);	ALL	be	""
+	"option group to specify huge page usage, e.g., -HP:bdt=2m:heap=2m,limit=150"
+-HP		Process_Hugepage_Default();		ALL	be	""
+	"equivalent to -HP:heap=2m"
+-HUGEPAGE:%s	Process_Hugepage_Group(optargs);	ALL	be	""
+	"equivalent to -HP:"
+-HUGEPAGE	Process_Hugepage_Default();		ALL	be	""
+	"equivalent to -HP"
+-DRIVER:%s ;    ALL be "-DRIVER:%s"
+    "options for internal use in driver"
 #ifndef KEY
 -MP:%s		Process_Mp_Group(optargs);		ALL	NONE	""
 	""
@@ -452,12 +493,41 @@ I-fini%s		;		CC	ld	"-fini %s"
 	"One trip DO loops"
 -1		;		f77	ffe	self
 	"One trip DO loops"
+#ifdef TARG_LOONGSON
+-loongson2e     toggle(&loongson_version,ISA_LOONGSON2e);               ALL     NONE    ""
+        "decoding to support loongson2e"
+-loongson2f     toggle(&loongson_version,ISA_LOONGSON2f);               ALL     NONE    ""
+        "decoding to support loongson2f"
+-loongson3      toggle(&loongson_version,ISA_LOONGSON3);                ALL     NONE    ""
+        "decoding to support loongson3"
+#endif
 -p	;		ALL	ld	self "-TENV:call_mcount"
 	""
 -pg	;		ALL	ld	self "-lm" "-TENV:call_mcount"
 	""
 -profile	;	ALL	ld	self "-lm" "-TENV:call_mcount"
 	""
+#ifdef SL
+% sl specific flags
+-march=%s	;  ALL     as      ""
+        "Set CPU type"
+-n32    toggle(&abi,ABI_N32);   ALL     PFA     "-n32" "-TARG:abi=n32"
+        "Compile for 32-bit ABI"
+-mips4  toggle(&isa,ISA_MIPS4);         ALL     as      "-mips4" "-TARG:isa=mips4"
+        "compile for mips4 instruction set"
+-sl1_dsp   toggle(&use_sl1_dsp,TRUE); 	ALL	 NONE	"-CG:dsp_thread=on -TARG:processor=sl1_dsp -march=sl1"
+	""
+-sl1_pcore toggle(&use_sl1_pcore,TRUE);	ALL  NONE   "-TARG:processor=sl1_pcore -march=sl1"
+	""
+-sl5       toggle(&use_sl5,TRUE);	ALL  NONE   "-TARG:processor=sl5 -march=sl5"
+	""
+-mlong-long      Long_Long_Support=TRUE;   Cc,cpp f self
+	"Supporting 64bit Long Long for SL"
+-msoft-float    Float_Point_Support=TRUE;  Cc,cpp f self
+	"Supporting Float Point Emulation for SL"
+-ldscript ldscript_file=TRUE; ALL ld  "" 
+  "Using appointed link file"
+#endif
 #ifdef X8664 /* Bug #381, here the MACRO is X8664/IA64, no 'TARG_' prefix */
 -m32	toggle(&abi,ABI_N32);	ALL	be	"-TARG:abi=n32" 
         "Compile for 32-bit ABI"
@@ -471,6 +541,12 @@ I-fini%s		;		CC	ld	"-fini %s"
         "Compile for 64-bit ABI"
 -w64	toggle(&abi,ABI_W64);	ALL	NONE	"-TARG:abi=w64"
 	"Compile for Windows 64-bit ABI"
+#endif
+#ifdef LOONGSON
+-n32    toggle(&abi,ABI_N32);   ALL     be      "-TARG:abi=n32"
+        "Compile for 32-bit ABI"
+-n64    toggle(&abi,ABI_64);    ALL     be      "-TARG:abi=n64"
+        "Compile for 64-bit ABI"
 #endif
 #ifdef KEY /* Bug 4210 */
 -module%s	Process_module(optargs);	F90	NONE	""
@@ -577,6 +653,8 @@ I-D_LANGUAGE_FORTRAN	;		FTN	CPP	self
 	"-W<phase>,<arg> sends arg to phase {p=cpp,f=fe,b=be,a=as,l=ld}"
 -Y%s	change_phase_path(optargs); 	ALL	ipap	"-Y%s"
 	"-Y<phase>,<path> uses path to find phase {p=cpp,f=fe,b=be,a=as,l=ld,i=inline,I=include,S=startup,L=libraries}"
+-run-build=%s	run_from_build(optargs);	ALL	NONE	""
+	"Run compiler from build directory specified in option."
 
 % XPG requires ability to do -O 0 as well as -O0
 -O*0	toggle(&olevel,0);		ALL	CMP,CPP	"-O0"
@@ -595,6 +673,8 @@ I-D_LANGUAGE_FORTRAN	;		FTN	CPP	self
 	"Optimize for space"
 -mspace toggle(&ospace,TRUE);	ALL	CMP	"-OPT:space"
 	""
+-mso    toggle(&oscale,TRUE);   ALL     CMP,ipap,	 ""
+        "Optimize for multicore scalability"
 -g	toggle(&glevel,2);		ALL	CMP	"-g2"
 	"full debug info"
 -g0	toggle(&glevel,0);		ALL	CMP	self
@@ -625,15 +705,16 @@ I-D_LANGUAGE_FORTRAN	;		FTN	CPP	self
 	"Produce debugging information for use by GDB"
 -ggdb3	toggle(&glevel,3);		ALL	CMP	"-g3"
 	"Produce debugging information for use by GDB"
-#ifdef KEY
+#ifdef BUILD_GNU3
 -gnu3	toggle(&gnu_major_version,3);toggle(&gnu_minor_version,3);	Cc	NONE	""
 	"Use GCC 3.3 C/C++ front-end."
 -gnu4	toggle(&gnu_major_version,4);toggle(&gnu_minor_version,2);	Cc	NONE	""
 	"Use GCC 4.2 C/C++ front-end."
--gnu40	toggle(&gnu_major_version,4);toggle(&gnu_minor_version,0);	Cc	NONE	""
-	"Use GCC 4.0 C/C++ front-end."
 -gnu42	toggle(&gnu_major_version,4);toggle(&gnu_minor_version,2);	Cc	NONE	""
 	"Use GCC 4.2 C/C++ front-end."
+#else
+-gnu42	toggle(&gnu_major_version,4);toggle(&gnu_minor_version,2);	Cc	NONE	""
+	""
 #endif
 -gstabs		warn_ignored(option_name);	ALL	NONE	""
 	""
@@ -839,8 +920,8 @@ I-xall		;	FTN	ffe	self
         "prevent the -pedantic warning of the variable length array"
 -Wno-error=%s   warn_ignored(option_name);      ALL     NONE    ""
         "makes -Ws warnings not be error"
--ftls-model=%s	check_opt_tls_model(optargs);		ALL	be	"-TENV:tls-model=%s"
-	"Thread-Local Storage model. IA64 only so far.\n\t\tShould be one of `global-dynamic', `local-dynamic', `initial-exec' or `local-exec'.\n\t\tThe default without -fpic is `initial-exec'; with -fpic the default is `global-dynamic`."
+-ftls-model=%s	check_opt_tls_model(optargs);		Cc	cfe	"-ftls-model=%s"
+	"Thread-Local Storage model. \n\t\tShould be one of `global-dynamic', `local-dynamic', `initial-exec' or `local-exec'.\n\t\tThe default without -fpic is `local-exec'; with -fpic the default is `global-dynamic`."
 -varargs	;		f77	ffe	self
 	"MATRA varargs"
 %-nocode last_phase=earliest_phase(P_any_fe,last_phase);  FTN ffe   self
@@ -866,13 +947,11 @@ I-xall		;	FTN	ffe	self
 % this should be on by default unless -mp, but off now until freeze over
 -cray_directives	;		FTN	N	self
 	""
+-mipslibs      toggle(&use_mipslibs,TRUE);toggle(&use_craylibs,FALSE);         f77     NONE    ""
+       ""
 
--mipslibs	toggle(&use_mipslibs,TRUE);toggle(&use_craylibs,FALSE);		f77	NONE	""
-	""
-
--craylibs	toggle(&use_craylibs,TRUE);toggle(&use_mipslibs,FALSE);		f77	NONE	""
-	""
-
+-craylibs      toggle(&use_craylibs,TRUE);toggle(&use_mipslibs,FALSE);         f77     NONE    ""
+       ""
 #ifndef KEY
 -cray_mp    toggle(&mpkind,CRAY_MP);	 FTN ffe self 
     "enable Cray micro-tasking directives"
@@ -886,8 +965,8 @@ I-xall		;	FTN	ffe	self
 -openmp			;		FTN,Cc	ffe	-mp
         "enable the multiprocessing directives (same as -mp)"
 #ifdef KEY
--fopenmp		;		Cc	cfe	self
-        ""
+-fopenmp			;		FTN,Cc	ffe	-mp
+        "enable the multiprocessing directives (same as -mp)"
 #endif
 #ifndef KEY
 -dsm_clone		;		ALL	ipl,be,d	self
@@ -911,6 +990,17 @@ I-xall		;	FTN	ffe	self
 
 -mno-ieee-fp	;	ALL	be	"-OPT:IEEE_NaN_Inf=off"
 	"IEEE floating point comparisons not required"
+
+#ifdef X8664
+-ftz	;	ALL	be	"-TENV:simd_fmask=on -TENV:simd_amask=on"
+	"Flush denormalized results to zero"
+
+-no-ftz	;	ALL	be	"-TENV:simd_fmask=off -TENV:simd_amask=off"
+	"Do not flush denormalized results to zero"
+
+-fp-accuracy=%s	Process_fp(optargs);	ALL	NONE	""
+        "Set accuracy level of floating point operations"
+#endif
 
 -mp_keep warn_no_longer_supported2(option_name,"-CLIST/-FLIST"); 	FTN,cc	NONE	""
 	""
@@ -1138,6 +1228,10 @@ I-u%s		;		Cc	ld	"-u %s"
 	"Pass -m args to linker"
 -m*elf_x86_64	;	LINK	ld	""
 	"Pass -m args to linker"
+#ifdef SL
+-m%s            ;               ALL     NONE    "-m %s"
+        "Pass -m args to as"
+#endif
 %-m	run_m4=TRUE;		f77	NONE	""
 %	"run m4 on each RATFOR source"
 -framepointer	warn_no_longer_supported2(option_name,"-TENV:large_stack");  ALL	NONE ""
@@ -1177,8 +1271,10 @@ I-u%s		;		Cc	ld	"-u %s"
 
 -mcpu=%s	set_cpu(optargs,M_CPU);	ALL	NONE	""
 	"Set CPU type"
+#if !defined(SL)
 -march=%s	set_cpu(optargs,M_ARCH);	ALL	NONE	""
 	"Set CPU type"
+#endif
 -mtune=%s	set_cpu(optargs,M_TUNE);	ALL	NONE	""
 	"Set CPU type"
 -pipe	;		ALL	NONE	""
@@ -1190,10 +1286,12 @@ I-u%s		;		Cc	ld	"-u %s"
 %%% C language options
 -flang-isoc9x	;		Cc	f	self
 	""
+#ifndef SL
 -msoft-float	warn_ignored(option_name);	ALL	NONE	""
 	""
 -mno-soft-float	warn_ignored(option_name);	ALL	NONE	""
 	""
+#endif
 -fcond-mismatch	;		Cc	f	self
 	""
 #ifdef KEY
@@ -1253,6 +1351,10 @@ I-u%s		;		Cc	ld	"-u %s"
 -fwritable-strings	;		Cc	f	self
 	"Attempt to support writable-strings K&R style C"
 -fno-writable-strings	;		Cc	f	self
+	""
+-fshow-column	;		Cc	f	self
+	"Show column numbers in diagnostics when available"
+-fno-show-column	;		Cc	f	self
 	""
 -ftraditional	;		Cc	f	self
 	""
@@ -1371,6 +1473,10 @@ I-u%s		;		Cc	ld	"-u %s"
 	"Do not warn about suspicious declarations of main"
 -Wmissing-braces	;	Cc	f	self
 	"Warn about possibly missing braces around initialisers"
+-Wextra                 ;       Cc      f       self
+        "Enable some extra warning flags that are not enabled by -Wall"
+-Wno-extra              ;       Cc      f       self
+        "Disable extra warning flags that are enabled by -Wextra"
 -Wno-missing-braces	;	Cc	f	self
 	"Do not warn about possibly missing braces around initialisers"
 -Wmissing-declarations	;		Cc	f	self
@@ -1395,6 +1501,10 @@ I-u%s		;		Cc	ld	"-u %s"
 	"Warn about externs not at file scope level"
 -Wno-nested-externs	;		Cc	f	self
 	"Do not warn about externs not at file scope level"
+-Wold-style-definition ; Cc	f	self
+	"Warn if an old-style function definition is used. A warning is given even if there is a previous prototype."
+-Wno-old-style-definition ; Cc	f	self
+	"Do not warn about old style fucntion definition"
 -Wparentheses	;		Cc	f	self
 	"Warn about possible missing parentheses"
 -Wno-parentheses	;		Cc	f	self
@@ -1403,17 +1513,17 @@ I-u%s		;		Cc	ld	"-u %s"
 	"Warn about function pointer arithmetic"
 -Wno-pointer-arith	;		Cc	f	self
 	"Do not warn about function pointer arithmetic"
--Wpointer-sign	;		Cc,CPP	CPP,f	self
+-Wpointer-sign	;		Cc	f	self
 	"Warn for pointer asignments with different signedness"
--Wno-pointer-sign	;		Cc,CPP	CPP,f	self
+-Wno-pointer-sign	;		Cc	f	self
 	"Don't warn for pointer asignments with different signedness"
--Wpointer-to-int-cast        ;		Cc,CPP	CPP	self
+-Wpointer-to-int-cast        ;		Cc	f	self
 	"Warn for pointer casts to integer types of a different size"
--Wno-pointer-to-int-cast        ;		Cc,CPP	CPP	self
+-Wno-pointer-to-int-cast        ;		Cc	f	self
 	"Don't warn for pointer casts to integer types of a different size"
--Wno-int-to-pointer-cast        ;		Cc,CPP	CPP	self
+-Wno-int-to-pointer-cast        ;		Cc	f	self
 	"Don't warn for casts to pointers from integer types of a different size"
--Wint-to-pointer-cast        ;		Cc,CPP	CPP	self
+-Wint-to-pointer-cast        ;		Cc	f	self
 	"Warn for casts to pointers from integer types of a different size"
 -Wredundant-decls	;		Cc	f	self
 	"Warn about multiple declarations of the same object"
@@ -1618,7 +1728,7 @@ I-u%s		;		Cc	ld	"-u %s"
 	"Improve FP speed by violating ANSI & IEEE rules"
 -fno-unsafe-math-optimizations	;	Cc	f	"-OPT:funsafe_math_optimizations=OFF -fmath-errno"
 	"Conform to ANSI & IEEE math rules at the expense of speed"
-#ifdef MIPS
+#if defined(MIPS) && !defined(SL)
 -ffloat-store	warn_ignored(option_name);	Cc,FTN	NONE	""
 #else
 -ffloat-store	;	Cc,FTN	be	"-CG:x87_store=1:min_spill_loc_size=1"
@@ -1841,35 +1951,37 @@ I-u%s		;		Cc	ld	"-u %s"
 	"File tells Fortran compiler how to transform ids into linker symbols"
 -undef	;		Cc,as,CPP	CPP	self
 	""
+-Wmissing-include-dirs   ;   Cc,as,CPP    CPP    self
+        "Warn if a user-supplied include directory does not exist"
 %%% Code Generation Options
 -fcall-saved-%s	;		Cc	NONE	""
 	""
 -fcall-used-%s	;		Cc	NONE	""
 	""
-% KEY: Because of limitation on derived flags, we repeat the -fexceptions
-% in the implied list.  This is to find the parent flag so action is done.
 #ifdef X8664
--fexceptions	;	ALL	cfe	"-fexceptions -fgnu-exceptions -TENV:frame_pointer=on"
+-fexceptions	;	Cc	CPP,cfe	"-fexceptions -TENV:frame_pointer=on"
 	"Enable exception handling"
 #else
--fexceptions	;	ALL	cfe	"-fexceptions -fgnu-exceptions"
+-fexceptions	;	Cc	CPP,cfe	self
 	"Enable exception handling"
 -foptimize-regions  ;   Cc  cfe "-foptimize-regions -TENV:omit_ue_destroy_frame=on"
-    "Enable optimization of EH regions formation"
+	"Enable optimization of EH regions formation"
 #endif
--fhandle-exceptions	;	Cc	cpp,cfe	self
-	"Enable exception handling"
--fno-exceptions	;	Cc	CPP,cfe	"-fno-exceptions -fno-gnu-exceptions"
+-fhandle-exceptions	;	Cc	CPP,cfe	self
+	""
+-fno-exceptions	;	Cc	CPP,cfe	"-fno-exceptions"
 	"Disable exception handling"
+-fno-emit-exceptions	;	Cc	w	self
+	"Do not emit code to handle exceptions"
 -fno-optimize-regions	;	Cc	cfe	self
 	"Enable optimization of EH regions formation"
--fno-handle-exceptions	;	Cc	cfe	self
-	"Disable exception handling"
-#ifdef KEY	/* bug 11732 */
--fgnu-exceptions	toggle(&gnu_exceptions,TRUE);	C	cfe	""
-	"Enable exception handling in the GNU front-end"
--fno-gnu-exceptions	toggle(&gnu_exceptions,FALSE);	C	cfe	""
-	"Disable exception handling in the GNU front-end"
+-fno-handle-exceptions	;	Cc	CPP,cfe	self
+	""
+#ifdef KEY     /* bug 11732 */
+-fgnu-exceptions	;	Cc	CPP,cfe	"-fexceptions"
+	""
+-fno-gnu-exceptions	;	Cc	CPP,cfe     "-fno-exceptions"
+	""
 #endif
 -ffixed-%s	;		Cc	NONE	"-TENV:registers_not_allocatable=%s"
 	""
@@ -1886,9 +1998,11 @@ I-u%s		;		Cc	ld	"-u %s"
 	""
 -mconstant-gp	;		Cc	NONE	"-TENV:constant_gp=on"
 	""
+#ifndef SL
 -mno-sdata	;		Cc	NONE	"-G0"
 	""
--finstrument-functions	;	ALL	NONE	"-OPT:cyg_instr=4"
+#endif
+-finstrument-functions	;	ALL	NONE	"-OPT:cyg_instr=3"
 	""
 -finhibit-size-directive	;		Cc	be	"-CG:inhibit_size_directive=1:emit_asm_dwarf=0"
 	"Do not generate .size directives"
@@ -1999,30 +2113,62 @@ I-u%s		;		Cc	ld	"-u %s"
 -malign-functions=%d	warn_ignored(option_name); 	ALL	NONE	self
 	""
 %%% x86 extensions
--mmmx	;		ALL	NONE	self
+-mmmx	toggle(&mmx,TRUE);		ALL	ALL	""
 	"Enable MMX extensions"
--mno-mmx	warn_ignored(option_name);	ALL	NONE	self
+-mno-mmx	toggle(&mmx,FALSE);toggle(&sse,FALSE);toggle(&sse2,FALSE);toggle(&sse3,FALSE);toggle(&sse4a,FALSE);	ALL	NONE	self
 	"Disable MMX extensions"
--msse	;		ALL	NONE	self
+-msse	toggle(&mmx,TRUE);toggle(&sse,TRUE);		ALL	ALL	""
 	"Enable SSE extensions"
--mno-sse	toggle(&sse2,FALSE);toggle(&sse3,FALSE);toggle(&sse4a,FALSE);	ALL	be	""
+-mno-sse	toggle(&sse,FALSE);toggle(&sse2,FALSE);toggle(&sse3,FALSE);toggle(&sse4a,FALSE);	ALL	be	""
 	"Disable SSE2/SSE3/SSE4a extensions"
--msse2	toggle(&sse2,TRUE);		ALL	be	""
+-msse2	toggle(&mmx,TRUE);toggle(&sse,TRUE);toggle(&sse2,TRUE);		ALL	CPP,cfe		self
 	"Enable SSE2 extensions"
--mno-sse2	toggle(&sse2,FALSE);toggle(&sse3,FALSE);toggle(&sse4a,FALSE);	ALL	be	""
+-mno-sse2	toggle(&sse2,FALSE);toggle(&sse3,FALSE);toggle(&sse4a,FALSE);	ALL	CPP,cfe		self
 	"Disable SSE2/SSE3 extensions"
--msse3	toggle(&sse2,TRUE);toggle(&sse3,TRUE);	ALL	be	""
+-msse3	toggle(&sse2,TRUE);toggle(&sse3,TRUE);	ALL	CPP,cfe		self
 	"Enable SSE3 extensions"
--mno-sse3	toggle(&sse3,FALSE);	ALL	be	""
+-mno-sse3	toggle(&sse3,FALSE);	ALL	CPP,cfe		self
 	"Disable SSE3 extensions"
--m3dnow		toggle(&m3dnow,TRUE);	ALL	be	""
+-m3dnow		toggle(&m3dnow,TRUE);	ALL	CPP,cfe		self
 	"Enable 3Dnow extensions"
--mno-3dnow	toggle(&m3dnow,FALSE);	ALL	be	""
+-mno-3dnow	toggle(&m3dnow,FALSE);	ALL	CPP,cfe		self
 	"Disable 3Dnow extensions"
--msse4a  toggle(&sse2,TRUE);toggle(&sse4a,TRUE);  ALL     be      ""
-        "Enable SSE4a extensions"
--mno-sse4a       toggle(&sse4a,FALSE);    ALL     be      ""
-        "Disable SSE4a extensions"
+-msse4a	toggle(&sse2,TRUE);toggle(&sse4a,TRUE);	ALL	CPP,cfe		self
+	"Enable SSE4a extensions"
+-mno-sse4a	toggle(&sse4a,FALSE);	ALL	CPP,cfe		self
+	"Disable SSE4a extensions"
+-mssse3	toggle(&sse2,TRUE);toggle(&ssse3,TRUE);	ALL	CPP,cfe		self
+	"Enable SSSE3 extensions"
+-mno-ssse3	toggle(&ssse3,FALSE);	ALL	CPP,cfe		self
+	"Disable SSSE3 extensions"
+-msse4.1	toggle(&sse2,TRUE);toggle(&sse41,TRUE);	ALL	CPP,cfe		self
+	"Enable SSE4.1 extensions"
+-mno-sse4.1	toggle(&sse41,FALSE);	ALL	CPP,cfe		self
+	"Disable SSE4.1 extensions"
+-msse4.2	toggle(&sse2,TRUE);toggle(&sse42,TRUE);	ALL	CPP,cfe		self
+	"Enable SSE4.2 extensions"
+-mno-sse4.2	toggle(&sse42,FALSE);	ALL	CPP,cfe		self
+	"Disable SSE4.2 extensions"
+-maes	toggle(&sse2,TRUE);toggle(&aes,TRUE);	ALL	CPP,cfe		self
+	"Enable AES extensions"
+-mno-aes	toggle(&aes,FALSE);	ALL	CPP,cfe		self
+	"Disable AES extensions"
+-mpclmul	toggle(&sse2,TRUE);toggle(&pclmul,TRUE);	ALL	CPP,cfe		self
+	"Enable PCLMUL extensions"
+-mno-pclmul	toggle(&pclmul,FALSE);	ALL	CPP,cfe		self
+	"Disable PCLMUL extensions"
+-mavx	toggle(&sse2,TRUE);toggle(&avx,TRUE);	ALL	CPP,cfe		self
+	"Enable AVX extensions"
+-mno-avx	toggle(&avx,FALSE);	ALL	CPP,cfe		self
+	"Disable AVX extensions"
+-mxop	toggle(&sse2,TRUE);toggle(&xop,TRUE);	ALL	CPP,cfe		self
+	"Enable XOP extensions"
+-mno-xop	toggle(&xop,FALSE);	ALL	CPP,cfe		self
+	"Disable XOP extensions"
+-mfma4	toggle(&sse2,TRUE);toggle(&fma4,TRUE);	ALL	CPP,cfe		self
+	"Enable FMA4 extensions"
+-mno-fma4	toggle(&fma4,FALSE);	ALL	CPP,cfe		self
+	"Disable FMA4 extensions"
 %%% x87
 -mx87-precision=%d	;	ALL	be	"-TARG:x87-precision=%d"
 	"Specify the precision of x87 floating-point calculations (32/64/80-bit)"
@@ -2178,8 +2324,6 @@ I-u%s		;		Cc	ld	"-u %s"
 -pthread	;	ALL	NONE	""
 	"Compile with pthreads support"
 % gcc compatibility flags
--compat-gcc	toggle(&compat_gcc,TRUE);	ALL	NONE	""
-	""
 -Wabi		warn_ignored(option_name);	ALL	cfe	self	""
 	""
 -###		{show_version++; show_but_not_run = TRUE;}	ALL	NONE	"-###"

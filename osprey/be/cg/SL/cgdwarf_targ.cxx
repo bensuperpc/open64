@@ -1,3 +1,15 @@
+/********************************************************************\
+|*                                                                  *|   
+|*  Copyright (c) 2006 by SimpLight Nanoelectronics.                *|
+|*  All rights reserved                                             *|
+|*                                                                  *|
+|*  This program is free software; you can redistribute it and/or   *|
+|*  modify it under the terms of the GNU General Public License as  *|
+|*  published by the Free Software Foundation; either version 2,    *|
+|*  or (at your option) any later version.                          *|
+|*                                                                  *|
+\********************************************************************/ 
+
 #include <stdio.h>
 #include <stdlib.h>
 #include "libelf/libelf.h"
@@ -107,7 +119,6 @@ static const UINT32 fd_to_dwarf[FD_LAST] = {
 
 /* for each fd register, a mapping to the corresponding spill ST */
 static ST *fd_to_spill_loc[FD_LAST];
-static ST *curr_fd_to_spill_loc[FD_LAST];
 /* keep copy of previous spill_loc in case locally spilling to new loc */
 static ST *prev_fd_to_spill_loc[FD_LAST];
 
@@ -155,11 +166,7 @@ CIE_dump2asm(Dwarf_P_Cie cie)
     fprintf(Asm_File, "\t%s\t\"%s\"\n", AS_ASCII, cie->cie_aug); 
   else
      fprintf(Asm_File, "\t%s \"\\000\"\n", ".ascii");
-#if 0 // we must set 1 here, don't know why
-  fprintf(Asm_File, fmt_string, AS_ULEBW, cie->cie_code_align); 
-#else
   fprintf(Asm_File, fmt_string, AS_ULEBW, 1); 
-#endif
   fprintf(Asm_File, fmt_string, AS_SLEBW, cie->cie_data_align); 
   fprintf(Asm_File, fmt_string, AS_1BYTE, cie->cie_ret_reg); 
 	  
@@ -356,9 +363,7 @@ update_state (
 
     if ( current_state[fd_reg] == DS_In_Memory ) {
       /* Check that we are not transitioning to the same state. */
-      if ((current_state[fd_reg] == new_state) &&
-	  	(prev_fd_to_spill_loc[fd_reg] == curr_fd_to_spill_loc[fd_reg])) {
-	  	printf("<update_state> ignore redundancy (Mem->Mem)\n");
+      if (current_state[fd_reg] == new_state) { 
 	if (Trace_Dwarf) fprintf (TFile, "<update_state> ignore redundancy (Mem->Mem)\n");
 		return fde;
       }
@@ -372,13 +377,6 @@ update_state (
       else if (fd_reg == FD_SL) {
 	fde = Add_Fde_Inst (fde, DW_CFA_register, DW_FRAME_STATIC_LINK,
 				    fd_to_dwarf[fd_reg]);
-      }
-      else {
-	// if we are restoring from stack, we switched to same value rule
-
-	    fde = Add_Fde_Inst (fde, DW_CFA_offset, fd_to_dwarf[fd_reg], 
-	    	Offset_from_FP (curr_fd_to_spill_loc[fd_reg]) / 
-							data_alignment_factor);
       }
     }
     else if ( current_state[fd_reg] == DS_In_Register ) {
@@ -721,6 +719,21 @@ Gen_Register_Mask(BB *firstbb, REGISTER_SET *interrupt_saved,
 }
 #endif
 
+static INT32
+OP_Inst_Size(const OP * op)
+{
+  INT32 size = 0;
+  extern INT Simulated_Op_Real_Inst_Words(const OP *op);
+
+  if (TOP_asm == op->opr) {
+    size = Simulated_Op_Real_Inst_Words(op) * 2;
+  } else {
+    size = OP_Real_Ops(op) ? ((ISA_PACK_Inst_Words(OP_code(op))) * 2) : 0;
+  }
+
+  return size;
+}
+
 /* construct the fde for the current procedure. */
 extern Dwarf_P_Fde
 Build_Fde_For_Proc (Dwarf_P_Debug dw_dbg, BB *firstbb, LABEL_IDX begin_label, LABEL_IDX end_label,  INT end_offset, INT low_pc, INT high_pc)
@@ -747,7 +760,6 @@ Build_Fde_For_Proc (Dwarf_P_Debug dw_dbg, BB *firstbb, LABEL_IDX begin_label, LA
     current_state[fd_reg] = DS_In_Register;
     fd_to_spill_loc[fd_reg] = NULL;
     prev_fd_to_spill_loc[fd_reg] = NULL;
-	curr_fd_to_spill_loc[fd_reg] = NULL;
   }
 
   curloc = 0;
@@ -762,7 +774,9 @@ Build_Fde_For_Proc (Dwarf_P_Debug dw_dbg, BB *firstbb, LABEL_IDX begin_label, LA
 
   // emit CIE for THIS procedure
   Is_True(dw_dbg->de_last_cie, ("CIE pointer is NULL"));
-  if (Assembly && (Current_PU_Count() == 0)) {
+  static BOOL emit_cie_head = FALSE;
+  if (Assembly && (emit_cie_head == FALSE)) { 
+    emit_cie_head = TRUE;
     CIE_dump2asm(dw_dbg->de_last_cie);
     // only need to emit this once at CIE level
     fde = Add_Fde_Inst (fde,DW_CFA_def_cfa, DW_FRAME_REG29, 0);
@@ -790,7 +804,7 @@ Build_Fde_For_Proc (Dwarf_P_Debug dw_dbg, BB *firstbb, LABEL_IDX begin_label, LA
   {
     if (BB_unreachable(bb)) {
       for (op = BB_first_op(bb); op; op = OP_next(op)) {
-        curloc += OP_Real_Ops(op) ? ((ISA_PACK_Inst_Words(OP_code(op))) * 2) : 0;
+        curloc += OP_Inst_Size(op);
       }
       continue;
     }
@@ -829,7 +843,7 @@ Build_Fde_For_Proc (Dwarf_P_Debug dw_dbg, BB *firstbb, LABEL_IDX begin_label, LA
 
     for (op = BB_first_op(bb); op; op = OP_next(op)) 
     {
-      curloc += OP_Real_Ops(op) ? ((ISA_PACK_Inst_Words(OP_code(op))) * 2) : 0;
+      curloc += OP_Inst_Size(op); 
 
       /* we don't need to update state for the last instruction in the 
        * procedure. The state after this instruction is not important 
@@ -852,12 +866,9 @@ Build_Fde_For_Proc (Dwarf_P_Debug dw_dbg, BB *firstbb, LABEL_IDX begin_label, LA
 	  }
 	  else {
 	    if (TN_is_save_reg(result_tn)) {
-		  if ((OP_code(op) == TOP_mvfc16) && (OP_opnd(op, 0) == RA_TN)) {
-		  	// printf("get ra_sv\n");
-		    ra_sv = result_tn;	
-			// extern void dump_st(ST *);
-       	    // dump_st(TN_var(ra_sv));
-		  } else {		  
+	      if ((OP_code(op) == TOP_mvfc16) && (OP_opnd(op, 0) == RA_TN)) {
+		ra_sv = result_tn;	
+              } else {		  
 	      fd_reg = Save_TN_to_fd (result_tn);
 	      fde = Add_Fde_Inst (
 				  fde, 
@@ -888,12 +899,9 @@ Build_Fde_For_Proc (Dwarf_P_Debug dw_dbg, BB *firstbb, LABEL_IDX begin_label, LA
 	if (TN_is_register(src_tn) && TN_is_save_reg(src_tn)) {
           fd_reg = TN_to_fd (src_tn);
 	  if (OP_store(op)) {
-	  	prev_fd_to_spill_loc[fd_reg] = curr_fd_to_spill_loc[fd_reg];
-		curr_fd_to_spill_loc[fd_reg] = TN_spill(OP_opnd(op,2));
+	  	prev_fd_to_spill_loc[fd_reg] = fd_to_spill_loc[fd_reg]; 
+		fd_to_spill_loc[fd_reg] = TN_spill(OP_opnd(op,2));
 	  	if ((ra_sv != NULL) && (OP_opnd(op, 0) == ra_sv)) {
-		  // printf("store ra_sv\n");
-		  // extern void dump_st(ST *);
-		  // dump_st(TN_var(ra_sv));
 		  fde = Add_Fde_Inst(fde, DW_CFA_offset, fd_to_dwarf[FD_RA], 
 		  	Offset_from_FP(TN_var(ra_sv))/data_alignment_factor);
 		  current_state[FD_RA] = DS_In_Memory;
@@ -931,7 +939,6 @@ DevWarn("found local store of callee_save reg that was not save_reg:  bb %d, reg
 BB_id(bb), REGISTER_machine_id( TN_register_class(tn), TN_register(tn)) );
 		prev_fd_to_spill_loc[fd_reg] = fd_to_spill_loc[fd_reg];
 		fd_to_spill_loc[fd_reg] = TN_spill(OP_opnd(op,2));
-		curr_fd_to_spill_loc[fd_reg] = TN_spill(OP_opnd(op,2));
 		// TODO:  could add sanity-checker that would check for any
 		// use of a callee-save tn when that tn is in register,
 		// as it should be saved in memory before being used.
@@ -1031,18 +1038,6 @@ static BOOL
 Is_Unwind_Simple (void)
 {
   if (has_asm) return FALSE;
-#if 0
-  for (ue_iter = ue_list.begin(); ue_iter != ue_list.end(); ++ue_iter) {
-    	// if not first or last bb, then not a simple unwind
-    	if (BB_prev(ue_iter->bb) != NULL && BB_next(ue_iter->bb) != NULL) {
-		return FALSE;
-    	}
-	// if not entry or exit bb, then not a simple unwind
-	if ( ! BB_entry(ue_iter->bb) && ! BB_exit(ue_iter->bb)) {
-		return FALSE;
-	}
-  }
-#endif
 
   return TRUE;
 }
@@ -1057,20 +1052,6 @@ Init_Unwind_Info (BOOL trace)
 
   //  Find_Unwind_Info ();
   simple_unwind = Is_Unwind_Simple();
-#if 0
-
-  last_label = 0;
-  next_when = 0;
-  proc_region = UNDEFINED_UREGION;
-  if ( ! simple_unwind) {
-	if (Trace_Unwind) fprintf (TFile, "need to propagate unwind info\n");
-	// need to propagate unwind info to each block,
-	// and update ue_list with state changes
-	Do_Control_Flow_Analysis_Of_Unwind_Info ();
-	if ( ! has_asm) simple_unwind = TRUE;
-  }
-  Compute_Region_Sizes();
-#endif
   if (Trace_Unwind) {
 	fprintf (TFile, "%s unwind\n", (simple_unwind ? "simple" : "complicated"));
 	//	Print_All_Unwind_Elem ("unwind2");

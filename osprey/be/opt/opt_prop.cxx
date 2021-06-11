@@ -1,4 +1,8 @@
 /*
+ * Copyright (C) 2009 Advanced Micro Devices, Inc.  All Rights Reserved.
+ */
+
+/*
  *  Copyright (C) 2006, 2007. QLogic Corporation. All Rights Reserved.
  */
 
@@ -424,6 +428,9 @@ COPYPROP::Propagatable(CODEREP *x, BOOL chk_inverse,
     // temporary hack
     if (x->Opr() == OPR_INTRINSIC_OP && x->Is_C3_Intrinsic())
       return NOT_PROPAGATABLE;
+
+    if (MTYPE_is_float(x->Dtyp()) || MTYPE_is_float(x->Dsctyp()))
+      return NOT_PROPAGATABLE;
 #endif
     // intrinsic op may by lowered into a call, so propagating it past the
     // def of a return preg is wrong
@@ -434,13 +441,14 @@ COPYPROP::Propagatable(CODEREP *x, BOOL chk_inverse,
        ))
       return NOT_PROPAGATABLE;
 
-#ifdef VENDOR_PSC
-    // These code comes from Pathscale 3.2
-    // They may cause compilation time out in 403.gcc on IA-64 and 64-bit compiler on x86_64
+#if !defined(TARG_IA64)
+    // These code are not applied on TARG_IA64 since it will cause compilation time out
+    // in RVI2 phase during building 403.gcc.
     // Too aggressive copy propagation may increase the compilation time in later phases
     if (icopy_phase) {
       if (x->Is_isop_flag_set(ISOP_ICOPY_VISITED)) {
 	*height = 1;	// don't really know the height, so return 1
+	*weight = 1;
         return (PROPAGATABILITY) (0x3 & x->Propagatability()); // to prevent sign extension
       }
       else {
@@ -451,6 +459,7 @@ COPYPROP::Propagatable(CODEREP *x, BOOL chk_inverse,
     else {
       if (x->Is_isop_flag_set(ISOP_COPY_VISITED)) {
 	*height = 1;	// don't really know the height, so return 1
+	*weight = 1;
         return (PROPAGATABILITY) (0x3 & x->Propagatability()); // to prevent sign extension
       }
       else {
@@ -459,9 +468,17 @@ COPYPROP::Propagatable(CODEREP *x, BOOL chk_inverse,
       }
     }
 #else
-    if (icopy_phase && !x->Is_isop_flag_set(ISOP_ICOPY_VISITED)) {
-      x->Set_isop_flag(ISOP_ICOPY_VISITED);
-      Add_visited_node(x);
+    if (icopy_phase) {
+      if (!x->Is_isop_flag_set(ISOP_ICOPY_VISITED)) {
+        x->Set_isop_flag(ISOP_ICOPY_VISITED);
+        Add_visited_node(x);
+      }
+    }
+    else {
+      if (!x->Is_isop_flag_set(ISOP_COPY_VISITED)) {
+        x->Set_isop_flag(ISOP_COPY_VISITED);
+        Add_visited_node(x);
+      }
     }
 #endif
 
@@ -472,7 +489,9 @@ COPYPROP::Propagatable(CODEREP *x, BOOL chk_inverse,
       const OPERATOR x_opr = x->Opr();
       // list out all operators that are not allowed to be propagated
       // into an array subscript
-      if ( x_opr == OPR_ARRAY || x_opr == OPR_SELECT) {
+      if ( x_opr == OPR_ARRAY || x_opr == OPR_SELECT ||
+           x_opr == OPR_MIN || x_opr == OPR_MAX || x_opr == OPR_MINMAX ) 
+      {
 	x->Set_propagatability(NOT_PROPAGATABLE);
 	return NOT_PROPAGATABLE;
       }
@@ -480,7 +499,10 @@ COPYPROP::Propagatable(CODEREP *x, BOOL chk_inverse,
 
 #if defined(TARG_IA32) || defined(TARG_X8664)
     // do not allow SELECT to be propagated
-    if (x->Opr() == OPR_SELECT) { 
+    const OPERATOR x_opr = x->Opr();
+    if (x_opr == OPR_SELECT ||
+        x_opr == OPR_MIN || x_opr == OPR_MAX || x_opr == OPR_MINMAX) 
+    { 
       x->Set_propagatability(NOT_PROPAGATABLE);
       return NOT_PROPAGATABLE;
     }
@@ -1158,6 +1180,7 @@ COPYPROP::Prop_var(CODEREP *x, BB_NODE *curbb, BOOL icopy_phase,
   // do not propagate in preopt if propagation is into branch in a loop
   // and it is not introduced by IVR
   if (expr->Non_leaf() && !stmt->Ivr_introduced() && Htable()->Phase() != MAINOPT_PHASE && 
+      Htable()->Phase() != PREOPT_LNO_PHASE &&
       Propagated_to_loop_branch(stmt->Bb(), curbb) && x == curversion)
     return NULL;
 

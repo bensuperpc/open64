@@ -1,4 +1,8 @@
 /*
+ * Copyright (C) 2009-2010 Advanced Micro Devices, Inc.  All Rights Reserved.
+ */
+
+/*
  * Copyright (C) 2007, 2008 PathScale, LLC.  All rights reserved.
  */
 /*
@@ -57,7 +61,6 @@
 #define TRACE_EXIT(x)
 #define TRACE_EXIT_i(x,i)
 
-#define __STDC_LIMIT_MACROS
 #include <stdint.h>
 #include <limits.h>
 #include "defs.h"
@@ -125,9 +128,11 @@ Is_Return_Preg (PREG_NUM preg)
 	return (preg == First_Int_Preg_Return_Offset ||
 	        preg == Last_Int_Preg_Return_Offset) || 
 	       (preg >= First_X87_Preg_Return_Offset && 
-		preg <= Last_X87_Preg_Return_Offset) ||
+	        preg <= Last_X87_Preg_Return_Offset) ||
 	       (preg >= First_Float_Preg_Return_Offset && 
-		preg <= Last_Float_Preg_Return_Offset);
+	        preg <= Last_Float_Preg_Return_Offset) ||
+	       (preg >= First_MMX_Preg_Return_Offset && 
+	        preg <= Last_MMX_Preg_Return_Offset);
 }
 
 /* return whether preg is an output preg */
@@ -145,7 +150,9 @@ Is_Formal_Preg (PREG_NUM preg)
 	return (preg >= First_Int_Preg_Param_Offset && 
 		preg <= Last_Int_Preg_Param_Offset) || 
 	       (preg >= First_Float_Preg_Param_Offset && 
-		preg <= Last_Float_Preg_Param_Offset);
+		preg <= Last_Float_Preg_Param_Offset)||
+	       (preg >= First_MMX_Preg_Return_Offset && 
+		preg <= Last_MMX_Preg_Return_Offset);
 }
 
 /* return the result of merging class1 and class2, implemented according to
@@ -184,36 +191,43 @@ static enum X86_64_PARM_CLASS Merge_Classes(enum X86_64_PARM_CLASS class1,
  * the register class used; return 0 if whole aggregate is passed in memory.
  * Implemented according to the X86-64 ABI */
 INT Classify_Aggregate(const TY_IDX ty, 
-			  enum X86_64_PARM_CLASS classes[MAX_CLASSES])
+			  enum X86_64_PARM_CLASS classes[MAX_CLASSES], INT byte_offset )
 {
   INT i, n;
   enum X86_64_PARM_CLASS subclasses[MAX_CLASSES];
 
+  if(TY_size(ty) == 0 && TY_kind(ty) == KIND_STRUCT && PU_cxx_lang(Get_Current_PU()) ){
+   classes[0] = X86_64_SSE_CLASS;
+   return 1;
+  }
+
   if (TY_size(ty) > 16 || TY_size(ty) == 0 ||
       TY_is_non_pod(ty) /* || TY_is_packed(ty) bug 11892 */)
     return 0;
-
-  INT size_in_dwords = (TY_size(ty) + 7) / 8;
+  byte_offset %= 8;
+  INT size_in_dwords = (TY_size(ty) + byte_offset + 7) / 8;
+  
   for (i = 0; i < size_in_dwords; i++)
     classes[i] = X86_64_NO_CLASS;
   if (TY_kind(ty) == KIND_STRUCT ||
       TY_kind(ty) == KIND_ARRAY) {
-    if (TY_kind(ty) == KIND_STRUCT) {
+    if (TY_kind(ty) == KIND_STRUCT && Ty_Table[ty].Fld()) {
       FLD_ITER fld_iter = Make_fld_iter(TY_fld(ty));
       do {
         FLD_HANDLE fld(fld_iter);
-        if (TY_size(FLD_type(fld)) == 0)
+        if (TY_size(FLD_type(fld)) == 0 && 
+	    !(TY_kind(FLD_type(fld)) == KIND_STRUCT && PU_cxx_lang(Get_Current_PU())))
 	  continue;
-        n = Classify_Aggregate(FLD_type(fld), subclasses);
+        n = Classify_Aggregate(FLD_type(fld), subclasses, byte_offset + FLD_ofst(fld));
         if (n == 0)
 	  return 0;
-        INT inx =	FLD_ofst(fld) / 8;
+        INT inx = (FLD_ofst(fld) + byte_offset) / 8;
         for (i = 0; i < n; i++) 
 	  classes[i + inx] = Merge_Classes(classes[i + inx], subclasses[i]);
       } while (!FLD_last_field(fld_iter++));
     }
     else { /* (TY_kind(ty) == KIND_ARRAY) */
-      n = Classify_Aggregate(TY_etype(ty), subclasses);
+      n = Classify_Aggregate(TY_etype(ty), subclasses, byte_offset);
       if (n == 0)
         return 0;
       for (i = 0; i < size_in_dwords; i++)
@@ -244,8 +258,8 @@ INT Classify_Aggregate(const TY_IDX ty,
     case MTYPE_F8:
       classes[0] = X86_64_SSE_CLASS;
       return 1;
-    case MTYPE_CQ:
-    case MTYPE_FQ:
+    case MTYPE_C10:
+    case MTYPE_F10:
       classes[0] = X86_64_X87_CLASS;
       return 0;
     case MTYPE_C4:
@@ -275,6 +289,7 @@ INT Classify_Aggregate(const TY_IDX ty,
     case MTYPE_V8I1:
     case MTYPE_V8I2:
     case MTYPE_V8I4:
+    case MTYPE_V8I8:
     case MTYPE_M8I1:
     case MTYPE_M8I2:
     case MTYPE_M8I4:
@@ -283,6 +298,24 @@ INT Classify_Aggregate(const TY_IDX ty,
     case MTYPE_M8F4:
       classes[0] = X86_64_X87_CLASS;
       return 1;
+    case MTYPE_V32I1:
+    case MTYPE_V32I2:
+    case MTYPE_V32I4:
+    case MTYPE_V32I8:
+      classes[0] = X86_64_INTEGER_CLASS;
+      classes[1] = X86_64_INTEGER_CLASS;
+      classes[2] = X86_64_INTEGER_CLASS;
+      classes[3] = X86_64_INTEGER_CLASS;
+      return 4;
+    case MTYPE_V32F4:
+    case MTYPE_V32F8:
+    case MTYPE_V32C4:
+    case MTYPE_V32C8:
+      classes[0] = X86_64_SSE_CLASS;
+      classes[1] = X86_64_SSEUP_CLASS;
+      classes[2] = X86_64_SSEUP_CLASS;
+      classes[3] = X86_64_SSEUP_CLASS;
+      return 4;
     default:
 	FmtAssert (FALSE, ("Classify_Aggregate:  mtype %s",
 			   MTYPE_name(TY_mtype(ty))));
@@ -385,7 +418,7 @@ Get_Return_Info(TY_IDX rtype, Mtype_Return_Level level, BOOL ff2c_abi)
       // info.return_via_first_arg = TRUE;
       break;
 
-    case MTYPE_FQ:
+    case MTYPE_F10:
 
       info.count = 1;
       info.mtype[0] = mtype;
@@ -434,18 +467,46 @@ Get_Return_Info(TY_IDX rtype, Mtype_Return_Level level, BOOL ff2c_abi)
         info.preg  [0] = PR_first_reg(SIM_INFO.flt_results);
       break;
 
+    case MTYPE_V8I1:
+    case MTYPE_V8I2:
+    case MTYPE_V8I4:
+    case MTYPE_V8I8:
+    case MTYPE_V8F4:
+    case MTYPE_M8I1:
+    case MTYPE_M8I2:
+    case MTYPE_M8I4:
+    case MTYPE_M8F4:
+      info.count = 1;
+      info.mtype [0] = mtype;
+      if (Is_Target_32bit() && Target_MMX) {
+        info.preg  [0] = MM0;
+      }
+      else {
+        info.preg  [0] = PR_first_reg(SIM_INFO.flt_results);
+      }
+      break;
     case MTYPE_V16I1:
     case MTYPE_V16I2:
     case MTYPE_V16I4:
     case MTYPE_V16I8:
     case MTYPE_V16F4:
     case MTYPE_V16F8:
-    case MTYPE_V8I1:
-    case MTYPE_V8I2:
-    case MTYPE_V8I4:
+    case MTYPE_V32I1:
+    case MTYPE_V32I2:
+    case MTYPE_V32I4:
+    case MTYPE_V32I8:
+    case MTYPE_V32F4:
+    case MTYPE_V32F8:
+    case MTYPE_V32C4:
+    case MTYPE_V32C8:
       info.count = 1;
       info.mtype [0] = mtype;
-      info.preg  [0] = XMM0;
+      if (Is_Target_32bit() && Target_SSE) {
+        info.preg  [0] = XMM0;
+      }
+      else {
+        info.preg  [0] = PR_first_reg(SIM_INFO.flt_results);
+      }
       break;
 
     case MTYPE_C4:
@@ -528,7 +589,7 @@ Get_Return_Info(TY_IDX rtype, Mtype_Return_Level level, BOOL ff2c_abi)
       }
       break;
 
-    case MTYPE_CQ:
+    case MTYPE_C10:
       if (Is_Target_32bit()) {
         info.count = 0;
         info.return_via_first_arg = TRUE;
@@ -550,13 +611,6 @@ Get_Return_Info(TY_IDX rtype, Mtype_Return_Level level, BOOL ff2c_abi)
       }
       break;
 
-    case MTYPE_M8I1:
-    case MTYPE_M8I2:
-    case MTYPE_M8I4:
-    case MTYPE_M8F4:
-      info.count = 0;
-      info.return_via_first_arg = TRUE;
-      break;
 
     case MTYPE_M:
 
@@ -638,9 +692,12 @@ Get_Return_Info(TY_IDX rtype, Mtype_Return_Level level, BOOL ff2c_abi)
 
 static INT Current_Int_Param_Num = -1;		// count integer parameters only
 static INT Current_Float_Param_Num = -1;	// count float parameters only
+static INT Current_MMX_Param_Num = -1;
 static INT Register_Parms = 0;
 static BOOL SSE_Register_Parms = FALSE;
+static BOOL FASTCALL_Parms = FALSE;
 const INT SSE_Register_Parms_Allowed = 3;
+const INT MMX_Register_Parms_Allowed = 3;
 
 
 static PLOC
@@ -670,11 +727,18 @@ Setup_Parameter_Locations (TY_IDX pu_type)
       // -m32 is enforced in front-end, use it here also to be more specific.
       SSE_Register_Parms = TY_has_sseregister_parm (pu_type);
       Register_Parms = TY_register_parm (pu_type);
+
+      FASTCALL_Parms = TY_has_fastcall (pu_type);
+      if (FASTCALL_Parms) {
+         Register_Parms = 2;  // use ECX and EDX for fast call
+      }
+
     }
 
     Current_Param_Num = -1;		// count all parameters
     Current_Int_Param_Num = -1;		// count integer parameters only
     Current_Float_Param_Num = -1;	// count float parameters only
+    Current_MMX_Param_Num = -1;   
     Last_Param_Offset = 0;
     return plocNULL;
 } // Setup_Parameter_Locations
@@ -684,8 +748,12 @@ static PLOC
 Get_Parameter_Location (TY_IDX ty, BOOL is_output)
 {
     PLOC ploc;				// return location
-    mDED_PREG_NUM int_regs_array[] = {RAX, RDX, RCX};
+    mDED_PREG_NUM regparm_regs_array[] = {RAX, RDX, RCX};
     mDED_PREG_NUM flt_regs_array[] = {XMM0, XMM1, XMM2};
+    mDED_PREG_NUM mmx_regs_array[] = {MM0, MM1, MM2};
+    mDED_PREG_NUM fastcall_regs_array[] = {RCX, RDX};
+    mDED_PREG_NUM *int_regs_array = 
+       FASTCALL_Parms ? fastcall_regs_array : regparm_regs_array;
 
     ploc.reg = 0;
     ploc.reg2 = 0;
@@ -729,50 +797,109 @@ Get_Parameter_Location (TY_IDX ty, BOOL is_output)
         ++Current_Int_Param_Num;
 	if (Is_Target_32bit() && Current_Int_Param_Num < Register_Parms) {
 	  ploc.reg = int_regs_array[Current_Int_Param_Num];
+          // handle 64 bit integer passed in register pair
+          if (ploc.size == 8) {
+            ++Current_Int_Param_Num;
+            if (FASTCALL_Parms) {
+              // fastcall doesn't pass 8byte value in register
+              ploc.reg = 0;
+            }
+            else if (Current_Int_Param_Num < Register_Parms) {
+              // check if there is another register left for the lower 32 bit
+	      ploc.reg2 = int_regs_array[Current_Int_Param_Num];
+            }
+            else {
+              // no enough register to pass 64bit parameter, remove the register
+              ploc.reg = 0;
+            }
+          }
 	}
 	else {
 	  ploc.reg = PR_first_reg(SIM_INFO.int_args) + Current_Int_Param_Num;
 	  if (ploc.reg > PR_last_reg(SIM_INFO.int_args)) 
 	    ploc.reg = 0;
+          // keep the int param number in sync for 32bit if the type is 64bit
+          if (Is_Target_32bit() && ploc.size == 8) {
+            ++Current_Int_Param_Num;
+          }
 	}
 	break;
 	
-    case MTYPE_V16I1:
-    case MTYPE_V16I2:
-    case MTYPE_V16I4:
-    case MTYPE_V16I8:
     case MTYPE_V8I1:
     case MTYPE_V8I2:
     case MTYPE_V8I4:
-    case MTYPE_V16F4:
-    case MTYPE_V16F8:
+    case MTYPE_V8I8:
     case MTYPE_V8F4:
-    case MTYPE_F4:
-    case MTYPE_F8:
-        ++Current_Float_Param_Num;
-        if (Is_Target_32bit() && SSE_Register_Parms &&
-            Current_Float_Param_Num < SSE_Register_Parms_Allowed) {
-          ploc.reg = flt_regs_array[Current_Float_Param_Num];
-        }
-        else {
-	  ploc.reg = PR_first_reg(SIM_INFO.flt_args) + Current_Float_Param_Num;
-	  if (ploc.reg > PR_last_reg(SIM_INFO.flt_args)) {
-	    ploc.reg = 0;
-	    if( Is_Target_64bit() )
-	      rpad = MTYPE_RegisterSize(SIM_INFO.flt_type) - ploc.size;
-	  }
-        }
-	break;
-
     case MTYPE_M8I1:
     case MTYPE_M8I2:
     case MTYPE_M8I4:
     case MTYPE_M8F4:
-      ploc.reg = 0; // pass in memory
+      if (Is_Target_32bit()) {
+	//8 bytes vector in 32bit system, if enable mmx
+	//use mm0, mm1, mm2 for parameter passing
+	++Current_MMX_Param_Num;
+	if (Current_MMX_Param_Num < MMX_Register_Parms_Allowed && Target_MMX) {
+	  ploc.reg = mmx_regs_array[Current_MMX_Param_Num];
+	}
+	else {
+	  ploc.reg = 0;  /* pass in memory */
+	}
+	break;
+      }
+    case MTYPE_F4:
+    case MTYPE_F8:
+      if (Is_Target_32bit()) {
+	//float and double in 32bit system, if allow sse register parms
+	//use xmm0, xmm1, xmm2 for parameter passing
+	++Current_Float_Param_Num;
+	if ( SSE_Register_Parms && Current_Float_Param_Num < SSE_Register_Parms_Allowed) {
+	  ploc.reg = flt_regs_array[Current_Float_Param_Num];
+	}
+	else {
+	  ploc.reg = 0;  /* pass in memory */
+	}
+	break;
+      }
+    case MTYPE_V16I1:
+    case MTYPE_V16I2:
+    case MTYPE_V16I4:
+    case MTYPE_V16I8:
+    case MTYPE_V16F4:
+    case MTYPE_V16F8:
+    case MTYPE_V32I1:
+    case MTYPE_V32I2:
+    case MTYPE_V32I4:
+    case MTYPE_V32I8:
+    case MTYPE_V32F4:
+    case MTYPE_V32F8:
+    case MTYPE_V32C4:
+    case MTYPE_V32C8:
+      ++Current_Float_Param_Num;
+      if (Is_Target_32bit()) {
+	//16 bytes vector in 32bit system, if enable sse
+	//use xmm0, xmm1, xmm2 for parameter passing
+	if (Current_Float_Param_Num < SSE_Register_Parms_Allowed && Target_SSE) {
+	  ploc.reg = flt_regs_array[Current_Float_Param_Num];
+	}
+	else {
+	  ploc.reg = 0;  /* pass in memory */
+	}
+      }
+      else {
+	//in 64bit system all vectors and float double use xmm0-xmm7 
+	//for parameter passing
+	ploc.reg = PR_first_reg(SIM_INFO.flt_args) + Current_Float_Param_Num;
+	if (ploc.reg > PR_last_reg(SIM_INFO.flt_args)) {
+	  ploc.reg = 0;
+	  rpad = MTYPE_RegisterSize(SIM_INFO.flt_type) - ploc.size;
+	}
+      }
       break;
 
-    case MTYPE_CQ:
-    case MTYPE_FQ:
+    case MTYPE_C10:
+    case MTYPE_F10:
+    case MTYPE_C16:
+    case MTYPE_F16:
       ploc.reg = 0;  /* pass in memory */
       break;
 

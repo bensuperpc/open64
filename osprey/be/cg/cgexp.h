@@ -1,4 +1,8 @@
 /*
+ * Copyright (C) 2009 Advanced Micro Devices, Inc.  All Rights Reserved.
+ */
+
+/*
  * Copyright 2003, 2004, 2005, 2006 PathScale, Inc.  All Rights Reserved.
  */
 
@@ -111,6 +115,9 @@ extern void Exp_OP (OPCODE opcode, TN *result, TN *op1, TN *op2, TN *op3,
 #if defined(TARG_SL)
 extern void Exp_Lda (
   TYPE_ID mtype, TN *tgt_tn, ST *sym, INT64 ofst, OPERATOR call_opr, OPS *ops,  BOOL is_internal_mem_ofst = FALSE);
+#elif defined(TARG_PPC32)
+extern void Exp_Lda (
+  TYPE_ID mtype, TN *tgt_tn, ST *sym, INT64 ofst, OPERATOR call_opr, OPS *ops, INTRINSIC intrn_id = INTRINSIC_INVALID);
 #else 
 extern void Exp_Lda (
   TYPE_ID mtype, TN *tgt_tn, ST *sym, INT64 ofst, OPERATOR call_opr, OPS *ops);
@@ -161,7 +168,7 @@ extern TN * Exp_Intrinsic_Call (
   INTRINSIC id, TN *op0, TN *op1, TN *op2, OPS *ops, 
   LABEL_IDX *label, OPS *loop_ops);
 
-#if defined(TARG_SL)
+#if defined(TARG_SL) || defined(TARG_PPC32)
 /* Expansion of co-processor instructions */
 extern TN * Exp_SL_Intrinsic_Call (INTRINSIC id, WN *intrncall, OPS *ops,
 				     LABEL_IDX *label, OPS *loop_ops, TN* result = NULL);
@@ -176,15 +183,10 @@ extern void Exp_Savexmms_Intrinsic(WN *intrncall, TN *rax_tn, LABEL_IDX *label,
 
 extern void Exp_Landingpadentry_Intrinsic (ST *dest1, ST *dest2, OPS* ops);
 
-extern void Exp_Fetch_and_And( TN*, TN*, TYPE_ID, OPS* );
-extern void Exp_Fetch_and_Or( TN*, TN*, TYPE_ID, OPS* );
-extern void Exp_Fetch_and_Xor( TN*, TN*, TYPE_ID, OPS* );
-extern TN*  Exp_Compare_and_Swap( TN*, TN*, TN*, TYPE_ID, OPS* );
-
 /* expand intrinsic op */
-extern void Exp_Intrinsic_Op (INTRINSIC id, TN *result, TN *op0, TN *op1, TN *op2, TYPE_ID mtype, OPS *ops);
+extern void Exp_Intrinsic_Op (INTRINSIC id, TN *result, TN *op0, TN *op1, TN *op2, TN *op3, TN *op4, TYPE_ID mtype, OPS *ops);
 
-#elif defined(TARG_IA64) 
+#elif defined(TARG_IA64) || defined(TARG_LOONGSON)
 extern void Exp_Intrinsic_Op (INTRINSIC id, TN *result, TN *op0, TN *op1, OPS *ops);
 #else
 /* expand intrinsic op */
@@ -193,7 +195,11 @@ extern void Exp_Intrinsic_Op (INTRINSIC id, TN *result, TN *op0, TN *op1, TYPE_I
 
 /* Expand TN(const) into a sequence of ops (used in prolog)
  */
+#ifdef TARG_SL
+extern void Exp_Immediate (TN *dest, TN *src, TYPE_ID rtype, OPS *);
+#else
 extern void Exp_Immediate (TN *dest, TN *src, BOOL is_signed, OPS *);
+#endif
 
 /* create add/sub/mpy op of given mtype */
 #define Exp_ADD(mtype,dest,src1,src2,ops)	\
@@ -221,11 +227,24 @@ extern void Exp_Select_And_VLdid (
 #endif
 
 /* create select and condition for select */
+#if defined(TARG_SL)
+extern void Exp_Select_And_Condition (
+        WN* wn_select, OPCODE select, TN *result, TN *true_tn, TN *false_tn,
+        OPCODE compare, TN *cmp_kid1, TN *cmp_kid2, VARIANT variant, OPS *ops);
+#else
 extern void Exp_Select_And_Condition (
         OPCODE select, TN *result, TN *true_tn, TN *false_tn,
         OPCODE compare, TN *cmp_kid1, TN *cmp_kid2, VARIANT variant, OPS *ops);
+#endif
 
 #if defined(TARG_SL)
+extern BOOL Exp_Opt_Select_And_Condition (WN * select, TN * result, TN * true_tn,
+        TN * false_tn, TN * cmp_kid1, TN * cmp_kid2, OPS * ops);
+extern void Exp_2inst_MC_Zero (TOP mc_op, TN* dest_tn, TN* true_tn, TN* false_tn, 
+        TN* cond_tn, TYPE_ID true_type, TYPE_ID false_type, INT unsignedflag, OPS* ops );
+#endif
+
+#if defined(TARG_PPC32) // not used ?
 extern BOOL Exp_Opt_Select_And_Condition (WN * select, TN * result, TN * true_tn,
         TN * false_tn, TN * cmp_kid1, TN * cmp_kid2, OPS * ops);
 extern void Exp_2inst_MC_Zero (TOP mc_op, TN* dest_tn, TN* true_tn, TN* false_tn, 
@@ -234,7 +253,7 @@ extern void Build_MC_OP (TOP mc_op, TN *result, TN *rs1, TN *rs2, int unsignedfl
         OPS *ops, OP_COND_DEF_KIND kind);
 #endif
 
-#if defined(TARG_SL)
+#if defined(TARG_SL) || defined(TARG_PPC32)
 extern LABEL_IDX Exp_Select_Part1(
         OPCODE select, TN *result, TN *true_tn, TN *false_tn,
         OPCODE compare, TN *cmp_kid1, TN *cmp_kid2, OPS *ops);
@@ -332,6 +351,10 @@ extern void Expand_Cmov (TOP top, TN *result, TN *src, TN *rflags, OPS *ops,
 			 TN *result2 = NULL, TN *src2 = NULL);
 #endif
 
+#ifdef TARG_X8664
+extern void Setup_Builtin_Apply_Args(OPS *ops);
+#endif
+
 /* Predicate manipulation routines.
  *
  * Most if not all of these routines take two result TNs. The second
@@ -351,11 +374,14 @@ extern void Exp_Pred_Compare(TN *dest, TN *cdest, TN *src1, TN *src2,
  */
 extern BOOL Target_Has_Immediate_Operand (WN *parent, WN *expr);
 
-#if defined(TARG_SL) 
+#if defined(TARG_SL) || defined(TARG_PPC32) 
 extern TN * Expand_Expr (WN *expr, WN *parent, TN *result, INTRINSIC intrn_id = INTRINSIC_INVALID);
 // On IA-64, Expand_Expr is static in whirl2ops.cxx
 //#elif defined(TARG_IA64)
 //extern TN * Expand_Expr (WN *expr, WN *parent, TN *result);
+/*  for 64bit expand */
+extern void Expand_Start();
+extern void Expand_Finish();
 #endif 
 
 #ifdef TARG_X8664

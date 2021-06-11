@@ -1,4 +1,8 @@
 /*
+ * Copyright (C) 2009-2010 Advanced Micro Devices, Inc.  All Rights Reserved.
+ */
+
+/*
  * Copyright (C) 2007. QLogic Corporation. All Rights Reserved.
  */
 
@@ -132,6 +136,16 @@ enum ST_MEMORY
     MEMORY_PARAM = 6,
     MEMORY_COUNT = 7
 }; // ST_MEMORY
+#else
+enum ST_TLS_MODEL {
+    TLS_NONE,
+    TLS_EMULATED, /* for emulated tls */
+    TLS_REAL,
+    TLS_GLOBAL_DYNAMIC = TLS_REAL,
+    TLS_LOCAL_DYNAMIC,
+    TLS_INITIAL_EXEC,
+    TLS_LOCAL_EXEC,
+}; // TLS_MODEL
 #endif /* TARG_NVISA */
 
 enum ST_FLAGS
@@ -188,14 +202,17 @@ enum ST_FLAGS_EXT
     ST_IS_THIS_PTR      = 0x20, 	// ST is "this"-pointer
     ST_IS_PURE_VFUNC    = 0x40,         // ST is pure virtual function
     ST_IS_THREAD_LOCAL  = 0x80,         // ST is Thread-Local_Storage, __thread
+    ST_IS_ARRAY_REMAPPING_CANDIDATE = 0x100,
+    ST_IS_ARRAY_REMAPPING_CANDIDATE_MALLOC = 0x200, // storage for the remapped
+                                        // array is from malloc()
 #if defined(TARG_SL)
-    ST_IN_V1BUF = 0x100,                // ST is vector1 variable
-    ST_IN_V2BUF = 0x200,                // ST is vector2 variable 
-    ST_IN_V4BUF = 0x400,                // ST is vector4 variable 
-    ST_IN_SDRAM = 0x800,                // ST is sdram variable 
-    ST_IN_SBUF =  0x1000,                // ST is explcitly declared sbuf so 
-    ST_IS_VBUF_OFFSET = 0x2000,  // represent this symbol means offset instead of a absolute address
-    ST_IS_SBUF_OFFSET = 0x4000,  // same as above and will be deleted for we don't have sbuf in the future.
+    ST_IN_V1BUF = 0x400,                // ST is vector1 variable
+    ST_IN_V2BUF = 0x800,                // ST is vector2 variable 
+    ST_IN_V4BUF = 0x1000,               // ST is vector4 variable 
+    ST_IN_SDRAM = 0x2000,               // ST is sdram variable 
+    ST_IN_SBUF =  0x4000,               // ST is explcitly declared sbuf so 
+    ST_IS_VBUF_OFFSET = 0x8000,  // represent this symbol means offset instead of a absolute address
+    ST_IS_SBUF_OFFSET = 0x10000, // same as above and will be deleted for we don't have sbuf in the future.
 #endif     
 }; // ST_FLAGS_EXT
 #endif
@@ -212,18 +229,18 @@ public:
     mUINT32 flags;			// misc. attributes
 
 #if defined(TARG_SL)
-    mUINT16 flags_ext;			// more attributes
+    mUINT32 flags_ext;			// more attributes
 #else
-    mUINT8 flags_ext;			// more attributes
+    mUINT16 flags_ext;			// more attributes
 #endif
 
     ST_CLASS sym_class : 8;		// class info
     ST_SCLASS storage_class : 8;	// storage info
-#ifdef TARG_NVISA
     ST_EXPORT export_class : 4;		// export class of the symbol
+#ifdef TARG_NVISA
     ST_MEMORY memory_space: 4;		// memory space of the symbol
 #else
-    ST_EXPORT export_class : 8;		// export class of the symbol
+    ST_TLS_MODEL tls_model: 4;		// Thread-Local-Storage(TLS) model
 #endif
     union {
 	TY_IDX type;			// idx to high-level type
@@ -251,7 +268,9 @@ public:
     void Print(FILE *f, BOOL verbose = TRUE) const;
     
     BOOL operator==(ST &st) const;
-    
+
+    friend std::ostream& operator<<(std::ostream &os, const ST& st);
+
 }; // ST
 
 
@@ -555,6 +574,8 @@ enum TY_FLAGS
 #ifdef TARG_NVISA
     TY_CAN_BE_VECTOR	= 0x8000,	// vector type like int4
 #endif
+    TY_COMPLETE_STRUCT_RELAYOUT_CANDIDATE = 0x0001, // it's OK to share this
+      // with TY_IS_CHARACTER above for now, since this has to be a struct
 };
 
 
@@ -568,7 +589,9 @@ enum TY_PU_FLAGS
     TY_HAS_SSEREG_PARM	= 0x00000008,	// SSE register parameters under i386
     TY_HAS_1_REG_PARM	= 0x00000010,	// 1 register parameter under i386
     TY_HAS_2_REG_PARM	= 0x00000020,	// 2 register parameters under i386
-    TY_HAS_3_REG_PARM	= 0x00000030	// 3 register parameters under i386
+    TY_HAS_3_REG_PARM	= 0x00000030,	// 3 register parameters under i386
+    TY_HAS_STDCALL      = 0x00000040,   // stdcall calling convention under i386
+    TY_HAS_FASTCALL     = 0x00000080    // fastcall calling convention under i386
 #endif
 };
 
@@ -716,7 +739,6 @@ public:
 #define PU_NO_INSTRUMENT        0x0000010000000000LL // -finstrument-functions will skip PU
 #endif
 
-#define PU_IS_MALLOC            0x0000020000000000LL // __attribute__((malloc)) semantic 
 #define PU_HAS_ATTR_MALLOC      0x0000020000000000LL // __attribute__((malloc)) semantic 
 #define PU_HAS_ATTR_PURE        0x0000040000000000LL // __attribute__((pure)) semantic 
 #define PU_HAS_ATTR_NORETURN    0x0000080000000000LL // __attribute__((noreturn)) semantic
@@ -728,6 +750,8 @@ public:
                                 0x0000800000000000LL // has a label jumped to directly from a nested function
 #define PU_HAS_GOTO_OUTER_BLOCK	0x0001000000000000LL // has GOTO_OUTER_BLOCK stmt
 #define PU_IS_CDECL             0x0002000000000000LL // __attribute__((cdecl)) semantic
+#define PU_NOTHROW              0x0004000000000000LL // doesn't throw, e.g. decl as "void foo() throw()".
+#define PU_HAS_APPLY_ARGS       0x0008000000000000LL // __builtin_apply_args
 
 enum PU_SRC_LANG_FLAGS
 {

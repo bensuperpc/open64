@@ -1,4 +1,8 @@
 /*
+ * Copyright (C) 2008-2010 Advanced Micro Devices, Inc.  All Rights Reserved.
+ */
+
+/*
  *  Copyright (C) 2007, 2008 PathScale, LLC.  All Rights Reserved.
  */
 
@@ -101,6 +105,7 @@
 #include "calls.h"
 #include "cg_loop.h"
 #include "config_lno.h"  // for LNO_Prefetch_Ahead
+#include "erbe.h"
 
 UINT32 CGTARG_branch_taken_penalty;
 BOOL CGTARG_branch_taken_penalty_overridden = FALSE;
@@ -203,6 +208,59 @@ UINT32 CGTARG_Mem_Ref_Bytes(const OP *memop)
       case TOP_cvtsi2ss_x:
       case TOP_cvtsi2ss_xx:
       case TOP_cvtsi2ss_xxx:
+      case TOP_vldss:		// 32 bit
+      case TOP_vldss_n32:
+      case TOP_vldssx:
+      case TOP_vldssxx:
+      case TOP_vstssxx:
+      case TOP_vstss:
+      case TOP_vstss_n32:
+      case TOP_vstssx:
+      case TOP_vstntss:
+      case TOP_vstntssx:
+      case TOP_vstntssxx:
+      case TOP_vdivxxxss:
+      case TOP_vfaddxxxss:
+      case TOP_vsubxxxss:
+      case TOP_vmulxxxss:
+      case TOP_vcomixss:
+      case TOP_vcomixxss:
+      case TOP_vcomixxxss:
+      case TOP_vdivxss:
+      case TOP_vdivxxss:
+      case TOP_vfaddxss:
+      case TOP_vsubxss:
+      case TOP_vmulxss:
+      case TOP_vfaddxxss:
+      case TOP_vsubxxss:
+      case TOP_vmulxxss:
+      case TOP_vcvtsi2ssx:
+      case TOP_vcvtsi2ssxx:
+      case TOP_vcvtsi2ssxxx:
+      case TOP_vfmaddxss:
+      case TOP_vfmaddxxss:
+      case TOP_vfmaddxxxss:
+      case TOP_vfmaddxrss:
+      case TOP_vfmaddxxrss:
+      case TOP_vfmaddxxxrss:
+      case TOP_vfnmaddxss:
+      case TOP_vfnmaddxxss:
+      case TOP_vfnmaddxxxss:
+      case TOP_vfnmaddxrss:
+      case TOP_vfnmaddxxrss:
+      case TOP_vfnmaddxxxrss:
+      case TOP_vfmsubxss:
+      case TOP_vfmsubxxss:
+      case TOP_vfmsubxxxss:
+      case TOP_vfmsubxrss:
+      case TOP_vfmsubxxrss:
+      case TOP_vfmsubxxxrss:
+      case TOP_vfnmsubxss:
+      case TOP_vfnmsubxxss:
+      case TOP_vfnmsubxxxss:
+      case TOP_vfnmsubxrss:
+      case TOP_vfnmsubxxrss:
+      case TOP_vfnmsubxxxrss:
 	return 4;
 
       case TOP_ldsd:		// 64 bit
@@ -244,6 +302,81 @@ UINT32 CGTARG_Mem_Ref_Bytes(const OP *memop)
       case TOP_cvtsi2ssq_x:
       case TOP_cvtsi2ssq_xx:
       case TOP_cvtsi2ssq_xxx:
+      case TOP_vldsd:		// 64 bit
+      case TOP_vldsd_n32:
+      case TOP_vldsdx:
+      case TOP_vldsdxx:
+      case TOP_vstsdxx:
+      case TOP_vsthpd:
+      case TOP_vsthpdx:
+      case TOP_vsthpdxx:
+      case TOP_vsthps:
+      case TOP_vsthpsx:
+      case TOP_vsthpsxx:
+      case TOP_vstlpd:
+      case TOP_vstlpdx:
+      case TOP_vstlpdxx:
+      case TOP_vstlps:
+      case TOP_vstlpsx:
+      case TOP_vstlpsxx:
+      case TOP_vstsd:
+      case TOP_vstsd_n32:
+      case TOP_vstsdx:
+      case TOP_vstntsd:
+      case TOP_vstntsdx:
+      case TOP_vstntsdxx:
+      case TOP_vstorelpd:
+      case TOP_vdivxxxsd:
+      case TOP_vfaddxxxsd:
+      case TOP_vsubxxxsd:
+      case TOP_vmulxxxsd:
+      case TOP_vcomixsd:
+      case TOP_vcomixxsd:
+      case TOP_vcomixxxsd:
+      case TOP_vdivxsd:
+      case TOP_vdivxxsd:
+      case TOP_vfaddxsd:
+      case TOP_vsubxsd:
+      case TOP_vmulxsd:
+      case TOP_vfaddxxsd:
+      case TOP_vsubxxsd:
+      case TOP_vmulxxsd:
+      case TOP_vcvtsd2ssx:
+      case TOP_vcvtsd2ssxx:
+      case TOP_vcvtsd2ssxxx:
+      case TOP_vcvtsi2sdx:
+      case TOP_vcvtsi2sdxx:
+      case TOP_vcvtsi2sdxxx:
+      case TOP_vcvtsi2sdqx:
+      case TOP_vcvtsi2sdqxx:
+      case TOP_vcvtsi2sdqxxx:
+      case TOP_vcvtsi2ssqx:
+      case TOP_vcvtsi2ssqxx:
+      case TOP_vcvtsi2ssqxxx:
+      case TOP_vfmaddxsd:
+      case TOP_vfmaddxxsd:
+      case TOP_vfmaddxxxsd:
+      case TOP_vfmaddxrsd:
+      case TOP_vfmaddxxrsd:
+      case TOP_vfmaddxxxrsd:
+      case TOP_vfnmaddxsd:
+      case TOP_vfnmaddxxsd:
+      case TOP_vfnmaddxxxsd:
+      case TOP_vfnmaddxrsd:
+      case TOP_vfnmaddxxrsd:
+      case TOP_vfnmaddxxxrsd:
+      case TOP_vfmsubxsd:
+      case TOP_vfmsubxxsd:
+      case TOP_vfmsubxxxsd:
+      case TOP_vfmsubxrsd:
+      case TOP_vfmsubxxrsd:
+      case TOP_vfmsubxxxrsd:
+      case TOP_vfnmsubxsd:
+      case TOP_vfnmsubxxsd:
+      case TOP_vfnmsubxxxsd:
+      case TOP_vfnmsubxrsd:
+      case TOP_vfnmsubxxrsd:
+      case TOP_vfnmsubxxxrsd:
 	return 8;
 
       case TOP_lddqa:		// 128 bit
@@ -256,6 +389,8 @@ UINT32 CGTARG_Mem_Ref_Bytes(const OP *memop)
       case TOP_ldups:
       case TOP_ldups_n32:
       case TOP_ldupd:
+      case TOP_ldupdx:
+      case TOP_ldupdxx:
       case TOP_ldupd_n32:
       case TOP_lddqax:
       case TOP_lddqux:
@@ -296,6 +431,58 @@ UINT32 CGTARG_Mem_Ref_Bytes(const OP *memop)
       case TOP_stapsxx:
       case TOP_stapdxx:
       case TOP_storenti128:
+      case TOP_vlddqa:		// 128 bit
+      case TOP_vlddqa_n32:
+      case TOP_vlddqu:
+      case TOP_vldapd:
+      case TOP_vldapd_n32:
+      case TOP_vldaps:
+      case TOP_vldaps_n32:
+      case TOP_vldups:
+      case TOP_vldups_n32:
+      case TOP_vldupd:
+      case TOP_vldupdx:
+      case TOP_vldupdxx:
+      case TOP_vldupd_n32:
+      case TOP_vlddqax:
+      case TOP_vlddqux:
+      case TOP_vldapdx:
+      case TOP_vldapsx:
+      case TOP_vlddqaxx:
+      case TOP_vlddquxx:
+      case TOP_vldapdxx:
+      case TOP_vldapsxx:
+      case TOP_vmovsldupx:
+      case TOP_vmovshdupx:
+      case TOP_vmovddupx:
+      case TOP_vmovsldupxx:
+      case TOP_vmovshdupxx:
+      case TOP_vmovddupxx:
+      case TOP_vmovsldupxxx:
+      case TOP_vmovshdupxxx:
+      case TOP_vmovddupxxx:
+      case TOP_vstdqa:
+      case TOP_vstdqa_n32:
+      case TOP_vstntpd:
+      case TOP_vstntps:
+      case TOP_vstdqu:
+      case TOP_vstdqax:
+      case TOP_vstntpdx:
+      case TOP_vstntpsx:
+      case TOP_vstdqux:
+      case TOP_vstdqaxx:
+      case TOP_vstntpdxx:
+      case TOP_vstntpsxx:
+      case TOP_vstdquxx:
+      case TOP_vstaps:
+      case TOP_vstaps_n32:
+      case TOP_vstapd:
+      case TOP_vstapd_n32:
+      case TOP_vstapsx:
+      case TOP_vstapdx:
+      case TOP_vstapsxx:
+      case TOP_vstapdxx:
+      case TOP_vstorenti128:
 	return 16;
 
       case TOP_store64_fm:	// Misc non-SSE, non-x87.
@@ -321,6 +508,10 @@ UINT32 CGTARG_Mem_Ref_Bytes(const OP *memop)
   case TOP_andx8:
   case TOP_andxx8:
   case TOP_andxxx8:
+  case TOP_test8:
+  case TOP_testx8:
+  case TOP_testxx8:
+  case TOP_testxxx8:
   case TOP_cmp8:
   case TOP_cmpx8:
   case TOP_cmpxx8:
@@ -328,6 +519,9 @@ UINT32 CGTARG_Mem_Ref_Bytes(const OP *memop)
   case TOP_cmpxi8:
   case TOP_cmpxxi8:
   case TOP_cmpxxxi8:
+  case TOP_cmpxr8:
+  case TOP_cmpxxr8:
+  case TOP_cmpxxxr8:
   case TOP_or8:
   case TOP_orx8:
   case TOP_orxx8:
@@ -358,6 +552,10 @@ UINT32 CGTARG_Mem_Ref_Bytes(const OP *memop)
   case TOP_andx16:
   case TOP_andxx16:
   case TOP_andxxx16:
+  case TOP_test16:
+  case TOP_testx16:
+  case TOP_testxx16:
+  case TOP_testxxx16:
   case TOP_cmp16:
   case TOP_cmpx16:
   case TOP_cmpxx16:
@@ -365,6 +563,9 @@ UINT32 CGTARG_Mem_Ref_Bytes(const OP *memop)
   case TOP_cmpxi16:
   case TOP_cmpxxi16:
   case TOP_cmpxxxi16:
+  case TOP_cmpxr16:
+  case TOP_cmpxxr16:
+  case TOP_cmpxxxr16:
   case TOP_or16:
   case TOP_orx16:
   case TOP_orxx16:
@@ -404,6 +605,9 @@ UINT32 CGTARG_Mem_Ref_Bytes(const OP *memop)
   case TOP_cmpxi32:
   case TOP_cmpxxi32:
   case TOP_cmpxxxi32:
+  case TOP_cmpxr32:
+  case TOP_cmpxxr32:
+  case TOP_cmpxxxr32:
   case TOP_testx32:
   case TOP_testxx32:
   case TOP_testxxx32:
@@ -414,6 +618,7 @@ UINT32 CGTARG_Mem_Ref_Bytes(const OP *memop)
   case TOP_ld32_64:
   case TOP_ldx32_64:
   case TOP_ldxx32_64:
+  case TOP_ld32_64_off:
   case TOP_ldss:
   case TOP_ldss_n32:
   case TOP_ldssx:
@@ -473,6 +678,9 @@ UINT32 CGTARG_Mem_Ref_Bytes(const OP *memop)
   case TOP_cmpxi64:
   case TOP_cmpxxi64:
   case TOP_cmpxxxi64:
+  case TOP_cmpxr64:
+  case TOP_cmpxxr64:
+  case TOP_cmpxxxr64:
   case TOP_testx64:
   case TOP_testxx64:
   case TOP_testxxx64:
@@ -1326,7 +1534,8 @@ CGTARG_Preg_Register_And_Class(
 
   if (!Preg_Offset_Is_Int(preg)   &&
       !Preg_Offset_Is_Float(preg) &&
-      !Preg_Offset_Is_X87(preg))
+      !Preg_Offset_Is_X87(preg)   &&
+      !Preg_Offset_Is_MMX(preg))
     return FALSE;
 
   /* Get the target register number and class associated with the
@@ -1343,6 +1552,10 @@ CGTARG_Preg_Register_And_Class(
   else if (Preg_Offset_Is_X87(preg)) {
     regnum = preg - X87_Preg_Min_Offset;
     rclass = ISA_REGISTER_CLASS_x87;
+  }
+  else if (Preg_Offset_Is_MMX(preg)) {
+    regnum = preg - MMX_Preg_Min_Offset;
+    rclass = ISA_REGISTER_CLASS_mmx;
   }
   else if (preg == 0) {
     regnum = 0;
@@ -1508,7 +1721,12 @@ VARIANT CGTARG_Analyze_Branch(
     if( OP_code(cmp_op) == TOP_test32  ||
 	OP_code(cmp_op) == TOP_test64  ||
 	OP_code(cmp_op) == TOP_testi32 ||
-	OP_code(cmp_op) == TOP_testi64 ){
+	OP_code(cmp_op) == TOP_testi64 ||
+    OP_code(cmp_op) == TOP_test8   ||
+    OP_code(cmp_op) == TOP_test16   ||
+    OP_code(cmp_op) == TOP_testi8   ||
+    OP_code(cmp_op) == TOP_testi16
+    ){
       if( *tn1 == *tn2 )
 	*tn2 = Gen_Literal_TN( 0, 4 );
       else
@@ -1773,6 +1991,8 @@ void CGTARG_Initialize(void)
   Set_Immed_To_Reg_Table( TOP_ori64,  TOP_or64  );
   Set_Immed_To_Reg_Table( TOP_xori32, TOP_xor32 );
   Set_Immed_To_Reg_Table( TOP_xori64, TOP_xor64 );
+  Set_Immed_To_Reg_Table( TOP_cmpi8,  TOP_cmp8  );
+  Set_Immed_To_Reg_Table( TOP_cmpi16, TOP_cmp16 );
   Set_Immed_To_Reg_Table( TOP_cmpi32, TOP_cmp32 );
   Set_Immed_To_Reg_Table( TOP_cmpi64, TOP_cmp64 );
   Set_Immed_To_Reg_Table( TOP_imuli32,TOP_imul32 );
@@ -1907,6 +2127,9 @@ INT CGTARG_Copy_Operand(OP *op)
   case TOP_movdq:
   case TOP_movapd:
   case TOP_movaps:
+  case TOP_vmovdqa:
+  case TOP_vmovapd:
+  case TOP_vmovaps:
   case TOP_fmov:
   case TOP_mov64_m:
   case TOP_movm_2i32:
@@ -2469,10 +2692,12 @@ CGTARG_Generate_Countdown_Loop ( TN *trip_count_tn,
   for ( op = branch->prev; op != NULL; op = op->prev ) {
     if (!cmp_found) {
       // Quit if the comparion before the branch is actually a "test".  
-      if (OP_code(op) == TOP_test32 || OP_code(op) == TOP_test64)
+      if (OP_code(op) == TOP_test32 || OP_code(op) == TOP_test64 || 
+          OP_code(op) == TOP_test8 || OP_code(op) == TOP_test16 )
 	return;
 
-      if (OP_code(op) == TOP_cmp32 || OP_code(op) == TOP_cmp64) {
+      if (OP_code(op) == TOP_cmp32 || OP_code(op) == TOP_cmp64 ||
+          OP_code(op) == TOP_cmp8 || OP_code(op) == TOP_cmp16 ) {
 	cmp_found = TRUE;
 	cmp = op;
       }
@@ -2591,6 +2816,15 @@ static TOP Movnti_Top(TOP old_top)
     case TOP_stdqa:     return TOP_stntpd;   break;
     case TOP_stdqax:    return TOP_stntpdx;  break;
     case TOP_stdqaxx:   return TOP_stntpdxx; break;
+    case TOP_vstapd:    return TOP_vstntpd;   break;
+    case TOP_vstapdx:   return TOP_vstntpdx;  break;
+    case TOP_vstapdxx:  return TOP_vstntpdxx; break;
+    case TOP_vstaps:    return TOP_vstntps;   break;
+    case TOP_vstapsx:   return TOP_vstntpsx;  break;
+    case TOP_vstapsxx:  return TOP_vstntpsxx; break;
+    case TOP_vstdqa:    return TOP_vstntpd;   break;
+    case TOP_vstdqax:   return TOP_vstntpdx;  break;
+    case TOP_vstdqaxx:  return TOP_vstntpdxx; break;
 
     case TOP_store32:   return TOP_storenti32;   break;
     case TOP_storex32:  return TOP_storentix32;  break;
@@ -2606,6 +2840,12 @@ static TOP Movnti_Top(TOP old_top)
     case TOP_stsd:      return TOP_stntsd; break;
     case TOP_stsdx:     return TOP_stntsdx; break;
     case TOP_stsdxx:    return TOP_stntsdxx; break;
+    case TOP_vstss:      return TOP_vstntss; break;
+    case TOP_vstssx:     return TOP_vstntssx; break;
+    case TOP_vstssxx:    return TOP_vstntssxx; break;
+    case TOP_vstsd:      return TOP_vstntsd; break;
+    case TOP_vstsdx:     return TOP_vstntsdx; break;
+    case TOP_vstsdxx:    return TOP_vstntsdxx; break;
     }
    FmtAssert(FALSE,("Non-Temporal Store: not supported!"));
    return TOP_UNDEFINED;
@@ -2699,9 +2939,6 @@ void CGTARG_LOOP_Optimize( LOOP_DESCR* loop )
 
   if( size < cache_size )
     return;
-#if 0 //temporarily disable changeset of bug 11853 for bug 12036
-  BOOL dep_graph_computed = FALSE;
-#endif
   FOR_ALL_BB_OPs_FWD( body, op ){
     if( OP_prefetch( op ) ){
       /* Get rid of any prefetchw operation, because it "loads the prefetched
@@ -2753,47 +2990,16 @@ void CGTARG_LOOP_Optimize( LOOP_DESCR* loop )
   (2) this change provents performance tuning using -CG:movnti in some case 
       (bug 12036)
  */
-#if 0 
-    BOOL skip = FALSE;
-    if (TOP_is_vector_op(OP_code(op)) &&
-	((OP_store(op) &&
-	  !TOP_is_nt_store(OP_code(op))))) {
-      ARC_LIST *arcs;
-      if (dep_graph_computed == FALSE) {
-	CG_DEP_Compute_Graph(body, NO_ASSIGNED_REG_DEPS, NON_CYCLIC,
-			     INCLUDE_MEMREAD_ARCS, INCLUDE_MEMIN_ARCS,
-			     NO_CONTROL_ARCS, NULL );
-	dep_graph_computed = TRUE;
-      }
-      for (arcs = OP_preds(op); arcs != NULL; arcs = ARC_LIST_rest(arcs)) {
-	ARC *arc = ARC_LIST_first(arcs);
-	if (ARC_kind(arc) == CG_DEP_MEMIN ||
-	    ARC_kind(arc) == CG_DEP_MEMANTI) {
-	  skip = TRUE;
-	  break;
-	}
-      }
-      if (skip == TRUE)
-        continue;
-
-      for (arcs = OP_succs(op); arcs != NULL; arcs = ARC_LIST_rest(arcs)) {
-	ARC *arc = ARC_LIST_first(arcs);
-	if (ARC_kind(arc) == CG_DEP_MEMIN ||
-	    ARC_kind(arc) == CG_DEP_MEMANTI) {
-	  skip = TRUE;
-	  break;
-	}
-      }
-      if (skip == TRUE)
-        continue;
-    }
-#endif
     TOP new_top = TOP_UNDEFINED;
     switch( OP_code(op) ){
     //SSE support
     case TOP_staps:
     case TOP_stapsx:
-    case TOP_stapsxx: {
+    case TOP_stapsxx:
+    case TOP_vstaps:
+    case TOP_vstapsx:
+    case TOP_vstapsxx: 
+       {
          new_top = Movnti_Top(OP_code(op));
          break;
        }
@@ -2804,6 +3010,12 @@ void CGTARG_LOOP_Optimize( LOOP_DESCR* loop )
     case TOP_stdqa:
     case TOP_stdqax:
     case TOP_stdqaxx:
+    case TOP_vstapd:
+    case TOP_vstapdx:
+    case TOP_vstapdxx:
+    case TOP_vstdqa:
+    case TOP_vstdqax:
+    case TOP_vstdqaxx:
     case TOP_store32:
     case TOP_storex32:
     case TOP_storexx32:
@@ -2821,7 +3033,14 @@ void CGTARG_LOOP_Optimize( LOOP_DESCR* loop )
     case TOP_stssxx:
     case TOP_stsd:
     case TOP_stsdx:
-    case TOP_stsdxx: {
+    case TOP_stsdxx:
+    case TOP_vstss:
+    case TOP_vstssx:
+    case TOP_vstssxx:
+    case TOP_vstsd:
+    case TOP_vstsdx:
+    case TOP_vstsdxx:
+       { 
          if(Is_Target_SSE4a())
             new_top = Movnti_Top(OP_code(op));
          break;
@@ -2831,10 +3050,6 @@ void CGTARG_LOOP_Optimize( LOOP_DESCR* loop )
    if( new_top != TOP_UNDEFINED )
       OP_Change_Opcode( op, new_top );
   }
-#if 0 //temporarily disable the changeset of bug 11853 for bug 12036
-  if (dep_graph_computed == TRUE)
-    CG_DEP_Delete_Graph(body);
-#endif
 }
 
 
@@ -2897,6 +3112,7 @@ CGTARG_TN_For_Asm_Operand (const char* constraint,
                            const WN* load,
                            TN* pref_tn,
                            ISA_REGISTER_SUBCLASS* subclass, 
+                           const WN* asm_wn,
 			   TYPE_ID type)
 {
   // skip constraint modifiers:
@@ -2971,17 +3187,21 @@ CGTARG_TN_For_Asm_Operand (const char* constraint,
       // immediate could have been put in preg by wopt
       load = Preg_Is_Rematerializable(WN_load_offset(load), NULL);
     }
-    FmtAssert(load && (WN_operator(load) == OPR_INTCONST ||
+    if (!(load && (WN_operator(load) == OPR_INTCONST ||
                        (WN_operator(load) == OPR_LDA &&
-                        ST_sym_class(WN_st(load)) == CLASS_CONST)),
-              ("Cannot find immediate operand for ASM"));
+                        ST_sym_class(WN_st(load)) == CLASS_CONST)))) {
+      ErrMsgSrcpos(EC_Invalid_Asm_Constrain, WN_Get_Linenum(asm_wn),
+                    ": Cannot find immediate operand for ASM");
+    }
     if (WN_operator(load) == OPR_INTCONST)
     {
       ret_tn = Gen_Literal_TN(WN_const_val(load), 
                               MTYPE_bit_size(WN_rtype(load))/8);
       // Bugs 3177, 3043 - safety check from gnu/config/i386/i386.h.
-      FmtAssert(CONST_OK_FOR_LETTER(WN_const_val(load), *constraint), 
-       ("The value of immediate operand supplied is not within expected range."));
+      if (!CONST_OK_FOR_LETTER(WN_const_val(load), *constraint)) {
+        ErrMsgSrcpos(EC_Invalid_Asm_Constrain, WN_Get_Linenum(asm_wn),
+                ": The value of immediate operand supplied is not within expected range.");
+      }
     }
     else
     {
@@ -3086,7 +3306,7 @@ CGTARG_TN_For_Asm_Operand (const char* constraint,
     // It is really the user's responsibility to do any type conversions between
     // long double and double/float. We will not handle any type conversions
     // as part of handling the inline asm. This is what Gcc does.
-    ret_tn = (pref_tn ? pref_tn : Build_TN_Of_Mtype(MTYPE_FQ));
+    ret_tn = (pref_tn ? pref_tn : Build_TN_Of_Mtype(MTYPE_F10));
   }
   else if (*constraint == 'f')
   {
@@ -3116,7 +3336,10 @@ CGTARG_TN_For_Asm_Operand (const char* constraint,
   }
   else if (*constraint == 'y')
   {
-    ret_tn = (pref_tn ? pref_tn : Build_RCLASS_TN(ISA_REGISTER_CLASS_float));
+    if(Is_Target_32bit())
+      ret_tn = (pref_tn ? pref_tn : Build_RCLASS_TN(ISA_REGISTER_CLASS_mmx));
+    else
+      ret_tn = (pref_tn ? pref_tn : Build_RCLASS_TN(ISA_REGISTER_CLASS_float));
   }
   else
   {
@@ -3221,7 +3444,7 @@ CGTARG_TN_And_Name_For_Asm_Constraint (char *constraint, TYPE_ID mtype,
 char CGTARG_Asm_Opnd_Modifiers[] = { 'r' };
 INT  CGTARG_Num_Asm_Opnd_Modifiers = 1;
 
-static const char* int_reg_names[3][16] = {
+static const char* x86_reg_names[4][16] = {
   /* BYTE_REG: low 8-bit */
   { "%al", "%bl", "%bpl", "%spl", "%dil", "%sil", "%dl", "%cl",
     "%r8b",  "%r9b",  "%r10b", "%r11b", "%r12b", "%r13b", "%r14b", "%r15b" },
@@ -3231,35 +3454,49 @@ static const char* int_reg_names[3][16] = {
   /* DWORD_REG: 32-bit */
   { "%eax", "%ebx", "%ebp", "%esp", "%edi", "%esi", "%edx", "%ecx",
     "%r8d",  "%r9d",  "%r10d", "%r11d", "%r12d", "%r13d", "%r14d", "%r15d" },
+  /* SSE2_REG: 128-bit */
+  { "%xmm0", "%xmm1", "%xmm2", "%xmm3", "%xmm4", "%xmm5", "%xmm6", "%xmm7",
+    "%xmm8", "%xmm9", "%xmm10", "%xmm11", "%xmm12", "%xmm13", "%xmm14", "%xmm15" },
 };
-      
+
 const char* 
 CGTARG_Modified_Asm_Opnd_Name(char modifier, TN* tn, char *tn_name)
 {
-  if (TN_register_class(tn) == ISA_REGISTER_CLASS_float ||
-      TN_register_class(tn) == ISA_REGISTER_CLASS_x87)
+  if (TN_register_class(tn) == ISA_REGISTER_CLASS_x87)
     return tn_name;
 
   if (modifier == 'r') {
-    if (TN_size(tn) == 8)
-      return tn_name;
-    else { 
-      // Bugs 482, 505, 626
-      INT sub_reg_class = 2; // DWORD_REG
-      if (TN_size(tn) == 2)
-	sub_reg_class = 1;   // WORD_REG
-      else if (TN_size(tn) == 1)
-	sub_reg_class = 0;   // BYTE_REG
-      const ISA_REGISTER_CLASS rc = ISA_REGISTER_CLASS_integer;
-      for( REGISTER reg = REGISTER_MIN; reg <= REGISTER_CLASS_last_register( rc ); reg++ ){
-	const char* n = REGISTER_name( rc, reg );
-	if( strcmp( n, tn_name ) == 0 ){
-	  const char *regname;
-	  regname = int_reg_names[sub_reg_class][reg-REGISTER_MIN];
-	  return regname;
-	}
-      }      
-    } 
+    REGISTER reg;
+    const ISA_REGISTER_CLASS rc = TN_register_class(tn);
+    for( reg = REGISTER_MIN; reg <= REGISTER_CLASS_last_register( rc ); reg++ ){
+      const char* n = REGISTER_name( rc, reg );
+      if( strcmp( n, tn_name ) == 0 ){
+	break;
+      }
+    }
+
+    if ( rc == ISA_REGISTER_CLASS_integer ) {
+      switch(TN_size(tn)) {
+      case 1:
+        return x86_reg_names[0][reg - REGISTER_MIN];
+      case 2:
+        return x86_reg_names[1][reg - REGISTER_MIN];
+      case 4:
+        return x86_reg_names[2][reg - REGISTER_MIN];
+      default:
+        FmtAssert(TN_size(tn) == 8, ("Bad TN size for integer"));
+        return tn_name;
+      }
+    }
+    else if ( rc == ISA_REGISTER_CLASS_float ) {
+      if ( TN_size(tn) == 32 ) 
+        return tn_name;
+      else
+        return x86_reg_names[3][reg - REGISTER_MIN];
+    }
+    else {
+      FmtAssert(FALSE, ("Unknown register class"));
+    }
   }
   else {
     FmtAssert(FALSE, ("Unknown ASM operand modifier '%c'", modifier));
@@ -3524,7 +3761,8 @@ CGTARG_Is_Thread_Local_Memory_OP (OP* op)
   }
 
   int offset_opnd = TOP_Find_Operand_Use(code, OU_offset);
-  if (offset_opnd != -1 &&
+  // if already has the base, do not append the TLS segment register
+  if (offset_opnd != -1 && base_opnd == -1 && 
       (TN_relocs(OP_opnd(op, offset_opnd)) == TN_RELOC_X8664_TPOFF32 ||
        TN_relocs(OP_opnd(op, offset_opnd)) == TN_RELOC_X8664_TPOFF32_seg_reg)) {
     return TRUE;

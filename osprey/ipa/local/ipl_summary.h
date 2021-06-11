@@ -1,4 +1,8 @@
 /*
+ * Copyright (C) 2009-2010 Advanced Micro Devices, Inc.  All Rights Reserved.
+ */
+
+/*
  * Copyright (C) 2006. QLogic Corporation. All Rights Reserved.
  */
 
@@ -132,6 +136,13 @@ private:
 #ifdef KEY
   Elf64_Word _ty_info_offset;
 #endif
+  // Constraint graph summary for Nystrom Alias Analyzer
+  Elf64_Word _constraint_graph_nodes_offset;
+  Elf64_Word _constraint_graph_edges_offset;
+  Elf64_Word _constraint_graph_stinfos_offset;
+  Elf64_Word _constraint_graph_callsites_offset;
+  Elf64_Word _constraint_graph_node_ids_offset;
+  Elf64_Word _constraint_graph_modranges_offset;
 
   // array section flow sensitive analysis information
   Elf64_Word _scalar_node_offset, _cfg_node_offset, _regions_array_offset;
@@ -150,6 +161,13 @@ private:
 #ifdef KEY
   mINT32 _ty_info_size;
 #endif
+  // Constraint graph summary for Nystrom Alias Analyzer
+  mINT32 _constraint_graph_nodes_size;
+  mINT32 _constraint_graph_edges_size;
+  mINT32 _constraint_graph_stinfos_size;
+  mINT32 _constraint_graph_callsites_size;
+  mINT32 _constraint_graph_node_ids_size;
+  mINT32 _constraint_graph_modranges_size;
 
   // array section flow sensitive analysis information
   mINT32 _scalar_node_size, _cfg_node_size, _regions_array_size; 
@@ -168,6 +186,14 @@ private:
 #ifdef KEY
   mUINT32 _ty_info_entry_size;
 #endif
+  // Constraint graph summary for Nystrom Alias Analyzer
+  mUINT32 _constraint_graph_nodes_entry_size;
+  mUINT32 _constraint_graph_edges_entry_size;
+  mUINT32 _constraint_graph_stinfos_entry_size;
+  mUINT32 _constraint_graph_callsites_entry_size;
+  mUINT32 _constraint_graph_node_ids_entry_size;
+  mUINT32 _constraint_graph_modranges_entry_size;
+
    // array section flow sensitive analysis information
   mINT32 _scalar_node_entry_size, _cfg_node_entry_size;
   mINT32 _regions_array_entry_size; 
@@ -206,7 +232,31 @@ public:
 #ifdef KEY
   void Set_ty_info_offset(Elf64_Word s) { _ty_info_offset = s;};
 #endif
-
+  // Constraint graph summary for Nystrom Alias Analyzer
+  void Set_constraint_graph_nodes_offset(Elf64_Word s) 
+  {
+    _constraint_graph_nodes_offset = s;
+  }
+  void Set_constraint_graph_edges_offset(Elf64_Word s) 
+  {
+    _constraint_graph_edges_offset = s;
+  }
+  void Set_constraint_graph_stinfos_offset(Elf64_Word s) 
+  {
+    _constraint_graph_stinfos_offset = s;
+  }
+  void Set_constraint_graph_callsites_offset(Elf64_Word s) 
+  {
+    _constraint_graph_callsites_offset = s;
+  }
+  void Set_constraint_graph_node_ids_offset(Elf64_Word s) 
+  {
+    _constraint_graph_node_ids_offset = s;
+  }
+  void Set_constraint_graph_modranges_offset(Elf64_Word s) 
+  {
+    _constraint_graph_modranges_offset = s;
+  }
 
   void Set_opt_level(mUINT8 opt_level) { _opt_level = opt_level;};
 
@@ -249,6 +299,31 @@ s;};
 #ifdef KEY
   void Set_ty_info_size(mINT32 s) { _ty_info_size = s;};
 #endif
+  // Constraint graph summary for Nystrom Alias Analyzer
+  void Set_constraint_graph_nodes_size(mINT32 s) 
+  { 
+    _constraint_graph_nodes_size = s; 
+  }
+  void Set_constraint_graph_edges_size(mINT32 s) 
+  { 
+    _constraint_graph_edges_size = s; 
+  }
+  void Set_constraint_graph_stinfos_size(mINT32 s) 
+  { 
+    _constraint_graph_stinfos_size = s; 
+  }
+  void Set_constraint_graph_callsites_size(mINT32 s) 
+  { 
+    _constraint_graph_callsites_size = s; 
+  }
+  void Set_constraint_graph_node_ids_size(mINT32 s) 
+  { 
+    _constraint_graph_node_ids_size = s; 
+  }
+  void Set_constraint_graph_modranges_size(mINT32 s) 
+  { 
+    _constraint_graph_modranges_size = s; 
+  }
 
   // array section flow sensitive analysis information
   void Set_scalar_node_size(mINT32 s) { _scalar_node_size = s;};
@@ -286,6 +361,13 @@ s;};
 #ifdef KEY
   void Set_ty_info_entry_size(mINT32 s) { _ty_info_entry_size = s;};
 #endif   
+  // Constraint graph summary for Nystrom Alias Analyzer
+  void Set_constraint_graph_nodes_entry_size(mINT32 s) { _constraint_graph_nodes_entry_size = s;};
+  void Set_constraint_graph_edges_entry_size(mINT32 s) { _constraint_graph_edges_entry_size = s;};
+  void Set_constraint_graph_stinfos_entry_size(mINT32 s) { _constraint_graph_stinfos_entry_size = s;};
+  void Set_constraint_graph_callsites_entry_size(mINT32 s) { _constraint_graph_callsites_entry_size = s;};
+  void Set_constraint_graph_node_ids_entry_size(mINT32 s) { _constraint_graph_node_ids_entry_size = s;};
+  void Set_constraint_graph_modranges_entry_size(mINT32 s) { _constraint_graph_modranges_entry_size = s;};
 
   void Set_scalar_node_entry_size(mINT32 s) { _scalar_node_entry_size = s;};
   void Set_cfg_node_entry_size(mINT32 s) {_cfg_node_entry_size = s;};
@@ -324,6 +406,31 @@ s;};
 #ifdef KEY
   Elf64_Word Get_ty_info_offset() const    { return _ty_info_offset;};
 #endif
+  // Constraint graph summary for Nystrom Alias Analyzer
+  Elf64_Word Get_constraint_graph_nodes_offset() const  
+  { 
+    return _constraint_graph_nodes_offset;
+  };
+  Elf64_Word Get_constraint_graph_edges_offset() const  
+  { 
+    return _constraint_graph_edges_offset;
+  };
+  Elf64_Word Get_constraint_graph_stinfos_offset() const  
+  { 
+    return _constraint_graph_stinfos_offset;
+  };
+  Elf64_Word Get_constraint_graph_callsites_offset() const  
+  { 
+    return _constraint_graph_callsites_offset;
+  };
+  Elf64_Word Get_constraint_graph_node_ids_offset() const  
+  { 
+    return _constraint_graph_node_ids_offset;
+  };
+  Elf64_Word Get_constraint_graph_modranges_offset() const  
+  { 
+    return _constraint_graph_modranges_offset;
+  };
 
   mUINT8  Get_opt_level() const { return _opt_level;};
 
@@ -368,6 +475,31 @@ s;};
 #ifdef KEY
   mINT32 Get_ty_info_size() const          { return _ty_info_size;};
 #endif
+  // Constraint graph summary for Nystrom Alias Analyzer
+  mINT32 Get_constraint_graph_nodes_size() const
+  {
+    return _constraint_graph_nodes_size;
+  }
+  mINT32 Get_constraint_graph_edges_size() const
+  {
+    return _constraint_graph_edges_size;
+  }
+  mINT32 Get_constraint_graph_stinfos_size() const
+  {
+    return _constraint_graph_stinfos_size;
+  }
+  mINT32 Get_constraint_graph_callsites_size() const
+  {
+    return _constraint_graph_callsites_size;
+  }
+  mINT32 Get_constraint_graph_node_ids_size() const
+  {
+    return _constraint_graph_node_ids_size;
+  }
+  mINT32 Get_constraint_graph_modranges_size() const
+  {
+    return _constraint_graph_modranges_size;
+  }
   
   // array section flow sensitive analysis information
   mINT32 Get_scalar_node_size()  const { return _scalar_node_size; };
@@ -400,6 +532,31 @@ s;};
 #ifdef KEY
   mINT32 Get_ty_info_entry_size() { return _ty_info_entry_size;};
 #endif
+  // Constraint graph summary for Nystrom Alias Analyzer
+  mINT32 Get_constraint_graph_nodes_entry_size() 
+  { 
+    return _constraint_graph_nodes_entry_size;
+  };
+  mINT32 Get_constraint_graph_edges_entry_size() 
+  { 
+    return _constraint_graph_edges_entry_size;
+  };
+  mINT32 Get_constraint_graph_stinfos_entry_size() 
+  { 
+    return _constraint_graph_stinfos_entry_size;
+  };
+  mINT32 Get_constraint_graph_callsites_entry_size() 
+  { 
+    return _constraint_graph_callsites_entry_size;
+  };
+  mINT32 Get_constraint_graph_node_ids_entry_size() 
+  { 
+    return _constraint_graph_node_ids_entry_size;
+  };
+  mINT32 Get_constraint_graph_modranges_entry_size() 
+  { 
+    return _constraint_graph_modranges_entry_size;
+  };
     
   mINT32 Get_scalar_node_entry_size() const  { 
     return _scalar_node_entry_size ;};
@@ -524,6 +681,22 @@ private:
 						   // LOCAL pragma's st 
 #define PROC_NEVER_INVOKED 		0x40000000 // INLINING_TUNING
     LANGUAGE _l;
+
+    // For Nystrom alias analyzer
+    mUINT32 _constraint_graph_nodes_idx;
+    mUINT32 _constraint_graph_nodes_count;
+    mUINT32 _constraint_graph_edges_idx;
+    mUINT32 _constraint_graph_edges_count;
+    mUINT32 _constraint_graph_stinfos_idx;
+    mUINT32 _constraint_graph_stinfos_count;
+    mUINT32 _constraint_graph_callsites_idx;
+    mUINT32 _constraint_graph_callsites_count;
+    mUINT32 _constraint_graph_node_ids_idx;
+    mUINT32 _constraint_graph_node_ids_count;
+    mUINT32 _constraint_graph_formal_parm_idx;
+    mUINT32 _constraint_graph_formal_parm_count;
+    mUINT32 _constraint_graph_formal_ret_idx;
+    mUINT32 _constraint_graph_formal_ret_count;
 
 public:
 
@@ -725,7 +898,126 @@ public:
     void Set_lang (LANGUAGE lang)	{ _l = lang; }
     LANGUAGE Get_lang() const		{ return _l; }
 
+    // For the Nystrom alias analyzer
+    mUINT32 Get_constraint_graph_nodes_idx() const
+    {
+      return _constraint_graph_nodes_idx;
+    }
+    void Set_constraint_graph_nodes_idx(mUINT32 i)
+    {
+      _constraint_graph_nodes_idx = i;
+    }
+    mUINT32 Get_constraint_graph_nodes_count() const
+    {
+      return _constraint_graph_nodes_count;
+    }
+    void Set_constraint_graph_nodes_count(mUINT32 c)
+    {
+      _constraint_graph_nodes_count = c;
+    }
 
+    mUINT32 Get_constraint_graph_edges_idx() const
+    {
+      return _constraint_graph_edges_idx;
+    }
+    void Set_constraint_graph_edges_idx(mUINT32 i)
+    {
+      _constraint_graph_edges_idx = i;
+    }
+    mUINT32 Get_constraint_graph_edges_count() const
+    {
+      return _constraint_graph_edges_count;
+    }
+    void Set_constraint_graph_edges_count(mUINT32 c)
+    {
+      _constraint_graph_edges_count = c;
+    }
+
+    mUINT32 Get_constraint_graph_stinfos_idx() const
+    {
+      return _constraint_graph_stinfos_idx;
+    }
+    void Set_constraint_graph_stinfos_idx(mUINT32 i)
+    {
+      _constraint_graph_stinfos_idx = i;
+    }
+    mUINT32 Get_constraint_graph_stinfos_count() const
+    {
+      return _constraint_graph_stinfos_count;
+    }
+    void Set_constraint_graph_stinfos_count(mUINT32 c)
+    {
+      _constraint_graph_stinfos_count = c;
+    }
+
+    mUINT32 Get_constraint_graph_callsites_idx() const
+    {
+      return _constraint_graph_callsites_idx;
+    }
+    void Set_constraint_graph_callsites_idx(mUINT32 i)
+    {
+      _constraint_graph_callsites_idx = i;
+    }
+    mUINT32 Get_constraint_graph_callsites_count() const
+    {
+      return _constraint_graph_callsites_count;
+    }
+    void Set_constraint_graph_callsites_count(mUINT32 c)
+    {
+      _constraint_graph_callsites_count = c;
+    }
+
+    mUINT32 Get_constraint_graph_node_ids_idx() const
+    {
+      return _constraint_graph_node_ids_idx;
+    }
+    void Set_constraint_graph_node_ids_idx(mUINT32 i)
+    {
+      _constraint_graph_node_ids_idx = i;
+    }
+    mUINT32 Get_constraint_graph_node_ids_count() const
+    {
+      return _constraint_graph_node_ids_count;
+    }
+    void Set_constraint_graph_node_ids_count(mUINT32 c)
+    {
+      _constraint_graph_node_ids_count = c;
+    }
+
+    mUINT32 Get_constraint_graph_formal_parm_idx() const
+    {
+      return _constraint_graph_formal_parm_idx;
+    }
+    void Set_constraint_graph_formal_parm_idx(mUINT32 i)
+    {
+      _constraint_graph_formal_parm_idx = i;
+    }
+    mUINT32 Get_constraint_graph_formal_parm_count() const
+    {
+      return _constraint_graph_formal_parm_count;
+    }
+    void Set_constraint_graph_formal_parm_count(mUINT32 c)
+    {
+      _constraint_graph_formal_parm_count = c;
+    }
+
+    mUINT32 Get_constraint_graph_formal_ret_idx() const
+    {
+      return _constraint_graph_formal_ret_idx;
+    }
+    void Set_constraint_graph_formal_ret_idx(mUINT32 i)
+    {
+      _constraint_graph_formal_ret_idx = i;
+    }
+    mUINT32 Get_constraint_graph_formal_ret_count() const
+    {
+      return _constraint_graph_formal_ret_count;
+    }
+    void Set_constraint_graph_formal_ret_count(mUINT32 c)
+    {
+      _constraint_graph_formal_ret_count = c;
+    }
+   
     /* operations */
 
     void Init (void) {
@@ -848,6 +1140,21 @@ class SUMMARY_CALLSITE
 
 #define IPL_IN_CASE_CLAUSE      0x40
 #define IPL_IS_VIRTUAL_CALL     0x80
+
+/*
+File 3: osprey/ipa/local/ipl_summary.h
+    I added a new state flag IPL_VIRTUAL_FUNCTION_TARGET in SUMMARY_CALLSITE 
+    and functions to set, reset and test this flag. This flag is set on the dummy callsite
+    inserted by Process_virtual_function. This flag is reset after the 
+    devirtualization pass has replaced a dummy call site with a real call, to the 
+    inferred direct call.
+    function that sets this flag: Set_virtual_function_target
+    function that resets this flag: Reset_virtual_function_target
+    function that checks this flag: Is_virtual_function_target
+
+*/
+
+#define IPL_VIRTUAL_FUNCTION_TARGET     0x100
     
 private:
 
@@ -876,11 +1183,13 @@ private:
 #ifdef KEY
     float _probability;			// if inside a branch, probability of it being taken
 #endif
-    TYPE_ID _return_type;		// Return type of this CALL
+    TYPE_ID _return_type:8;		// Return type of this CALL
 
     TY_IDX _virtual_class;              // the class of the virtual function 
     mUINT32 _vtable_offset;             // virtual function position, the offset of the vtable 
     mUINT64 _vptr_offset;               // vtable field offset of this call 
+
+    mUINT32 _constraint_graph_callsite_id; // For the Nystrom alias analyzer
 
 public:
 
@@ -919,6 +1228,8 @@ public:
 	return u2._value_index;
     }
 
+    mUINT16 Get_state() const { return _state;}
+
     void Set_actual_index (mINT32 a)	{ _actual_index = a; }
     INT Get_actual_index () const	{ return _actual_index; }
 
@@ -943,6 +1254,7 @@ public:
 
     void Set_intrinsic()		{ _state |= IPL_INTRINSIC_FUNC; }
     BOOL Is_intrinsic() const		{ return _state & IPL_INTRINSIC_FUNC; };
+
     void Set_callsite_freq ()		{ _state |= IPL_HAS_CALLSITE_FREQ;}
     BOOL Has_callsite_freq () const	{ return _state & IPL_HAS_CALLSITE_FREQ; }
 
@@ -966,6 +1278,10 @@ public:
     void Set_return_type (TYPE_ID return_type)	{ _return_type = return_type;}
     TYPE_ID Get_return_type () const		{ return _return_type;}
 
+    void Set_virtual_function_target() { _state |= IPL_VIRTUAL_FUNCTION_TARGET; }
+    void Reset_virtual_function_target() { _state &= ~IPL_VIRTUAL_FUNCTION_TARGET; }
+    BOOL Is_virtual_function_target() { return (_state & IPL_VIRTUAL_FUNCTION_TARGET); }
+
     void Set_virtual_class(TY_IDX func) { _virtual_class = func; } 
     TY_IDX Get_virtual_class() { return _virtual_class; } 
   
@@ -976,7 +1292,18 @@ public:
     UINT64 Get_vptr_offset() { return _vptr_offset; } 
   
     void Set_is_virtual_call() { _state |= IPL_IS_VIRTUAL_CALL; } 
+    void Reset_is_virtual_call() { _state &= ~IPL_IS_VIRTUAL_CALL; }
     BOOL Is_virtual_call() { return _state & IPL_IS_VIRTUAL_CALL; } 
+
+    // For the Nystrom alias analyzer
+    UINT32 Get_constraint_graph_callsite_id() const
+    { 
+      return _constraint_graph_callsite_id; 
+    }
+    void Set_constraint_graph_callsite_id(UINT32 callSiteId)
+    {
+      _constraint_graph_callsite_id = callSiteId;
+    }
 
     /* operations */
 
@@ -1274,8 +1601,8 @@ private:
 
     /* 64-bit aligned at this point */
 
-    mTYPE_ID _mtype;			// result type
-    mTYPE_ID _target_mtype;		// used only when _addr_of is true: 
+    mTYPE_ID _mtype : 8;		// result type
+    mTYPE_ID _target_mtype : 8;		// used only when _addr_of is true: 
 					// specify the mtype of what this
 					// value points to
     
@@ -2008,7 +2335,7 @@ private:
     mUINT32 _type   :  8;               // type information about the symbol
     mUINT32 _state  :  8;               // state of the symbol
     mUINT32 _modref : 16;               // mod ref state of the symbol
-    mTYPE_ID _btype;                    // backend type
+    mTYPE_ID _btype :  8;               // backend type
     
 public:
     /* access functions */
@@ -2616,6 +2943,7 @@ class SUMMARY_TY_INFO
 extern SUMMARY_SYMBOL *Ipl_Summary_Symbol;
 extern BOOL IPA_Trace_Mod_Ref;          /* Trace log for Mod_Ref */
 extern char Modref_Buf[];                                                      
+
 
 #endif /* ipl_summary_INCLUDED */
 

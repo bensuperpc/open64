@@ -60,7 +60,6 @@
  * ====================================================================
  */
 
-#define __STDC_LIMIT_MACROS
 #include <stdint.h>
 #ifdef USE_PCH
 #include "lno_pch.h"
@@ -673,11 +672,6 @@ extern WN* Parallelize_Doacross_Loop(
       WN_MAP_Set(LNO_Info_Map,wn_if,(void *)if_info);
       LNO_Build_If_Access(wn_if, loop_stack);
 
-#if 0
-LWN_Delete_DU(wn_if);
-LWN_Delete_LNO_dep_graph(wn_if);
-LWN_Delete_Tree(wn_if);
-#endif
     }
 
     WN* wn_lower_do_while=NULL;
@@ -724,11 +718,6 @@ LWN_Delete_Tree(wn_if);
       WN_MAP_Set(LNO_Info_Map,wn_if,(void *)if_info);
       LNO_Build_If_Access(wn_if, loop_stack);
 
-#if 0
-LWN_Delete_DU(wn_if);
-LWN_Delete_LNO_dep_graph(wn_if);
-LWN_Delete_Tree(wn_if);
-#endif
     }
 
   }
@@ -1047,7 +1036,7 @@ static WN* Create_Initialize_Loop (WN* processor_loop,
   // create DO_LOOP_INFO and access vectors for init loop
   DO_LOOP_INFO*  dli = (DO_LOOP_INFO *)
     CXX_NEW(DO_LOOP_INFO(&LNO_default_pool,NULL,NULL,NULL,
-	FALSE,FALSE,FALSE,FALSE,FALSE,FALSE,TRUE) ,&LNO_default_pool);
+	FALSE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE,TRUE) ,&LNO_default_pool);
   dli->Depth = Get_Do_Loop_Info(processor_loop)->Depth;
   WN_MAP_Set(LNO_Info_Map,init_loop,(void *)dli);
 

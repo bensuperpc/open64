@@ -1,4 +1,8 @@
 /*
+ * Copyright (C) 2009-2010 Advanced Micro Devices, Inc.  All Rights Reserved.
+ */
+
+/*
  * Copyright 2002, 2003, 2004, 2005, 2006 PathScale, Inc.  All Rights Reserved.
  */
 
@@ -111,7 +115,7 @@
 #include "be_util.h"
 #include "config_asm.h"
 
- #if defined(TARG_X8664) || defined(TARG_NVISA)
+#if defined(TARG_X8664) || defined(TARG_NVISA) || defined(TARG_SL) || defined(TARG_PPC32)
 #include "cgexp_internals.h"
 #else
 #define OP_NEED_PAIR(t) (0)
@@ -122,11 +126,9 @@
 #endif
 
 #ifdef EMULATE_LONGLONG
-#ifndef TARG_SL
 extern void Add_TN_Pair (TN*, TN*);
 extern TN *If_Get_TN_Pair(TN*);
 extern TN *Gen_Literal_TN_Pair(UINT64);
-#endif
 #endif
 
 BOOL Compiling_Proper_REGION;
@@ -135,10 +137,10 @@ static BOOL Trace_WhirlToOp = FALSE;
 /* reference to a dedicated TN in Cur_BB */
 static BOOL dedicated_seen;
 
-static BOOL In_Glue_Region = FALSE;	/* in glue-code region */
+/*static*/ BOOL In_Glue_Region = FALSE;	/* in glue-code region */
 
 /* Forward declarations. */
-#if !defined(TARG_SL)
+#if !defined(TARG_SL) && !defined(TARG_PPC32)
 static TN * Expand_Expr (WN *expr, WN *parent, TN *result);
 #endif
 static void initialize_region_stack(WN *);
@@ -182,16 +184,16 @@ static WN *last_loop_pragma;
  * op processed for the memory op to wn mapping.
  */
 
-static OP *Last_Mem_OP;
+/*static*/ OP *Last_Mem_OP;
 OP_MAP OP_to_WN_map;
-static OP_MAP predicate_map = NULL;
-static WN_MAP WN_to_OP_map;
+/*static*/ OP_MAP predicate_map = NULL;
+/*static*/ WN_MAP WN_to_OP_map;
 // map between load (GOT entry) and the associated symbol
 OP_MAP OP_Ld_GOT_2_Sym_Map; 
 
 OP_MAP OP_Asm_Map;
 
-#ifdef TARG_IA64
+#if defined(TARG_IA64) || defined(TARG_LOONGSON)
 inline BOOL 
 WN_Is_Bool_Operator(WN* expr) 
 {
@@ -249,6 +251,7 @@ Is_Old_Boolean_Expression(WN* expr)
 }
 
 
+#ifndef TARG_LOONGSON
 /*
 This function is to transform poorly-handled boolean processing to predicated processing in IA64. 
 Predicates is returned as the result.
@@ -477,6 +480,7 @@ Handle_Bool_As_Predicate(WN*condition, WN*parent, BOOL invert)
     return (invert) ? predicate_result1 : predicate_result0;
 }
 #endif
+#endif
 
 TN *
 Get_Complement_TN(TN *tn)
@@ -603,7 +607,7 @@ static void region_stack_push(RID *value)
  * =======================================================================
  */
 
-static void region_stack_eh_set_has_call(void)
+/*static*/ void region_stack_eh_set_has_call(void)
 {
   RID ** p;
   for (p = region_stack_ptr - 1; p >= region_stack_base; --p)
@@ -617,14 +621,13 @@ static void region_stack_eh_set_has_call(void)
   
 
 
-#ifndef TARG_IA64
 static BOOL WN_pragma_preamble_end_seen = FALSE;
 
 BOOL W2OPS_Pragma_Preamble_End_Seen ()
 {
    return WN_pragma_preamble_end_seen;
 }
-#endif
+
 /* Process the new OPs that have been created since the last call to 
  * this routine. We set their srcpos field and increment the count
  * of number of OPs in the BB. We check if any of the new OPs have
@@ -647,12 +650,12 @@ Process_New_OPs (void)
     }
     OP_srcpos(op) = current_srcpos;
     total_bb_insts++;
-#ifndef TARG_IA64
+
     if (WN_pragma_preamble_end_seen) {
       Set_OP_first_after_preamble_end(op);
       WN_pragma_preamble_end_seen = FALSE;
     }
-#endif
+
   }
   Last_Processed_OP = OPS_last(&New_OPs);
 }
@@ -815,7 +818,7 @@ Split_Jumpy_BB (BB *bb) {
 /* Start a new basic block. Any OPs that have not been put into a BB
  * are added to the current basic block before we create a new one.
  */
-static BB *
+BB *
 Start_New_Basic_Block (void)
 {
   BB *bb = Cur_BB;
@@ -889,6 +892,22 @@ Start_New_Basic_Block (void)
   return bb;
 }
 
+#ifdef TARG_LOONGSON
+/* wrapper for calling the static function */
+void Begin_New_Basic_Block ()
+{
+  Start_New_Basic_Block ();
+}
+/* wrapper for calling the static function */
+void Start_New_Label (LABEL_IDX lb_idx, LABEL *lb, const char *str)
+{
+  char * buf;
+  buf = (char *)alloca(strlen(str) + 32);
+  Add_Label (lb_idx);
+  sprintf (buf, "$PU%d_BB%d_%s", Current_PU_Count(), BB_id(Cur_BB), str);
+  LABEL_Init (*lb, Save_Str(buf), LKIND_DEFAULT);
+}
+#endif
 /* Check if we are over the threshold of how many instructions
  * we will allow in a single basic block. If we are, then call 
  * 'Start_New_Basic_Block' to start a new basic block.
@@ -898,21 +917,6 @@ Process_OPs_For_Stmt (void)
 {
   Process_New_OPs ();
 
-#if 0	// now done later in Split_BBs()
-  if (Enable_BB_Splitting && (total_bb_insts > Split_BB_Length)) {
-    /* We assume in LRA that the number of instructions in a BB fits
-     * in 16 bits.
-     */
-    FmtAssert (total_bb_insts < 32768,
-  	  ("Convert_WHIRL_To_OPs: Too many instructions for 1 statment (%d)\n", 
-	   total_bb_insts));
-    if (Trace_WhirlToOp) {
-          fprintf (TFile, "Convert_WHIRL_To_OPs: splitting a large BB (%d)\n", 
-		    total_bb_insts);
-    }
-    Start_New_Basic_Block ();
-  }
-#endif
 }
 
 
@@ -923,9 +927,37 @@ Process_OPs_For_Stmt (void)
  * Currently we allocate a new TN for every invocation of this procedure.
  * 
  */
-static TN *
+TN *
 Allocate_Result_TN (WN *wn, TN **opnd_tn)
 {
+#ifdef TARG_SL
+
+#ifdef EMULATE_LONGLONG
+  TYPE_ID mtype = WN_rtype(wn);
+  if (MTYPE_is_longlong(mtype)) {
+    TYPE_ID new_mtype = (mtype == MTYPE_I8 ? MTYPE_I4 : MTYPE_U4);
+    TN *tn  = Build_TN_Of_Mtype (new_mtype);
+    TN *tn2 = Build_TN_Of_Mtype (new_mtype);
+    Add_TN_Pair (tn, tn2);
+    return tn;
+  }
+#endif
+
+#ifdef EMULATE_FLOAT_POINT
+  if (mtype == MTYPE_F8) {
+    TN *tn   = Build_TN_Of_Mtype(MTYPE_U4);
+    TN *pair = Build_TN_Of_Mtype(MTYPE_U4);
+    Add_TN_Pair (tn, pair);
+    return tn;
+  } else if (mtype = MTYPE_F4) {
+    return Build_TN_Of_Mtype(MTYPE_U4);
+  }
+#endif 
+
+  return Build_TN_Of_Mtype (mtype);
+
+#else // !defined(TARG_SL)
+
 #ifdef EMULATE_LONGLONG
 
   TYPE_ID mtype = WN_rtype(wn);
@@ -936,7 +968,7 @@ Allocate_Result_TN (WN *wn, TN **opnd_tn)
     Add_TN_Pair (tn, tn2);
     return tn;
   }
-  else return Build_TN_Of_Mtype (WN_rtype(wn));
+  else return Build_TN_Of_Mtype (mtype);
 
 #else 
 #ifdef TARG_X8664 
@@ -947,20 +979,21 @@ Allocate_Result_TN (WN *wn, TN **opnd_tn)
   else
 #endif
   return Build_TN_Of_Mtype (WN_rtype(wn));
+
+#endif // defined(TARG_SL)
 #endif
 }
 
 
 /* set the op2wn mappings for memory ops
  */
-#if !defined(TARG_SL)
+#if !defined(TARG_SL) && !defined(TARG_PPC32)
 static 
 #endif
 void
 Set_OP_To_WN_Map(WN *wn)
 {
   OP *op;
-
   // We don't have aliasing information at -O0 and -O1.
   if (CG_opt_level < 2) return;
 
@@ -1026,6 +1059,11 @@ Preg_Is_Rematerializable(PREG_NUM preg, BOOL *gra_homeable)
   if (home == NULL) 
 	return NULL;
   opc = WN_opcode(home);
+#if defined(TARG_PPC32)
+  if( OP_NEED_PAIR( OPCODE_rtype(opc) ) ){
+    return NULL;
+  }
+#endif
 
 #ifdef TARG_X8664
   /* GRA does not understand -m32, and gra will reload a double
@@ -1132,7 +1170,7 @@ TN *
 PREG_To_TN (TY_IDX preg_ty, PREG_NUM preg_num)
 {
   TN *tn;
-
+  TYPE_ID mtype = TY_mtype(preg_ty);
 #ifdef TARG_NVISA
   // allow this to be called for dedicated regs in global scope
   // (parameter regs for prototypes).
@@ -1190,6 +1228,24 @@ PREG_To_TN (TY_IDX preg_ty, PREG_NUM preg_num)
 	}
 #endif
       	tn = Build_Dedicated_TN(rclass, reg, TY_size(preg_ty));
+#if defined(TARG_SL) && defined(EMULATE_LONGLONG) 
+      if (mtype == MTYPE_I8 || mtype == MTYPE_U8) {
+        TN* pair = Build_Dedicated_TN(rclass, reg+1, TY_size(preg_ty));
+        Add_TN_Pair(tn, pair);
+      }
+#endif
+#if defined(TARG_SL) && defined(EMULATE_FLOAT_POINT) 
+      if (mtype == MTYPE_F8) {
+        TN* pair = Build_Dedicated_TN(rclass, reg+1, TY_size(preg_ty));
+        Add_TN_Pair(tn, pair);
+      } 
+#endif
+#if defined(EMULATE_LONGLONG) && defined(TARG_PPC32)
+      if (mtype == MTYPE_I8 || mtype == MTYPE_U8) {
+        TN* pair = Build_Dedicated_TN(rclass, reg+1, TY_size(preg_ty));
+        Add_TN_Pair(pair, tn);
+      }
+#endif
 
 #ifdef TARG_X8664
 	if( reg == First_Int_Preg_Return_Offset &&
@@ -1203,7 +1259,7 @@ PREG_To_TN (TY_IDX preg_ty, PREG_NUM preg_num)
 	}
 #endif
 
-#if defined(EMULATE_LONGLONG) && !defined(TARG_SL)
+#if defined(EMULATE_LONGLONG) && !defined(TARG_SL) && !defined(TARG_PPC32)
         // only on IA-32
         if (reg == First_Int_Preg_Return_Offset) {
           // dedicated and eax
@@ -1228,7 +1284,6 @@ PREG_To_TN (TY_IDX preg_ty, PREG_NUM preg_num)
     else
     {
       /* create a TN for this PREG. */
-      TYPE_ID mtype = TY_mtype(preg_ty);
 #ifdef TARG_X8664
       /* bug#512
 	 MTYPE_C4 is returned in one SSE register. (check wn_lower.cxx)
@@ -1238,7 +1293,7 @@ PREG_To_TN (TY_IDX preg_ty, PREG_NUM preg_num)
       }
 #endif
 
-#if defined(EMULATE_LONGLONG) 
+#if defined(EMULATE_LONGLONG) && !defined (TARG_SL)
       if (mtype == MTYPE_I8 || mtype == MTYPE_U8) {
         mtype = (mtype == MTYPE_I8 ? MTYPE_I4 : MTYPE_U4);
         tn = Build_TN_Of_Mtype(mtype);
@@ -1246,6 +1301,27 @@ PREG_To_TN (TY_IDX preg_ty, PREG_NUM preg_num)
       } else {
         tn = Build_TN_Of_Mtype (mtype);
       }
+#elif defined(TARG_SL)
+
+#ifdef EMULATE_LONGLONG
+      if (mtype == MTYPE_I8 || mtype == MTYPE_U8) {
+        mtype = (mtype == MTYPE_I8 ? MTYPE_I4 : MTYPE_U4);
+        tn = Build_TN_Of_Mtype(mtype);
+        Add_TN_Pair(tn, Build_TN_Of_Mtype(mtype));
+      } else 
+#endif      
+
+#ifdef EMULATE_FLOAT_POINT 
+      if (mtype == MTYPE_F8) {
+        TN* pair = Build_TN_Of_Mtype(MTYPE_U4);
+        tn = Build_TN_Of_Mtype(MTYPE_U4);
+        Add_TN_Pair(tn, pair);
+      } else if (mtype == MTYPE_F4) {
+        tn = Build_TN_Of_Mtype(MTYPE_U4);
+      } else       
+#endif
+    	tn = Build_TN_Of_Mtype (mtype);
+
 #else
 #ifdef TARG_X8664
       if( OP_NEED_PAIR(mtype) ){
@@ -1305,7 +1381,7 @@ PREG_To_TN (TY_IDX preg_ty, PREG_NUM preg_num)
         }
     }
     PREG_To_TN_Array[preg_num] = tn;
-    PREG_To_TN_Mtype[preg_num] = TY_mtype(preg_ty);
+    PREG_To_TN_Mtype[preg_num] = mtype;
   }
   if ( TN_is_dedicated( tn ) ) {
     dedicated_seen = TRUE;
@@ -1316,19 +1392,50 @@ PREG_To_TN (TY_IDX preg_ty, PREG_NUM preg_num)
       tn = Build_Dedicated_TN (TN_register_class(tn),
                                TN_register(tn),
                                TY_size(preg_ty));
+
+#if defined(TARG_SL) && defined(EMULATE_FLOAT_POINT)
+      if ((mtype == MTYPE_F8) && (!Get_TN_Pair(tn))) {
+        TN* pair = Build_Dedicated_TN(TN_register_class(tn), 
+            TN_register(tn) + 1, TY_size(preg_ty));
+        Add_TN_Pair(tn, pair);
+      } 
+#endif
     }
 #ifdef KEY
     // Do the same for integer class; we have separate set of dedicated TNs
     // of size 4 bytes
     if (!TN_is_float(tn) &&
 	TN_size(tn) != TY_size(preg_ty)
-#ifdef TARG_X8664
-	&& Is_Target_64bit()
-#endif // TARG_X8664
        ) {
+#if defined(TARG_SL) && (defined(EMULATE_LONGLONG) || defined(EMULATE_FLOAT_POINT)) 
+      if (mtype != MTYPE_I8 && mtype != MTYPE_U8 && mtype != MTYPE_F8) 
+#elif defined(TARG_PPC32)
+      if (mtype != MTYPE_I8 && mtype != MTYPE_U8) 
+#endif        
       tn = Build_Dedicated_TN (TN_register_class(tn),
                                TN_register(tn),
                                TY_size(preg_ty));
+    }
+#endif
+#if defined(TARG_SL) && (defined(EMULATE_LONGLONG) || defined(EMULATE_FLOAT_POINT))
+    // for dedicated TN, tn is the high part, we should return the low part
+    if (mtype == MTYPE_I8 || mtype == MTYPE_U8 || mtype == MTYPE_F8) {      
+      if (!Get_TN_Pair(tn)) {
+        TN* pair = Build_Dedicated_TN (TN_register_class(tn),
+                   TN_register(tn) + 1, TY_size(preg_ty));
+        Add_TN_Pair(tn, pair);
+      }
+    }
+#elif defined(TARG_PPC32)
+    // for dedicated TN, tn is the high part, we should return the low part
+    if (mtype == MTYPE_I8 || mtype == MTYPE_U8) {
+      TN* pair = Build_Dedicated_TN (TN_register_class(tn),
+                               TN_register(tn) + 1,
+                               TY_size(preg_ty));
+      if (!Get_TN_Pair(pair)) {
+        Add_TN_Pair(pair, tn);
+      }
+      tn = pair;
     }
 #endif
   }
@@ -1485,7 +1592,7 @@ Add_PregTNs_To_BB (PREG_LIST *prl0, BB *bb, BOOL prepend)
 /* Check if the parent WHIRL node can take an immediate operand
  * of the value const_val. If parent is NULL, return FALSE.
  */
-static BOOL
+BOOL
 Has_Immediate_Operand (WN *parent, WN *expr)
 {
   Is_True( WN_operator_is(expr, OPR_INTCONST),
@@ -1555,7 +1662,7 @@ Has_Immediate_Operand (WN *parent, WN *expr)
  *  2. mark the current PU and bb as having a call.
  *  3. mark the current EH range as having a call.
  */
-static void
+void
 Handle_Call_Site (WN *call, OPERATOR call_opr)
 {
   TN *tgt_tn;
@@ -1576,6 +1683,36 @@ Handle_Call_Site (WN *call, OPERATOR call_opr)
       !ST_is_export_local(call_st) ){
     PU_References_GOT = TRUE;
   }
+#endif
+
+#if defined(TARG_PPC32)
+  extern void Expand_Vararg_Float_Flag(BOOL bfloat, OPS * ops);
+
+  ST * callee_st = NULL;
+  if (WN_has_sym(call)) {
+     callee_st = WN_st(call);
+  }
+  
+  INT	num_actuals = WN_num_actuals(call);
+  TY_IDX call_ty  = (WN_operator_is(call, OPR_ICALL) ? WN_ty(call) :
+	  ST_pu_type(callee_st));
+
+  if (TY_has_prototype(call_ty) && TY_is_varargs(call_ty))
+  {
+    BOOL bf = FALSE;
+    for (int i = 0; i < num_actuals; i++) {
+      WN		*parm = WN_actual(call, i);
+      TYPE_ID	parmType = WN_rtype(parm);
+      if (MTYPE_is_float(parmType))
+      {
+        bf = TRUE;
+        break;
+      }
+    }
+    
+    Expand_Vararg_Float_Flag(bf, &New_OPs);
+  }
+
 #endif
 
   /* Generate the call instruction */
@@ -1651,7 +1788,11 @@ Handle_Call_Site (WN *call, OPERATOR call_opr)
 static VARIANT Memop_Variant(WN *memop)
 {
   VARIANT variant = V_NONE;
+#if defined(TARG_SL)
+  INT     required_alignment = MTYPE_alignment(WN_desc(memop));
+#else
   INT     required_alignment = MTYPE_RegisterSize(WN_desc(memop));
+#endif
 
 #ifndef KEY
   /* If volatile, set the flag.
@@ -1679,7 +1820,7 @@ static VARIANT Memop_Variant(WN *memop)
        */
       offset = WN_load_offset(memop);
       ty_align = ST_alignment(WN_st(memop));
-#ifdef TARG_X8664 // bug 8198: in absence of pointed-to type's alignment, need this
+#if defined(TARG_X8664) || defined(TARG_SL) // bug 8198: in absence of pointed-to type's alignment, need this
       if (offset) {
 	INT offset_align = offset % required_alignment;
 	if (offset_align) ty_align = MIN(ty_align, offset_align);
@@ -1693,6 +1834,12 @@ static VARIANT Memop_Variant(WN *memop)
 	if (TY_kind(ty) == KIND_POINTER) ty = TY_pointed(ty);
 	ty_align = TY_align(ty);
 	offset = WN_load_offset(memop);
+#if defined(TARG_SL) 
+	if (offset) {
+	  INT offset_align = offset % required_alignment;
+	  if (offset_align) ty_align = MIN(ty_align, offset_align);
+	}
+#endif
       }
       break;
     case OPR_ISTORE:
@@ -1728,7 +1875,11 @@ static VARIANT Memop_Variant(WN *memop)
 #endif
 
     if (align < required_alignment) {
+#ifdef TARG_IA64
+      Set_V_alignment(variant, ffs(align) - 1);
+#else
       Set_V_alignment(variant, align);
+#endif
      /*
       *	TODO
       *	When we have ST information we may be able to compute an
@@ -1771,7 +1922,7 @@ static VARIANT Memop_Variant(WN *memop)
   return variant;
 }
 
-static TN *
+TN *
 Handle_LDA (WN *lda, WN *parent, TN *result, OPCODE opcode)
 {
   OPERATOR call_op = OPERATOR_UNKNOWN;
@@ -1832,8 +1983,11 @@ Find_PREG_For_Symbol (const ST *st)
     return ST_ATTR_reg_id(St_Attr_Table(ST_IDX_level (idx), d));
 } 
 
+#ifdef TARG_SL
+extern void Expand_Copy_Extension (TN *result, TN *src, TYPE_ID mtype, BOOL signed_extension, OPS *ops);
+#endif
 
-static TN *
+TN *
 Handle_LDID (WN *ldid, TN *result, OPCODE opcode)
 {
   if (ST_assigned_to_dedicated_preg(WN_st(ldid))) {
@@ -1846,7 +2000,22 @@ Handle_LDID (WN *ldid, TN *result, OPCODE opcode)
    */
   if (WN_class(ldid) == CLASS_PREG)
   {
-#ifdef TARG_NVISA
+#if defined(TARG_SL) || defined(TARG_PPC32)
+    TYPE_ID mtype =  ST_mtype(WN_st(ldid));
+    TN *ldid_result = PREG_To_TN (WN_st(ldid), WN_load_offset(ldid));
+        
+#ifdef EMULATE_LONGLONG
+      if (MTYPE_is_longlong(mtype)) {
+        FmtAssert(Get_TN_Pair(ldid_result), ("Handle_LDID: TN pair should be setup"));
+      }
+#endif
+#ifdef EMULATE_FLOAT_POINT
+      if (mtype == MTYPE_F8) {
+        FmtAssert(Get_TN_Pair(ldid_result), ("Handle_LDID: TN pair should be setup"));
+      }
+#endif
+
+#elif defined(TARG_NVISA)
     TN *ldid_result;
     if (Is_Simple_Type(WN_ty(ldid))) {
         // pass more exact ty rather than st so know to create 
@@ -1862,6 +2031,7 @@ Handle_LDID (WN *ldid, TN *result, OPCODE opcode)
     if (rtype != OPCODE_desc(opcode)
 	&& MTYPE_size_reg(Mtype_Of_TN(ldid_result)) != MTYPE_size_reg(rtype) )
     {
+        TYPE_ID dest_type = OPCODE_desc(opcode);
 	// insert cvt of register
 	if (result == NULL)
 		result = Build_TN_Of_Mtype(rtype);
@@ -1875,10 +2045,23 @@ Handle_LDID (WN *ldid, TN *result, OPCODE opcode)
       result = ldid_result;
     }
     else {
-#ifdef EMULATE_LONGLONG
+#if defined(TARG_SL) && (defined(EMULATE_LONGLONG) || defined(EMULATE_FLOAT_POINT)) 
+      if (Get_TN_Pair(result)) {
+        Expand_Copy_Extension(result, ldid_result, WN_rtype(ldid), MTYPE_signed(WN_desc(ldid)), &New_OPs);
+      }
+      else {
+        Exp_COPY(result, ldid_result, &New_OPs);
+      }
+#elif defined(TARG_PPC32) && defined(EMULATE_LONGLONG)
+      if (OP_NEED_PAIR(mtype) && Get_TN_Pair(result)) {
+        Expand_Copy (result, ldid_result, mtype, &New_OPs);
+      }
+      else {
+        Exp_COPY(result, ldid_result, &New_OPs);
+      }
+#elif defined(EMULATE_LONGLONG)
       {
-        extern void
-          Expand_Copy (TN *result, TN *src, TYPE_ID mtype, OPS *ops);
+        extern void Expand_Copy (TN *result, TN *src, TYPE_ID mtype, OPS *ops);
         TYPE_ID mtype =  ST_mtype(WN_st(ldid));
         if (mtype == MTYPE_I8 || mtype == MTYPE_U8) {
           Expand_Copy (result, ldid_result, mtype, &New_OPs);
@@ -1886,16 +2069,15 @@ Handle_LDID (WN *ldid, TN *result, OPCODE opcode)
           Exp_COPY (result, ldid_result, &New_OPs);
         }
       }
-#else
-#ifdef TARG_X8664
+#elif  defined(TARG_X8664)
       if( OP_NEED_PAIR( ST_mtype(WN_st(ldid) ) ) ){
-	Expand_Copy( result, ldid_result, ST_mtype(WN_st(ldid)), &New_OPs );
-	
-      } else
-#endif // TARG_X8664
-	Exp_COPY (result, ldid_result, &New_OPs);
-
-#endif // EMULATE_LONGLONG
+        Expand_Copy( result, ldid_result, ST_mtype(WN_st(ldid)), &New_OPs );
+      } else {
+        Exp_COPY (result, ldid_result, &New_OPs);
+      }
+#else  // TARG_X8664
+      Exp_COPY (result, ldid_result, &New_OPs);
+#endif 
     }
   } 
   else
@@ -1920,7 +2102,8 @@ Handle_LDID (WN *ldid, TN *result, OPCODE opcode)
     }
     variant = Memop_Variant(ldid);
 
-    if (result == NULL) result = Allocate_Result_TN (ldid, NULL);
+    if (result == NULL)
+      result = Allocate_Result_TN (ldid, NULL);
     Last_Mem_OP = OPS_last(&New_OPs);
     Exp_Load (OPCODE_rtype(opcode), OPCODE_desc(opcode),
 	result, 
@@ -1933,7 +2116,7 @@ Handle_LDID (WN *ldid, TN *result, OPCODE opcode)
   return result;
 }
 
-static TN *
+TN *
 Handle_LDBITS (WN *ldbits, TN *result, OPCODE opcode)
 {
   TN *src_tn;
@@ -1963,7 +2146,7 @@ Handle_LDBITS (WN *ldbits, TN *result, OPCODE opcode)
   return result;
 }
 
-static TN *
+TN *
 Handle_EXTRACT_BITS (WN *extrbits, TN *result, OPCODE opcode)
 {
   TN *kid0_tn = Expand_Expr (WN_kid0(extrbits), extrbits, NULL);
@@ -2041,7 +2224,7 @@ TN *TN_CORRESPOND_Get(TN *result, WN *expr)
 }
 
 
-static TN *
+TN *
 Handle_DIVREM(WN *expr, WN *parent, TN *result, OPCODE opcode)
 {
   TN	*result2, *kid0_tn, *kid1_tn;
@@ -2061,7 +2244,7 @@ Handle_DIVREM(WN *expr, WN *parent, TN *result, OPCODE opcode)
   return result;
 }
 
-static TN *
+TN *
 Handle_DIVPART(WN *expr, WN *parent, TN *result)
 {
   TN *pregTN;
@@ -2085,7 +2268,7 @@ Handle_DIVPART(WN *expr, WN *parent, TN *result)
   return result;
 }
 
-static TN *
+TN *
 Handle_REMPART(WN *expr, WN *parent, TN *result)
 {
   TN *pregTN;
@@ -2112,7 +2295,7 @@ Handle_REMPART(WN *expr, WN *parent, TN *result)
   return result;
 }
 
-static TN *
+TN *
 Handle_MINMAX(WN *expr, WN *parent, TN *result, OPCODE opcode)
 {
   TN	*result2, *kid0_tn, *kid1_tn;
@@ -2132,7 +2315,7 @@ Handle_MINMAX(WN *expr, WN *parent, TN *result, OPCODE opcode)
   return result;
 }
 
-static TN *
+TN *
 Handle_MINPART(WN *expr, WN *parent, TN *result)
 {
   TN *pregTN;
@@ -2157,7 +2340,7 @@ Handle_MINPART(WN *expr, WN *parent, TN *result)
   return result;
 }
 
-static TN *
+TN *
 Handle_MAXPART(WN *expr, WN *parent, TN *result)
 {
   TN *pregTN;
@@ -2175,7 +2358,7 @@ Handle_MAXPART(WN *expr, WN *parent, TN *result)
     return pregTN;
   }
 
-#ifdef TARG_X8664
+#if defined(TARG_X8664) || defined(TARG_PPC32)
       if( OP_NEED_PAIR( ST_mtype(WN_st(kid) ) ) ){
 	Expand_Copy( result, pregTN, ST_mtype(WN_st(kid)), &New_OPs );
 	
@@ -2187,7 +2370,7 @@ Handle_MAXPART(WN *expr, WN *parent, TN *result)
 
 
 
-static TN *
+TN *
 Handle_ILOAD (WN *iload, TN *result, OPCODE opcode)
 {
   VARIANT variant;
@@ -2213,6 +2396,32 @@ Handle_ILOAD (WN *iload, TN *result, OPCODE opcode)
   variant = Memop_Variant(iload);
   if (result == NULL) result = Allocate_Result_TN (iload, NULL);
 
+#if defined(TARG_PPC32)
+  if ( WN_operator_is(kid0, OPR_LDA) ) {
+     st = WN_st(kid0);     
+     if ((ST_sclass(st) == SCLASS_FORMAL) && 
+      MTYPE_is_m(TY_mtype(ST_type(st)))) {      
+
+      TN *kid0_tn = Expand_Expr(kid0, iload, NULL); 
+      TN *offset_tn = Gen_Literal_TN(0, 4); //Gen_Literal_TN (WN_lda_offset(kid0), 4);
+      Last_Mem_OP = OPS_last(&New_OPs);
+      Exp_OP2v (opcode, result, kid0_tn, offset_tn, variant, &New_OPs);
+    }
+    else {     
+      Last_Mem_OP = OPS_last(&New_OPs);        
+      Allocate_Object (st);
+      Exp_Load (OPCODE_rtype(opcode), OPCODE_desc(opcode),
+  	    result, st, WN_offset(iload) + WN_lda_offset(kid0),
+  		  &New_OPs, variant);
+    }
+  }
+  else {  
+      TN *kid0_tn = Expand_Expr (kid0, iload, NULL); 
+      TN *offset_tn = Gen_Literal_TN (WN_offset(iload), 4);
+      Last_Mem_OP = OPS_last(&New_OPs);
+      Exp_OP2v (opcode, result, kid0_tn, offset_tn, variant, &New_OPs);
+  }
+#else //  not if defined(TARG_PPC32)
   /* If the kid of the ILOAD is an LDA, handle the ILOAD like an LDID */
   if (WN_operator_is(kid0, OPR_LDA)) {
     Last_Mem_OP = OPS_last(&New_OPs);
@@ -2285,12 +2494,13 @@ Handle_ILOAD (WN *iload, TN *result, OPCODE opcode)
     Last_Mem_OP = OPS_last(&New_OPs);
     Exp_OP2v (opcode, result, kid0_tn, offset_tn, variant, &New_OPs);
   }
+#endif   
   Set_OP_To_WN_Map(iload);
   return result;
 }
 
 
-static TN *
+TN *
 Handle_ILDBITS (WN *ildbits, TN *result, OPCODE opcode)
 {
   VARIANT variant = Memop_Variant(ildbits);
@@ -2344,7 +2554,7 @@ static BOOL Operator_Is_Bool (OPERATOR opr) {
   }
 }
 
-static void
+void
 Handle_STID (WN *stid, OPCODE opcode)
 {
   TN *result;
@@ -2373,7 +2583,7 @@ Handle_STID (WN *stid, OPCODE opcode)
   if (WN_class(stid) == CLASS_PREG) {
       WN *kid = WN_kid0(stid);
 
-#ifdef TARG_NVISA
+#if defined(TARG_NVISA)
       TN *final_result = NULL;
       if (Is_Simple_Type(WN_ty(stid))) {
         // pass more exact ty rather than st so know to create 
@@ -2394,6 +2604,14 @@ Handle_STID (WN *stid, OPCODE opcode)
       // so know that it is already normalized if used in later LAND.
       if (OPERATOR_is_boolean(WN_operator(kid))) {
 	Set_TN_is_boolean(result);
+      }
+#elif defined(TARG_SL)
+      if (Is_Simple_Type(WN_ty(stid))) {
+        // pass more exact ty rather than st so know to create 
+        // exact-sized register.
+        result = PREG_To_TN (WN_ty(stid), WN_store_offset(stid));
+      } else {
+        result = PREG_To_TN (WN_st(stid), WN_store_offset(stid));
       }
 #else
       result = PREG_To_TN (WN_st(stid), WN_store_offset(stid));
@@ -2422,6 +2640,18 @@ Handle_STID (WN *stid, OPCODE opcode)
 	result = Gen_Register_TN(TN_register_class(result),
 				 MTYPE_byte_size(dtype));
       }
+
+#if defined(TARG_X8664)
+      // MMX data can be store into SSE(float) register. For example, the 
+      // return value. In this case, we create a new MMX result for expansion 
+      // and after the expansion, copy the data from MMX to SSE(float).
+      if (MTYPE_is_mmx_vector(dtype) &&
+          TN_register_class(result) == ISA_REGISTER_CLASS_float) {
+        old_result = result;
+        result = Gen_Register_TN(ISA_REGISTER_CLASS_mmx, MTYPE_byte_size(dtype));
+      }
+#endif
+
 #endif
 
 #if defined(TARG_IA32)
@@ -2444,6 +2674,82 @@ Handle_STID (WN *stid, OPCODE opcode)
         Expand_Expr (kid, stid, result);
       }
 #else
+
+#if defined(TARG_SL) && defined(EMULATE_LONGLONG)
+      if(MTYPE_is_longlong(OPCODE_desc(opcode)) && !Get_TN_Pair(result)) {	
+        FmtAssert(FALSE, ("Handle_STID: Get_TN_Pair Failed"));       
+      }
+
+      TYPE_ID stid_type = OPCODE_desc(opcode);
+      TYPE_ID kid0_type = WN_rtype(WN_kid0(stid));
+	  
+      if (MTYPE_is_longlong(kid0_type)  // I4 <- I8
+      && (MTYPE_byte_size(kid0_type) > MTYPE_byte_size(stid_type))) {
+        TN * rett = Expand_Expr(kid, stid, NULL);
+        if (result) 
+          Expand_Copy(result, rett, stid_type, &New_OPs);
+        else 
+          result = rett;
+      }
+      else if (MTYPE_is_longlong(stid_type) && Get_TN_Pair(result)  // I8 <- I4
+           && (MTYPE_byte_size(kid0_type) < MTYPE_byte_size(stid_type))) {   
+        TN* tn =  Expand_Expr(kid, stid, NULL);
+        Expand_Copy_Extension(result, tn, stid_type, MTYPE_signed(kid0_type), &New_OPs);
+      }
+      else { // I8 <- I8 || I4 <- I4
+        Expand_Expr(kid, stid, result);
+      }
+
+      // If the start address of a 64bit variable is the last param register($11) in wn_lower phase,
+      // Store the paired high-bit TN of it to stack. The paird TN of $11 should be $12.
+      // It should be consistent with ABI (targ_sim.cxx).
+      if ((MTYPE_byte_size(OPCODE_desc(opcode)) == 8) && (TN_number(result) == 12)) {
+        TN *result_h = Get_TN_Pair(result);
+        if (result_h && (TN_number(result_h) == 13)) {
+          Last_Mem_OP = OPS_last(&New_OPs);
+          TYPE_ID type_t = ((OPCODE_desc(opcode) == MTYPE_I8) ? MTYPE_I4 : MTYPE_U4);
+          Exp_Store (type_t, result_h, SP_Sym, 0, &New_OPs, 0);
+          Set_OP_no_alias(OPS_last(&New_OPs));
+        }
+      }
+#elif defined(TARG_PPC32) // TARG_SL && EMULATE_LONGLONG 
+      TYPE_ID stid_type = OPCODE_desc(opcode);
+      TYPE_ID kid0_type = WN_rtype(WN_kid0(stid));
+      if (OP_NEED_PAIR(kid0_type) && 
+        (MTYPE_byte_size(kid0_type) > MTYPE_byte_size(stid_type))) {
+        TN * rett = Expand_Expr(kid, stid, NULL);
+        if (result) 
+          Expand_Copy(result, rett, stid_type, &New_OPs);
+        else 
+          result = rett;
+      }
+      else if (OP_NEED_PAIR(stid_type) && Get_TN_Pair(result) &&
+	      MTYPE_byte_size(kid0_type) < MTYPE_byte_size(stid_type)) {
+        if(MTYPE_is_signed(stid_type)){
+          TN* tn =  Expand_Expr(kid, stid, NULL);
+          Expand_Copy(result, tn, MTYPE_I4, &New_OPs);
+          Build_OP(TOP_srawi, Get_TN_Pair(result), tn, Gen_Literal_TN(31,4), &New_OPs);
+    	  }
+        else {
+          if (MTYPE_is_signed(kid0_type)) {
+            TN* tn =  Expand_Expr(kid, stid, NULL);
+            Expand_Copy(result, tn, MTYPE_I4, &New_OPs);
+            Build_OP(TOP_srawi, Get_TN_Pair(result), tn, Gen_Literal_TN(31,4), &New_OPs);
+          } else {
+            Expand_Expr(kid, stid, result);
+	     Expand_Immediate(Get_TN_Pair(result), Gen_Literal_TN(0,4), FALSE, &New_OPs );
+          }
+        }
+      }
+      else {
+        Expand_Expr(kid, stid, result);
+      }
+#ifdef KEY
+      if (old_result != NULL) {
+	Exp_COPY(old_result, result, &New_OPs);
+      }
+#endif
+#else // TARG_PPC32
 #ifdef TARG_X8664 // bug 11088
         if(OPCODE_is_compare(WN_opcode(kid)) && 
                   MTYPE_is_vector(WN_desc(kid))){
@@ -2454,8 +2760,28 @@ Handle_STID (WN *stid, OPCODE opcode)
         return;
        }else
 #endif
+#ifdef TARG_LOONGSON
+    if ((WN_operator_is(kid, OPR_LDID)) && (WN_class(kid) == CLASS_PREG)
+    	&& ((opcode == OPC_U4STID && WN_opcode(kid) == OPC_U8U8LDID)
+	||(opcode == OPC_I4STID && WN_opcode(kid) == OPC_I8I8LDID))) {
+      //   U8U8LDID
+      // U4STID    	  
+      // Add U4U8CVT	between such stid and ldid
+      
+      //   I8I8LDID
+      // I4STID
+      // Add I4I8CVT    between such stid and ldid
+      TN *src_tn = PREG_To_TN (WN_st(kid), WN_load_offset(kid));    	     	 
+      TN *tmp = Build_TN_Like (src_tn);
+      Build_OP (TOP_sll, result, True_TN, src_tn, Gen_Literal_TN(0, 2), &New_OPs);
+    }
+    else{
+      Expand_Expr (kid, stid, result);	
+    }
+#else	
       //lets do something here, of course we need to handle this
       Expand_Expr (kid, stid, result); /// I would think this is the problem
+#endif
 
 #ifdef TARG_NVISA
       if (final_result != NULL) {
@@ -2471,6 +2797,7 @@ Handle_STID (WN *stid, OPCODE opcode)
 	Exp_COPY(old_result, result, &New_OPs);
       }
 #endif
+#endif  // TARG_SL && EMULATE_LONGLONG
 
 #ifdef TARG_X8664
       const TYPE_ID stid_type = OPCODE_desc(opcode);
@@ -2545,7 +2872,7 @@ Handle_STID (WN *stid, OPCODE opcode)
 }
 
 
-static void
+void
 Handle_STBITS (WN *stbits)
 {
   VARIANT variant;
@@ -2577,9 +2904,18 @@ Handle_STBITS (WN *stbits)
     result = Allocate_Result_TN (kid, NULL);
   }
 
+#ifdef TARG_PPC32
+ // for store, desc means the store type, and this rtype means the rtype of store node kid0
+ // so we pass param as follow
+  Exp_Deposit_Bits(desc, rtype, WN_bit_offset(stbits),
+		   WN_bit_size(stbits), result, field_tn, bits_tn, &New_OPs);
+#else
   // deposit bits_tn into field_tn returning result in result
   Exp_Deposit_Bits(rtype, desc, WN_bit_offset(stbits),
 		   WN_bit_size(stbits), result, field_tn, bits_tn, &New_OPs);
+#endif
+
+  
 
   if (WN_class(stbits) != CLASS_PREG) 
     {
@@ -2591,13 +2927,13 @@ Handle_STBITS (WN *stbits)
 }
 
 
-static TN *
+TN *
 Handle_COMPOSE_BITS (WN *compbits, TN *result, OPCODE opcode)
 {
   TN *kid0_tn = Expand_Expr (WN_kid0(compbits), compbits, NULL);
   TN *kid1_tn = Expand_Expr (WN_kid1(compbits), compbits, NULL);
   if (result == NULL) result = Allocate_Result_TN (compbits, NULL);
-
+  
 #ifdef TARG_X8664
   extern UINT64 Bitmask_Of_Size(INT bsize);
   if (WN_operator(WN_kid1(compbits)) == OPR_INTCONST && 
@@ -2607,23 +2943,39 @@ Handle_COMPOSE_BITS (WN *compbits, TN *result, OPCODE opcode)
 		 result, kid0_tn, &New_OPs);
   else
 #endif
+#if defined(TARG_SL) || (TARG_PPC32)
+  Exp_Deposit_Bits(OPCODE_rtype(opcode), WN_rtype(WN_kid1(compbits)), 
+		   WN_bit_offset(compbits), WN_bit_size(compbits), 
+		   result, kid0_tn, kid1_tn, &New_OPs);
+#else
   Exp_Deposit_Bits(OPCODE_rtype(opcode), OPCODE_rtype(opcode), 
 		   WN_bit_offset(compbits), WN_bit_size(compbits), 
 		   result, kid0_tn, kid1_tn, &New_OPs);
 
+#endif //TARG_SL
   return result;
 }
 
 
-static void
+void
 Handle_ISTORE (WN *istore, OPCODE opcode)
 {
   VARIANT variant  = Memop_Variant(istore);
   WN *kid1 = WN_kid1(istore);
-  TN *kid0_tn = Expand_Expr (WN_kid0(istore), istore, NULL);
+  TN *kid0_tn;
+  if (WN_operator(WN_kid0(istore)) == OPR_FIRSTPART)
+  {
+    kid0_tn = Expand_Expr(WN_kid0(WN_kid0(istore)),istore,NULL);
+    variant |= V_LOW64;
+  } else if (WN_operator(WN_kid0(istore)) == OPR_SECONDPART){
+    kid0_tn = Expand_Expr(WN_kid0(WN_kid0(istore)),istore,NULL);
+    variant |= V_HIGH64; 
+  } else {
+    kid0_tn = Expand_Expr (WN_kid0(istore), istore, NULL);
+  }
   ST *st;
 
-#ifdef EMULATE_LONGLONG
+#if defined(EMULATE_LONGLONG) && !defined(TARG_SL) && !defined(TARG_PPC32)
   {
     // long long check: If the LHS is an I/U8, and the RHS is I4,
     // then assert that RHS must be a boolean.
@@ -2636,6 +2988,34 @@ Handle_ISTORE (WN *istore, OPCODE opcode)
   }
 #endif
 
+#if defined(TARG_PPC32)
+  if (WN_operator_is(kid1, OPR_LDA)) {
+    Last_Mem_OP = OPS_last(&New_OPs);
+    st = WN_st(kid1);    
+    Allocate_Object (st);
+    Exp_Store (OPCODE_desc(opcode), kid0_tn,	st,
+      WN_offset(istore) + WN_lda_offset(kid1),
+      &New_OPs, variant);    
+  }
+  else {
+    TN *kid1_tn = Expand_Expr (WN_kid1(istore), istore, NULL);
+    TN *offset_tn = Gen_Literal_TN (WN_offset(istore), 4);
+    Last_Mem_OP = OPS_last(&New_OPs);
+
+    if ( (WN_opcode(kid1) == OPC_U4U4LDID)  && 
+      (ST_sclass(WN_st(kid1)) == SCLASS_FORMAL) && 
+      MTYPE_is_m(TY_mtype(ST_type(WN_st(kid1)))) ) {      
+      printf("\n\nMMMM %d %d\n\n", WN_offset(istore), 
+        WN_lda_offset(WN_kid1(istore)));
+
+      offset_tn = Gen_Literal_TN (WN_offset(istore) + 
+        WN_lda_offset(WN_kid1(istore)), 4);
+    }
+    
+    Exp_OP3v (opcode, NULL, 	kid0_tn, kid1_tn,
+      offset_tn, variant, &New_OPs);
+  }
+#else
   /* if the kid1 is an LDA, treat the ISTORE as an STID */
   if (WN_operator_is(kid1, OPR_LDA)) {
     Last_Mem_OP = OPS_last(&New_OPs);
@@ -2715,11 +3095,12 @@ Handle_ISTORE (WN *istore, OPCODE opcode)
 	variant,
 	&New_OPs);
   }
+#endif  
   Set_OP_To_WN_Map(istore);
 }
 
 
-static void
+void
 Handle_ISTBITS (WN *istbits)
 {
   VARIANT variant  = Memop_Variant(istbits);
@@ -2779,7 +3160,7 @@ Handle_ISTBITS (WN *istbits)
   }
 }
 
-static TN *
+TN *
 Handle_SELECT(WN *select, TN *result, OPCODE opcode)
 {
   TN	*trueop, *falseop, *cond;
@@ -2850,11 +3231,14 @@ Handle_SELECT(WN *select, TN *result, OPCODE opcode)
     	op1 = Expand_Expr (WN_kid0(compare), compare, NULL);
     	op2 = Expand_Expr (WN_kid1(compare), compare, NULL);
 #if defined(TARG_SL)
-      if (!Exp_Opt_Select_And_Condition(select, result, trueop, falseop, op1, op2, &New_OPs))
-#endif
+        if (!(CG_enable_opt_condmv && Exp_Opt_Select_And_Condition(select, result, trueop, falseop, op1, op2, &New_OPs)))
+  	  Exp_Select_And_Condition (select, opcode, result, trueop, falseop, 	
+				    WN_opcode(compare), op1, op2, variant, &New_OPs);
+#else
   	Exp_Select_And_Condition (opcode, result, trueop, falseop, 
 				  WN_opcode(compare), op1, op2, variant, 
 				  &New_OPs);
+#endif
   }
 
   return result;
@@ -2924,7 +3308,7 @@ Handle_RROTATE (WN *rotate, TN *result)
 **
 **	If the operands are boolean, then we can use the binary version
 */
-static TN*
+TN*
 Handle_LAND_LIOR(WN *expr, WN *parent, TN *result)
 {
   VARIANT variant;
@@ -2953,7 +3337,7 @@ Handle_LAND_LIOR(WN *expr, WN *parent, TN *result)
   return result;
 }
 
-static TN*
+TN*
 Handle_LNOT(WN *expr, WN *parent, TN *result)
 {
   VARIANT variant;
@@ -3068,6 +3452,11 @@ Is_CVT_Noop(WN *cvt, WN *parent)
      /*
       *  if 32-bit ints are sign-extended to 64-bit, then is a nop.
       */
+
+#ifdef TARG_SL
+      return FALSE;
+#endif
+
       if ( ! Split_64_Bit_Int_Ops && ! Only_Unsigned_64_Bit_Ops)
       {
 #ifdef TARG_X8664
@@ -3196,9 +3585,10 @@ Is_CVTL_Opcode (OPCODE opc)
 	}
 }
 
-static TN* 
+TN* 
 Handle_ALLOCA (WN *tree, TN *result)
 {
+
 #ifdef TARG_IA64
   TN *tsize = Expand_Expr (WN_kid0(tree), tree, NULL);
   // align the size
@@ -3215,7 +3605,12 @@ Handle_ALLOCA (WN *tree, TN *result)
   BOOL is_zero = is_const && WN_const_val(WN_kid0(tree)) == 0;
   TN *tsize = NULL;
   if (!is_zero) {
-    if (is_const) {
+    if (is_const 
+#ifdef TARG_LOONGSON
+	  // For LOONGSON, the length of the immediate operand is 16-bit.
+	  && ISA_LC_Value_In_Class(WN_const_val(WN_kid0(tree)), LC_i16)
+#endif
+	  ){
       // align the size
       INT64 size = WN_const_val(WN_kid0(tree));
       size += Stack_Alignment() - 1;
@@ -3283,7 +3678,7 @@ Handle_ALLOCA (WN *tree, TN *result)
   return result;
 }
 
-static void
+void
 Handle_DEALLOCA (WN *tree)
 {
   INT stack_adjustment = Stack_Offset_Adjustment_For_PU();
@@ -3311,8 +3706,71 @@ Handle_Imm_Op (WN * expr, INT * kidno /* counted from 0 */)
 
   switch (id)
   {
+    // SSE 4.2
+    case INTRN_PCMPESTRI128:
+    case INTRN_PCMPESTRA128:
+    case INTRN_PCMPESTRC128:
+    case INTRN_PCMPESTRO128:
+    case INTRN_PCMPESTRS128:
+    case INTRN_PCMPESTRZ128:
+    case INTRN_PCMPESTRM128:
+#ifdef Is_True_On
+      {
+        const char * intrn_name = INTRN_c_name (id);
+        Is_True (WN_kid_count (expr) == 5,
+                 ("Handle_Imm_Op: Invalid # of kids of %s intrn", intrn_name));
+        Is_True (WN_operator (WN_kid0 (WN_kid4 (expr))) == OPR_INTCONST,
+           ("Handle_Imm_Op: Arg 5 of %s intrn must be immediate constant",
+            intrn_name));
+      }
+#endif
+      *kidno = 4;
+      return Gen_Literal_TN (WN_const_val (WN_kid0 (WN_kid4 (expr))), 4);
+
     case INTRN_SHUFPS:
     case INTRN_SHUFPD:
+    // SSSE3
+    case INTRN_PALIGNR:
+    // SSE4.1
+    case INTRN_BLENDPD:
+    case INTRN_BLENDPS:
+    case INTRN_DPPD:
+    case INTRN_DPPS:
+    case INTRN_INSERTPS128:
+    case INTRN_MPSADBW128:
+    case INTRN_PBLENDW128:
+    case INTRN_VEC_SET_V16QI:
+    case INTRN_VEC_SET_V2DI:
+    case INTRN_VEC_SET_V4SF:
+    case INTRN_VEC_SET_V4SI:
+    // SSE4.2
+    case INTRN_PCMPISTRI128:
+    case INTRN_PCMPISTRA128:
+    case INTRN_PCMPISTRC128:
+    case INTRN_PCMPISTRO128:
+    case INTRN_PCMPISTRS128:
+    case INTRN_PCMPISTRZ128:
+    case INTRN_PCMPISTRM128:
+    // PCLMUL
+    case INTRN_PCLMULQDQ128:
+    // AVX
+    case INTRN_BLENDPD256:
+    case INTRN_BLENDPS256:
+    case INTRN_CMPPD:
+    case INTRN_CMPPD256:
+    case INTRN_CMPPS:
+    case INTRN_CMPPS256:
+    case INTRN_CMPSD:
+    case INTRN_CMPSS:
+    case INTRN_DPPS256:
+    case INTRN_SHUFPD256:
+    case INTRN_SHUFPS256:
+    case INTRN_VINSERTF128PD256:
+    case INTRN_VINSERTF128PS256:
+    case INTRN_VINSERTF128SI256:
+    case INTRN_VPERM2F128PD256:
+    case INTRN_VPERM2F128PS256:
+    case INTRN_VPERM2F128SI256:
 #ifdef Is_True_On
       {
         const char * intrn_name = INTRN_c_name (id);
@@ -3326,12 +3784,61 @@ Handle_Imm_Op (WN * expr, INT * kidno /* counted from 0 */)
       *kidno = 2;
       return Gen_Literal_TN (WN_const_val (WN_kid0 (WN_kid2 (expr))), 4);
 
+
     case INTRN_PSLLDQ:
     case INTRN_PSRLDQ:
+#ifdef Is_True_On
+      {
+        const char * intrn_name = INTRN_c_name (id);
+        Is_True (WN_kid_count (expr) == 2,
+                 ("Handle_Imm_Op: Invalid # of kids of %s intrn", intrn_name));
+        Is_True (WN_operator (WN_kid0 (WN_kid1 (expr))) == OPR_INTCONST,
+           ("Handle_Imm_Op: Arg 2 of %s intrn must be immediate constant",
+            intrn_name));
+        Is_True (WN_const_val (WN_kid0 (WN_kid1 (expr))) %8 == 0,
+            ("offset is bit size must be byte based\n"));
+      }
+#endif
+      *kidno = 1;
+      return Gen_Literal_TN (WN_const_val (WN_kid0 (WN_kid1 (expr)))/8, 4);
+
+    case INTRN_PSLLWI:
+    case INTRN_PSLLDI:
+    case INTRN_PSLLQI:
+    case INTRN_PSRLWI:
+    case INTRN_PSRLDI:
+    case INTRN_PSRLQI:
+    case INTRN_PSRAWI:
+    case INTRN_PSRADI:
+    case INTRN_PSLLWI128:
+    case INTRN_PSLLDI128:
+    case INTRN_PSLLQI128:
+    case INTRN_PSRLWI128:
+    case INTRN_PSRLDI128:
+    case INTRN_PSRLQI128:
+    case INTRN_PSRAWI128:
+    case INTRN_PSRADI128:
     case INTRN_PSHUFD:
     case INTRN_PSHUFW:
     case INTRN_PSHUFLW:
     case INTRN_PSHUFHW:
+    // AES
+    case INTRN_AESKEYGENASSIST128:
+    // XOP
+    case INTRN_VPROTB_IMM:
+    case INTRN_VPROTD_IMM:
+    case INTRN_VPROTQ_IMM:
+    case INTRN_VPROTW_IMM:
+    // AVX
+    case INTRN_ROUNDPD256:
+    case INTRN_ROUNDPS256:
+    case INTRN_EXTRACTF128PD256:
+    case INTRN_EXTRACTF128PS256:
+    case INTRN_EXTRACTF128SI256:
+    case INTRN_VPERMILPD:
+    case INTRN_VPERMILPD256:
+    case INTRN_VPERMILPS:
+    case INTRN_VPERMILPS256:
 #ifdef Is_True_On
       {
         const char * intrn_name = INTRN_c_name (id);
@@ -3351,7 +3858,7 @@ Handle_Imm_Op (WN * expr, INT * kidno /* counted from 0 */)
 }
 #endif
 
-static TN*
+TN*
 Handle_INTRINSIC_OP (WN *expr, TN *result)
 {
   INTRINSIC id = (INTRINSIC) WN_intrinsic (expr);
@@ -3365,7 +3872,7 @@ Handle_INTRINSIC_OP (WN *expr, TN *result)
 #endif
 
   TN *kid0 = Expand_Expr(WN_kid0(expr), expr, NULL);
-  TN * kid1 = NULL, * kid2 = NULL;
+  TN * kid1 = NULL, * kid2 = NULL, * kid3 = NULL, * kid4 = NULL;
 #ifdef TARG_X8664
   INT imm_kidno = 0;
   // Get any immediate operand in intrinsic.
@@ -3374,7 +3881,7 @@ Handle_INTRINSIC_OP (WN *expr, TN *result)
 
   if (imm_kid)
   {
-    Is_True (imm_kidno == 1 || imm_kidno == 2,
+    Is_True (imm_kidno == 1 || imm_kidno == 2 || imm_kidno == 4,
              ("Immediate kid0 of intrinsic not supported"));
     if (imm_kidno == 1)
     {
@@ -3382,23 +3889,30 @@ Handle_INTRINSIC_OP (WN *expr, TN *result)
       if (numkids == 3)
         kid2 = Expand_Expr(WN_kid2(expr), expr, NULL);
     }
-    else
+    else if (imm_kidno == 2)
     { // kid2 is immediate operand
       Is_True (numkids == 3, ("Invalid # of kids for intrinsic"));
       kid1 = Expand_Expr(WN_kid1(expr), expr, NULL);
       kid2 = imm_kid;
     }
+    else
+    { // kid4 is immediate operand
+      Is_True (numkids == 5, ("Invalid # of kids for intrinsic"));
+      kid1 = Expand_Expr(WN_kid1(expr), expr, NULL);
+      kid2 = Expand_Expr(WN_kid2(expr), expr, NULL);
+      kid3 = Expand_Expr(WN_kid3(expr), expr, NULL);
+      kid4 = imm_kid;
+    }
   }
   else
   {
-    kid1 = (numkids >= 2) ? Expand_Expr(WN_kid1(expr), expr, NULL) : NULL;
-
-    if (numkids == 3) {
-      kid2 = Expand_Expr(WN_kid2(expr), expr, NULL);
-    }
+    kid1 = (numkids > 1) ? Expand_Expr(WN_kid1(expr), expr, NULL) : NULL;
+    kid2 = (numkids > 2) ? Expand_Expr(WN_kid2(expr), expr, NULL) : NULL;
+    kid3 = (numkids > 3) ? Expand_Expr(WN_kid3(expr), expr, NULL) : NULL;
+    kid4 = (numkids > 4) ? Expand_Expr(WN_kid4(expr), expr, NULL) : NULL;
   }
   
-  FmtAssert(numkids <= 3, ("unexpected number of kids in intrinsic_op"));
+  FmtAssert(numkids <= 5, ("unexpected number of kids in intrinsic_op"));
 #elif defined(TARG_NVISA)
   kid1 = (numkids >= 2) ? Expand_Expr(WN_kid1(expr), expr, NULL) : NULL;
   if (numkids == 3) {
@@ -3414,9 +3928,12 @@ Handle_INTRINSIC_OP (WN *expr, TN *result)
     result = Allocate_Result_TN(expr, NULL);
   }
 
-#ifdef TARG_IA64
+#if defined(TARG_IA64) || defined(TARG_LOONGSON)
   Exp_Intrinsic_Op (id, result, kid0, kid1, &New_OPs);
-#elif defined(TARG_X8664) || defined(TARG_NVISA)
+#elif defined(TARG_X8664)
+  const TYPE_ID mtype = WN_rtype( WN_kid0(expr) );
+  Exp_Intrinsic_Op (id, result, kid0, kid1, kid2, kid3, kid4, mtype, &New_OPs);
+#elif defined(TARG_NVISA)
   const TYPE_ID mtype = WN_rtype( WN_kid0(expr) );
   Exp_Intrinsic_Op (id, result, kid0, kid1, kid2, mtype, &New_OPs);
 #else
@@ -3525,10 +4042,10 @@ Preproc_Divmodsi3_To_udivremsi4(WN* expr) {
          &New_OPs );
        Build_OP(TOP_addu, tmp_a, Zero_TN, tmp_a, &New_OPs);
      }
-     Build_MC_OP(TOP_mc_zc_lt, neg, tmp_a, tmp, 0, &New_OPs, OP_ALWAYS_UNC_DEF);
+     Build_OP(TOP_mc_zc_lt, neg, tmp_a, tmp, Gen_Literal_TN(0, 4), &New_OPs);
    }
    else {
-     Build_MC_OP(TOP_mc_zc_lt, neg, tn_a, tmp,  0, &New_OPs, OP_ALWAYS_UNC_DEF);
+     Build_OP(TOP_mc_zc_lt, neg, tn_a, tmp, Gen_Literal_TN(0, 4), &New_OPs);
    }
    
    /* a =  ( a < 0 ) ? (-a) : (a) */
@@ -3739,22 +4256,22 @@ Expand_SL_DivRem_Op( WN* expr, const char* func_name, OPCODE opcode, PREG_NUM pr
          }
          //Build_OP(TOP_addiu, tmp_b, Zero_TN, Gen_Literal_TN(TN_value(tn_b), 4), &New_OPs);
          TN* neg_a1 = Build_TN_Of_Mtype(MTYPE_I4);
-         Build_MC_OP(TOP_mc_zc_lt, neg_a1, tmp_b, tmp, 0, &New_OPs,OP_ALWAYS_UNC_DEF);
+         Build_OP(TOP_mc_zc_lt, neg_a1, tmp_b, tmp, Gen_Literal_TN(0, 4), &New_OPs);
          Build_OP(TOP_xor, neg, neg, neg_a1, &New_OPs);
        }
        else {
          TN* neg_a1 = Build_TN_Of_Mtype(MTYPE_I4);
-         Build_MC_OP(TOP_mc_zc_lt,  neg_a1, tn_b, tmp, 0, &New_OPs, OP_ALWAYS_UNC_DEF);
+         Build_OP(TOP_mc_zc_lt,  neg_a1, tn_b, tmp, Gen_Literal_TN(0, 4), &New_OPs);
          Build_OP(TOP_xor, neg, neg, neg_a1, &New_OPs);
        }
      }
-     Build_MC_OP(TOP_mc_zn_eq, res, neg, res, 0, &New_OPs,OP_ALWAYS_UNC_DEF);
+     Build_OP(TOP_mc_zn_eq, res, neg, res, Gen_Literal_TN(0, 4), &New_OPs);
 
      if(!TN_is_constant(tn_a)) {
-      Build_MC_OP(TOP_mc_zn_eq, tn_a, neg, tn_a, 0, &New_OPs, OP_ALWAYS_UNC_DEF);
+      Build_OP(TOP_mc_zn_eq, tn_a, neg, tn_a, Gen_Literal_TN(0, 4), &New_OPs);
      }
      if(!TN_is_constant(tn_b)) {
-      Build_MC_OP(TOP_mc_zn_eq, tn_b, neg, tn_b, 0, &New_OPs, OP_ALWAYS_UNC_DEF);
+      Build_OP(TOP_mc_zn_eq, tn_b, neg, tn_b, Gen_Literal_TN(0, 4), &New_OPs);
      }
   // restore registers which div clobber 
        if(WN_div_in_actual(expr)) {
@@ -4076,6 +4593,120 @@ Handle_Shift_Operation(WN* expr, TN* result)
   
   return result; 
 }
+
+#elif defined(TARG_X8664)
+
+void dump_op(const OP* op);
+
+static TN* 
+Handle_Fma_Operation(WN* expr, TN* result, WN *mul_wn, BOOL mul_kid0) 
+{
+  
+  WN* add_wn = (mul_kid0) ? WN_kid1(expr) : WN_kid0(expr); 
+  TN* opnd0; 
+  TN* opnd1; 
+  TN* opnd2;
+  TOP opcode; 
+  TYPE_ID rtype = OPCODE_rtype(WN_opcode(expr));
+  BOOL is_vector = MTYPE_is_vector(rtype);
+
+  // now match a scalar or vector fma4 
+  switch (WN_opcode(mul_wn)) {
+  case OPC_F4MPY:
+    opcode = TOP_vfmaddss;
+    break;
+  case OPC_F8MPY:
+    opcode = TOP_vfmaddsd;
+    break;
+  case OPC_V16F4MPY:
+  case OPC_V16C4MPY:
+    FmtAssert(is_vector, ("unexpected fma vector form"));
+    opcode = TOP_vfmaddps;
+    break;
+  case OPC_V16F8MPY:
+  case OPC_V16C8MPY:
+    FmtAssert(is_vector, ("unexpected fma vector form"));
+    opcode = TOP_vfmaddpd;
+    break;
+  default:
+    FmtAssert(FALSE, ("unexpected fma form"));
+    break;
+  }
+
+  opnd2 = Expand_Expr(add_wn, expr,  NULL); 
+  opnd1 = Expand_Expr(WN_kid1(mul_wn), mul_wn, NULL);
+  opnd0 = Expand_Expr(WN_kid0(mul_wn), mul_wn, NULL);
+ 
+  if(result == NULL) 
+    result = Allocate_Result_TN(expr, NULL); 
+
+  // Position tn's from loads on operand 1's position if possible.
+  if (OPCODE_is_load(WN_opcode(WN_kid0(mul_wn))))
+    Build_OP(opcode,  result,  opnd1,  opnd0, opnd2, &New_OPs); 
+  else
+    Build_OP(opcode,  result,  opnd0,  opnd1, opnd2, &New_OPs); 
+
+  // TODO: add operand size check for 256-bit
+  if (PU_has_avx128 == FALSE)
+    PU_has_avx128 = TRUE;
+  
+  return result; 
+}
+
+static TN* 
+Handle_Fms_Operation(WN* expr, TN* result, WN *mul_wn, BOOL mul_kid0) 
+{
+  WN* sub_wn = (mul_kid0) ? WN_kid1(expr) : WN_kid0(expr); 
+  TN* opnd0; 
+  TN* opnd1; 
+  TN* opnd2;
+  TOP opcode; 
+  TYPE_ID rtype = OPCODE_rtype(WN_opcode(expr));
+  BOOL is_vector = MTYPE_is_vector(rtype);
+
+  // now match a scalar or vector fma4 
+  switch (WN_opcode(mul_wn)) {
+  case OPC_F4MPY:
+    opcode = TOP_vfmsubss;
+    break;
+  case OPC_F8MPY:
+    opcode = TOP_vfmsubsd;
+    break;
+  case OPC_V16F4MPY:
+  case OPC_V16C4MPY:
+    FmtAssert(is_vector, ("unexpected fms vector form"));
+    opcode = TOP_vfmsubps;
+    break;
+  case OPC_V16F8MPY:
+  case OPC_V16C8MPY:
+    FmtAssert(is_vector, ("unexpected fms vector form"));
+    opcode = TOP_vfmsubpd;
+    break;
+  default:
+    FmtAssert(FALSE, ("unexpected fms form"));
+    break;
+  }
+
+  opnd2 = Expand_Expr(sub_wn, expr,  NULL); 
+  opnd1 = Expand_Expr(WN_kid1(mul_wn), mul_wn, NULL);
+  opnd0 = Expand_Expr(WN_kid0(mul_wn), mul_wn, NULL);
+
+  if(result == NULL) 
+    result = Allocate_Result_TN(expr, NULL); 
+
+  // Position tn's from loads on the 2nd operand if possible.
+  if (OPCODE_is_load(WN_opcode(WN_kid0(mul_wn))))
+    Build_OP(opcode,  result,  opnd1,  opnd0, opnd2, &New_OPs); 
+  else
+    Build_OP(opcode,  result,  opnd0,  opnd1, opnd2, &New_OPs); 
+
+  // TODO: add operand size check for 256-bit
+  if (PU_has_avx128 == FALSE)
+    PU_has_avx128 = TRUE;
+  
+  return result; 
+}
+
 #endif
 
 
@@ -4094,7 +4725,8 @@ Handle_Shift_Operation(WN* expr, TN* result)
  * is also NULL for cases where there is no parent (i.e. statement
  * level nodes).
  */
-#if defined(TARG_SL) 
+int aa=0;
+#if defined(TARG_SL) || defined(TARG_PPC32)
 TN *
 Expand_Expr (WN *expr, WN *parent, TN *result, INTRINSIC intrn_id)
 #else 
@@ -4102,6 +4734,10 @@ static TN *
 Expand_Expr (WN *expr, WN *parent, TN *result)
 #endif
 {
+#ifdef _OLIVE_AUTO_CG_a
+//  extern TN* Burm_Expand_Expr(WN *, WN *, TN *, INTRINSIC);
+//  return Burm_Expand_Expr(expr, parent, result, intrn_id);
+#endif
   OPCODE opcode;
   OPERATOR opr;
   INT num_opnds;
@@ -4131,8 +4767,13 @@ Expand_Expr (WN *expr, WN *parent, TN *result)
 #endif
 
   top = WHIRL_To_TOP (expr);
+#ifdef TARG_PPC32
+  if (top == TOP_nop && (opr == OPR_PARM || opr == OPR_PAREN)) {
+  	return Expand_Expr (WN_kid0(expr), parent, result, intrn_id);
+  }
+#endif
   if (TOP_is_noop(top)
-#ifdef TARG_IA64
+#if defined(TARG_IA64) || defined(TARG_LOONGSON)
 	&& (opr == OPR_PAREN || opr == OPR_TAS || opr == OPR_PARM)) 
 #else
 	&& (opr == OPR_PAREN || 
@@ -4153,6 +4794,21 @@ Expand_Expr (WN *expr, WN *parent, TN *result)
 #endif
 			  );
   }
+
+#ifdef _OLIVE_AUTO_CG_
+  if(aa==1){
+    printf("\nOPCODE: %d %s    TOP: %d\n", opcode, OPCODE_name(opcode), top);
+    dump_tree(expr);
+  }
+
+  extern TN* Burm_Expand_Expr(WN *, WN *, TN *, INTRINSIC);
+  if(  
+	aa==0)
+	 return Burm_Expand_Expr(expr, parent, result, intrn_id);
+  aa=0;
+#endif
+
+
   /* get #opnds from topcode or from #kids of whirl
    * (special cases like store handled directly). */
   if (top != TOP_UNDEFINED) {
@@ -4304,7 +4960,7 @@ Expand_Expr (WN *expr, WN *parent, TN *result)
     switch (opcode) {
     case OPC_I8INTCONST:
     case OPC_U8INTCONST:
-#ifdef EMULATE_LONGLONG
+#if defined(EMULATE_LONGLONG) && !defined(TARG_SL) && !defined(TARG_PPC32)
       const_tn = Gen_Literal_TN_Pair((UINT64) WN_const_val(expr));
 #else
       const_tn = Gen_Literal_TN (WN_const_val(expr), 8);
@@ -4351,6 +5007,7 @@ Expand_Expr (WN *expr, WN *parent, TN *result)
       return const_tn;
     }
 
+#if !defined(TARG_PPC32)     
     /* If the constant is in a hardwired register, return the register.
      * No need to generate a LDIMM in that case.
      */
@@ -4364,13 +5021,19 @@ Expand_Expr (WN *expr, WN *parent, TN *result)
 
 	/* If the constant is integer 0, it is always available in $0.
 	 */
+#if defined(TARG_SL)
+	if (Zero_TN && (WN_const_val(expr) == 0)
+  && (opcode == OPC_I4INTCONST || opcode == OPC_U4INTCONST)) return Zero_TN;
+#else
 	if (Zero_TN && WN_const_val(expr) == 0) return Zero_TN;
+#endif
       }
     }
+#endif
 
     if (CGSPILL_Rematerialize_Constants && result == NULL) {
       result = Allocate_Result_TN (expr, NULL);
-#ifdef TARG_X8664
+#if defined(TARG_X8664) || defined(TARG_PPC32)
       // Don't rematerialize a 64-bit imm value under -m32.
       if( !OP_NEED_PAIR( WN_rtype(expr) ) )
 #endif // TARG_X8664
@@ -4404,7 +5067,11 @@ Expand_Expr (WN *expr, WN *parent, TN *result)
     else if (Is_CVTL_Opcode(opcode))
     {
       opnd_tn[0] = Expand_Expr (WN_kid0(expr), expr, NULL);
+#ifdef TARG_LOONGSON
+      opnd_tn[1] = Gen_Literal_TN (0, 4);
+#else
       opnd_tn[1] = Gen_Literal_TN (32, 4);
+#endif
       num_opnds = 2;
     }
     else
@@ -4611,6 +5278,36 @@ Expand_Expr (WN *expr, WN *parent, TN *result)
       CG_SL2_enable_peephole &&  
       Has_Shift_Operation(expr)) {
       return Handle_Shift_Operation(expr, result); 
+    }
+#elif defined(TARG_X8664)
+  case OPR_SUB:
+  case OPR_ADD:
+    if ((CG_opt_level > 1) && Is_Target_Orochi() && 
+        Is_Target_AVX() && Is_Target_FMA4()) {
+      TYPE_ID rtype = OPCODE_rtype(opcode);
+      WN *mul_wn = NULL;
+      // Looking for a fm{a/s} candidate via FMA4 insns
+      if (MTYPE_is_float(rtype) || MTYPE_is_vector(rtype)) {
+        if ((WN_operator(mul_wn = WN_kid(expr, 0)) == OPR_MPY) &&
+            (WN_opcode(mul_wn) != OPC_FQMPY) && (WN_opcode(mul_wn) != OPC_F10MPY) ) {
+          rtype = OPCODE_rtype(WN_opcode (mul_wn));
+          if (MTYPE_is_float(rtype) || MTYPE_is_vector(rtype)) {
+            if (WN_operator(expr) == OPR_ADD) {
+              return Handle_Fma_Operation(expr, result, mul_wn, TRUE);
+            } else if (WN_operator(expr) == OPR_SUB) {
+              return Handle_Fms_Operation(expr, result, mul_wn, TRUE);
+            }
+          }
+        } else if ((WN_operator(mul_wn = WN_kid(expr, 1)) == OPR_MPY) &&
+                   (WN_opcode(mul_wn) != OPC_FQMPY) && (WN_opcode(mul_wn) != OPC_F10MPY)) {
+          rtype = OPCODE_rtype(WN_opcode (mul_wn));
+          if (MTYPE_is_float(rtype) || MTYPE_is_vector(rtype)) {
+            if (WN_operator(expr) == OPR_ADD) {
+              return Handle_Fma_Operation(expr, result, mul_wn, FALSE);
+            } 
+          }
+        }
+      }
     }
 #endif 
 
@@ -5169,6 +5866,7 @@ static void Build_CFG(void)
 	  && BB_rid(BB_next(bb)) != NULL
 	  && CGRIN_entry(RID_cginfo(BB_rid(BB_next(bb)))) != BB_next(bb)) {
 	BB *region_entry = CGRIN_entry(RID_cginfo(BB_rid(BB_next(bb))));
+	FmtAssert(region_entry, ("Build_CFG : entry is NULL"));
 	ANNOTATION *ant = ANNOT_Get (BB_annotations(region_entry), ANNOT_LABEL);
 	OPS ops;
 	OPS_Init(&ops);
@@ -5193,7 +5891,28 @@ static void Build_CFG(void)
 	continue;	// no successor
       } 
       else {
+#ifdef TARG_LOONGSON	// in loongson2e, without rid, the codes have to be copied here.
+	br_op = BB_branch_op( bb );
+	if ( br_op == NULL ) {
+	  if ( BB_next( bb ) && !BB_exit( bb ) )
+	     // for some reason there is an empty block after a return 
+	     // block but this should not really be a successor 
+	     Link_Pred_Succ ( bb, BB_next( bb ) );
+	  }
+	  else {
+	    if ( OP_cond( br_op ) ) {
+	      if ( BB_next( bb ) ) Link_Pred_Succ ( bb, BB_next( bb ) );
+	    }
+	    target_tn = OP_opnd(br_op, OP_find_opnd_use(br_op, OU_target));
+	    FmtAssert( TN_is_label( target_tn ),
+	          ("target of branch is not a label") );
+	    label = TN_label( target_tn );
+	    if ( Get_Label_BB ( label ) != NULL )
+	       Link_BBs( bb, label );
+        }
+#else	
 	Link_Pred_Succ (bb, BB_next(bb));
+#endif
       }
     }
   }
@@ -5211,6 +5930,9 @@ static VARIANT
 WHIRL_Compare_To_OP_variant (OPCODE opcode, BOOL invert)
 {
   VARIANT variant = V_BR_NONE;
+#ifdef TARG_LOONGSON
+  BOOL need_negative = TRUE;
+#endif
   switch (opcode) {
 // >> WHIRL 0.30: replaced OPC_T1{EQ,NE,GT,GE,LT,LE} by OPC_BT1, OPC_I4T1 variants
 // TODO WHIRL 0.30: get rid of OPC_I4T1 variants
@@ -5230,13 +5952,22 @@ WHIRL_Compare_To_OP_variant (OPCODE opcode, BOOL invert)
   case OPC_BU4EQ: case OPC_I4U4EQ: variant = V_BR_U4EQ; break;
   case OPC_U4FQEQ:
   case OPC_BFQEQ: case OPC_I4FQEQ: variant = V_BR_QEQ; break;
-#ifdef TARG_IA64
+#if defined(TARG_IA64) || defined(TARG_X8664)
+  case OPC_U4F10EQ:
   case OPC_BF10EQ: case OPC_I4F10EQ: variant = V_BR_XEQ; break;
 #endif
   case OPC_U4F8EQ:
-  case OPC_BF8EQ: case OPC_I4F8EQ: variant = V_BR_DEQ; break;
+  case OPC_BF8EQ: case OPC_I4F8EQ: variant = V_BR_DEQ;
+#ifdef TARG_LOONGSON
+    need_negative = FALSE;
+#endif
+  break;
   case OPC_U4F4EQ:
-  case OPC_BF4EQ: case OPC_I4F4EQ: variant = V_BR_FEQ; break;
+  case OPC_BF4EQ: case OPC_I4F4EQ: variant = V_BR_FEQ;
+#ifdef TARG_LOONGSON
+    need_negative = FALSE;
+#endif
+	break;
   // ------------------------- OPR_NE -------------------------
   case OPC_U4I8NE:
   case OPC_BI8NE: case OPC_I4I8NE: variant = V_BR_I8NE; break;
@@ -5257,13 +5988,22 @@ WHIRL_Compare_To_OP_variant (OPCODE opcode, BOOL invert)
   case OPC_BU4NE: case OPC_I4U4NE: variant = V_BR_U4NE; break;
   case OPC_U4FQNE:
   case OPC_BFQNE: case OPC_I4FQNE: variant = V_BR_QNE; break;
-#ifdef TARG_IA64
+#if defined(TARG_IA64) || defined(TARG_X8664)
+  case OPC_U4F10NE:
   case OPC_BF10NE: case OPC_I4F10NE: variant = V_BR_XNE; break;
 #endif
   case OPC_U4F8NE:
-  case OPC_BF8NE: case OPC_I4F8NE: variant = V_BR_DNE; break;
+  case OPC_BF8NE: case OPC_I4F8NE: variant = V_BR_DNE;
+#ifdef TARG_LOONGSON
+    need_negative = FALSE;
+#endif
+	break;
   case OPC_U4F4NE:
-  case OPC_BF4NE: case OPC_I4F4NE: variant = V_BR_FNE; break;
+  case OPC_BF4NE: case OPC_I4F4NE: variant = V_BR_FNE; 
+#ifdef TARG_LOONGSON
+    need_negative = FALSE;
+#endif
+	break;
   // ------------------------- OPR_GT -------------------------
   case OPC_U4I8GT:
   case OPC_BI8GT: case OPC_I4I8GT: variant = V_BR_I8GT; break;
@@ -5284,13 +6024,22 @@ WHIRL_Compare_To_OP_variant (OPCODE opcode, BOOL invert)
   case OPC_BU4GT: case OPC_I4U4GT: variant = V_BR_U4GT; break;
   case OPC_U4FQGT:
   case OPC_BFQGT: case OPC_I4FQGT: variant = V_BR_QGT; break;
-#ifdef TARG_IA64
+#if defined(TARG_IA64) || defined(TARG_X8664)
+  case OPC_U4F10GT:
   case OPC_BF10GT: case OPC_I4F10GT: variant = V_BR_XGT; break;
 #endif
   case OPC_U4F8GT:
-  case OPC_BF8GT: case OPC_I4F8GT: variant = V_BR_DGT; break;
+  case OPC_BF8GT: case OPC_I4F8GT: variant = V_BR_DGT; 
+#ifdef TARG_LOONGSON
+    need_negative = FALSE;
+#endif
+	break;
   case OPC_U4F4GT:
-  case OPC_BF4GT: case OPC_I4F4GT: variant = V_BR_FGT; break;
+  case OPC_BF4GT: case OPC_I4F4GT: variant = V_BR_FGT; 
+#ifdef TARG_LOONGSON
+    need_negative = FALSE;
+#endif
+	break;
 
   // ------------------------- OPR_GE -------------------------
   case OPC_U4I8GE:
@@ -5312,13 +6061,22 @@ WHIRL_Compare_To_OP_variant (OPCODE opcode, BOOL invert)
   case OPC_BU4GE: case OPC_I4U4GE: variant = V_BR_U4GE; break;
   case OPC_U4FQGE:
   case OPC_BFQGE: case OPC_I4FQGE: variant = V_BR_QGE; break;
-#ifdef TARG_IA64
+#if defined(TARG_IA64) || defined(TARG_X8664)
+  case OPC_U4F10GE:
   case OPC_BF10GE: case OPC_I4F10GE: variant = V_BR_XGE; break;
 #endif
   case OPC_U4F8GE:
-  case OPC_BF8GE: case OPC_I4F8GE: variant = V_BR_DGE; break;
+  case OPC_BF8GE: case OPC_I4F8GE: variant = V_BR_DGE; 
+#ifdef TARG_LOONGSON
+    need_negative = FALSE;
+#endif
+	break;
   case OPC_U4F4GE:
-  case OPC_BF4GE: case OPC_I4F4GE: variant = V_BR_FGE; break;
+  case OPC_BF4GE: case OPC_I4F4GE: variant = V_BR_FGE; 
+#ifdef TARG_LOONGSON
+    need_negative = FALSE;
+#endif
+	break;
 
   // ------------------------- OPR_LT -------------------------
   case OPC_U4I8LT:
@@ -5340,13 +6098,22 @@ WHIRL_Compare_To_OP_variant (OPCODE opcode, BOOL invert)
   case OPC_BU4LT: case OPC_I4U4LT: variant = V_BR_U4LT; break;
   case OPC_U4FQLT:
   case OPC_BFQLT: case OPC_I4FQLT: variant = V_BR_QLT; break;
-  case OPC_U4F8LT:
-#ifdef TARG_IA64
+#if defined(TARG_IA64) || defined(TARG_X8664)
+  case OPC_U4F10LT:
   case OPC_BF10LT: case OPC_I4F10LT: variant = V_BR_XLT; break;
 #endif
-  case OPC_BF8LT: case OPC_I4F8LT: variant = V_BR_DLT; break;
+  case OPC_U4F8LT:
+  case OPC_BF8LT: case OPC_I4F8LT: variant = V_BR_DLT; 
+#ifdef TARG_LOONGSON
+    need_negative = FALSE;
+#endif
+	break;
   case OPC_U4F4LT:
-  case OPC_BF4LT: case OPC_I4F4LT: variant = V_BR_FLT; break;
+  case OPC_BF4LT: case OPC_I4F4LT: variant = V_BR_FLT; 
+#ifdef TARG_LOONGSON
+    need_negative = FALSE;
+#endif
+	break;
 
   // ------------------------- OPR_LE -------------------------
   case OPC_U4I8LE:
@@ -5368,19 +6135,38 @@ WHIRL_Compare_To_OP_variant (OPCODE opcode, BOOL invert)
   case OPC_BU4LE: case OPC_I4U4LE: variant = V_BR_U4LE; break;
   case OPC_U4FQLE:
   case OPC_BFQLE: case OPC_I4FQLE: variant = V_BR_QLE; break;
-#ifdef TARG_IA64
+#if defined(TARG_IA64) || defined(TARG_X8664)
+  case OPC_U4F10LE:
   case OPC_BF10LE: case OPC_I4F10LE: variant = V_BR_XLE; break;
 #endif
   case OPC_U4F8LE:
-  case OPC_BF8LE: case OPC_I4F8LE: variant = V_BR_DLE; break;
+  case OPC_BF8LE: case OPC_I4F8LE: variant = V_BR_DLE; 
+#ifdef TARG_LOONGSON
+    need_negative = FALSE;
+#endif
+	break;
   case OPC_U4F4LE:
-  case OPC_BF4LE: case OPC_I4F4LE: variant = V_BR_FLE; break;
+  case OPC_BF4LE: case OPC_I4F4LE: variant = V_BR_FLE; 
+#ifdef TARG_LOONGSON
+    need_negative = FALSE;
+#endif
+	break;
 
   case OPC_BBNE: variant = V_BR_PNE; break;
   case OPC_BBEQ: variant = V_BR_PEQ; break;
 // << WHIRL 0.30: replaced OPC_T1{EQ,NE,GT,GE,LT,LE} by OPC_BT1, OPC_I4T1 variants
   }
-  if (invert) variant = Negate_BR_Variant(variant);
+  if (invert)
+#ifdef TARG_LOONGSON
+{
+	if (need_negative)
+		variant = Negate_BR_Variant (variant);
+	else
+		Set_V_false_br (variant);
+}
+#else
+		variant = Negate_BR_Variant (variant);
+#endif
 #ifdef Is_True_On
   if (variant == V_BR_NONE && OPERATOR_is_compare(OPCODE_operator(opcode)))
     DevWarn ("KEY: Unknown branch variant found for %s!", OPCODE_name(opcode));
@@ -5422,7 +6208,7 @@ Handle_CONDBR (WN *branch)
   }
   else {
 
-#ifdef TARG_IA64
+#if defined(TARG_IA64) || defined(TARG_LOONGSON)
     /* 
     Ideally MTYPE_B should be used for the return result type of the 
     condition operator. However, it is used for other purposes already.
@@ -5431,9 +6217,17 @@ Handle_CONDBR (WN *branch)
     */
     operand0 = NULL;  // set for old branch
     if (Is_Old_Boolean_Expression(condition)) {
+#ifdef TARG_LOONGSON
+      TN *binary_result;
+      binary_result = Build_TN_Of_Mtype (MTYPE_I8);
+      operand0 = Expand_Expr (condition, branch, binary_result);      
+      operand1 = Zero_TN;
+      variant = (invert) ? V_BR_I8EQ : V_BR_I8NE;
+#else
       operand0 = Handle_Bool_As_Predicate(condition, branch, invert);
       operand1 = NULL;
    		variant = V_BR_P_TRUE;
+#endif
     }
     
     if (operand0==NULL) {
@@ -5472,7 +6266,7 @@ Handle_CONDBR (WN *branch)
 #endif
       }
     } else {
-#if !defined(TARG_IA32) && !defined(TARG_X8664) && !defined(TARG_NVISA)
+#if !defined(TARG_IA32) && !defined(TARG_X8664) && !defined(TARG_NVISA) && !defined(TARG_PPC32)
       operand1 = Zero_TN;
       variant = (invert) ? V_BR_I8EQ : V_BR_I8NE;
 #else
@@ -5771,18 +6565,6 @@ Handle_ASM (const WN* asm_wn)
   ASM_OP_wn(asm_info) = asm_wn;
 
 #ifdef TARG_IA32
-#if 0  
-  // Adding eflags register to the clobber set causes a problem
-  // in LRA, because a live range that includes such an ASM OP
-  // cannot use eflags register for allocation. Given that we
-  // currently don't do any dependence-based transformations for
-  // IA-32, it should be safe to ignore Asm_Clobbers_Cc flag.
-  //
-  if (WN_Asm_Clobbers_Cc(asm_wn)) {
-    ASM_OP_clobber_set(asm_info)[ISA_REGISTER_CLASS_eflags] = 
-      REGISTER_SET_Union1(REGISTER_SET_EMPTY_SET, REGISTER_MIN);
-  }
-#endif
 #endif
 
   // process ASM clobber list
@@ -5866,10 +6648,10 @@ Handle_ASM (const WN* asm_wn)
     }
     ISA_REGISTER_SUBCLASS subclass = ISA_REGISTER_SUBCLASS_UNDEFINED;
 
-#if defined(TARG_IA64)
-    TN* tn = CGTARG_TN_For_Asm_Operand(constraint, load, pref_tn, &subclass);
+#if defined(TARG_IA64) || defined(TARG_PPC32) || defined(TARG_LOONGSON)
+    TN* tn = CGTARG_TN_For_Asm_Operand(constraint, load, pref_tn, &subclass, asm_wn);
 #else
-    TN* tn = CGTARG_TN_For_Asm_Operand(constraint, load, pref_tn, &subclass, 
+    TN* tn = CGTARG_TN_For_Asm_Operand(constraint, load, pref_tn, &subclass, asm_wn, 
 				       default_type);
 #endif
 
@@ -5931,10 +6713,10 @@ Handle_ASM (const WN* asm_wn)
     }
     ISA_REGISTER_SUBCLASS subclass = ISA_REGISTER_SUBCLASS_UNDEFINED;
 
-#if defined(TARG_IA64)
-    TN* tn = CGTARG_TN_For_Asm_Operand(constraint, load, pref_tn, &subclass);
+#if defined(TARG_IA64) || defined(TARG_PPC32) || defined(TARG_LOONGSON)
+    TN* tn = CGTARG_TN_For_Asm_Operand(constraint, load, pref_tn, &subclass, asm_wn);
 #else
-    TN* tn = CGTARG_TN_For_Asm_Operand(constraint, load, pref_tn, &subclass, 
+    TN* tn = CGTARG_TN_For_Asm_Operand(constraint, load, pref_tn, &subclass, asm_wn,
 				       MTYPE_I4);
 #endif
 
@@ -5955,14 +6737,14 @@ Handle_ASM (const WN* asm_wn)
     if (TN_is_register(tn)) {
 #ifdef TARG_X8664
       if( ( TN_register_class(tn) == ISA_REGISTER_CLASS_x87 ) &&
-	  ( WN_rtype(load) != MTYPE_FQ ) ){
+	  ( WN_rtype(load) != MTYPE_F10 ) ){
 	const TYPE_ID rtype = WN_rtype(load);
 	extern void Expand_Float_To_Float( TN*, TN*, TYPE_ID, TYPE_ID, OPS* );
 	FmtAssert( MTYPE_is_float(rtype), ("NYI") );
 	TN* tmp_tn = Gen_Typed_Register_TN( rtype, MTYPE_byte_size(rtype) );
 
 	Expand_Expr( load, NULL, tmp_tn );
-	Expand_Float_To_Float( tn, tmp_tn, MTYPE_FQ, rtype, &New_OPs );
+	Expand_Float_To_Float( tn, tmp_tn, MTYPE_F10, rtype, &New_OPs );
       } else
 #endif // TARG_X8664
 	Expand_Expr (load, NULL, tn);
@@ -6221,9 +7003,9 @@ BOOL SL_Intrinsic_Has_ReturnP(TOP opcode) {
       case  TOP_c2_med:
       case  TOP_c2_gsums:
       case  TOP_c3_mvtacc:
-      case  TOP_c3_mvtadd:	 
+      case  TOP_c3_mvtaddr:	 
       case  TOP_c3_mvfacc:
-      case  TOP_c3_mvfadd:	  	 
+      case  TOP_c3_mvfaddr:	  	 
         return TRUE;
       default:
         return FALSE;
@@ -6339,6 +7121,8 @@ static void Expand_Statement (WN *stmt)
       LOOPINFO_wn(info) = loop_info;
       LOOPINFO_srcpos(info) = srcpos;
       LOOPINFO_trip_count_tn(info) = trip_tn;
+      LOOPINFO_multiversion(info) = WN_Loop_Multiversion_Alias(loop_info);
+
 #ifndef TARG_NVISA
       if (!CG_PU_Has_Feedback && WN_loop_trip_est(loop_info) == 0)
 	WN_loop_trip_est(loop_info) = 100;
@@ -6388,10 +7172,27 @@ static void Expand_Statement (WN *stmt)
       else
 	BB_Add_Annotation(Cur_BB, ANNOT_PRAGMA, stmt);
     }
-#ifdef TARG_X8664 
+#if defined(TARG_X8664) || defined(TARG_IA64)
+    if (WN_pragma(stmt) == WN_PRAGMA_INLINE_BODY_START)
+    {
+      OPCODE opcode = WN_opcode(stmt);
+      if (OPCODE_has_sym(opcode)){
+        BB_Add_Annotation (Cur_BB, ANNOT_INLINE, (void *)WN_st_idx(stmt));
+      }
+    }
+    if (WN_pragma(stmt) == WN_PRAGMA_INLINE_BODY_END)
+    { 
+      OPCODE opcode = WN_opcode(stmt);
+      if (OPCODE_has_sym(opcode)){
+        ST *st = WN_st(stmt);
+        BB_Add_Annotation (Cur_BB, 
+                           ANNOT_INLINE, 
+                           (void *)(WN_st_idx(stmt)+ST_index(st)));
+      }
+    }
+#endif
     if (WN_pragma(stmt) == WN_PRAGMA_PREAMBLE_END)
       WN_pragma_preamble_end_seen = TRUE;
-#endif
     break;
   case OPC_COMMENT:
     COMMENT_Add(Cur_BB, WN_GetComment(stmt));
@@ -6417,7 +7218,7 @@ static void Expand_Statement (WN *stmt)
 }
 
 
-static WN *
+WN *
 Handle_INTRINSIC_CALL (WN *intrncall)
 {
   enum {max_intrinsic_opnds = 4};
@@ -6450,83 +7251,6 @@ Handle_INTRINSIC_CALL (WN *intrncall)
       BB_Add_Annotation (bb, ANNOT_LABEL, (void *)label);
       Set_Label_BB (label,bb);
       return next_stmt;
-    }
-    break;
-
-#if 0 // removed from PSC 3.2
-  case INTRN_FETCH_AND_ADD_I4:
-  case INTRN_FETCH_AND_ADD_I8:
-    {
-      Exp_Fetch_and_Add( Expand_Expr(WN_kid0(intrncall), intrncall, NULL),
-			 Expand_Expr(WN_kid1(intrncall), intrncall, NULL),
-			 WN_rtype(intrncall),
-			 &New_OPs );
-
-      return next_stmt;
-    }
-    break;
-#endif
-
-  case INTRN_FETCH_AND_AND_I4:
-  case INTRN_FETCH_AND_AND_I8:
-    {
-      Exp_Fetch_and_And( Expand_Expr(WN_kid0(intrncall), intrncall, NULL),
-                         Expand_Expr(WN_kid1(intrncall), intrncall, NULL),
-			 WN_rtype(intrncall),
-			 &New_OPs );
-      return next_stmt;
-    }
-    break;
-  case INTRN_FETCH_AND_OR_I4:
-  case INTRN_FETCH_AND_OR_I8:
-    {
-      Exp_Fetch_and_Or( Expand_Expr(WN_kid0(intrncall), intrncall, NULL),
-                        Expand_Expr(WN_kid1(intrncall), intrncall, NULL),
-			WN_rtype(intrncall),
-			&New_OPs );
-      return next_stmt;
-    }
-    break;
-  case INTRN_FETCH_AND_XOR_I4:
-  case INTRN_FETCH_AND_XOR_I8:
-    {
-      Exp_Fetch_and_Xor( Expand_Expr(WN_kid0(intrncall), intrncall, NULL),
-                         Expand_Expr(WN_kid1(intrncall), intrncall, NULL),
-			 WN_rtype(intrncall),
-			 &New_OPs );
-      return next_stmt;
-    }
-    break;
-
-#if 0 // removed from PSC 3.2
-  case INTRN_FETCH_AND_SUB_I4:
-  case INTRN_FETCH_AND_SUB_I8:
-    {
-      Exp_Fetch_and_Sub( Expand_Expr(WN_kid0(intrncall), intrncall, NULL),
-                         Expand_Expr(WN_kid1(intrncall), intrncall, NULL),
-			 WN_rtype(intrncall),
-			 &New_OPs );
-#if defined(TARG_IA64)
-      // OSP
-      goto cont;
-#else
-      return next_stmt;
-#endif
-    }
-    break;
-#endif
-
-  case INTRN_COMPARE_AND_SWAP_I4:
-  case INTRN_COMPARE_AND_SWAP_I8:
-    {
-      result = Exp_Compare_and_Swap( Expand_Expr(WN_kid0(intrncall), intrncall, NULL),
-			 Expand_Expr(WN_kid1(intrncall), intrncall, NULL),
-			 Expand_Expr(WN_kid2(intrncall), intrncall, NULL),
-			 WN_rtype(WN_kid1(intrncall)),
-			 &New_OPs );
-
-//      return next_stmt;
-      goto cont;
     }
     break;
   case INTRN_STMXCSR: {
@@ -6635,6 +7359,9 @@ Handle_INTRINSIC_CALL (WN *intrncall)
 #endif
 	       )
         ) {
+#if defined(TARG_SL)
+   if (!((OP_code(op) == TOP_depb) && (i == (OP_opnds(op)-1)))) // Don't replace the hiden operand of depb.
+#endif
 	  Set_OP_opnd (op, i, result);
 	}
       }
@@ -6818,6 +7545,10 @@ Convert_WHIRL_To_OPs (WN *tree)
   BOOL Trace_BBs = Get_Trace (TP_CGEXP, 512);
   Trace_WhirlToOp = Get_Trace (TP_CGEXP, 2);
 
+#ifdef TARG_X8664
+  PU_has_avx128 = FALSE;
+#endif
+
   // Initialization; some of this should be PU level others are region level
 
   if (Trace_WhirlToOp) {
@@ -6984,6 +7715,13 @@ void Whirl2ops_Initialize(struct ALIAS_MANAGER *alias_mgr)
     WN_to_OP_map = WN_MAP_UNDEFINED;
   }
   last_loop_pragma = NULL;
+
+#ifdef TARG_X8664
+  if (Is_Target_Orochi() && Is_Target_AVX()) {
+    Init_LegacySSE_To_Vex_Group();
+  }
+#endif
+
   OP_Asm_Map = OP_MAP_Create();
 #if defined(TARG_IA64)
   OP_Ld_GOT_2_Sym_Map = OP_MAP_Create();

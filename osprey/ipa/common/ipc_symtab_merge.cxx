@@ -1,4 +1,8 @@
 /*
+ * Copyright (C) 2009-2010 Advanced Micro Devices, Inc.  All Rights Reserved.
+ */
+
+/*
  * Copyright 2003, 2004, 2005, 2006 PathScale, Inc.  All Rights Reserved.
  */
 
@@ -63,7 +67,6 @@
 // ====================================================================
 //
 
-#define __STDC_LIMIT_MACROS
 #include <stdint.h>
 #include "linker.h"
 
@@ -1148,7 +1151,8 @@ Synch_Pu_With_Pu (PU& merged_pu, const PU& original_pu)
 	PU_IS_MAINPU | PU_UPLEVEL | PU_MP_NEEDS_LNO | PU_HAS_ALLOCA |
 	PU_IN_ELF_SECTION | PU_HAS_MP | PU_MP | PU_HAS_NAMELIST |
 	PU_HAS_RETURN_ADDRESS | PU_HAS_REGION | PU_HAS_INLINES |
-	PU_CALLS_SETJMP | PU_CALLS_LONGJMP | PU_HAS_USER_ALLOCA;
+	PU_CALLS_SETJMP | PU_CALLS_LONGJMP | PU_HAS_USER_ALLOCA |
+	PU_HAS_ATTR_MALLOC | PU_HAS_ATTR_NORETURN | PU_NOTHROW;
 
     const UINT64 original_flags = original_pu.flags;
     UINT64 merged_flags = merged_pu.flags;
@@ -1225,8 +1229,32 @@ Synch_ST_flags (ST& merged_st, const ST& original_st)
 	(ST_GPREL | ST_NOT_GPREL)) {
 	Clear_ST_gprel (merged_st); 
     }
+
+    // if the named_section starts with .rodata., we
+    // need to set the ST as const_var, as gas will
+    // treat it as a rodata.
+    if (ST_is_const_var(merged_st))
+        return;
+
+    BOOL set_const_var = FALSE;
+    if (ST_has_named_section(&merged_st))
+    {
+        STR_IDX name = Find_Section_Name_For_ST(&merged_st);
+        if (strncmp(Index_To_Str(name), ".rodata.", 8) == 0)
+            set_const_var = TRUE;
+    }
+    if (!set_const_var && ST_has_named_section(&original_st))
+    {
+        STR_IDX name = Find_Section_Name_For_ST(&original_st);
+        if (strncmp(Index_To_Str(name), ".rodata.", 8) == 0)
+            set_const_var = TRUE;
+    }
+    if (set_const_var)
+        Set_ST_is_const_var(&merged_st);
+
 } // Synch_ST_flags
  
+
 
 static void
 Synch_St_With_St(const IPC_GLOBAL_TABS& original_tabs,
@@ -1728,7 +1756,7 @@ Merge_Global_St(UINT                   idx,
     //
     char *st_name = &original_tabs.symstr_tab[ST_name_idx (original_st)];
 
-#if defined(TARG_IA64) || defined(TARG_X8664) || defined(TARG_MIPS) || defined(TARG_SL)
+#if defined(TARG_IA64) || defined(TARG_X8664) || defined(TARG_MIPS) || defined(TARG_SL) || defined(TARG_LOONGSON)
     void *pext = ld_slookup_mext(st_name,
     	    	    	    	(ST_storage_class (original_st) == SCLASS_EXTERN));
 #else
@@ -1905,6 +1933,16 @@ Merge_Global_Inito(const INITO* inito_tab, UINT32 inito_tab_size,
     }
 } // Merge_Global_Inito
 
+static BOOL St_Attr_Entry_Existed(ST_IDX new_st_idx, ST_ATTR_KIND kind) {
+	UINT32 i;
+	ST_ATTR* st_attr_entry;
+	for (i = 0; i < ST_ATTR_Table_Size(GLOBAL_SYMTAB) && (st_attr_entry = &St_Attr_Table(GLOBAL_SYMTAB,i)); ++i) {
+	    if (st_attr_entry->kind == kind && st_attr_entry->st_idx == new_st_idx) {
+	      return TRUE;
+	    }
+	}
+	return FALSE;
+} // St_Attr_Entry_Existed
 
 static void
 Merge_Global_St_Attr(const ST_ATTR* st_attr_tab, UINT32 size)
@@ -1927,6 +1965,9 @@ Merge_Global_St_Attr(const ST_ATTR* st_attr_tab, UINT32 size)
 	ST_IDX st_idx = (*New_St_Idx) [ST_ATTR_st_idx (old_st_attr)];
 	Update_reference_count (&St_Table [st_idx], /*refcount*/ 1,
 				/*modcount*/ 0, /*is_cmod*/ FALSE);
+
+	if (St_Attr_Entry_Existed(st_idx, old_st_attr.kind)) continue;
+
 	ST_ATTR_KIND akind = old_st_attr.kind;
 	ST_ATTR_IDX new_st_attr_idx;
 	ST_ATTR&    new_st_attr = New_ST_ATTR (GLOBAL_SYMTAB, new_st_attr_idx);

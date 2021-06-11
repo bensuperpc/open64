@@ -1,14 +1,14 @@
-/*********************************************************************\
- |*                                                                  *|   
- |*    Copyright (c) 2006 by SimpLight Nanoelectronics.              *|
- |*    All rights reserved                                           *|
- |*                                                                  *|
- |* This material constitutes the trade secrets and confidential,    *| 
- |* proprietary information of SimpLight.  This material is not to   *|  
- |* be disclosed, reproduced, copied, or used in any manner  not     *|  
- |* permitted under license from SimpLight Nanoelectronics Ltd.      *|  
- |*                                                                  *|   
-\*********************************************************************/ 
+/********************************************************************\
+|*                                                                  *|   
+|*  Copyright (c) 2006 by SimpLight Nanoelectronics.                *|
+|*  All rights reserved                                             *|
+|*                                                                  *|
+|*  This program is free software; you can redistribute it and/or   *|
+|*  modify it under the terms of the GNU General Public License as  *|
+|*  published by the Free Software Foundation; either version 2,    *|
+|*  or (at your option) any later version.                          *|
+|*                                                                  *|
+\********************************************************************/
 
 #include "tracing.h"
 #include "error.h"
@@ -524,7 +524,7 @@ static inline BOOL OP_is_copy( OP *op )
   BOOL ret = OP_copy(op);
 #ifdef TARG_SL
   if( (OP_code(op)==TOP_c3_mvfacc) || (OP_code(op)==TOP_c3_mvtacc) ||
-      (OP_code(op)==TOP_c3_mvfadd) || (OP_code(op)==TOP_c3_mvtadd) ){
+      (OP_code(op)==TOP_c3_mvfaddr) || (OP_code(op)==TOP_c3_mvtaddr) ){
     Is_True( OP_opnds(op)==2, ("opnd number is not 2, incorrect") );
     TN *shift_tn = OP_opnd(op, 1);
     if( TN_is_constant(shift_tn) && TN_value(shift_tn)==0 )

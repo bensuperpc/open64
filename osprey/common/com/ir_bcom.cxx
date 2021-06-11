@@ -1,4 +1,8 @@
 /*
+ * Copyright (C) 2009, 2011 Advanced Micro Devices, Inc.  All Rights Reserved.
+ */
+
+/*
  *  Copyright (C) 2006. QLogic Corporation. All Rights Reserved.
  */
 
@@ -41,7 +45,6 @@
 */
 
 
-#define __STDC_LIMIT_MACROS
 #include <stdint.h>
 #ifdef USE_PCH
 #include "common_com_pch.h"
@@ -86,6 +89,7 @@
 #define INIT_TMP_MAPPED_SIZE    MAPPED_SIZE
 
 #ifdef BACK_END
+
 #define DEFAULT_NUM_OF_PREFETCHES 64
 WN **prefetch_ldsts;
 INT num_prefetch_ldsts;
@@ -96,11 +100,17 @@ WN **alias_classes;
 INT num_alias_class_nodes;
 INT max_alias_class_nodes;
 
+#define DEFAULT_NUM_ALIAS_CGNODES 128
+WN **alias_cgnodes;
+INT num_alias_cgnode_nodes;
+INT max_alias_cgnode_nodes;
+
 #define DEFAULT_NUM_AC_INTERNALS 128
 WN **ac_internals;
 INT num_ac_internal_nodes;
 INT max_ac_internal_nodes;
-#endif
+
+#endif // BACK_END
 
 #ifndef __GNUC__
 #define __ALIGNOF(x) __builtin_alignof(x)
@@ -350,6 +360,7 @@ ir_b_write_tree (WN *node, off_t base_offset, Output_File *fl, WN_MAP off_map)
     if (off_map != WN_MAP_UNDEFINED &&
 	(Write_BE_Maps ||
 	 Write_ALIAS_CLASS_Map ||
+	 Write_ALIAS_CGNODE_Map ||
 	 Write_AC_INTERNAL_Map)) {
 	/* save node_offset for use when writing maps */
 	BOOL set_offset = FALSE;
@@ -407,6 +418,28 @@ ir_b_write_tree (WN *node, off_t base_offset, Output_File *fl, WN_MAP off_map)
 		alias_classes[num_alias_class_nodes++] = node;
 	    }
 	}
+
+        // To dump the WN to CGNodeId map for the Nystrom Alias Analyzer
+	if (Write_ALIAS_CGNODE_Map) {
+
+	    if (WN_MAP32_Get (WN_MAP_ALIAS_CGNODE, node) != 0) {
+                set_offset = TRUE;
+		if (alias_cgnodes == NULL) {
+		    max_alias_cgnode_nodes = DEFAULT_NUM_ALIAS_CGNODES;
+		    alias_cgnodes = (WN **) malloc (max_alias_cgnode_nodes *
+						    sizeof(WN *));
+		    FmtAssert (alias_cgnodes != NULL, ("No more memory."));
+		} else if (max_alias_cgnode_nodes == 
+                           num_alias_cgnode_nodes + 1) {
+		    max_alias_cgnode_nodes *= 2;
+		    alias_cgnodes = (WN **) realloc(alias_cgnodes,
+						    max_alias_cgnode_nodes *
+						    sizeof(WN **));
+		    FmtAssert(alias_cgnodes != NULL, ("No more memory."));
+		}
+		alias_cgnodes[num_alias_cgnode_nodes++] = node;
+	    }
+	}
 	
 	if (Write_AC_INTERNAL_Map) {
 	    if (opr == OPR_ILOAD  ||
@@ -462,7 +495,7 @@ ir_b_write_tree (WN *node, off_t base_offset, Output_File *fl, WN_MAP off_map)
     	INITV_IDX types = INITV_next (INITV_blk (INITO_val (WN_ereg_supp (node))));
 	for (; types; types = INITV_next (types))
 	{
-	    if (INITV_kind (types) == INITVKIND_ZERO)
+	    if (INITV_kind (types) != INITVKIND_VAL)
 	    	continue;
 	    int index = TCON_uval (INITV_tc_val (types));
 	    if (index <= 0) continue;
@@ -787,6 +820,13 @@ IPA_irb_write_mod_ref_info(Output_File *fl)
                    0, // padding
                    fl);
 
+    // same_entry_exit_value_or_1
+    ir_b_save_buf (Mod_Ref_Info_Table[0].same_entry_exit_value_or_1,
+		   Mod_Ref_Info_Table[0].size,
+		   0, // alignment
+		   0, // padding
+		   fl);
+
     for (INT i=1; i<size; i++)
     {
       ir_b_save_buf (&Mod_Ref_Info_Table[i].pu_idx,
@@ -800,6 +840,10 @@ IPA_irb_write_mod_ref_info(Output_File *fl)
 
       ir_b_save_buf (Mod_Ref_Info_Table[i].ref,
                      Mod_Ref_Info_Table[i].size, 0, 0, fl);
+
+      ir_b_save_buf (Mod_Ref_Info_Table[i].same_entry_exit_value_or_1,
+                     Mod_Ref_Info_Table[i].size, 0, 0, fl);
+      
     }
 
     offset_mod_ref = offset_mod_ref - cur_sec_disp;
@@ -817,3 +861,4 @@ IPA_irb_write_mod_ref_info(Output_File *fl)
     header_addr->entsize = sizeof(pu_mod_ref_info);
 }
 #endif
+

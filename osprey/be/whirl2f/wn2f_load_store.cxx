@@ -1,4 +1,8 @@
 /*
+ * Copyright (C) 2010 Advanced Micro Devices, Inc.  All Rights Reserved.
+ */
+
+/*
  * Copyright 2005, 2006 PathScale, Inc.  All Rights Reserved.
  */
 
@@ -712,13 +716,6 @@ WN2F_mstore(TOKEN_BUFFER tokens, WN *wn, WN2F_CONTEXT context)
     */
    ASSERT_DBG_FATAL(WN_opc_operator(wn) == OPR_MSTORE, 
 		    (DIAG_W2F_UNEXPECTED_OPC, "WN2F_mstore"));
-#if 0
-   ASSERT_DBG_WARN(WN_opc_operator(WN_kid0(wn)) == OPR_MLOAD,
-		    (DIAG_W2F_UNEXPECTED_OPC, "rhs of WN2F_mstore"));
-
-   //TODO: scalar expression allowed, but array/structure assignment assumed
-   // with constant ie: should put out doloop?... call OFFSET_Memref?
-#endif
 
    /* Get the base address into which we are storing a value */
    base_ty = WN_Tree_Type(WN_kid1(wn));
@@ -995,9 +992,11 @@ WN2F_ldid(TOKEN_BUFFER tokens, WN *wn, WN2F_CONTEXT context)
             break;
          case MTYPE_F4:
          case MTYPE_F8:
+         case MTYPE_F10:
          case MTYPE_FQ:
          case MTYPE_C4:
          case MTYPE_C8:
+         case MTYPE_C10:
          case MTYPE_CQ:
             sprintf(buffer, "reg%d", First_Float_Preg_Return_Offset);
             Append_Token_String(tokens, buffer);
@@ -1175,12 +1174,6 @@ WN2F_array(TOKEN_BUFFER tokens, WN *wn, WN2F_CONTEXT context)
       set_WN2F_CONTEXT_deref_addr(context);
 
    }
-#if 0
- else
-      ASSERT_DBG_WARN(deref,
-		      (DIAG_UNIMPLEMENTED, 
-		       "taking the address of an array element"));
-#endif
 
    /* Get the array or, for ptr-as-array types, the element type */
 

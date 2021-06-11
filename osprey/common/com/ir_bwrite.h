@@ -56,6 +56,7 @@ extern "C" {
 extern BOOL Write_BE_Maps;
 extern BOOL Write_AC_INTERNAL_Map;
 extern BOOL Write_ALIAS_CLASS_Map;
+extern BOOL Write_ALIAS_CGNODE_Map;
 #endif /* BACK_END */
 
 
@@ -99,6 +100,8 @@ extern Output_File *WN_open_output (char *file_name);
 extern void WN_close_output (Output_File *fl);
 extern void WN_close_file (void *fl);
 
+extern Section *
+get_section (Elf64_Word sh_info, const char *name, Output_File *fl);
 
 /*
  * Write global tables to their own Elf sections.  These should only be
@@ -152,6 +155,7 @@ extern void WN_write_voidptr_map(PU_Info     *pu,
 				 INT32        subsection_type,
 				 WN_MAP       value_map,
 				 const char  *subsection_name);
+extern void WN_write_SSA(PU_Info *pu, Output_File *fl);
 #ifndef OWN_ERROR_PACKAGE
 
 /*

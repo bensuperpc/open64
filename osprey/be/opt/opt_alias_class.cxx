@@ -1,3 +1,7 @@
+/*
+ * Copyright (C) 2009 Advanced Micro Devices, Inc.  All Rights Reserved.
+ */
+
 //-*-c++-*-
 
 /*
@@ -83,7 +87,6 @@
 
 // For the interface to clients, see opt_alias_class.h
 
-#define __STDC_LIMIT_MACROS
 #include <stdint.h>
 #include <set>
 #include <math.h>
@@ -406,10 +409,10 @@ ALIAS_CLASSIFICATION::New_base_id(const ST *st, TY_IDX ty)
 
   // If this base_id is a local variable or parameter, it gets its
   // own class.
-  if ((storage_class == SCLASS_AUTO &&
+  if (((storage_class == SCLASS_AUTO ||
+        storage_class == SCLASS_FORMAL ||
+        storage_class == SCLASS_FORMAL_REF) &&
        ST_IDX_level(ST_st_idx(st)) == CURRENT_SYMTAB) ||
-      storage_class == SCLASS_FORMAL                  ||
-      storage_class == SCLASS_FORMAL_REF              ||
       storage_class == SCLASS_REG) {
     // Set up the LDA and LDID classes for this variable...
     ALIAS_CLASS_MEMBER *ldid_item = New_alias_class_member(id);
@@ -487,7 +490,8 @@ ALIAS_CLASSIFICATION::New_base_id(const ST *st, TY_IDX ty)
 	   // uplevel reference and therefore must be treated as
 	   // global because its address can be stored into a global,
 	   // and it may contain the address of a global. Non-uplevel
-	   // references with SCLASS_AUTO are handled as locals above.
+	   // references with SCLASS_AUTO, SCLASS_FORMAL or
+           // SCLASS_FORMAL_REF are handled as locals above.
 	   // Including uplevel references here is the fix for 555533.
 	   // 634200 was a milder case of the same problem, and only
 	   // part of the fix was required to get that one right; that
@@ -495,6 +499,8 @@ ALIAS_CLASSIFICATION::New_base_id(const ST *st, TY_IDX ty)
 	   // parameters; 555533 makes clear that we have to go
 	   // all the way and treat them as globals.
 	   storage_class == SCLASS_AUTO    ||
+           storage_class == SCLASS_FORMAL  ||
+           storage_class == SCLASS_FORMAL_REF  ||
 	   // storage class can be UNKNOWN for constant data because CG may
 	   // already have run for an earlier PU and in the process lowered
 	   // string (and maybe other) constants to .rodata. Unfortunately,
@@ -696,10 +702,6 @@ ALIAS_CLASS_REP::Process_pending(ALIAS_CLASSIFICATION &ac)
   Is_True(Is_pointer_class(),
 	  ("ACR::Process_pending: Must be pointer class"));
 
-#if 0
-  fprintf(TFile, "Process pending for ");
-  Print(TFile);
-#endif
 
   while (_pending != NULL) {
     ALIAS_CLASS_REP *item = _pending->Node()->Alias_class();
@@ -1039,6 +1041,8 @@ ALIAS_CLASSIFICATION::Classify_deref_of_expr(WN  *const expr,
 	}
 	return AC_PTR_OBJ_PAIR(lda_class, ldid_class);
       }
+    case OPR_LDA_LABEL:
+      return AC_PTR_OBJ_PAIR(Const_addr_class(), Global_class());
     case OPR_INTCONST:
       // TODO: Maybe find a way to
       // assign base_id's to integer constants so we can match them up
@@ -1113,9 +1117,7 @@ ALIAS_CLASSIFICATION::Classify_deref_of_expr(WN  *const expr,
   // PARM, since we want our return value to describe all the
   // information available to the callee.
   else if (OPCODE_is_load(opc) ||
-#if defined (TARG_SL)
  	   (opr == OPR_PARM && WN_Parm_Dereference(expr)) ||
-#endif
 	   Is_fortran_reference_parm(expr)) {
     FmtAssert(OPERATOR_is_scalar_iload (opr) ||
 	      opr == OPR_MLOAD ||
@@ -1227,11 +1229,47 @@ ALIAS_CLASSIFICATION::Classify_deref_of_expr(WN  *const expr,
     for (INT i = 0; i < WN_kid_count(expr); i++) {
       // Tell the recursive call that the expression need not
       // point. If it must point, we'll handle it here.
-      AC_PTR_OBJ_PAIR u = Classify_deref_of_expr(WN_kid(expr, i),
-						 FALSE);
+      WN * wn_kid = WN_kid(expr, i);
+      OPCODE kid_opc = WN_opcode(wn_kid);
+      OPERATOR kid_opr = OPCODE_operator(kid_opc);
+      BOOL kid_maybe_point = Expr_may_contain_pointer(wn_kid);
+      BOOL kid_must_point = FALSE;
 
-      if (expr_maybe_point && 
-          Expr_may_contain_pointer (WN_kid(expr, i))) {
+      // AMD Bug 15176. For an address expression "U8ADD" as shown below, 
+      // kid "U8U8ILOAD" gives base address, but we got a NULL object class
+      // for "U8U8ILOAD" from "Classify_deref_of_expr" since we passed down 
+      // a value of "FALSE" for "expr_must_point".
+      // i.e,, we create an object class for a pointer expression "p", 
+      // but we did not create an object class for pointer expression
+      // "*p" even though "*p" itself is also a pointer.  As a result,
+      // "(*p + e1)" and "(*p + e2)" have different object classes
+      // even though "e1" could have the same runtime value as "e2".
+      //
+      //    U8U8LDID 0 <3,69,_temp___slink_sym25> T<126,anon_ptr.,8>
+      //   U8U8ILOAD 40 T<52,anon_ptr.,8> T<126,anon_ptr.,8> 
+      //      I4I4LDID 0 <3,24,IATM> T<4,.predef_I4,4>
+      //      I4INTCONST -1 (0xffffffffffffffff)
+      //     I4ADD
+      //    I8I4CVT
+      //    U8INTCONST 24 (0x18)
+      //   U8MPY
+      //  U8ADD 
+      // F8F8ILOAD T<11,.predef_F8,8> T<75,anon_ptr.,8>
+      //
+      // As a fix, for an address expression rooted at a "ADD" or a "SUB",
+      // if kid is an "ILOAD" that could be a pointer, we pass down "TRUE"
+      // to "Classify_deref_of_expr" for the "ILOAD", where an object class
+      // will be created for it if none exists yet.
+      if (expr_must_point && kid_maybe_point
+	  && (kid_opr == OPR_ILOAD)
+	  && ((opr == OPR_ADD) || (opr == OPR_SUB))
+	  && !Opcode_cannot_be_pointer_value(opr, opc)
+	  && !Opcode_cannot_be_pointer_value(kid_opr, kid_opc))
+	kid_must_point = TRUE;
+ 
+      AC_PTR_OBJ_PAIR u = Classify_deref_of_expr(WN_kid(expr, i), kid_must_point);
+      
+      if (expr_maybe_point && kid_maybe_point) {
         AC_PTR_OBJ_PAIR t(t_member->Alias_class(),
 			  t_member->Alias_class()->Class_pointed_to());
         Merge_conditional(t, u);
@@ -1315,10 +1353,6 @@ ALIAS_CLASSIFICATION::Classify_lhs_of_store(WN *const stmt)
 //
 BOOL
 ALIAS_CLASSIFICATION::Expr_may_contain_pointer (WN* const expr) {
-   
-  if (!WOPT_Enable_Aggressive_Alias_Classification || !Alias_Pointer_Types) {
-    return TRUE;
-  }
 
   TYPE_ID res = WN_rtype (expr); 
   if (MTYPE_byte_size (res) == 0) {
@@ -1333,8 +1367,7 @@ ALIAS_CLASSIFICATION::Expr_may_contain_pointer (WN* const expr) {
 
   if (MTYPE_byte_size (res) < Pointer_Size ||
       (MTYPE_is_void (res)    || MTYPE_is_float (res) || 
-       MTYPE_is_complex (res) || MTYPE_is_vector (res) || 
-       MTYPE_is_boolean (res))) {
+       MTYPE_is_complex (res) || MTYPE_is_vector (res))) {
      return FALSE;
   }
    
@@ -1367,6 +1400,10 @@ ALIAS_CLASSIFICATION::Expr_may_contain_pointer (WN* const expr) {
   case OPR_BNOT:
   case OPR_LNOT:
     return FALSE;
+  }
+
+  if (!WOPT_Enable_Aggressive_Alias_Classification || !Alias_Pointer_Types) {
+    return TRUE;
   }
 
   return TRUE;
@@ -1514,12 +1551,10 @@ ALIAS_CLASSIFICATION::Callee_changes_no_points_to(const WN *const call_wn,
   else if (WN_Call_Does_Mem_Free(call_wn)) {
     return TRUE;
   }
-#if 1
   else if ((WN_operator(call_wn) == OPR_CALL) &&
 	   (strcmp("free", ST_name(WN_st(call_wn))) == 0)) {
     return TRUE;
   }
-#endif
   else if (Callee_returns_new_memory(call_wn)) {
     return TRUE;
   }
@@ -2145,9 +2180,7 @@ ALIAS_CLASSIFICATION::Finalize_ac_map_wn(WN *wn)
   }
   else if (OPCODE_is_load(opc) ||
 	   OPCODE_is_store(opc) ||
-#if defined (TARG_SL)
 	   (opr==OPR_PARM && WN_Parm_Dereference(wn)) ||
-#endif
 	   Is_fortran_reference_parm(wn) ||
 	   ((opr == OPR_LDA || opr == OPR_LDMA) &&
 	    Is_LDA_of_variable(wn))) {
@@ -2207,13 +2240,6 @@ ALIAS_CLASSIFICATION::Finalize_ac_map_wn(WN *wn)
       // gives the alias class member corresponding to the WN.
       ALIAS_CLASS_MEMBER *acm =
 	(ALIAS_CLASS_MEMBER *) WN_MAP_Get(Indir_classification_map(), wn);
-#if 0
-      if (Tracing()) {
-	fprintf(TFile, "Got 0x%p from indir map %u on\n", acm,
-		Indir_classification_map());
-	Dump_wn_tree(TFile, wn);
-      }
-#endif
       ALIAS_CLASS_REP    *acr = acm->Alias_class();
 
       if (Tracing()) {

@@ -1,4 +1,8 @@
 /*
+ * Copyright (C) 2010 Advanced Micro Devices, Inc.  All Rights Reserved.
+ */
+
+/*
  * Copyright 2003, 2004, 2005, 2006 PathScale, Inc.  All Rights Reserved.
  */
 
@@ -438,7 +442,7 @@ CGSPILL_Initialize_For_PU(void)
   LOCAL_SPILLS_used(slc) = NULL;
 
   slc = &lra_x87_spills;
-  LOCAL_SPILLS_mem_type(slc) = MTYPE_To_TY( MTYPE_FQ );
+  LOCAL_SPILLS_mem_type(slc) = MTYPE_To_TY( MTYPE_F10 );
   LOCAL_SPILLS_free(slc) = NULL;
   LOCAL_SPILLS_used(slc) = NULL;
 
@@ -570,7 +574,7 @@ CGSPILL_Get_TN_Spill_Location (TN *tn, CGSPILL_CLIENT client)
        */
       if( TN_size(tn) == 16 || TN_size(tn) == 12 ){
 	mem_type = TN_register_class(tn) == ISA_REGISTER_CLASS_x87
-	  ? MTYPE_To_TY( MTYPE_FQ ) : Quad_Type;
+	  ? MTYPE_To_TY( MTYPE_F10 ) : Quad_Type;
       }
       // MMX
       if (TN_register_class(tn) == ISA_REGISTER_CLASS_mmx) {
@@ -870,7 +874,7 @@ CGSPILL_Load_From_Memory (TN *tn, ST *mem_loc, OPS *ops, CGSPILL_CLIENT client,
       switch (opcode) {
       case OPC_I8INTCONST:
       case OPC_U8INTCONST:
-#ifdef EMULATE_LONGLONG
+#if defined(EMULATE_LONGLONG) && !defined(TARG_SL) && !defined(TARG_PPC32)
         {
           extern TN *Gen_Literal_TN_Pair(UINT64);
           const_tn = Gen_Literal_TN_Pair((UINT64) WN_const_val(home));
@@ -1064,14 +1068,6 @@ CGSPILL_Prepend_Ops (BB *bb, OPS *ops)
 {
   if (OPS_first(ops) == NULL) return;
 
-#if 0
-  OP *op;
-  SRCPOS srcpos = 0;
-  /* want ops srcpos associated with beginning of bb */
-  srcpos = BB_first_op(bb) ? OP_srcpos(BB_first_op(bb)) 
-	: OP_srcpos(BB_last_op(BB_prev(bb)));
-  FOR_ALL_OPS_OPs(ops, op) OP_srcpos(op) = srcpos;
-#endif
 
   Reset_BB_scheduled (bb);
 
@@ -1362,20 +1358,7 @@ CGSPILL_Append_Ops (BB *bb, OPS *ops)
     if (OP_prev(before_point) != NULL && OP_xfer(OP_prev(before_point))) {
 	before_point = OP_prev(before_point);
     }
-  }
-#if defined (TARG_SL)
-  else if( BB_zdl_body(bb) ) {
-    orig_last_op = BB_last_op(bb);
-    Is_True( OP_has_tag(orig_last_op), ("the last op of zdl body has no tag") );
-    Is_True( !OP_xfer(orig_last_op) && 
-             OP_code(orig_last_op) != TOP_c2_joint &&
-             OP_code(orig_last_op) != TOP_loop, 
-             ("bad opcode of a tagged op, in zdl") );
-    after_tagged_op = TRUE;
-    tag_idx = Get_OP_Tag( orig_last_op );
-  }
-#endif
-  else {
+  }  else {
     OP *last_op;
 
     if (PROC_has_branch_delay_slot())
@@ -1410,17 +1393,6 @@ CGSPILL_Append_Ops (BB *bb, OPS *ops)
     BB_Insert_Ops_Before (bb, before_point, ops);
   }
    else {
-#if defined(TARG_SL)
-    new_last_op = ops->last;
-    if( new_last_op && after_tagged_op ){
-      Is_True( !OP_xfer(new_last_op) && 
-               OP_code(new_last_op) != TOP_c2_joint &&
-               OP_code(new_last_op) != TOP_loop, 
-               ("bad opcode of a tagged op, in zdl") );
-      Set_OP_Tag( new_last_op, tag_idx );
-      Reset_OP_has_tag( orig_last_op );
-    }
-#endif
     BB_Append_Ops (bb, ops);
   }
   Reset_BB_scheduled (bb);

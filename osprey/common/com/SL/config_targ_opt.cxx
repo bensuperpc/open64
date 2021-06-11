@@ -1,38 +1,14 @@
-
-/*
-
-  Copyright (C) 2000, 2001 Silicon Graphics, Inc.  All Rights Reserved.
-
-  This program is free software; you can redistribute it and/or modify it
-  under the terms of version 2 of the GNU General Public License as
-  published by the Free Software Foundation.
-
-  This program is distributed in the hope that it would be useful, but
-  WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
-
-  Further, this software is distributed without any warranty that it is
-  free of the rightful claim of any third person regarding infringement 
-  or the like.  Any license provided herein, whether implied or 
-  otherwise, applies only to this software file.  Patent licenses, if 
-  any, provided herein do not apply to combinations of this program with 
-  other software, or any other product whatsoever.  
-
-  You should have received a copy of the GNU General Public License along
-  with this program; if not, write the Free Software Foundation, Inc., 59
-  Temple Place - Suite 330, Boston MA 02111-1307, USA.
-
-  Contact information:  Silicon Graphics, Inc., 1600 Amphitheatre Pky,
-  Mountain View, CA 94043, or:
-
-  http://www.sgi.com
-
-  For further information regarding this notice, see:
-
-  http://oss.sgi.com/projects/GenInfo/NoticeExplan
-
-*/
-
+/********************************************************************\
+|*                                                                  *|   
+|*  Copyright (c) 2006 by SimpLight Nanoelectronics.                *|
+|*  All rights reserved                                             *|
+|*                                                                  *|
+|*  This program is free software; you can redistribute it and/or   *|
+|*  modify it under the terms of the GNU General Public License as  *|
+|*  published by the Free Software Foundation; either version 2,    *|
+|*  or (at your option) any later version.                          *|
+|*                                                                  *|
+\********************************************************************/
 
 /* ====================================================================
  * ====================================================================
@@ -89,7 +65,7 @@ BOOL Flush_To_Zero = FALSE;		/* suppress fp underflow */
 
 /* Miscellaneous target instruction features: */
 #if defined(TARG_SL)
-BOOL Madd_Allowed = TRUE;		/* Generate madd instructions? */
+BOOL Madd_Allowed = FALSE;		/* Generate madd instructions? */
 #else
 BOOL Madd_Allowed = TRUE;		/* Generate madd instructions? */
 #endif
@@ -124,14 +100,6 @@ static OPTION_DESC Options_TARG[] = {
   { OVK_SELF,	OV_SHY,		FALSE, "mips4",	NULL,
     0, 0, 0, &ISA_Name,		NULL,
     "Use the MIPS-IV instruction set architecture" },
-#if 0
-  { OVK_SELF,	OV_SHY,		FALSE, "mips5",	NULL,
-    0, 0, 0, &ISA_Name,		NULL,
-    "Use the MIPS-V instruction set architecture" },
-  { OVK_SELF,	OV_SHY,		FALSE, "mips6",	NULL,
-    0, 0, 0, &ISA_Name,		NULL,
-    "Use the MIPS-VI instruction set architecture" },
-#endif
   { OVK_NAME,	OV_VISIBLE,	FALSE, "platform",	"pl",
     0, 0, 0, &Platform_Name,	NULL,
     "Specify the target platform" },

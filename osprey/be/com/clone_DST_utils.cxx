@@ -1,4 +1,8 @@
 /*
+ * Copyright (C) 2009 Advanced Micro Devices, Inc.  All Rights Reserved.
+ */
+
+/*
 
   Copyright (C) 2000, 2001 Silicon Graphics, Inc.  All Rights Reserved.
 
@@ -69,14 +73,14 @@ create_ipa_internal_name(void)
     // GNU C/C++ uses a real preprocessor, so we can't put #if inside
     // macro arguments.
 #if defined(_LEGO_CLONER)
-    name = (char *) CXX_NEW(char[strlen("***ipa_intnl***")+20],
+    name = (char *) CXX_NEW_ARRAY(char, strlen("***ipa_intnl***")+20,
 			    MEM_src_pool_ptr);
 #else
-    name = (char *) CXX_NEW(char[strlen("***ipa_intnl***")+20],
+    name = (char *) CXX_NEW_ARRAY(char, strlen("***ipa_intnl***")+20,
 			    &Ipo_mem_pool);
 #endif // _LEGO_CLONER
 #else
-    name = (char *)CXX_NEW(char[strlen("***ipa_intnl***")+20], 
+    name = (char *)CXX_NEW_ARRAY(char, strlen("***ipa_intnl***")+20, 
 #ifndef _LEGO_CLONER
                            &Ipo_mem_pool);
 #else
@@ -91,7 +95,7 @@ create_ipa_internal_name(void)
 #endif //  !defined(_STANDALONE_INLINER)
 
 
-static DST_IDX
+DST_IDX
 get_abstract_origin(DST_IDX concrete_instance)
 {
     DST_INFO *dst = DST_INFO_IDX_TO_PTR(concrete_instance);

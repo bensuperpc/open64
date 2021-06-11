@@ -2068,14 +2068,6 @@ void do_stmt_semantics (void)
                                                                stmt_start_col;
             insert_sh_chain_before(cdir_switches.doacross_sh_idx);
 
-# if 0
-            if (do_var_idx != NULL_IDX &&
-                ATD_TASK_SHARED(do_var_idx)) {
-
-               PRINTMSG(IL_LINE_NUM(lc_il_idx), 961, Error, 
-                        IL_COL_NUM(lc_il_idx));
-            }
-# endif
 
             cdir_switches.doacross_sh_idx = NULL_IDX;
          }
@@ -2086,14 +2078,6 @@ void do_stmt_semantics (void)
                                                                stmt_start_col;
             insert_sh_chain_before(cdir_switches.paralleldo_sh_idx);
 
-# if 0
-            if (do_var_idx != NULL_IDX &&
-                ATD_TASK_SHARED(do_var_idx)) {
-
-               PRINTMSG(IL_LINE_NUM(lc_il_idx), 961, Error,
-                        IL_COL_NUM(lc_il_idx));
-            }
-# endif
 
             cdir_switches.paralleldo_sh_idx = NULL_IDX;
          }
@@ -2104,14 +2088,6 @@ void do_stmt_semantics (void)
                                                                stmt_start_col;
             insert_sh_chain_before(cdir_switches.pdo_sh_idx);
 
-# if 0
-            if (do_var_idx != NULL_IDX &&
-                ATD_TASK_SHARED(do_var_idx)) {
-
-               PRINTMSG(IL_LINE_NUM(lc_il_idx), 961, Error,
-                        IL_COL_NUM(lc_il_idx));
-            }
-# endif
 
             cdir_switches.pdo_sh_idx = NULL_IDX;
          }
@@ -8211,13 +8187,15 @@ typedef struct AllocHead {
 
 
    if (TYP_LINEAR(type_idx) == Integer_4) {
+      /* OSP_467, #1, sizeof(long_type) == 64 on TARGET64 */
+      int *p_version = (int *) version;
       cn_idx = ntr_const_tbl(type_idx,
                              FALSE,
-                             version);
+                             (long_type *)p_version);
 
       *second_cn_idx = ntr_const_tbl(type_idx,
                                      FALSE,
-                                     &(version[1]));
+                                     (long_type *)(p_version+1));
    }
    else {
       *second_cn_idx = NULL_IDX;

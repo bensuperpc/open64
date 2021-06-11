@@ -112,6 +112,11 @@ LIBINSTR_HEADER_DIRS    = \
  $(BUILD_TOT)/common/util        \
  $(BUILD_TOT)/linux/include      \
  $(BUILD_TOT)/gnu_common/libstdc++  
+
+ifeq ($(BUILD_TARGET), LOONGSON)
+LIBINSTR_HEADER_DIRS += $(BUILD_TOT)/common/com/loongson
+endif
+
 # These are the directories in which to look for source files.
 
 
@@ -148,6 +153,15 @@ LASOPTS = $(STD_COMPILE_OPTS)
 LASDEFS = $(HOSTDEFS) $(TARGDEFS)
 LASINCS = $(LCINCS)
 
+ifeq ($(BUILD_TARGET), LOONGSON)
+CC=mips64el-n32-linux-gcc
+CFLAGS += -mabi=n32 -static -O3 -gdwarf-2 -DKEY -DTARG_LOONGSON
+CXX=mips64el-n32-linux-g++
+CXXFLAGS += -mabi=n32 -static -fno-exceptions -O3 -gdwarf-2 -DKEY -DTARG_LOONGSON -g
+AR = mips64el-n32-linux-ar
+LD = mips64el-n32-linux-gcc
+RANLIB = mips64el-n32-linux-ranlib
+endif
 
 # setup stuff to build shared or non-shared
 GLDOPTS = $(STD_LOAD_OPTS)
@@ -179,6 +193,9 @@ endif
 ifeq ($(BUILD_VARIANT), ABI)
 TARGETS = $(LIBRARY)
 endif
+ifeq ($(BUILD_TARGET), LOONGSON)
+TARGETS = $(LIBRARY)
+endif
 ifndef TARGETS
 TARGETS = $(DSO) 
 endif
@@ -194,9 +211,14 @@ LLDLIBS +=
 endif
 
 ifeq ($(BUILD_OS), IRIX)
-default: so_locations $(TARGETS) last
+default:
+	$(MAKE) so_locations
+	$(MAKE) $(TARGETS)
+	$(MAKE) last
 else
-default: $(TARGETS) last
+default:
+	$(MAKE) $(TARGETS)
+	$(MAKE) last
 endif
 
 #----------------------------------------------------------------------

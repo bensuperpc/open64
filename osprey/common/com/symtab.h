@@ -1,4 +1,8 @@
 /*
+ * Copyright (C) 2009-2010 Advanced Micro Devices, Inc.  All Rights Reserved.
+ */
+
+/*
  * Copyright 2003, 2004, 2005, 2006 PathScale, Inc.  All Rights Reserved.
  */
 
@@ -45,7 +49,7 @@
 // This file should contain only inlined functions for accessing various
 // fields in the symbol table classes.
 
-#include <ext/slist>
+#include <iosfwd>
 
 #ifndef segmented_array_INCLUDED
 #include "segmented_array.h"
@@ -303,6 +307,12 @@ Get_Current_PU ()
 #else
     return *Current_pu;
 #endif
+}
+
+inline TY_IDX
+Get_Current_PU_TY ()
+{
+    return PU_prototype( Get_Current_PU() );
 }
 
 // get PU at specified level
@@ -567,7 +577,16 @@ ST_ATTR_Init (ST_ATTR& st_attr, ST_IDX st_idx, ST_ATTR_KIND akind, UINT64 val)
 {
     st_attr.st_idx = st_idx;
     st_attr.kind = akind;
-    st_attr.Set_u (val);
+    switch (akind) {
+    case ST_ATTR_DEDICATED_REGISTER:
+      st_attr.Set_reg_id(val);
+      break;
+    case ST_ATTR_SECTION_NAME:
+      st_attr.Set_section_name(val);
+      break;
+    default:
+      Is_True (FALSE, ("Unknown kind of ST_ATTR_Init "));
+    }
 }
 
 inline UINT32

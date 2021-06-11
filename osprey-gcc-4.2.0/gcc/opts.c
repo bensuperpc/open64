@@ -1,4 +1,8 @@
 /*
+ * Copyright (C) 2009-2010 Advanced Micro Devices, Inc.  All Rights Reserved.
+ */
+
+/*
  * Copyright (C) 2007. QLogic Corporation. All Rights Reserved.
  */
 /* Command line option handling.
@@ -1026,6 +1030,13 @@ common_handle_option (size_t scode, const char *arg, int value,
     case OPT_spinfile:
       flag_spin_file = 1;
       spin_file_name = arg;
+
+      /* Disable GNU inlining when generating SPIN.  */
+      flag_no_inline = 1;
+
+      /* Generating correct SPIN, particularly for 'inline' and
+	 'extern inline', is easier when we use -funit-at-a-time.  */
+      flag_unit_at_a_time = 1;
       break;
 #endif
 

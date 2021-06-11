@@ -1,4 +1,8 @@
 /*
+ * Copyright (C) 2010 Advanced Micro Devices, Inc.  All Rights Reserved.
+ */
+
+/*
  *  Copyright (C) 2006. QLogic Corporation. All Rights Reserved.
  */
 
@@ -153,14 +157,26 @@
 # endif
 
 # define SET_POINTER_SIZE	(cmd_line_flags.s_pointer8)
+/* OSP_456 */
+# define Is_Target_32bit()      (cmd_line_flags.s_pointer8 == 0)
+# define Is_Target_64bit()      (cmd_line_flags.s_pointer8 == 1)
 
-# if defined(_DOPE_VECTOR_32_OR_64)
+/* OSP_467, #4, select ptr32 or ptr64 for TARG_X8664 at runtime */
+# if defined(_DOPE_VECTOR_32_OR_64) || defined(TARG_X8664)
 
-#ifdef KEY /* Bug 6845 */
-# define DV_ALLOC_CPNT_OFFSET_WORD_SIZE		((SET_POINTER_SIZE)? 2 : 1)
-#endif /* KEY Bug 6845 */
-# define DV_DIM_WORD_SIZE		((SET_POINTER_SIZE)? 6 : 3)
-# define DV_HD_WORD_SIZE		((SET_POINTER_SIZE)? 12 : 8)
+# if defined(TARG_X8664) && defined(_HOST64)
+#  define DV_ALLOC_CPNT_OFFSET_WORD_SIZE		1
+#  define DV_DIM_WORD_SIZE               ((SET_POINTER_SIZE)? 3 : 3)
+#  define DV_HD_WORD_SIZE                ((SET_POINTER_SIZE)? 6 : 8)
+#  define DV_BITS_PER_WORD               ((SET_POINTER_SIZE)? 64 : 32)
+#  define INTEGER_DEFAULT_BITS           ((SET_POINTER_SIZE)? 64 : 32)
+# else
+#  define DV_ALLOC_CPNT_OFFSET_WORD_SIZE ((SET_POINTER_SIZE)? 2 : 1)
+#  define DV_DIM_WORD_SIZE               ((SET_POINTER_SIZE)? 6 : 3)
+#  define DV_HD_WORD_SIZE                ((SET_POINTER_SIZE)? 12 : 8)
+#  define DV_BITS_PER_WORD               TARGET_BITS_PER_WORD
+#  define INTEGER_DEFAULT_BITS           TARGET_BITS_PER_WORD
+# endif
 
 # define DV_BASE_ADDR(DOPE)		((SET_POINTER_SIZE)?                   \
                      (DOPE).ptr64.base_addr : (DOPE).ptr32.base_addr)
@@ -250,13 +266,12 @@
 # define DV_ALLOC_CPNT_OFFSET_WORD_SIZE		1
 #endif /* KEY Bug 6845 */
 
-#if defined (TARG_X8664) && defined (_HOST64)
-# define DV_DIM_WORD_SIZE               ((SET_POINTER_SIZE)? 3 : 3)
-# define DV_HD_WORD_SIZE                ((SET_POINTER_SIZE)? 6 : 8)
-#else
 # define DV_DIM_WORD_SIZE		3       /* Size of dope vector dimen  */
 # define DV_HD_WORD_SIZE		6       /* Size of dope vector header */
-#endif
+
+/* OSP_XXX */
+# define DV_BITS_PER_WORD               TARGET_BITS_PER_WORD
+# define INTEGER_DEFAULT_BITS           TARGET_BITS_PER_WORD
 
 # define DV_BASE_ADDR(DOPE)             (DOPE).base_addr
 # define DV_EL_LEN(DOPE)                (DOPE).el_len
@@ -389,15 +404,15 @@
 # define AT_NOT_VISIBLE(IDX)		attr_tbl[IDX].fld.not_visible
 # define AT_OBJ_CLASS(IDX)		attr_tbl[IDX].fld.object_class
 # define AT_OBJ_NAME(IDX)		name_pool[AT_NAME_IDX(IDX)].name_char
-# define AT_OBJ_NAME_LONG(IDX)		&(name_pool[AT_NAME_IDX(IDX)].name_long)
-# define AT_OBJ_NAME_PTR(IDX)		&name_pool[AT_NAME_IDX(IDX)].name_char
+# define AT_OBJ_NAME_LONG(IDX)		((long *)&name_pool[AT_NAME_IDX(IDX)])
+# define AT_OBJ_NAME_PTR(IDX)		((char *)&name_pool[AT_NAME_IDX(IDX)])
 # define AT_OPTIONAL(IDX)		attr_tbl[IDX].fld.optional
 # define AT_ORIG_MODULE_IDX(IDX)	attr_tbl[IDX].fld.orig_module_idx
 # define AT_ORIG_NAME_IDX(IDX)		attr_tbl[IDX].fld.orig_name_idx
 # define AT_ORIG_NAME_LEN(IDX)		attr_tbl[IDX].fld.orig_name_len
-# define AT_ORIG_NAME_PTR(IDX)	   &name_pool[AT_ORIG_NAME_IDX(IDX)].name_char
+# define AT_ORIG_NAME_PTR(IDX)	    ((char *)&name_pool[AT_ORIG_NAME_IDX(IDX)])
 # define AT_ORIG_NAME(IDX)	    name_pool[AT_ORIG_NAME_IDX(IDX)].name_char
-# define AT_ORIG_NAME_LONG(IDX)    &(name_pool[AT_ORIG_NAME_IDX(IDX)].name_long)
+# define AT_ORIG_NAME_LONG(IDX)     ((long *)&name_pool[AT_ORIG_NAME_IDX(IDX)])
 # define AT_PRIVATE(IDX)		attr_tbl[IDX].fld.private_access
 # define AT_REF_IN_CHILD(IDX)		attr_tbl[IDX].fld.ref_in_child
 # define AT_REFERENCED(IDX)		attr_tbl[IDX].fld.referenced
@@ -1247,6 +1262,15 @@
 # endif
 
 # ifdef _DEBUG
+# define ATD_TASK_PRIVATE(IDX)                                                 \
+        ((AT_OBJ_CLASS(IDX) == Data_Obj) ?                                     \
+		attr_tbl:sytb_var_error("ATD_TASK_PRIVATE", IDX))      \
+                [IDX].fld.flag58
+# else
+# define ATD_TASK_PRIVATE(IDX)           attr_tbl[IDX].fld.flag58
+# endif
+
+# ifdef _DEBUG
 # define ATD_TASK_COPYIN(IDX)                                                  \
         ((AT_OBJ_CLASS(IDX) == Data_Obj) ?                                     \
 		attr_aux_tbl:attr_aux_var_error("ATD_TASK_COPYIN", IDX))       \
@@ -1310,14 +1334,10 @@
 # define ATD_TASK_LASTTHREAD(IDX)         attr_aux_tbl[IDX].fld.flag16
 # endif
 
-# ifdef _DEBUG
-# define ATD_TASK_PRIVATE(IDX)                                                 \
-        ((AT_OBJ_CLASS(IDX) == Data_Obj) ?                                     \
-		attr_aux_tbl:attr_aux_var_error("ATD_TASK_PRIVATE", IDX))      \
-                [IDX].fld.flag12
-# else
-# define ATD_TASK_PRIVATE(IDX)           attr_aux_tbl[IDX].fld.flag12
-# endif
+/* Module elements can be private or shared, see bug 686.
+ * ATD_TASK_PRIVATE is now a field of an element of attr_tbl (not
+ * attr_aux_tbl) since attr_aux_tbl is not exported in modules.
+ */
 
 # ifdef _DEBUG
 # define ATD_TASK_REDUCTION(IDX)                                               \
@@ -2231,8 +2251,8 @@
 # endif
 
 # define ATP_EXT_NAME(IDX)	      name_pool[ATP_EXT_NAME_IDX(IDX)].name_char
-# define ATP_EXT_NAME_LONG(IDX)    &(name_pool[ATP_EXT_NAME_IDX(IDX)].name_long)
-# define ATP_EXT_NAME_PTR(IDX)	     &name_pool[ATP_EXT_NAME_IDX(IDX)].name_char
+# define ATP_EXT_NAME_LONG(IDX)	     ((long *)&name_pool[ATP_EXT_NAME_IDX(IDX)])
+# define ATP_EXT_NAME_PTR(IDX)	     ((char *)&name_pool[ATP_EXT_NAME_IDX(IDX)])
 
 # ifdef _DEBUG
 # define ATP_EXT_NAME_LEN(IDX)						       \
@@ -2430,7 +2450,7 @@
 # define ATP_MOD_PATH_IDX(IDX)		attr_tbl[IDX].fld.field4
 # endif
 
-# define ATP_MOD_PATH_NAME_PTR(IDX)  &name_pool[ATP_MOD_PATH_IDX(IDX)].name_char
+# define ATP_MOD_PATH_NAME_PTR(IDX)  ((char *)&name_pool[ATP_MOD_PATH_IDX(IDX)])
 
 # ifdef _DEBUG
 # define ATP_MOD_PATH_LEN(IDX)						       \
@@ -3227,8 +3247,8 @@
 # define FP_NAME_IDX(IDX)		file_path_tbl[IDX].name_idx
 # define FP_NAME_LEN(IDX)		file_path_tbl[IDX].name_len
 # define FP_NAME(IDX)		        (str_pool[FP_NAME_IDX(IDX)].name_char)
-# define FP_NAME_LONG(IDX)	       &(str_pool[FP_NAME_IDX(IDX)].name_long)
-# define FP_NAME_PTR(IDX)	       &str_pool[FP_NAME_IDX(IDX)].name_char
+# define FP_NAME_LONG(IDX)		((long *)&str_pool[FP_NAME_IDX(IDX)])
+# define FP_NAME_PTR(IDX)		((char *)&str_pool[FP_NAME_IDX(IDX)])
 # define FP_NEXT_FILE_IDX(IDX)		file_path_tbl[IDX].next_file_idx
 # define FP_OFFSET(IDX)			file_path_tbl[IDX].offset
 # define FP_OUTPUT_TO_O(IDX)		file_path_tbl[IDX].output_to_o
@@ -3247,13 +3267,13 @@
 # define GA_NAME_IDX(IDX)		global_attr_tbl[IDX].fld.name_idx
 # define GA_NAME_LEN(IDX)		global_attr_tbl[IDX].fld.length
 # define GA_OBJ_CLASS(IDX)		global_attr_tbl[IDX].fld.object_class
-# define GA_OBJ_NAME_LONG(IDX)		&(str_pool[GA_NAME_IDX(IDX)].name_long)
-# define GA_OBJ_NAME_PTR(IDX)		&str_pool[GA_NAME_IDX(IDX)].name_char
+# define GA_OBJ_NAME_LONG(IDX)		((long *)&str_pool[GA_NAME_IDX(IDX)])
+# define GA_OBJ_NAME_PTR(IDX)		((char *)&str_pool[GA_NAME_IDX(IDX)])
 # define GA_OPTIONAL(IDX)		global_attr_tbl[IDX].fld.optional
 # define GA_ORIG_NAME_LEN(IDX)		global_attr_tbl[IDX].fld.orig_name_len
 # define GA_ORIG_NAME_IDX(IDX)		global_attr_tbl[IDX].fld.orig_name_idx
-# define GA_ORIG_NAME_PTR(IDX)	      &str_pool[GA_ORIG_NAME_IDX(IDX)].name_char
-# define GA_ORIG_NAME_LONG(IDX)     &(str_pool[GA_ORIG_NAME_IDX(IDX)].name_long)
+# define GA_ORIG_NAME_PTR(IDX)	      ((char *)&str_pool[GA_ORIG_NAME_IDX(IDX)])
+# define GA_ORIG_NAME_LONG(IDX)	      ((long *)&str_pool[GA_ORIG_NAME_IDX(IDX)])
 # define GA_REFERENCED(IDX)		global_attr_tbl[IDX].fld.referenced
 # define GA_USE_ASSOCIATED(IDX)		global_attr_tbl[IDX].fld.use_associated
 #ifdef KEY /* Bug 14150 */
@@ -3715,11 +3735,11 @@
 # define GL_PATH_NAME_LEN(IDX)		global_line_tbl[IDX].path_name_len
 # define GL_SOURCE_LINES(IDX)		global_line_tbl[IDX].source_lines
 
-# define GL_FILE_NAME_LONG(IDX)   &(str_pool[GL_FILE_NAME_IDX(IDX)].name_long)
-# define GL_FILE_NAME_PTR(IDX)    &str_pool[GL_FILE_NAME_IDX(IDX)].name_char
+# define GL_FILE_NAME_LONG(IDX)	      ((long *)&str_pool[GL_FILE_NAME_IDX(IDX)])
+# define GL_FILE_NAME_PTR(IDX)	      ((char *)&str_pool[GL_FILE_NAME_IDX(IDX)])
 
-# define GL_PATH_NAME_LONG(IDX)   &(str_pool[GL_PATH_NAME_IDX(IDX)].name_long)
-# define GL_PATH_NAME_PTR(IDX)    &str_pool[GL_PATH_NAME_IDX(IDX)].name_char
+# define GL_PATH_NAME_LONG(IDX)	      ((long *)&str_pool[GL_PATH_NAME_IDX(IDX)])
+# define GL_PATH_NAME_PTR(IDX)	      ((char *)&str_pool[GL_PATH_NAME_IDX(IDX)])
 
 
 /* GLOBAL NAME TABLE */
@@ -3727,8 +3747,8 @@
 # define GN_ATTR_IDX(IDX)		global_name_tbl[IDX].attr_idx
 # define GN_NAME_IDX(IDX)		global_name_tbl[IDX].name_idx
 # define GN_NAME_LEN(IDX)		global_name_tbl[IDX].name_len
-# define GN_NAME_LONG(IDX)	       &(str_pool[GN_NAME_IDX(IDX)].name_long)
-# define GN_NAME_PTR(IDX)	       &str_pool[GN_NAME_IDX(IDX)].name_char
+# define GN_NAME_LONG(IDX)		((long *)&str_pool[GN_NAME_IDX(IDX)])
+# define GN_NAME_PTR(IDX)		((char *)&str_pool[GN_NAME_IDX(IDX)])
 
 /* GLOBAL TYPE TABLE */
 
@@ -3749,6 +3769,7 @@
 # define HN_ATTR_IDX(IDX)		hidden_name_tbl[IDX].attr_idx
 # define HN_NAME_IDX(IDX)		hidden_name_tbl[IDX].name_idx
 # define HN_NAME_LEN(IDX)		hidden_name_tbl[IDX].name_len
+# define HN_NAME_PTR(IDX)		((char *)&name_pool[HN_NAME_IDX(IDX)])
 
 
 /* SCOPE TABLE definitions */
@@ -4087,7 +4108,8 @@
 # define LN_IN_ONLY_LIST(IDX)		loc_name_tbl[IDX].in_only_list
 # define LN_NAME_IDX(IDX)		loc_name_tbl[IDX].name_idx
 # define LN_NAME_LEN(IDX)		loc_name_tbl[IDX].name_len
-# define LN_NAME_LONG(IDX)		&(name_pool[LN_NAME_IDX(IDX)].name_long)
+# define LN_NAME_LONG(IDX)		((long *)&name_pool[LN_NAME_IDX(IDX)])
+# define LN_NAME_PTR(IDX)		((char *)&name_pool[LN_NAME_IDX(IDX)])
 # define LN_NEW_NAME(IDX)		loc_name_tbl[IDX].new_name
 # define LN_RENAMED(IDX)		loc_name_tbl[IDX].renamed
 
@@ -4107,8 +4129,8 @@
 # define RO_LINE_NUM(IDX)		rename_only_tbl[IDX].line_num
 # define RO_NAME_IDX(IDX)		rename_only_tbl[IDX].name_idx
 # define RO_NAME_LEN(IDX)		rename_only_tbl[IDX].name_len
-# define RO_NAME_LONG(IDX)		&(name_pool[RO_NAME_IDX(IDX)].name_long)
-# define RO_NAME_PTR(IDX)		&name_pool[RO_NAME_IDX(IDX)].name_char
+# define RO_NAME_LONG(IDX)		((long *)&name_pool[RO_NAME_IDX(IDX)])
+# define RO_NAME_PTR(IDX)		((char *)&name_pool[RO_NAME_IDX(IDX)])
 # define RO_NEXT_IDX(IDX)		rename_only_tbl[IDX].next_idx
 # define RO_RENAME_IDX(IDX)		rename_only_tbl[IDX].rename_idx
 # define RO_RENAME_NAME(IDX)		rename_only_tbl[IDX].rename_name
@@ -4122,6 +4144,7 @@
 # define SN_MATCHED_DARG(IDX)		sec_name_tbl[IDX].matched
 # define SN_NAME_IDX(IDX)		sec_name_tbl[IDX].name_idx
 # define SN_NAME_LEN(IDX)		sec_name_tbl[IDX].length
+# define SN_NAME_PTR(IDX)		((char *)&name_pool[SN_NAME_IDX(IDX)])
 # define SN_SIBLING_LINK(IDX)		sec_name_tbl[IDX].sibling_link
 
 
@@ -4148,7 +4171,7 @@
 # define SB_EXT_NAME_IDX(IDX)		stor_blk_tbl[IDX].fld.ext_name_idx
 # define SB_EXT_NAME_LEN(IDX)		stor_blk_tbl[IDX].fld.ext_name_len
 # define SB_EXT_NAME(IDX)	      name_pool[SB_EXT_NAME_IDX(IDX)].name_char
-# define SB_EXT_NAME_PTR(IDX)	     &name_pool[SB_EXT_NAME_IDX(IDX)].name_char
+# define SB_EXT_NAME_PTR(IDX)	      ((char *)&name_pool[SB_EXT_NAME_IDX(IDX)])
 #endif /* KEY Bug 14150 */
 # define SB_FILL_SYMBOL(IDX)		stor_blk_tbl[IDX].fld.fill_symbol
 # define SB_FIRST_ATTR_IDX(IDX)		stor_blk_tbl[IDX].fld.first_attr_idx
@@ -4165,8 +4188,8 @@
 # define SB_MODULE_IDX(IDX)		stor_blk_tbl[IDX].fld.module_idx
 # define SB_MODULE(IDX)			stor_blk_tbl[IDX].fld.module
 # define SB_NAME_IDX(IDX)		stor_blk_tbl[IDX].fld.name_idx
-# define SB_NAME_PTR(IDX)		&name_pool[SB_NAME_IDX(IDX)].name_char
-# define SB_NAME_LONG(IDX)		&(name_pool[SB_NAME_IDX(IDX)].name_long)
+# define SB_NAME_PTR(IDX)		((char *)&name_pool[SB_NAME_IDX(IDX)])
+# define SB_NAME_LONG(IDX)		((long *)&name_pool[SB_NAME_IDX(IDX)])
 # define SB_NAME(IDX)			name_pool[SB_NAME_IDX(IDX)].name_char
 # define SB_NAME_IN_STONE(IDX)		stor_blk_tbl[IDX].fld.name_in_stone
 # define SB_NAME_LEN(IDX)		stor_blk_tbl[IDX].fld.name_len
@@ -4657,6 +4680,10 @@
 # define BYTES_TO_WORDS(BIT_SIZE, ALIGN_TO)				       \
 	bits_and_bytes_to_words(&(BIT_SIZE), (ALIGN_TO == 64) ? 7:3,	       \
 				(ALIGN_TO == 64) ? 3 : 2);
+
+/* OSP_467, #2 */
+# define BITS_TO_INTEGER_DEFAULT_WORDS(BIT_SIZE, INT_SIZE)                     \
+	((INT_SIZE) == 64) ? (((BIT_SIZE)+63) >> 6) : (((BIT_SIZE)+31) >> 5)
 
 /*      This routine will test the value held in an integer array (c) against */
 /*      the value held in TRUE_VALUE to see if the they match. This is to     */

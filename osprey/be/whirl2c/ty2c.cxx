@@ -1,4 +1,8 @@
 /*
+ * Copyright (C) 2009-2010 Advanced Micro Devices, Inc.  All Rights Reserved.
+ */
+
+/*
 
   Copyright (C) 2000, 2001 Silicon Graphics, Inc.  All Rights Reserved.
 
@@ -95,7 +99,7 @@ typedef struct SCALAR_C_NAME
 const char TY2C_Aligned_Block_Name[] = "__block";
 
 #if defined(TARG_X8664)
-#define MTYPE_PREDEF MTYPE_V16F8
+#define MTYPE_PREDEF MTYPE_V32F8
 #else
 #define MTYPE_PREDEF MTYPE_F16
 #endif /* TARG_X8664 */
@@ -114,8 +118,16 @@ static const SCALAR_C_NAME Scalar_C_Names[MTYPE_LAST + 1] =
     {"unsigned long long", "_UINT64"},          /* MTYPE_U8 = 9 */
     {"float",              "_IEEE32"},          /* MTYPE_F4 = 10 */
     {"double",             "_IEEE64"},          /* MTYPE_F8 = 11 */
+#if defined(TARG_IA64) || defined(TARG_X8664)
+    {"long double",        "_IEEE80"},          /* MTYPE_F10 = 12 */
+#else
     {Name_Unknown_Type,    "_IEEE80"},          /* MTYPE_F10 = 12 */
-    {Name_Unknown_Type,    "_IEEE128"},  /* MTYPE_F16 = 13 = MTYPE_PREDEF */
+#endif
+#if defined(TARG_IA64) || defined(TARG_X8664)
+    {"__float128",         "_IEEE128"},         /* MTYPE_F16 = 13 = MTYPE_PREDEF */
+#else
+    {Name_Unknown_Type,    "_IEEE128"},         /* MTYPE_F16 = 13 = MTYPE_PREDEF */
+#endif
     {Name_Unknown_Type,        ""},             /* MTYPE_STRING = 14 */
     {Name_Unknown_Type,        ""},             /* MTYPE_FQ = 15 */
     {Name_Unknown_Type,        ""},             /* MTYPE_M = 16 */
@@ -126,27 +138,44 @@ static const SCALAR_C_NAME Scalar_C_Names[MTYPE_LAST + 1] =
     {Name_Unknown_Type,        ""},             /* MTYPE_BS = 21 */
     {Name_Unknown_Type,        ""},             /* MTYPE_A4 = 22 */
     {Name_Unknown_Type,        ""},             /* MTYPE_A8 = 23 */
-    {"_Complex long double", "_COMPLEX80"},     /* MTYPE_C10 = 24 */
+#if defined(TARG_IA64) || defined(TARG_X8664)
+    {"_Complex long double", "_COMPLEX80"},       /* MTYPE_C10 = 24 */
+#else
+    {Name_Unknown_Type, "_COMPLEX80"},          /* MTYPE_C10 = 24 */
+#endif
+#if defined(TARG_IA64) || defined(TARG_X8664)
+    {"_Complex __float128",  "_IEEE128"},       /* MTYPE_F16 = 13 = MTYPE_PREDEF */
+#else
     {Name_Unknown_Type,        ""},             /* MTYPE_C16 = 25 */
+#endif
     {Name_Unknown_Type,        ""},             /* MTYPE_I16 = 26 */
     {Name_Unknown_Type,        ""},              /* MTYPE_U16 = 27 */
 #ifdef TARG_X8664
     {Name_Unknown_Type,        "_CMPLX8[2]"},   /* MTYPE_V16C4 = 28 */
     {Name_Unknown_Type,        "_CMPLX16[1]"},  /* MTYPE_V16C8 = 29 */
-    {"signed char[16]",        "_INT8[16]"},    /* MTYPE_V16I1 = 30 */
-    {"signed short[8]",        "_INT16[8]"},    /* MTYPE_V16I2 = 31 */
-    {"signed int[4]",          "_INT32[4]"},    /* MTYPE_V16I4 = 32 */
-    {"signed long long int[2]","_INT64[2]"},    /* MTYPE_V16I8 = 33 */
-    {"float[4]",               "_IEEE32[4]"},   /* MTYPE_V16F4 = 34 */
-    {"double[2]",              "_IEEE64[2]"},   /* MTYPE_V16F8 = 35 */
+    {Name_Unknown_Type,        "V16I1"},        /* MTYPE_V16I1 = 30 */
+    {Name_Unknown_Type,        "V16I2"},        /* MTYPE_V16I2 = 31 */
+    {Name_Unknown_Type,        "V16I4"},        /* MTYPE_V16I4 = 32 */
+    {Name_Unknown_Type,        "V16I8"},        /* MTYPE_V16I8 = 33 */
+    {Name_Unknown_Type,        "V16F4"},        /* MTYPE_V16F4 = 34 */
+    {Name_Unknown_Type,        "V16F8"},        /* MTYPE_V16F8 = 35 */
     {Name_Unknown_Type,        ""},             /* MTYPE_V8I1 = 36 */
     {Name_Unknown_Type,        ""},             /* MTYPE_V8I2 = 37 */
     {Name_Unknown_Type,        ""},             /* MTYPE_V8I4 = 38 */
-    {Name_Unknown_Type,        ""},             /* MTYPE_V8F4 = 39 */
-    {Name_Unknown_Type,        ""},             /* MTYPE_M8I1 = 40 */
-    {Name_Unknown_Type,        ""},             /* MTYPE_M8I2 = 41 */
-    {Name_Unknown_Type,        ""},             /* MTYPE_M8I4 = 42 */
-    {Name_Unknown_Type,        ""},             /* MTYPE_M8F4 = 43 */
+    {Name_Unknown_Type,        ""},             /* MTYPE_V8I8 = 39 */
+    {Name_Unknown_Type,        ""},             /* MTYPE_V8F4 = 40 */
+    {Name_Unknown_Type,        ""},             /* MTYPE_M8I1 = 41 */
+    {Name_Unknown_Type,        ""},             /* MTYPE_M8I2 = 42 */
+    {Name_Unknown_Type,        ""},             /* MTYPE_M8I4 = 43 */
+    {Name_Unknown_Type,        ""},             /* MTYPE_M8F4 = 44 */
+    {Name_Unknown_Type,        ""},             /* MTYPE_V32C4 = 45 */
+    {Name_Unknown_Type,        ""},             /* MTYPE_V32C8 = 46 */
+    {Name_Unknown_Type,        ""},             /* MTYPE_V32I1 = 47 */
+    {Name_Unknown_Type,        ""},             /* MTYPE_V32I2 = 48 */
+    {Name_Unknown_Type,        ""},             /* MTYPE_V32I4 = 49 */
+    {Name_Unknown_Type,        ""},             /* MTYPE_V32I8 = 50 */
+    {Name_Unknown_Type,        ""},             /* MTYPE_V32F4 = 51 */
+    {Name_Unknown_Type,        ""},             /* MTYPE_V32F8 = 52 */
 #elif defined(TARG_SL)
     {Name_Unknown_Type,        ""},             /* MTYPE_SB1 = 28 */
     {Name_Unknown_Type,        ""},             /* MTYPE_SB2 = 29 */
@@ -368,10 +397,6 @@ skip_till_next_field(FLD_HANDLE  this_fld,
 	      //bug1452 -- on PPC we have situations where a type's natural alignemnt 
 	      //is different from when it's the inside a struct, so we'd have a "misaligned"
 	      //field here that still needs to be output
-#if 0
-	      (!TY_Is_Pointer(FLD_type(next_fld)) &&
-	       FLD_ofst(next_fld) % TY_align(FLD_type(next_fld)) != 0) ||
-#endif
 	      (!is_union &&
 	       FLD_Is_Bitfield(next_fld, 
 			       FLD_next(next_fld),

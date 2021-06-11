@@ -1,4 +1,8 @@
 /*
+ * Copyright (C) 2009-2010 Advanced Micro Devices, Inc.  All Rights Reserved.
+ */
+
+/*
  *  Copyright (C) 2007. QLogic Corporation. All Rights Reserved.
  */
 
@@ -45,6 +49,7 @@
 
 #include <stdint.h>
 #include <signal.h>
+#include "pathscale_defs.h"
 #include "defs.h"
 #include "errors.h"
 #include "erglob.h"
@@ -246,7 +251,7 @@ static UINT64 determine_pseudo_inverse (
 }
 
 
-static UINT log2 (UINT i)
+static UINT log2_uint (UINT i)
 {
   UINT t = 0;
   i = i >> 1;
@@ -299,7 +304,7 @@ Expand_Integer_Divide_By_Constant(TN *result, TN *numer_tn, INT64 denom_val,
   if (!is_double && CG_idivbyconst_opt) {
     if (is_signed) {
       UINT64 d = labs((UINT64)denom_val);
-      UINT l = log2((UINT)d);
+      UINT l = log2_uint((UINT)d);
       INT64 e = denom_val;
       UINT s, a;
       UINT64 m;
@@ -434,7 +439,7 @@ Expand_Integer_Divide_By_Constant(TN *result, TN *numer_tn, INT64 denom_val,
 	n++;
       }
       
-      l = log2(t) + 1;
+      l = log2_uint(t) + 1;
       j = (((UINT64)(0xffffffff)) % ((UINT64)(t)));
       k = (((UINT64)(1)) << (32 + l)) / ((UINT64)(0xffffffff - j));
       m_low = (((UINT64)(1)) << (32 + l)) / t;
@@ -450,7 +455,7 @@ Expand_Integer_Divide_By_Constant(TN *result, TN *numer_tn, INT64 denom_val,
 	a = 0;
       }
       else {
-	s = log2(t);
+	s = log2_uint(t);
 	m_low = (((UINT64)(1)) << (32 + s)) / ((UINT64)(t));
 	r = ((UINT)((((UINT64)(1)) << (32 + s)) % ((UINT64)(t))));
 	m = (r < ((t >> 1) + 1)) ? ((UINT)(m_low)) : ((UINT)(m_low)) + 1;
@@ -748,7 +753,9 @@ Expand_Power_Of_2_Rem (TN *result, TN *src1, INT64 src2_val, TYPE_ID mtype, OPS 
     /* Avoid generating multi-BBs under -m32, which does not have too many
        registers.
     */
-    if( CG_use_setcc || Is_Target_32bit() || src2_val < 0 ){
+    if (src2_val > 0 && CG_divrem_opt) {
+      Expand_Fast_Power_Of_2_Rem( result, src1, src2_val, mtype, ops );
+    } else if( CG_use_setcc || Is_Target_32bit() || src2_val < 0 ){
       TN *t1 = Build_TN_Of_Mtype(mtype);
       INT64 absdvsr = src2_val < 0 ? -src2_val : src2_val;
       BOOL is_double = MTYPE_is_size_double(mtype);
@@ -1040,19 +1047,17 @@ Expand_DivRem(TN *result, TN *result2, TN *src1, TN *src2, TYPE_ID mtype, OPS *o
     if (MTYPE_is_signed(mtype)) {
       const INT64 minintval = is_double ? INT64_MIN : INT32_MIN;
       if (src1_val == minintval && src2_val == -1) {
-	// Bug 952 - instead of asserting, generate a divide for a compile-only 	// test (Gcc compatible - but why can't Gcc compute this even at higher 	// optimization levels ?)
-	// FmtAssert (FALSE, ("Division overflow detected.\n"));
-	printf("pathcc - division overflow detected\n");
-	INT tn_size = MTYPE_is_size_double(mtype) ? 8 : 4;
-	src2 = Expand_Immediate_Into_Register(Gen_Literal_TN(src2_val, tn_size), 
-					      is_double, ops);
-	src1 = Expand_Immediate_Into_Register(Gen_Literal_TN(src1_val, tn_size),
-					      is_double, ops);
-	TN *src3;
-	Extend_Dividend(&src1, &src3, mtype, is_double, ops);
-	Build_OP(is_double ? TOP_idiv64 : TOP_idiv32, 
-		 result, result2, src1, src3, src2, ops);	
-	return;
+        //
+        // INT_MIN/-1 => INT_MIN * 1/-1 => INT_MIN * -1 
+        //  => -INT_MIN => ~INT_MIN + 1 => INT_MIN 
+        // 
+        // INT_MIN % -1 => 0
+
+        BOOL is_signed = true;
+        INT tn_size = is_double ? 8 : 4;
+        Exp_Immediate(result, Gen_Literal_TN(minintval, tn_size), is_signed, ops);
+        Exp_Immediate(result2, Gen_Literal_TN(0, tn_size), is_signed, ops);
+        return;
       }
     }
     INT64 quot_val, rem_val;

@@ -57,6 +57,7 @@
 #include <assert.h>
 #include <list>
 #include <vector>
+#include <string.h>
 #include "topcode.h"
 #include "targ_isa_properties.h"
 #include "gen_util.h"
@@ -242,14 +243,14 @@ const char* Print_Name(int print_index)
     for (i = 0; i < MAX_LISTING_OPERANDS; ++i) {
       char buf[80];
       if (i == END) {
-	comp_name[i] = "ISA_PACK_COMP_end";
+	comp_name[i] = strdup("ISA_PACK_COMP_end");
       } else if (i == OPND) {
-	comp_name[i] = "ISA_PACK_COMP_opnd";
+	comp_name[i] = strdup("ISA_PACK_COMP_opnd");
       } else if (i > OPND && i < (OPND + MAX_OPNDS)) {
 	sprintf(buf, "ISA_PACK_COMP_opnd+%d", i - OPND);
 	comp_name[i] = strdup(buf);
       } else if (i == RESULT) {
-	comp_name[i] = "ISA_PACK_COMP_result";
+	comp_name[i] = strdup("ISA_PACK_COMP_result");
       } else {
 	assert(i > RESULT && i < (RESULT + MAX_RESULTS));
 	sprintf(buf, "ISA_PACK_COMP_result+%d", i - RESULT);
@@ -503,6 +504,7 @@ void ISA_Pack_End(void)
   bool only_zero_opndpos;
   const char *info_index_type;
 
+#ifndef TARG_LOONGSON
   for (err = false, top = 0; top < TOP_count; ++top) {
     bool is_dummy = TOP_is_dummy((TOP)top);
     bool is_simulated = TOP_is_simulated((TOP)top);
@@ -523,6 +525,7 @@ void ISA_Pack_End(void)
     }
   }
   if (err) exit(EXIT_FAILURE);
+#endif
 
   // setup types and formats depending on instruction size.
   if (inst_bits > 32) {
@@ -777,7 +780,6 @@ void ISA_Pack_End(void)
   index = 1;
   for ( isi = all_packs.begin(); isi != all_packs.end(); ++isi ) {
     ISA_PACK_TYPE curr_ptype = *isi;
-    i = 0;
     if (curr_ptype->oadj.begin() != curr_ptype->oadj.end()) {
       curr_ptype->adj_index = index;
       for ( ioi = curr_ptype->oadj.begin(); 
@@ -863,4 +865,8 @@ void ISA_Pack_End(void)
 		 "}\n");
 
   Emit_Footer (hfile);
+
+  fclose(hfile);
+  fclose(cfile);
+  fclose(efile);
 }

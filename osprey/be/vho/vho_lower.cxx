@@ -1,4 +1,7 @@
 /*
+ * Copyright (C) 2009-2010 Advanced Micro Devices, Inc.  All Rights Reserved.
+ */
+/*
  * Copyright 2003, 2004, 2005, 2006 PathScale, Inc.  All Rights Reserved.
  */
 
@@ -39,7 +42,6 @@
 
 //-*-c++-*-
 
-#define __STDC_LIMIT_MACROS
 #include <stdint.h>
 
 #ifndef FRONT_END
@@ -47,6 +49,7 @@
 #include "defs.h"
 #include "config.h"
 #include "config_opt.h"
+#include "config_debug.h"
 #include "mempool.h"
 #include "wn.h"
 #include "wn_util.h"
@@ -65,6 +68,8 @@
 #include "prompf.h" 
 #include "wb_f90_lower.h"
 #include "wn_lower.h"
+#include "be_util.h"            // For Current_PU_Count
+#include "glob.h"               // For Show_Progress
 #ifdef KEY
 #include "w2op.h"		// For OPCODE_Can_Be_Spculative
 #endif
@@ -168,37 +173,9 @@ static WN * vho_lower_expr ( WN * expr, WN * block, BOOL_INFO * bool_info, BOOL 
 
 /* Table used to promote integers less than 4 bytes into their
  * 4 byte counterparts in order to get the right type for OPCODE_make_op
+ * See definitions in wn_lower.cxx
  */
-
-TYPE_ID Promoted_Mtype [MTYPE_LAST + 1] = {
-  MTYPE_UNKNOWN,  /* MTYPE_UNKNOWN */
-  MTYPE_UNKNOWN,  /* MTYPE_B */
-  MTYPE_I4,       /* MTYPE_I1 */
-  MTYPE_I4,       /* MTYPE_I2 */
-  MTYPE_I4,       /* MTYPE_I4 */
-  MTYPE_I8,       /* MTYPE_I8 */
-  MTYPE_U4,       /* MTYPE_U1 */
-  MTYPE_U4,       /* MTYPE_U2 */
-  MTYPE_U4,       /* MTYPE_U4 */
-  MTYPE_U8,       /* MTYPE_U8 */
-  MTYPE_F4,       /* MTYPE_F4 */
-  MTYPE_F8,       /* MTYPE_F8 */
-  MTYPE_F10,      /* MTYPE_F10 */
-  MTYPE_UNKNOWN,  /* MTYPE_F16 */
-  MTYPE_UNKNOWN,  /* MTYPE_STR */
-  MTYPE_FQ,       /* MTYPE_FQ */
-  MTYPE_M,        /* MTYPE_M */
-  MTYPE_C4,       /* MTYPE_C4 */
-  MTYPE_C8,       /* MTYPE_C8 */
-  MTYPE_CQ,       /* MTYPE_CQ */
-  MTYPE_V,         /* MTYPE_V */
-#if defined(TARG_IA64)
-  MTYPE_UNKNOWN,  /* MTYPE_BS */
-  MTYPE_UNKNOWN,  /* MTYPE_A4 */
-  MTYPE_UNKNOWN,  /* MTYPE_A8 */
-  MTYPE_C10,      /* MTYPE_C10 */
-#endif
-};
+extern TYPE_ID Promoted_Mtype [MTYPE_LAST + 1];
 
 #ifdef VHO_DEBUG
 static BOOL      VHO_Switch_Debug = TRUE;
@@ -207,6 +184,8 @@ static char    * VHO_Switch_Format;
 #endif /* VHO_DEBUG */
 
 static SRCPOS    VHO_Srcpos;
+static BOOL      VHO_SCL_Debug;             // Debug Structure Copy Lowering 
+static BOOL      VHO_M_Debug_Type_Mismatch;
 
 /* Variables related to handling of switch statements */
 
@@ -1026,7 +1005,7 @@ VHO_Lower_Switch ( WN * wn )
   INT32      i;
   INT32      j;
   SRCPOS     srcpos;
-  INT32      count;
+  INT32      count = 0;
   WN       * conv_wn = NULL;
 
   LABEL_IDX  last_label;
@@ -1253,7 +1232,7 @@ VHO_Lower_Compgoto ( WN * wn )
  * Update VHO_Struct_Nfields, VHO_Struct_Last_Field_Offset
  * VHO_Struct_Last_Field_Size.
  *
- * If the structure contains misaligned data, holes or fields which
+ * If the structure contains misaligned data, holes in unions or fields which
  * are out of order, then lowering is not done.
  * This is done by setting VHO_Struct_Can_Be_Lowered to FALSE.
  *
@@ -1261,7 +1240,7 @@ VHO_Lower_Compgoto ( WN * wn )
  */
 
 static UINT
-VHO_Get_Field_List ( WN_OFFSET offset, TY_IDX sty_idx, UINT field_id )
+VHO_Get_Field_List ( WN_OFFSET offset, TY_IDX sty_idx, UINT field_id, BOOL avoid_hole )
 {
   TY_IDX      fty_idx;
   WN_OFFSET   field_offset;
@@ -1273,6 +1252,11 @@ VHO_Get_Field_List ( WN_OFFSET offset, TY_IDX sty_idx, UINT field_id )
 
   FLD_ITER fld_iter = Make_fld_iter (TY_fld (Ty_Table[sty_idx]));
 
+  // AMD bug: 15046. When a union is seen, we should not allow holes between underleath flattened fields
+  // when we use copy-by-field to lower struct copies.
+  if (TY_is_union(Ty_Table[sty_idx]))
+    avoid_hole = TRUE;
+  
   while (VHO_Struct_Can_Be_Lowered) {
     FLD_HANDLE fld (fld_iter);
     if ( FLD_is_bit_field(fld) ) {
@@ -1290,13 +1274,18 @@ VHO_Get_Field_List ( WN_OFFSET offset, TY_IDX sty_idx, UINT field_id )
         if ( VHO_Struct_Nfields ) {
           if ( field_offset >= VHO_Struct_Last_Field_Offset
                                  + VHO_Struct_Last_Field_Size ) {
-            /* new field */
-            VHO_Struct_Last_Field_Offset = field_offset;
-            VHO_Struct_Last_Field_Size   = TY_size (Ty_Table [fty_idx]);
-            VHO_Struct_Field_Is_Array_Table [VHO_Struct_Nfields] = FALSE;
-            VHO_Struct_Field_Id_Table [VHO_Struct_Nfields] = field_id;
-            VHO_Struct_Offset_Table [VHO_Struct_Nfields] = field_offset;
-            VHO_Struct_Fld_Table [VHO_Struct_Nfields++] = fty_idx;
+
+	    if (avoid_hole && (field_offset > (VHO_Struct_Last_Field_Offset + VHO_Struct_Last_Field_Size)))
+	      VHO_Struct_Can_Be_Lowered = FALSE;
+	    else {
+	      /* new field */
+	      VHO_Struct_Last_Field_Offset = field_offset;
+	      VHO_Struct_Last_Field_Size   = TY_size (Ty_Table [fty_idx]);
+	      VHO_Struct_Field_Is_Array_Table [VHO_Struct_Nfields] = FALSE;
+	      VHO_Struct_Field_Id_Table [VHO_Struct_Nfields] = field_id;
+	      VHO_Struct_Offset_Table [VHO_Struct_Nfields] = field_offset;
+	      VHO_Struct_Fld_Table [VHO_Struct_Nfields++] = fty_idx;
+	    }
           }
           else
           if ( field_offset == VHO_Struct_Last_Field_Offset ) {
@@ -1342,7 +1331,7 @@ VHO_Get_Field_List ( WN_OFFSET offset, TY_IDX sty_idx, UINT field_id )
       
        	  // get new field id from sub-struct 
           // so next field will have right value.
-          field_id = VHO_Get_Field_List (offset + FLD_ofst (fld), fty_idx, field_id);
+          field_id = VHO_Get_Field_List (offset + FLD_ofst (fld), fty_idx, field_id, avoid_hole);
         }
         break;
 
@@ -1374,26 +1363,31 @@ VHO_Get_Field_List ( WN_OFFSET offset, TY_IDX sty_idx, UINT field_id )
         if(VHO_Struct_Nfields) {
           if ( field_offset >=  VHO_Struct_Last_Field_Offset
                                   + VHO_Struct_Last_Field_Size ) { 
-            for(int i=0; i<array_elem_num; i++) {
-              if (TY_kind(ety_idx) == KIND_STRUCT) {
-                INT last_nfield = VHO_Struct_Nfields;
-                // array of structs; open up each field of struct
-                VHO_Get_Field_List (field_offset + i*TY_size(ety_idx), 
-                                    ety_idx, field_id);
-                for (INT j=last_nfield; j < VHO_Struct_Nfields; ++j) {
-                  VHO_Struct_Field_Is_Array_Table [j] = TRUE;
-                  VHO_Struct_Field_Id_Table [j] = field_id;
-                }
-              }
-              else {
-                VHO_Struct_Field_Is_Array_Table [VHO_Struct_Nfields] = TRUE;
-                VHO_Struct_Field_Id_Table [VHO_Struct_Nfields] = field_id;
-                VHO_Struct_Offset_Table [VHO_Struct_Nfields] = field_offset + i*TY_size(Ty_Table [ety_idx]);
-                VHO_Struct_Fld_Table [VHO_Struct_Nfields++] = ety_idx;
-              }
-            }
-            VHO_Struct_Last_Field_Offset = field_offset;
-            VHO_Struct_Last_Field_Size   = TY_size(Ty_Table [fty_idx]); 
+
+	    if (avoid_hole && (field_offset > (VHO_Struct_Last_Field_Offset + VHO_Struct_Last_Field_Size)))
+	      VHO_Struct_Can_Be_Lowered = FALSE;
+	    else {
+	      for(int i=0; i<array_elem_num; i++) {
+		if (TY_kind(ety_idx) == KIND_STRUCT) {
+		  INT last_nfield = VHO_Struct_Nfields;
+		  // array of structs; open up each field of struct
+		  VHO_Get_Field_List (field_offset + i*TY_size(ety_idx), 
+				      ety_idx, field_id, avoid_hole);
+		  for (INT j=last_nfield; j < VHO_Struct_Nfields; ++j) {
+		    VHO_Struct_Field_Is_Array_Table [j] = TRUE;
+		    VHO_Struct_Field_Id_Table [j] = field_id;
+		  }
+		}
+		else {
+		  VHO_Struct_Field_Is_Array_Table [VHO_Struct_Nfields] = TRUE;
+		  VHO_Struct_Field_Id_Table [VHO_Struct_Nfields] = field_id;
+		  VHO_Struct_Offset_Table [VHO_Struct_Nfields] = field_offset + i*TY_size(Ty_Table [ety_idx]);
+		  VHO_Struct_Fld_Table [VHO_Struct_Nfields++] = ety_idx;
+		}
+	      }
+	      VHO_Struct_Last_Field_Offset = field_offset;
+	      VHO_Struct_Last_Field_Size   = TY_size(Ty_Table [fty_idx]); 
+	    }
           } else if ( field_offset == VHO_Struct_Last_Field_Offset ) {
             if ( TY_size (Ty_Table [fty_idx]) > VHO_Struct_Last_Field_Size ) {
               VHO_Struct_Nfields--;
@@ -1402,7 +1396,7 @@ VHO_Get_Field_List ( WN_OFFSET offset, TY_IDX sty_idx, UINT field_id )
                   INT last_nfield = VHO_Struct_Nfields;
                   // array of structs; open up each field of struct
                   VHO_Get_Field_List (field_offset + i*TY_size(ety_idx), 
-                                      ety_idx, field_id);
+                                      ety_idx, field_id, avoid_hole);
                   for (INT j=last_nfield; j < VHO_Struct_Nfields; ++j) {
                     VHO_Struct_Field_Is_Array_Table [j] = TRUE;
                     VHO_Struct_Field_Id_Table [j] = field_id;
@@ -1429,7 +1423,7 @@ VHO_Get_Field_List ( WN_OFFSET offset, TY_IDX sty_idx, UINT field_id )
               INT last_nfield = VHO_Struct_Nfields;
               // array of structs; open up each field of struct
               VHO_Get_Field_List (field_offset + i*TY_size(ety_idx), 
-                                  ety_idx, field_id);
+                                  ety_idx, field_id, avoid_hole);
               for (INT j=last_nfield; j < VHO_Struct_Nfields; ++j) {
                 VHO_Struct_Field_Is_Array_Table [j] = TRUE;
                 VHO_Struct_Field_Id_Table [j] = field_id;
@@ -1589,7 +1583,7 @@ VHO_Lower_Mstore ( WN * wn )
 //    VHO_Struct_Alignment = TY_align(dst_ty_idx);
 
       /* Flatten out the structure into non overlapping fields */
-      VHO_Get_Field_List ( 0, src_ty_idx, WN_field_id(src_value) );
+      VHO_Get_Field_List ( 0, src_ty_idx, WN_field_id(src_value), FALSE );
 
 #ifdef VHO_DEBUG
       if ( VHO_Struct_Debug )
@@ -1847,8 +1841,14 @@ VHO_Lower_Mstid (WN * wn)
   SRCPOS      srcpos;
   OPCODE      opc;
   BOOL	      src_is_pointer = FALSE;
+  BOOL        ty_mismatch;
   INT src_field_id = 0;
   INT dst_field_id = 0;
+
+  if (VHO_SCL_Debug) {
+      fprintf ( TFile, "\nVHO_Lower_Mstid  lowering:\n");
+      fdump_tree(TFile, wn);
+  }
 
   src_value   = WN_kid0(wn);
   dst_ty_idx  = WN_ty(wn);
@@ -1936,7 +1936,7 @@ VHO_Lower_Mstid (WN * wn)
       // src_field_id is the starting point of type src_ty_idx
       // inside the outer structure of type orig_src_ty_idx
               
-      VHO_Get_Field_List (0, src_ty_idx, src_field_id);
+      VHO_Get_Field_List (0, src_ty_idx, src_field_id, FALSE);
               
 #ifdef VHO_DEBUG
       if ( VHO_Struct_Debug)
@@ -1998,18 +1998,33 @@ VHO_Lower_Mstid (WN * wn)
                                         VHO_Struct_Field_Id_Table[i]);
               }
           }
+
+          // Note (1).  The source and dest. types must match otherwise, the
+          // calculation to compute the field_id argument to WN_CreateStid()
+          // will be incorrect.
           opc = OPCODE_make_op ( OPR_STID, MTYPE_V, TY_mtype(fty_idx) );
-          if (VHO_Struct_Field_Is_Array_Table[i]) {
+          ty_mismatch = TY_id(src_ty_idx) != TY_id(dst_ty_idx);
+          if (VHO_Struct_Field_Is_Array_Table[i] || ty_mismatch || VHO_Disable_Copy_Field_Element) {
               // each element uses same field_id,
               // so rather than create array refs, just do element copies
               dst = WN_CreateStid ( opc, 
                                     dst_offset + VHO_Struct_Offset_Table[i], 
                                     dst_st, fty_idx, src);
+              if (VHO_M_Debug_Type_Mismatch && ty_mismatch || VHO_SCL_Debug) {
+                  fprintf(TFile, "VHO_Lower_Mstid: %stype mismatch, dst WN follows\n",
+                        ty_mismatch ? "" : "no ");
+                  fdump_tree(TFile, dst);
+              }
           } else {
               dst = WN_CreateStid ( opc, 
                                     dst_offset + VHO_Struct_Offset_Table[i], 
                                     dst_st, WN_ty(wn), src, 
                                     dst_field_id - src_field_id + VHO_Struct_Field_Id_Table[i]);
+              if (VHO_SCL_Debug) {
+                  fprintf(TFile, "dst_field_id=%d, src_field_id=%d, VHO_Struct_Field_Id_Table[%d]=%d, dst WN follows\n",
+                          dst_field_id, src_field_id, i, VHO_Struct_Field_Id_Table[i]);
+                  fdump_tree(TFile, dst);
+              }
           }
           WN_Set_Linenum(dst, srcpos);
           WN_INSERT_BlockAfter (block, WN_last(block), dst);
@@ -2090,6 +2105,7 @@ VHO_Lower_Mistore ( WN * wn )
   WN        * size;
   INT64       bytes;
   WN        * block;
+  BOOL        ty_mismatch;
   // WN_OFFSET   field_offset;
   INT32       i;
   SRCPOS      srcpos;
@@ -2101,6 +2117,10 @@ VHO_Lower_Mistore ( WN * wn )
   WN *src_iload_kid;
   WN *src_ldid;
 
+  if (VHO_SCL_Debug) {
+      fprintf ( TFile, "\nVHO_Lower_Mistore lowering:\n");
+      fdump_tree(TFile, wn);
+  }
   src_value      = WN_kid0(wn);
   WN *dst_address= WN_kid1(wn);
   dst_offset     = WN_store_offset(wn);
@@ -2154,7 +2174,7 @@ VHO_Lower_Mistore ( WN * wn )
       VHO_Struct_Can_Be_Lowered = TRUE;
       //    VHO_Struct_Alignment = TY_align(dst_ty_idx);
       /* Flatten out the structure into non overlapping fields */
-      VHO_Get_Field_List ( 0, src_ty_idx, WN_field_id(src_value) );
+      VHO_Get_Field_List ( 0, src_ty_idx, WN_field_id(src_value), FALSE );
 
 #ifdef VHO_DEBUG
       if ( VHO_Struct_Debug )
@@ -2215,17 +2235,29 @@ VHO_Lower_Mistore ( WN * wn )
             }
           }
           opc = OPCODE_make_op ( OPR_ISTORE, MTYPE_V, TY_mtype(fty_idx));
-          if (VHO_Struct_Field_Is_Array_Table[i]) {
+          // See Note (1).
+          ty_mismatch = TY_id(src_ty_idx) != TY_id(dst_ty_idx);
+          if (VHO_Struct_Field_Is_Array_Table[i] || ty_mismatch || VHO_Disable_Copy_Field_Element) {
             dst = WN_CreateIstore ( opc, 
                                     dst_offset + VHO_Struct_Offset_Table[i],
                                     Make_Pointer_Type( fty_idx),
                                     src, WN_COPY_Tree( dst_address ));
+            if (VHO_M_Debug_Type_Mismatch && ty_mismatch || VHO_SCL_Debug) {
+              fprintf(TFile, "VHO_Lower_Mistore: %stype mismatch, dst WN follows\n",
+                      ty_mismatch ? "" : "no ");
+              fdump_tree(TFile, dst);
+            }
           } else {
             dst = WN_CreateIstore ( opc, 
                                     dst_offset + VHO_Struct_Offset_Table[i],
                                     ptr_dst_ty_idx,
                                     src, WN_COPY_Tree( dst_address ), 
                                     dst_field_id - src_field_id + VHO_Struct_Field_Id_Table[i]);
+            if (VHO_SCL_Debug) {
+              fprintf(TFile, "dst_field_id=%d, src_field_id=%d, VHO_Struct_Field_Id_Table[%d]=%d, dst WN follows\n",
+                      dst_field_id, src_field_id, i, VHO_Struct_Field_Id_Table[i]);
+              fdump_tree(TFile, dst);
+            }
           }
           WN_Set_Linenum(dst, srcpos);
 
@@ -3527,12 +3559,12 @@ vho_lower_cselect ( WN * wn_cselect, WN * block, BOOL_INFO * bool_info )
 	    return wn;
 	  }
 	}
-
+#if !defined(TARG_PPC32) // PPC32 can not handle intric call
 	/* Handle saturation arithmetic SUB operator by converting it 
 	 * to an intrinsic 
 	 * x =  (y >= 0x8000) ? y - 0x8000 : 0; 
 	 */
-#if defined(TARG_X8664) || defined(TARG_SL)	
+#if defined(TARG_X8664) 
 	if ( WN_operator(test) == OPR_GT &&
 	     WN_rtype(test) == MTYPE_I4 &&
 	     WN_desc(test) == MTYPE_U4 &&
@@ -3569,7 +3601,8 @@ vho_lower_cselect ( WN * wn_cselect, WN * block, BOOL_INFO * bool_info )
 	  return wn;
 	  
 	}
-#endif // TARG_X7664 || TARG_SL
+#endif // TARG_X8664 
+#endif // #if !defined(TARG_PPC32)  
 #endif
 
         /* x > 0 ? x : -x => abs(x) */
@@ -3604,7 +3637,11 @@ vho_lower_cselect ( WN * wn_cselect, WN * block, BOOL_INFO * bool_info )
         if (    (    WN_operator(test) == OPR_GT
                   || WN_operator(test) == OPR_GE )
              && WN_Simp_Compare_Trees ( WN_kid0(test), lwn ) == 0
-             && WN_Simp_Compare_Trees ( WN_kid1(test), rwn ) == 0 ) {
+             && WN_Simp_Compare_Trees ( WN_kid1(test), rwn ) == 0 
+#if defined(TARG_SL) || defined(TARG_PPC32)
+             && MTYPE_is_integral(WN_desc(test))
+#endif
+	 ) {
 
           DevWarn ( "%s: %s %s\n",
                     OPCODE_name(WN_opcode(wn)),
@@ -3626,7 +3663,11 @@ vho_lower_cselect ( WN * wn_cselect, WN * block, BOOL_INFO * bool_info )
         if (    (    WN_operator(test) == OPR_LT
                   || WN_operator(test) == OPR_LE )
              && WN_Simp_Compare_Trees ( WN_kid0(test), lwn ) == 0
-             && WN_Simp_Compare_Trees ( WN_kid1(test), rwn ) == 0 ) {
+             && WN_Simp_Compare_Trees ( WN_kid1(test), rwn ) == 0 
+#if defined(TARG_SL) || defined(TARG_PPC32)
+             && MTYPE_is_integral(WN_desc(test))
+#endif			 
+	 ) {
 
           DevWarn ( "%s: %s %s\n",
                     OPCODE_name(WN_opcode(wn)),
@@ -4219,13 +4260,167 @@ vho_lower_mparm (WN * wn)
     // bugs 9989, 10139
     // bug fix for OSP_258
     INT field_id;
-    Is_True (WN_field_id(kid) == 0,("vho_lower_mparm: Expected field-id zero"));
     if ((TY_kind(ty) == KIND_STRUCT) &&
         (field_id /* assign */ = single_field_in_struct (ty)))
       WN_set_field_id (kid, field_id);
   }
 
   return wn;
+}
+#endif
+
+#if defined(TARG_X8664)
+/* ============================================================================
+ *
+ * void split_vector_load (  WN* orig_load, WN* block, WN** splt_load, TYPE_ID mtype )
+ *
+ * split vector load into several scalar loads 
+ *
+ * ============================================================================
+ */
+static void
+split_vector_load ( WN* orig_load, WN* block, WN** splt_load, TYPE_ID mtype )
+{
+  TYPE_ID elem_type = Mtype_vector_elemtype(mtype);
+  int count = MTYPE_byte_size(mtype) / MTYPE_byte_size(elem_type);
+
+  if ( ! OPERATOR_is_load(WN_operator(orig_load)) ) {
+    // store to result of the orig_load to stack
+    ST* arg_st = New_ST(CURRENT_SYMTAB);
+    ST_Init ( arg_st, Save_Str("__split_vector_arg"),
+              CLASS_VAR, SCLASS_AUTO, EXPORT_LOCAL,
+              MTYPE_To_TY( mtype ) );
+    WN* stid = WN_Stid( mtype, 0, arg_st, MTYPE_To_TY(mtype), orig_load, 0 );
+    WN_INSERT_BlockLast ( block, stid );
+    orig_load = WN_Ldid ( mtype, 0, arg_st, MTYPE_To_TY(mtype), 0 ); 
+  } 
+
+  switch ( WN_operator(orig_load) ) {
+    case OPR_ILOAD: {
+      WN* addr = WN_kid0(orig_load);
+      WN_OFFSET ofst = WN_load_offset(orig_load);
+      if ( WN_operator(addr) != OPR_LDID ) {
+        // promote address into preg
+        PREG_NUM addr_preg = Create_Preg( Pointer_Mtype, "__split_vectoe_load_addr" );
+        ST* addr_st = MTYPE_To_PREG( Pointer_Mtype );
+        WN* addr_stid = WN_StidIntoPreg( Pointer_Mtype, addr_preg, addr_st, addr );
+        WN_INSERT_BlockLast ( block, addr_stid );
+        addr = WN_LdidPreg( Pointer_Mtype, addr_preg );
+      }
+      for ( int i = 0; i < count; i ++ ) {
+        splt_load[i] = WN_Iload ( elem_type, ofst + i * MTYPE_byte_size(elem_type),
+                                  MTYPE_To_TY(elem_type), WN_COPY_Tree(addr), 0 );
+      }
+    }
+    break;
+
+    case OPR_LDID: {
+      ST* addr_st = WN_st(orig_load);
+      WN_OFFSET ofst = WN_load_offset(orig_load);
+      if ( ST_class(addr_st) == CLASS_PREG ) {
+        // store preg to stack
+        addr_st = New_ST(CURRENT_SYMTAB);
+        ST_Init( addr_st, Save_Str("__split_vector_arg"),
+                 CLASS_VAR, SCLASS_AUTO, EXPORT_LOCAL, MTYPE_To_TY(mtype) );
+        WN* stid = WN_Stid(mtype, 0, addr_st, MTYPE_To_TY(mtype), orig_load);
+        WN_INSERT_BlockLast ( block, stid );
+        ofst = 0;
+      }
+      for ( int i = 0; i < count; i ++ ) {
+        splt_load[i] = WN_Ldid ( elem_type, ofst + i * MTYPE_byte_size(elem_type),
+                                 addr_st, MTYPE_To_TY(elem_type), 0 );
+      }
+    }
+    break;
+
+    default:
+      FmtAssert(FALSE, ("split_vector_load NYI"));
+  }
+}
+
+/* ============================================================================
+ *
+ * WN * vho_lower_vector_mpy ( WN* wn, WN * block )
+ *
+ * split integer vector mpy into several scalar mpys 
+ *
+ * ============================================================================
+ */
+static WN*
+vho_lower_vector_mpy ( WN * wn, WN * block )
+{
+  Is_True( WN_operator(wn) == OPR_MPY &&
+           MTYPE_is_vector(WN_rtype(wn)),
+           ("Bad tree for vho_lower_vector_mpy") );
+
+  TYPE_ID orig_type = WN_rtype(wn);
+
+  // only handle M8I4MPY V16I4MPY so far
+  if ( orig_type != MTYPE_M8I4 && orig_type != MTYPE_V16I4 )
+    return wn;
+  // SSE41 support pmulld
+  if ( Is_Target_SSE41() && orig_type == MTYPE_V16I4 )
+    return wn;
+
+  // store result to stack
+  ST* result_st = New_ST(CURRENT_SYMTAB);
+  ST_Init ( result_st, Save_Str("__vector_mpy_res"),
+            CLASS_VAR, SCLASS_AUTO, EXPORT_LOCAL,
+            MTYPE_To_TY( WN_rtype(wn) ) );
+  
+  TYPE_ID elem_type = Mtype_vector_elemtype(orig_type);
+  int count = MTYPE_byte_size(orig_type) / MTYPE_byte_size(elem_type);
+  WN *arg0[8], *arg1[8];
+  split_vector_load ( WN_kid0(wn), block, arg0, orig_type );
+  split_vector_load ( WN_kid1(wn), block, arg1, orig_type );
+  for ( int i = 0; i < count; i ++ ) {
+    WN* mpy = WN_Mpy ( elem_type, arg0[i], arg1[i] );
+    WN* stid = WN_Stid( elem_type, i * MTYPE_byte_size(elem_type),
+                        result_st,  MTYPE_To_TY(elem_type), mpy, 0 );
+    WN_INSERT_BlockLast ( block, stid );
+  }
+  return WN_Ldid ( orig_type, 0, result_st, MTYPE_To_TY(orig_type), 0 );
+}
+
+/* ============================================================================
+ *
+ * WN * vho_lower_vector_div ( WN* wn, WN * block )
+ *
+ * split integer vector div into several scalar divs
+ *
+ * ============================================================================
+ */
+static WN*
+vho_lower_vector_div ( WN * wn, WN * block )
+{
+  Is_True( WN_operator(wn) == OPR_DIV &&
+           MTYPE_is_vector(WN_rtype(wn)),
+           ("Bad tree for vho_lower_vector_div") );
+
+  TYPE_ID orig_type = WN_rtype(wn);
+
+  if ( MTYPE_is_float(orig_type) )
+    return wn;
+
+  // store result to stack
+  ST* result_st = New_ST(CURRENT_SYMTAB);
+  ST_Init ( result_st, Save_Str("__vector_div_res"),
+            CLASS_VAR, SCLASS_AUTO, EXPORT_LOCAL,
+            MTYPE_To_TY( WN_rtype(wn) ) );
+
+  TYPE_ID elem_type = Mtype_vector_elemtype(orig_type);
+  int count = MTYPE_byte_size(orig_type) / MTYPE_byte_size(elem_type);
+  WN *arg0[8], *arg1[8];
+  split_vector_load ( WN_kid0(wn), block, arg0, orig_type );
+  split_vector_load ( WN_kid1(wn), block, arg1, orig_type );
+  TYPE_ID comparison_type = Mtype_comparison(elem_type);
+  for ( int i = 0; i < count; i ++ ) {
+    WN* div = WN_Div ( comparison_type, arg0[i], arg1[i] );
+    WN* stid = WN_Stid( elem_type, i * MTYPE_byte_size(elem_type),
+                        result_st,  MTYPE_To_TY(elem_type), div, 0 );
+    WN_INSERT_BlockLast ( block, stid );
+  }
+  return WN_Ldid ( orig_type, 0, result_st, MTYPE_To_TY(orig_type), 0 );
 }
 #endif
 
@@ -4410,6 +4605,12 @@ vho_lower_expr ( WN * wn, WN * block, BOOL_INFO * bool_info, BOOL is_return )
 
       if ( VHO_Combine_Loads && wn_operator == OPR_ADD )
         wn = vho_lower_combine_loads ( wn );
+#if defined(TARG_X8664)
+      else if ( wn_operator == OPR_MPY && MTYPE_is_vector(WN_rtype(wn)) )
+        wn = vho_lower_vector_mpy ( wn, block );
+      else if ( wn_operator == OPR_DIV && MTYPE_is_vector(WN_rtype(wn)) )
+        wn = vho_lower_vector_div ( wn, block );
+#endif
       break;
 
     case OPR_LOWPART:
@@ -4522,7 +4723,7 @@ vho_lower_expr ( WN * wn, WN * block, BOOL_INFO * bool_info, BOOL is_return )
 
     case OPR_PARM:
 
-#ifdef KEY // bug 7741
+#if defined(KEY) && !defined(TARG_PPC32) // bug 7741
       wn = vho_lower_mparm (wn);
 #endif
       WN_kid0(wn) = vho_lower_expr (WN_kid0(wn), block, NULL);
@@ -5308,6 +5509,27 @@ vho_lower_asm_stmt (WN* wn, WN* block)
   return wn;
 } /* vho_lower_asm_stmt */
 
+#if defined(TARG_SL)
+void Add_function_before_return(WN *wn, WN* block) {
+  if ((DEBUG_Stack_Check & STACK_FUNC_END_CHECK)
+   && ((WN_operator(wn) == OPR_RETURN) || (WN_operator(wn) == OPR_RETURN_VAL))) {
+    char * PU_name = ST_name(&St_Table[PU_Info_proc_sym(Current_PU_Info)]);
+    if ((strcmp(PU_name, INSERT_END_FUNC_NAME) != 0) && (strcmp(PU_name, INSERT_BEGIN_FUNC_NAME) != 0)) {
+      TY_IDX ty = Make_Function_Type(MTYPE_To_TY(MTYPE_V ));
+      ST *st = Gen_Intrinsic_Function(ty, INSERT_END_FUNC_NAME);
+      Clear_PU_no_side_effects(Pu_Table[ST_pu(st)]);
+      Clear_PU_is_pure(Pu_Table[ST_pu(st)]);
+      Set_PU_no_delete(Pu_Table[ST_pu(st)]);
+      WN *wn_call = WN_Call(MTYPE_V, MTYPE_V, 0, st );
+      WN_Set_Call_Default_Flags(wn_call);
+      WN_Set_Linenum (wn_call, WN_Get_Linenum(wn));
+      WN_INSERT_BlockLast(block, wn_call);
+    }
+  }
+}
+#endif
+
+
 static WN *
 vho_lower_stmt ( WN * wn, WN * block )
 {
@@ -5358,13 +5580,20 @@ vho_lower_stmt ( WN * wn, WN * block )
 #ifdef KEY
     case OPR_GOTO_OUTER_BLOCK:
 #endif
-
+      
       wn = vho_lower_return ( wn, block );
+#if defined(TARG_SL)
+      if (DEBUG_Stack_Check & STACK_FUNC_END_CHECK)
+        Add_function_before_return(wn, block);
+#endif
       break;
 
     case OPR_RETURN_VAL:
-
       wn = vho_lower_return_val ( wn, block );
+#if defined(TARG_SL)
+      if (DEBUG_Stack_Check & STACK_FUNC_END_CHECK)
+        Add_function_before_return(wn, block);
+#endif
       break;
 
     case OPR_LABEL:
@@ -6815,27 +7044,6 @@ static void Misc_Loop_Fusion ( WN * wn, WN * block )
   
   // Collect the do loops to be fused.
   WN *body = WN_while_body(wn);
-#if 0
-  WN *stmt = WN_first(body);
-  WN *preloop = NULL;
-  WN *mainloop = NULL;
-  WN *postloop = NULL;
-  while(stmt) {
-    if (WN_operator(stmt) == OPR_DO_LOOP &&
-	WN_next(stmt) && WN_operator(WN_next(stmt)) == OPR_STID &&
-	WN_desc(WN_next(stmt)) == MTYPE_I4 &&
-	WN_next(WN_next(stmt)) && 
-	WN_operator(WN_next(WN_next(stmt))) == OPR_DO_LOOP &&
-	WN_next(WN_next(WN_next(stmt))) &&
-	WN_operator(WN_next(WN_next(WN_next(stmt)))) == OPR_DO_LOOP) {
-      preloop = stmt;
-      mainloop = WN_next(WN_next(stmt));
-      postloop = WN_next(WN_next(WN_next(stmt)));
-      break;
-    }
-    stmt = WN_next(stmt);
-  }
-#endif
   FmtAssert(preloop && mainloop && postloop, 
 	    ("Handle this case in Misc_Loop_Fusion"));
   
@@ -7254,15 +7462,7 @@ vho_lower_while_do ( WN * wn, WN *block )
   //LLC
 
   // Clone the loop test
-#ifndef KEY
   WN *copy = WN_COPY_Tree( test_original );
-#else
-#if defined(TARG_SL)
-  WN *copy = WN_COPY_Tree( test_original );  
-#else
-  WN *copy = WN_COPY_Tree_With_Map( test_original );
-#endif
-#endif
 
   if ( Cur_PU_Feedback ) {
     // Guess that the loop test will not be cloned
@@ -7424,15 +7624,7 @@ vho_lower_while_do ( WN * wn, WN *block )
 
 	Reset_PREG_Table_Size( CURRENT_SYMTAB, last_preg );
 
-#ifndef KEY
         WN *copy = WN_COPY_Tree( test_original );
-#else
-#if defined (TARG_SL) 
-        WN *copy = WN_COPY_Tree( test_original );
-#else
-        WN *copy = WN_COPY_Tree_With_Map( test_original );
-#endif
-#endif
 	Cur_PU_Feedback->FB_clone_loop_test( test_original, copy, wn );
 
 	test_block = WN_CreateBlock ();
@@ -7681,7 +7873,7 @@ vho_lower_if ( WN * wn, WN *block )
    */
 
   WN* test = WN_if_test(wn);  
-#if defined(TARG_X8664) || defined(TARG_SL)
+#if defined(TARG_X8664) 
   if ( WN_operator(test) == OPR_GT &&
        WN_rtype(test) == MTYPE_I4 &&
        WN_desc(test) == MTYPE_U4 &&
@@ -7730,7 +7922,7 @@ vho_lower_if ( WN * wn, WN *block )
       return wn;
     }
   }
-#endif // TARG_X8664 || TARG_SL
+#endif // TARG_X8664 
 
   // If-Convert:
   //   if <compare>
@@ -8320,6 +8512,76 @@ VHO_Lower ( WN * wn )
 
 #ifndef FRONT_END
 
+class VHO_Switches_Mgr {
+private:
+  BOOL Struct_Opt;
+  BOOL Switch_Opt;
+  BOOL Cselect_Opt;
+  BOOL Iload_Opt;
+  BOOL Istore_Opt;
+  BOOL Call_Opt;
+public:
+  void Init();
+  void Disable();
+  void Enable();
+}; /* class VHO_Switches_Mgr */
+
+void VHO_Switches_Mgr::Init()
+{
+  Struct_Opt  = VHO_Struct_Opt;
+  Switch_Opt  = VHO_Switch_Opt;
+  Cselect_Opt = VHO_Cselect_Opt;
+  Iload_Opt   = VHO_Iload_Opt;
+  Istore_Opt  = VHO_Istore_Opt;
+  Call_Opt    = VHO_Call_Opt;
+} /* VHO_Switches_Mgr::Init */
+
+void VHO_Switches_Mgr::Disable()
+{
+  Struct_Opt  = FALSE;  
+  Switch_Opt  = FALSE;  
+  Cselect_Opt = FALSE;  
+  Iload_Opt   = FALSE;  
+  Istore_Opt  = FALSE;  
+  Call_Opt    = FALSE;  
+} /* VHO_Switches_Mgr::Disable */
+
+void VHO_Switches_Mgr::Enable()
+{
+  VHO_Struct_Opt  = Struct_Opt;
+  VHO_Switch_Opt  = Switch_Opt;
+  VHO_Cselect_Opt = Cselect_Opt;
+  VHO_Iload_Opt   = Iload_Opt;
+  VHO_Istore_Opt  = Istore_Opt;
+  VHO_Call_Opt    = Call_Opt;
+} /* VHO_Switches_Mgr::Enable */
+
+static VHO_Switches_Mgr vho_switches_mgr;
+
+void Disable_VHO_Opt()
+{
+  vho_switches_mgr.Disable();
+} /* Disable_VHO_Opt */
+
+void Enable_VHO_Opt()
+{
+  vho_switches_mgr.Enable();
+} /* Enable_VHO_Opt */
+
+void Vho_Init()
+{
+  /* Save VHO flags */
+  vho_switches_mgr.Init();
+
+  /* Construct the skiplist from -VHO:skip_* options */
+  VHO_Skip_List = Build_Skiplist( VHO_Skip );
+} /* Vho_Init */
+
+void Vho_Fini()
+{
+} /* Vho_Fini */
+
+
 /* ============================================================================
  *
  * WN *VHO_Lower_Driver (PU_Info* pu_info, WN * wn )
@@ -8332,6 +8594,9 @@ VHO_Lower ( WN * wn )
 
 WN * VHO_Lower_Driver (PU_Info* pu_info, 
 		       WN *wn) {
+
+   VHO_SCL_Debug = Get_Trace ( TP_VHO_LOWER, 0x4 );
+   VHO_M_Debug_Type_Mismatch = Get_Trace ( TP_VHO_LOWER, 0x8 );
 
    if (Get_Trace ( TKIND_IR, TP_VHO_LOWER )) {
 
@@ -8348,7 +8613,18 @@ WN * VHO_Lower_Driver (PU_Info* pu_info,
       wn = F90_Lower(pu_info, wn);
       WB_F90_Lower_Terminate();
    }
-   wn = VHO_Lower(wn);
+
+   if ( Query_Skiplist(VHO_Skip_List, Current_PU_Count()) ) {
+      if ( Show_Progress )
+        ErrMsg(EC_Skip_PU, " VHO", Current_PU_Count(), ST_name(PU_Info_proc_sym(pu_info)));
+
+      Disable_VHO_Opt();
+      wn = VHO_Lower(wn);
+      Enable_VHO_Opt();
+   }
+   else {
+     wn = VHO_Lower(wn);
+   }
 
    if (Get_Trace ( TKIND_IR, TP_VHO_LOWER )) {
 

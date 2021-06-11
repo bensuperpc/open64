@@ -1,4 +1,8 @@
 /*
+ * Copyright (C) 2008-2010 Advanced Micro Devices, Inc.  All Rights Reserved.
+ */
+
+/*
 
   Copyright (C) 2000, 2001 Silicon Graphics, Inc.  All Rights Reserved.
 
@@ -85,6 +89,7 @@ typedef	enum {
   RL_RGN_INIT,  /* processed by REGION_initialize in driver	*/
   RL_IPA_PREOPT,/* processed by IPA controlled Preopt		*/
   RL_LNO_PREOPT,/* processed by LNO controlled Preopt		*/
+  RL_LNO1_PREOPT, /* processed by LNO controlled Preopt	        */
   RL_LNO,	/* processed by LNO				*/
   RL_DU_PREOPT,	/* processed by LNO DU checking			*/
   RL_RAIL,	/* processed by RAIL				*/
@@ -99,7 +104,7 @@ typedef	enum {
 } REGION_LEVEL;
 
 struct region_flags_struct {
-  mUINT16 level : 4;	       /* how far the region has been processed*/
+  mUINT16 level : 5;	       /* how far the region has been processed*/
   mUINT16 gra_flags : 4;
   mUINT16 return_flag : 1;     /* region contains a return	       */
   mUINT16 glue_code_flag : 1;  /* glue code region created by cg       */
@@ -254,6 +259,7 @@ typedef struct region_id {
 
   LOWER_ACTIONS	lowered; /* lowerer actions already applied to region	*/
   struct EH_RANGE  *eh_range_ptr; /* pointer to current EH range   	*/
+  INT32 num_eh_ranges;   /* how many eh_ranges in this eh region        */
 
 } RID;
 
@@ -273,6 +279,7 @@ typedef struct region_id {
 #define RID_rloop(r)         	((r)->rloop)
 #define RID_lowered(r)       	((r)->lowered)
 #define RID_eh_range_ptr(r) 	((r)->eh_range_ptr)
+#define RID_num_eh_ranges(r)    ((r)->num_eh_ranges)
 #define RID_type(r)          	((r)->rid_type)
 
 /* flag macros */
@@ -597,6 +604,8 @@ extern void RID_Fprint(FILE *, RID *);
 
 /* Print the tree of RIDs rooted at rid to TFile */
 extern void RID_Tree_Print(FILE *, RID *);
+
+extern bool RID_is_valid(RID *, RID*);
 
 /* Print the tree of RIDs rooted at the RID of the given WN to TFile */
 extern void RID_WN_Tree_Print(FILE *, WN *);

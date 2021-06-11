@@ -1,4 +1,8 @@
 /*
+ * Copyright (C) 2008-2009 Advanced Micro Devices, Inc.  All Rights Reserved.
+ */
+
+/*
  *  Copyright (C) 2006, 2007. QLogic Corporation. All Rights Reserved.
  */
 
@@ -76,12 +80,14 @@
 #include "file_names.h"
 #include "phases.h"
 #include "opt_actions.h"
+#include "option_seen.h"
 #include "file_utils.h"
 #include "pathscale_defs.h"
 #include "option_names.h"
 #include "lib_phase_dir.h"
 
 boolean show_flag = FALSE;
+boolean v_flag = FALSE;
 boolean show_but_not_run = FALSE;
 boolean execute_flag = TRUE;
 boolean time_flag = FALSE;
@@ -96,6 +102,10 @@ static void init_time (void);
 static void print_time (char *phase);
 static void my_psema(void);
 static void my_vsema(void);
+
+extern boolean add_heap_limit;
+extern int heap_limit;
+extern int hugepage_attr;
 
 #define LOGFILE "/var/log/messages"
 
@@ -283,12 +293,40 @@ run_phase (phases_t phase, char *name, string_list_t *args)
 	const boolean uses_message_system = 
 			(phase == P_f90_fe || phase == P_f90_cpp ||
 			 phase == P_cppf90_fe);
-	
+
+        if (((phase == P_be) || (phase == P_ipl))) {
+            if (add_heap_limit) {
+                char buf[100];
+                char * str;
+                sprintf(&buf[0],"%d", heap_limit);
+                str = concat_strings("-OPT:hugepage_heap_limit=", buf);
+                sprintf(&buf[0],"%d", hugepage_attr);
+                str = concat_strings(str, 
+                                     concat_strings(" -OPT:hugepage_attr=", buf));
+                add_string(args, str);
+            }
+
+            if (oscale == TRUE)
+                add_string(args, "-OPT:scale=ON");
+        }
+
 	if (show_flag) {
 		/* echo the command */
 		fprintf(stderr, "%s ", name);
 		print_string_list(stderr, args);
 	}
+
+	/* When using -v (and not -show), do not echo out the gcc call
+	   that does the link phase.  libtool uses the -v option and greps
+	   for lines with -L to determine the link method when building
+	   shared libraries.  Echoing both the gcc call and the collect2/ld
+	   call that gcc generates confuses libtool.  */
+
+	if (v_flag && !show_flag && phase != P_ld && phase != P_ldplus) {
+		fprintf(stderr, "%s ", name);
+		print_string_list(stderr, args);
+	}
+
 	if (!execute_flag) return;
 
 	if (time_flag) init_time();
@@ -647,7 +685,7 @@ run_phase (phases_t phase, char *name, string_list_t *args)
 				   ) {
 					nomsg_error(RC_INTERNAL_ERROR);
 				}
-				else if (!show_flag || save_stderr) {
+				else if (!(show_flag || v_flag) || save_stderr) {
 					nomsg_error(RC_USER_ERROR);
 				} else {
 					error("%s returned non-zero status %d",
@@ -922,7 +960,7 @@ run_phase (phases_t phase, char *name, string_list_t *args)
     }
     else if (user_err) {
       /* assume phase will print diagnostics */
-      if (!show_flag || save_stderr)
+      if (!(show_flag || v_flag) || save_stderr)
 	nomsg_error(RC_USER_ERROR);
       else
         error("%s returned non-zero status %d", name, status);

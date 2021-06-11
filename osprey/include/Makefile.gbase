@@ -1,5 +1,7 @@
 # -*- Makefile -*-
 #
+#  Copyright (C) 2009 Advanced Micro Devices, Inc.  All Rights Reserved.
+#
 #  Copyright (C) 2000, 2001 Silicon Graphics, Inc.  All Rights Reserved.
 #
 #  This program is free software; you can redistribute it and/or modify it
@@ -164,6 +166,14 @@ ifeq ($(BUILD_TARGET), X8664)
 SYS_DIRS = \
 	ia64
 endif
+ifeq ($(BUILD_TARGET), PPC32)
+SYS_DIRS = \
+	ia64
+endif
+ifeq ($(BUILD_TARGET), LOONGSON)
+SYS_DIRS = \
+        ia64
+endif
 
 LIBELF_HFILES = \
 	elf_repl.h \
@@ -173,6 +183,7 @@ LIBELF_HFILES = \
 
 LIBELF_DIRS = libelf
 
+.PHONY: default
 default: pathscale_defs.h
 	@: Make directories in case they do not exist.
 	@for d in sys cmplrs libelf; do \
@@ -181,53 +192,59 @@ default: pathscale_defs.h
 	    fi; \
 	done	
 	@for h in $(LINUX_HFILES); do \
-	    if ! test -a $$h; then \
+	    if ! test -e $$h; then \
 	      $(LN) -sf $(BUILD_TOT)/linux/include/$$h $$h; \
-	    fi; \
-	done
-	@for h in $(LINUX_SYS_HFILES); do \
-	    if ! test -a $$h; then \
-	      $(LN) -sf $(BUILD_TOT)/../linux/include/sys/$$h sys/$$h; \
-	    fi; \
-	done
-	@for h in $(INCLUDE_HFILES); do \
-	    if ! test -a $$h; then \
-	      $(LN) -sf $(BUILD_TOT)/include/$$h $$h; \
-	    fi; \
-	done
-	@for h in $(LIBDWARF_HFILES); do \
-	    if ! test -a $$h; then \
-	      $(LN) -sf $(BUILD_TOT)/libdwarf/libdwarf/$$h $$h; \
-	    fi; \
-	done
-	@for h in $(CMPLR_DIRS); do \
-	    if ! test -a $$h; then \
-	      $(MKDIR) $$h; \
-	    fi; \
-	done
-	@for h in $(CMPLR_HFILES); do \
-	    if ! test -a cmplrs/$$h; then \
-	      $(LN) -sf $(BUILD_TOT)/../include/cmplrs/$$h cmplrs/$$h; \
-	    fi; \
-	done
-	@for h in $(SYS_HFILES); do \
-	    if ! test -a sys/$$h; then \
-	      $(LN) -sf $(BUILD_TOT)/../include/sys/$$h sys/$$h; \
-	    fi; \
-	done
-	@for h in $(SYS_DIRS); do \
-	    if ! test -a sys/$$h; then \
-	      $(LN) -sf $(BUILD_TOT)/../include/sys/$$h sys/$$h; \
 	    fi; \
 	done
 	@for h in $(LIBELF_HFILES); do \
 	    if ! test -a $$h; then \
-	      $(LN) -sf $(BUILD_TOT)/../libelf/lib/$$h libelf/$$h; \
+	      ln -sf $(BUILD_TOT)/libelf/lib/$$h libelf/$$h; \
+	    fi; \
+	done
+	@for h in $(LINUX_SYS_HFILES); do \
+	    if ! test -e $$h; then \
+	      $(LN) -sf $(BUILD_TOT)/../linux/include/sys/$$h sys/$$h; \
+	    fi; \
+	done
+	@for h in $(INCLUDE_HFILES); do \
+	    if ! test -e $$h; then \
+	      $(LN) -sf $(BUILD_TOT)/include/$$h $$h; \
+	    fi; \
+	done
+	@for h in $(LIBDWARF_HFILES); do \
+	    if ! test -e $$h; then \
+	      $(LN) -sf $(BUILD_TOT)/libdwarf/libdwarf/$$h $$h; \
+	    fi; \
+	done
+	@for h in $(CMPLR_DIRS); do \
+	    if ! test -e $$h; then \
+	      $(MKDIR) $$h; \
+	    fi; \
+	done
+	@for h in $(CMPLR_HFILES); do \
+	    if ! test -e cmplrs/$$h; then \
+	      $(LN) -sf $(BUILD_TOT)/include/cmplrs/$$h cmplrs/$$h; \
+	    fi; \
+	done
+	@for h in $(SYS_HFILES); do \
+	    if ! test -e sys/$$h; then \
+	      $(LN) -sf $(BUILD_TOT)/include/sys/$$h sys/$$h; \
+	    fi; \
+	done
+	@for h in $(SYS_DIRS); do \
+	    if ! test -e sys/$$h; then \
+	      $(LN) -sf $(BUILD_TOT)/include/sys/$$h sys/$$h; \
+	    fi; \
+	done
+	@for h in $(LIBELF_HFILES); do \
+	    if ! test -e $$h; then \
+	      $(LN) -sf $(BUILD_TOT)/libelf/lib/$$h libelf/$$h; \
 	    fi; \
 	done
 
 pathscale_defs.h: $(BUILD_TOT)/../defs.mk 
 	echo '#ifndef __pathscale_defs_h' > $@
+	echo '#define __pathscale_defs_h' >> $@
 	echo '#define OPEN64_NAME_PREFIX "${OPEN64_NAME_PREFIX}"' >> $@
 	echo '#define OPEN64_MAJOR_VERSION_NUM ${OPEN64_MAJOR_VERSION}' >> $@
 	echo '#define OPEN64_MINOR_VERSION_NUM ${OPEN64_MINOR_VERSION}' >> $@

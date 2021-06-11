@@ -1,37 +1,14 @@
-/*
-
-  Copyright (C) 2000, 2001 Silicon Graphics, Inc.  All Rights Reserved.
-
-  This program is free software; you can redistribute it and/or modify it
-  under the terms of version 2 of the GNU General Public License as
-  published by the Free Software Foundation.
-
-  This program is distributed in the hope that it would be useful, but
-  WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
-
-  Further, this software is distributed without any warranty that it is
-  free of the rightful claim of any third person regarding infringement 
-  or the like.  Any license provided herein, whether implied or 
-  otherwise, applies only to this software file.  Patent licenses, if 
-  any, provided herein do not apply to combinations of this program with 
-  other software, or any other product whatsoever.  
-
-  You should have received a copy of the GNU General Public License along
-  with this program; if not, write the Free Software Foundation, Inc., 59
-  Temple Place - Suite 330, Boston MA 02111-1307, USA.
-
-  Contact information:  Silicon Graphics, Inc., 1600 Amphitheatre Pky,
-  Mountain View, CA 94043, or:
-
-  http://www.sgi.com
-
-  For further information regarding this notice, see:
-
-  http://oss.sgi.com/projects/GenInfo/NoticeExplan
-
-*/
-
+/********************************************************************\
+|*                                                                  *|   
+|*  Copyright (c) 2006 by SimpLight Nanoelectronics.                *|
+|*  All rights reserved                                             *|
+|*                                                                  *|
+|*  This program is free software; you can redistribute it and/or   *|
+|*  modify it under the terms of the GNU General Public License as  *|
+|*  published by the Free Software Foundation; either version 2,    *|
+|*  or (at your option) any later version.                          *|
+|*                                                                  *|
+\********************************************************************/
 
 /* ====================================================================
  * ====================================================================
@@ -82,7 +59,6 @@
 
 
 #define USE_STANDARD_TYPES 1
-#define __STDC_LIMIT_MACROS
 #include <stdint.h>
 #include <limits.h>
 #include <fp_class.h>
@@ -4402,110 +4378,6 @@ Str_To_Tcon(TYPE_ID ty, char *buf)
   return c;
 } /* Str_To_Tcon */
 
-#if 0 /*foo*/
-/* 
- * Bit_Str_To_Tcon
- * 
- * This routine is passed a sequence of bytes in buf[0], buf[1], ... 
- * which have the following semantics:  the byte in buf[0] is the least 
- * significant byte; the byte in buf[1] is the next least significant 
- * byte; etc until we run out of bytes for an object of be_type "ty".  
- * We must make a TCON which preserves the byte ordering regardless of 
- * target endianness.  Hence if the user does:
- *       i = '00001001'x
- * i had better get the value 4097.
- * It is the callers responsibility to provide us with "n" bytes of 
- * valid "buf" if the betype corresponding to "ty" requires "n" bytes 
- * of target representation.  In other words, MTYPE_I1 only requires 
- * that buf[0] be valid, but MTYPE_F8 requires that buf[0] through 
- * buf[7] be valid.  The caller must do any zero padding in buf as 
- * required so that buf[0] is the LSByte of the constant.
- * TODO:  is MTYPE_I1, buf[0] == 0xff supposed to be 255 or -1?
- *        Targ_To_Host doesn't care what we do, does anybody else?
- */
-
-TCON
-Bit_Str_To_Tcon ( TYPE_ID ty, char *arg_buf )
-{
-  static TCON c;
-  unsigned char *buf;
-  UINT temp;
-  
-  buf = (unsigned char *)arg_buf; /* zero-extend our arg bytes */
-  TCON_ty(c) = ty;
-
-  switch (ty) {
-    case MTYPE_I1:
-    case MTYPE_U1: /* We want to sign-extend here; we'll truncate later */
-      TCON_v0(c) = buf[0];
-      TCON_v1(c) = 0;
-      break;
-
-    case MTYPE_I2:
-    case MTYPE_U2: /* We want to sign-extend here; we'll truncate later */
-      TCON_v0(c) = (buf[1] << 8) | buf[0];
-      TCON_v1(c) = 0;
-      break;
-
-    case MTYPE_I4:
-    case MTYPE_U4:
-      TCON_v0(c) = (buf[3] << 24) | (buf[2] << 16) | (buf[1] << 8) | buf[0];
-      TCON_v1(c) = 0;
-      break;
-
-    case MTYPE_F4:
-      /* user is trying to give floating constant in binary, octal, hex,
-       * etc.  He had better know the floating point format.
-       */
-      temp = (buf[3] << 24) | (buf[2] << 16) | (buf[1] << 8) | buf[0];
-      Set_TCON_R4(c, *((float *)&temp));
-      TCON_v1(c) = 0;
-      break;
-
-    case MTYPE_F8:
-      /* We must be careful about which word gets which set of 4 bytes
-       * here.  buf[0] must go into the most significant byte of
-       * TCON_R8.  Since the current code is written to use the host's
-       * representation as the internal representation, we must make
-       * sure we put it in the proper place depending on the host's
-       * endianness.
-       */
-#if HOST_IS_BIG_ENDIAN
-      TCON_v1(c) = (buf[3] << 24) | (buf[2] << 16) | (buf[1] << 8) | buf[0];
-      TCON_v0(c) = (buf[7] << 24) | (buf[6] << 16) | (buf[5] << 8) | buf[4];
-#else
-      TCON_v0(c) = (buf[3] << 24) | (buf[2] << 16) | (buf[1] << 8) | buf[0];
-      TCON_v1(c) = (buf[7] << 24) | (buf[6] << 16) | (buf[5] << 8) | buf[4];
-#endif
-      break;
-
-    case MTYPE_FQ:
-      /* We must be careful about which word gets which set of 4 bytes
-       * here.  buf[0] must go into the most significant byte of
-       * TCON_R8.  Since the current code is written to use the host's
-       * representation as the internal representation, we must make
-       * sure we put it in the proper place depending on the host's
-       * endianness.
-       */
-#if HOST_IS_BIG_ENDIAN
-      TCON_v3(c) = (buf[3] << 24) | (buf[2] << 16) | (buf[1] << 8) | buf[0];
-      TCON_v2(c) = (buf[7] << 24) | (buf[6] << 16) | (buf[5] << 8) | buf[4];
-      TCON_v1(c) = (buf[11] << 24) | (buf[10] << 16) | (buf[9] << 8) | buf[8];
-      TCON_v0(c) = (buf[15] << 24) | (buf[14] << 16) | (buf[13] << 8) | buf[12];
-#else
-      TCON_v0(c) = (buf[3] << 24) | (buf[2] << 16) | (buf[1] << 8) | buf[0];
-      TCON_v1(c) = (buf[7] << 24) | (buf[6] << 16) | (buf[5] << 8) | buf[4];
-      TCON_v2(c) = (buf[11] << 24) | (buf[10] << 16) | (buf[9] << 8) | buf[8];
-      TCON_v3(c) = (buf[15] << 24) | (buf[14] << 16) | (buf[13] << 8) | buf[12];
-#endif
-      break;
-
-    default:
-      ErrMsg ( EC_Inv_Mtype, Mtype_Name(ty), "Bit_Str_To_Tcon" );
-  }
-  return c;
-} /* Bit_Str_To_Tcon */
-#endif /*foo*/
 
 #endif /* HAS_TCON_TO_STR */
 

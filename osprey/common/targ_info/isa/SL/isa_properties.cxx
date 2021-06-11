@@ -1,41 +1,14 @@
-/*
- * Copyright 2003, 2004 PathScale, Inc.  All Rights Reserved.
- */
-
-/*
-
-  Copyright (C) 2000, 2001 Silicon Graphics, Inc.  All Rights Reserved.
-
-  This program is free software; you can redistribute it and/or modify it
-  under the terms of version 2 of the GNU General Public License as
-  published by the Free Software Foundation.
-
-  This program is distributed in the hope that it would be useful, but
-  WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
-
-  Further, this software is distributed without any warranty that it is
-  free of the rightful claim of any third person regarding infringement 
-  or the like.  Any license provided herein, whether implied or 
-  otherwise, applies only to this software file.  Patent licenses, if 
-  any, provided herein do not apply to combinations of this program with 
-  other software, or any other product whatsoever.  
-
-  You should have received a copy of the GNU General Public License along
-  with this program; if not, write the Free Software Foundation, Inc., 59
-  Temple Place - Suite 330, Boston MA 02111-1307, USA.
-
-  Contact information:  Silicon Graphics, Inc., 1600 Amphitheatre Pky,
-  Mountain View, CA 94043, or:
-
-  http://www.sgi.com
-
-  For further information regarding this notice, see:
-
-  http://oss.sgi.com/projects/GenInfo/NoticeExplan
-
-*/
-
+/********************************************************************\
+|*                                                                  *|   
+|*  Copyright (c) 2006 by SimpLight Nanoelectronics.                *|
+|*  All rights reserved                                             *|
+|*                                                                  *|
+|*  This program is free software; you can redistribute it and/or   *|
+|*  modify it under the terms of the GNU General Public License as  *|
+|*  published by the Free Software Foundation; either version 2,    *|
+|*  or (at your option) any later version.                          *|
+|*                                                                  *|
+\********************************************************************/
 
 //  
 //  Generate ISA properties information
@@ -167,26 +140,6 @@ main()
 /* ===== Move operator ====== */
   move = ISA_Property_Create ("move");
   Instruction_Group (move,
-#if defined(TARG_SL)  	
-                     TOP_mc_z_eq,
-                     TOP_mc_z_ne,
-		     TOP_mc_z_gt,
-		     TOP_mc_z_ge,
-		     TOP_mc_z_lt,
-		     TOP_mc_z_le,
-		     TOP_mc_zn_eq,
-		     TOP_mc_zn_ne,
-		     TOP_mc_zn_gt,
-		     TOP_mc_zn_ge,
-		     TOP_mc_zn_lt,
-		     TOP_mc_zn_le,
-		     TOP_mc_r_eq,
-		     TOP_mc_r_ne,
-		     TOP_mc_r_gt,
-		     TOP_mc_r_ge,
-		     TOP_mc_r_lt,
-		     TOP_mc_r_le,
-#endif		    
 		     TOP_movf,
 		     TOP_movn,
 		     TOP_movt,
@@ -228,47 +181,25 @@ main()
                       TOP_ldw16,
                       TOP_ldub16_rs,
                       TOP_lduh16_rs,
-		      TOP_c3_dmac_a,
-		      TOP_c3_dmacn_a,
-		      TOP_c3_dmula_a,
-		      TOP_c3_dmulan_a,
-		      TOP_c3_mac_a,
-		      TOP_c3_mac_ar,
-		      TOP_c3_macn_a,
-		      TOP_c3_macn_ar,
-		      TOP_c3_mula_a,
-		      TOP_c3_mula_ar,
-		      TOP_c3_saadd_a,
-		      TOP_c3_saaddh_a,
-		      TOP_c3_saddha_a,
-		      TOP_c3_samulh_a,
-		      TOP_c3_sasub_a,
-		      TOP_c3_sasubh_a,
-                      TOP_c3_fftld,
+                      TOP_c3_dmac_a,
+                      TOP_c3_dmacn_a,
+                      TOP_c3_dmula_a,
+                      TOP_c3_dmulan_a,
+                      TOP_c3_ffe,
                       TOP_c3_ld,
-	              TOP_c3_fft,
-	              TOP_c3_viterbi,
-                      TOP_c3_trback,
-                      // new c3 instruction
-                      TOP_C3_dmac_a,
-                      TOP_C3_dmacn_a,
-                      TOP_C3_dmula_a,
-                      TOP_C3_dmulan_a,
-                      TOP_C3_ffe,
-                      TOP_C3_ld,
-                      TOP_C3_fftld,
-                      TOP_C3_mac_a,
-                      TOP_C3_macn_a,
-                      TOP_C3_mac_ar,
-                      TOP_C3_macn_ar,
-                      TOP_C3_mula_a,
-                      TOP_C3_mula_ar,
-                      TOP_C3_saadd_a,
-                      TOP_C3_sasub_a,
-                      TOP_C3_saaddh_a,
-                      TOP_C3_sasubh_a,
-                      TOP_C3_sadda_a,
-                      TOP_C3_samulh_a,
+                      TOP_c3_fftld,
+                      TOP_c3_mac_a,
+                      TOP_c3_macn_a,
+                      TOP_c3_mac_ar,
+                      TOP_c3_macn_ar,
+                      TOP_c3_mula_a,
+                      TOP_c3_mula_ar,
+                      TOP_c3_saadd_a,
+                      TOP_c3_sasub_a,
+                      TOP_c3_saaddh_a,
+                      TOP_c3_sasubh_a,
+                      TOP_c3_sadda_a,
+                      TOP_c3_samulh_a,
 #endif
                       TOP_c2_ld_v_b_u,
                       TOP_c2_ld_v_b,
@@ -554,56 +485,32 @@ main()
 #ifdef TARG_SL 
   c3_load = ISA_Property_Create("c3_load");
   Instruction_Group(c3_load,
-                    TOP_c3_fftld,
-	            TOP_c3_ld,
                     TOP_c3_dmac_a,
                     TOP_c3_dmacn_a,
                     TOP_c3_dmula_a,
                     TOP_c3_dmulan_a,
+                    TOP_c3_ffe,
+                    TOP_c3_ld,
+                    TOP_c3_fftld,
                     TOP_c3_mac_a,
-                    TOP_c3_mac_ar,
                     TOP_c3_macn_a,
+                    TOP_c3_mac_ar,
                     TOP_c3_macn_ar,
                     TOP_c3_mula_a,
                     TOP_c3_mula_ar,
                     TOP_c3_saadd_a,
-                    TOP_c3_saaddh_a,
-                    TOP_c3_saddha_a,
-                    TOP_c3_samulh_a,
                     TOP_c3_sasub_a,
+                    TOP_c3_saaddh_a,
                     TOP_c3_sasubh_a,
-                    TOP_c3_fft,
-                    TOP_c3_viterbi,
-                    TOP_c3_trback,
-                    // new c3 instruction
-                    TOP_C3_dmac_a,
-                    TOP_C3_dmacn_a,
-                    TOP_C3_dmula_a,
-                    TOP_C3_dmulan_a,
-                    TOP_C3_ffe,
-                    TOP_C3_ld,
-                    TOP_C3_fftld,
-                    TOP_C3_mac_a,
-                    TOP_C3_macn_a,
-                    TOP_C3_mac_ar,
-                    TOP_C3_macn_ar,
-                    TOP_C3_mula_a,
-                    TOP_C3_mula_ar,
-                    TOP_C3_saadd_a,
-                    TOP_C3_sasub_a,
-                    TOP_C3_saaddh_a,
-                    TOP_C3_sasubh_a,
-                    TOP_C3_sadda_a,
-                    TOP_C3_samulh_a,
+                    TOP_c3_sadda_a,
+                    TOP_c3_samulh_a,
 	            TOP_UNDEFINED);
   
   c3_store = ISA_Property_Create("c3_store");
   Instruction_Group(c3_store,
+                    // new c3 instruction version
                     TOP_c3_fftst,
                     TOP_c3_st,
-                    // new c3 instruction version
-                    TOP_C3_fftst,
-                    TOP_C3_st,
                     TOP_UNDEFINED);
 
 		   /* ===== 16-bit op*/
@@ -695,6 +602,7 @@ main()
       TOP_sltu,
       TOP_sub,
       TOP_subu,
+      TOP_smult,
       TOP_and,
       TOP_andi,
       TOP_nor,
@@ -768,9 +676,6 @@ main()
                       TOP_stw16,
                       TOP_c3_st,
                       TOP_c3_fftst,
-                      // new c3 instruction version
-                      TOP_C3_st,
-                      TOP_C3_fftst,
 #endif                    
                       TOP_c2_st_v_b,
                       TOP_c2_st_v_h,
@@ -952,14 +857,6 @@ main()
 /* ===== Result def is conditional ====== */
   cond_move = ISA_Property_Create ("cond_move");
   Instruction_Group (cond_move,
-#if defined(TARG_SL)  
-                     TOP_mc_z_eq,
-		     TOP_mc_z_ne,
-		     TOP_mc_z_gt,
-		     TOP_mc_z_ge,
-		     TOP_mc_z_lt,
-		     TOP_mc_z_le,
-#endif                     
 		     TOP_movf,
 		     TOP_movn,
 		     TOP_movt,
@@ -995,44 +892,24 @@ main()
   		     TOP_mc_z_ge,
 		     TOP_mc_z_lt,
 		     TOP_mc_z_le,
-		     TOP_c3_bitc,
-		     TOP_c3_dmac,
-		     TOP_c3_dmacn,
-		     TOP_c3_dmac_a,
-  	             TOP_c3_dmacn_a,
-  	             TOP_c3_mac,
-  	             TOP_c3_mac_a,
-  	             TOP_c3_mac_i,
-  	             TOP_c3_macci,
-                     TOP_c3_macd,
-  	             TOP_c3_macn, 
-  	             TOP_c3_macn_a,
-  	             TOP_c3_macn_ar,
-  	             TOP_c3_mac_ar,
-  	             TOP_c3_round,
-  	             TOP_c3_saddha,
-  	             TOP_c3_saddha_a,
-                     TOP_c3_viterbi,
-                     TOP_c3_trback,
-                     TOP_c3_fft,
-                     // new c3 instruction
-                     TOP_C3_aadda,
-                     TOP_C3_dmac,
-                     TOP_C3_dmacn,
-                     TOP_C3_dmac_a,
-                     TOP_C3_dmacn_a,
-                     TOP_C3_ffe,
-                     TOP_C3_mac,
-                     TOP_C3_macn,
-                     TOP_C3_mac_a,
-                     TOP_C3_macn_a,
-                     TOP_C3_mac_ar,
-                     TOP_C3_macn_ar,
-                     TOP_C3_round,
-                     TOP_C3_sadda,
-                     TOP_C3_sadda_a,
-                     TOP_C3_shav,
-                     TOP_C3_shla_i,
+                     TOP_c3_aadda,
+                     TOP_c3_dmac,
+                     TOP_c3_dmacn,
+                     TOP_c3_dmac_a,
+                     TOP_c3_dmacn_a,
+                     TOP_c3_ffe,
+                     TOP_c3_mac,
+                     TOP_c3_macn,
+                     TOP_c3_mac_a,
+                     TOP_c3_macn_a,
+                     TOP_c3_mac_ar,
+                     TOP_c3_macn_ar,
+                     TOP_c3_round,
+                     TOP_c3_sadda,
+                     TOP_c3_sadda_a,
+                     TOP_c3_shav,
+                     TOP_c3_shla_i,
+                     TOP_c3_shra_i,
 #endif		     
 #ifdef TARG_SL2
                    TOP_c2_bxtr_u_l,
@@ -1088,6 +965,11 @@ main()
 		      TOP_daddi,
 		      TOP_daddiu,
 		      TOP_daddu,
+#ifdef TARG_SL
+                      TOP_add16,
+                      TOP_add16_i,
+                      TOP_add16_sp,
+#endif
                      TOP_UNDEFINED);
 
 /* ===== Integer subtract operator ====== */
@@ -1097,6 +979,10 @@ main()
 		     TOP_subu,
 		     TOP_dsub,
 		     TOP_dsubu,
+#ifdef TARG_SL
+                     TOP_sub16,
+                     TOP_sub16_i,
+#endif
                      TOP_UNDEFINED);
 
 /* ===== Integer multiply operator ====== */
@@ -1428,14 +1314,10 @@ main()
                       TOP_lduh16_rs,
                       TOP_push16,
                       TOP_stw16,
-                      TOP_c3_ld,
+	              TOP_c3_ld,
                       TOP_c3_fftld,
                       TOP_c3_st,
                       TOP_c3_fftst,
-	              TOP_C3_ld,
-                      TOP_C3_fftld,
-                      TOP_C3_st,
-                      TOP_C3_fftst,
 #endif		      
                      TOP_UNDEFINED);
 
@@ -2086,11 +1968,7 @@ main()
 		  TOP_asm, 
 		  TOP_sync,
 #ifdef TARG_SL
-		  TOP_c3_viterbi,
-		  TOP_c3_trback,
-		  TOP_c3_fft,
-                  // new C3
-	          TOP_C3_ffe,
+	          TOP_c3_ffe,
 #endif 
 #ifdef TARG_SL2
 		  TOP_c2_add_shl_g_i,

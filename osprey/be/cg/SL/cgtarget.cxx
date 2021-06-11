@@ -1,41 +1,14 @@
-/*
- * Copyright 2002, 2003, 2004 PathScale, Inc.  All Rights Reserved.
- */
-
-/*
-
-  Copyright (C) 2000, 2001 Silicon Graphics, Inc.  All Rights Reserved.
-
-  This program is free software; you can redistribute it and/or modify it
-  under the terms of version 2 of the GNU General Public License as
-  published by the Free Software Foundation.
-
-  This program is distributed in the hope that it would be useful, but
-  WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
-
-  Further, this software is distributed without any warranty that it is
-  free of the rightful claim of any third person regarding infringement 
-  or the like.  Any license provided herein, whether implied or 
-  otherwise, applies only to this software file.  Patent licenses, if 
-  any, provided herein do not apply to combinations of this program with 
-  other software, or any other product whatsoever.  
-
-  You should have received a copy of the GNU General Public License along
-  with this program; if not, write the Free Software Foundation, Inc., 59
-  Temple Place - Suite 330, Boston MA 02111-1307, USA.
-
-  Contact information:  Silicon Graphics, Inc., 1600 Amphitheatre Pky,
-  Mountain View, CA 94043, or:
-
-  http://www.sgi.com
-
-  For further information regarding this notice, see:
-
-  http://oss.sgi.com/projects/GenInfo/NoticeExplan
-
-*/
-
+/********************************************************************\
+|*                                                                  *|   
+|*  Copyright (c) 2006 by SimpLight Nanoelectronics.                *|
+|*  All rights reserved                                             *|
+|*                                                                  *|
+|*  This program is free software; you can redistribute it and/or   *|
+|*  modify it under the terms of the GNU General Public License as  *|
+|*  published by the Free Software Foundation; either version 2,    *|
+|*  or (at your option) any later version.                          *|
+|*                                                                  *|
+\********************************************************************/
 
 /* ====================================================================
  * ====================================================================
@@ -148,53 +121,27 @@ UINT32 CGTARG_Mem_Ref_Bytes(const OP *memop)
       return 1;
     case TOP_lduh16_rs:
       return 2;
-
-    case TOP_c3_ld:
-    case TOP_c3_st:
-    case TOP_c3_dmac_a:
-    case TOP_c3_dmacn_a:
-    case TOP_c3_dmula_a:
-    case TOP_c3_dmulan_a:
-    case TOP_c3_mac_a:
-    case TOP_c3_mac_ar:
-    case TOP_c3_macn_a:
-    case TOP_c3_macn_ar:
-    case TOP_c3_mula_a:
-    case TOP_c3_mula_ar:
-    case TOP_c3_saadd_a:
-    case TOP_c3_saaddh_a:
-    case TOP_c3_saddha_a:
-    case TOP_c3_samulh_a:
-    case TOP_c3_sasub_a:
-    case TOP_c3_sasubh_a:
-    case TOP_c3_viterbi:
-    case TOP_c3_trback:
-    case TOP_c3_fft:
-    case TOP_c3_fftld:
-    case TOP_c3_fftst:
-    // new C3   
-    case TOP_C3_dmac_a:            
-    case TOP_C3_dmacn_a:           
-    case TOP_C3_dmula_a:           
-    case TOP_C3_dmulan_a:          
-    case TOP_C3_ffe:               
-    case TOP_C3_fftld:             
-    case TOP_C3_ld:                
-    case TOP_C3_fftst:             
-    case TOP_C3_st:                
-    case TOP_C3_mac_a:             
-    case TOP_C3_macn_a:            
-    case TOP_C3_mac_ar:            
-    case TOP_C3_macn_ar:           
-    case TOP_C3_mula_a:            
-    case TOP_C3_mula_ar:           
-    case TOP_C3_saadd_a:           
-    case TOP_C3_sasub_a:           
-    case TOP_C3_saaddh_a:          
-    case TOP_C3_sasubh_a:          
-    case TOP_C3_sadda_a:           
-    case TOP_C3_samulh_a:          
-    // end 
+    case TOP_c3_dmac_a:            
+    case TOP_c3_dmacn_a:           
+    case TOP_c3_dmula_a:           
+    case TOP_c3_dmulan_a:          
+    case TOP_c3_ffe:               
+    case TOP_c3_fftld:             
+    case TOP_c3_ld:                
+    case TOP_c3_fftst:             
+    case TOP_c3_st:                
+    case TOP_c3_mac_a:             
+    case TOP_c3_macn_a:            
+    case TOP_c3_mac_ar:            
+    case TOP_c3_macn_ar:           
+    case TOP_c3_mula_a:            
+    case TOP_c3_mula_ar:           
+    case TOP_c3_saadd_a:           
+    case TOP_c3_sasub_a:           
+    case TOP_c3_saaddh_a:          
+    case TOP_c3_sasubh_a:          
+    case TOP_c3_sadda_a:           
+    case TOP_c3_samulh_a:          
       return 4;
 #endif
 
@@ -1173,8 +1120,8 @@ void CGTARG_Compute_Branch_Parameters(INT32 *mispredict, INT32 *fixed, INT32 *br
   {
     *mispredict= 7; *fixed= 1; *brtaken= 1; *factor = 1.0;
   }
-#ifdef TARG_SL
-  else if (Is_Target_Sl1_pcore()  || Is_Target_Sl1_dsp()) {
+#if defined(TARG_SL)
+  else if (Is_Target_Sl1_pcore()  || Is_Target_Sl1_dsp() || Is_Target_Sl5()) {
     *mispredict= 7; *fixed= 1; *brtaken= 1; *factor = 1.0;
   }
   else if ( Is_Target_Sl2_pcore() || Is_Target_Sl2_mcore()) {
@@ -1665,64 +1612,55 @@ INT CGTARG_Copy_Operand(OP *op)
   {
   case TOP_addi:
   case TOP_addiu:
-  case TOP_daddi:
-  case TOP_daddiu:
+  case TOP_ori:
+  case TOP_xori:
   case TOP_sll:
   case TOP_srl:
   case TOP_sra:
-  case TOP_dsll:
-  case TOP_dsrl:
-  case TOP_dsra:
-    if (TN_has_value(OP_opnd(op,1)) && TN_value(OP_opnd(op,1)) == 0)
-      return 0;
-    break;
-
+    {
+      TN *src1 = OP_opnd(op, 1);
+      if (TN_is_constant(src1) && TN_has_value(src1)) {
+        INT64 val = TN_value(src1);
+        if (val == 0) return 0;
+      }
+      break;
+    }
   case TOP_andi:
     {
       TN *src1 = OP_opnd( op, 1 );
-      if (TN_is_constant(src1)) {
-	INT64 val;
-	if (TN_has_value(src1))
-	  val = TN_value(src1);
-	else FmtAssert(FALSE,("unexpected constant in CGTARG_Copy_Operand"));
-	if (val == -1)
-	  return 0;
+      if (TN_is_constant(src1) && TN_has_value(src1)) {
+        INT64 val = TN_value(src1);
+        if (val == -1) return 0;
       }
       break;
     }
-
-  case TOP_ori:
-  case TOP_xori:
-    {
-      TN *src1 = OP_opnd( op, 1 );
-      if (TN_is_constant(src1)) {
-	INT64 val;
-	if (TN_has_value(src1))
-	  val = TN_value(src1);
-	else FmtAssert(FALSE,("unexpected constant in CGTARG_Copy_Operand"));
-	if (val == 0)
-	  return 0;
-      }
-      break;
-    }
-
   case TOP_or:
   case TOP_xor:
+  case TOP_add:
   case TOP_addu:
-  case TOP_daddu:
-    if (OP_opnd( op, 1) == Zero_TN)
-      return 0;
-    else if (OP_opnd( op, 0) == Zero_TN)
-      return 1;
-    break;
-
+    {
+      if (OP_opnd( op, 1) == Zero_TN)
+        return 0;
+      else if (OP_opnd( op, 0) == Zero_TN)
+        return 1;
+      break;
+    }
+  case TOP_sub:
+  case TOP_subu:
+  case TOP_sllv:
+  case TOP_srlv:
+  case TOP_srav:
+    {
+      if (OP_opnd( op, 1) == Zero_TN)
+        return 0;
+      break;
+    }
   }
 
   if (OP_copy(op)) {
-    if (opr == TOP_add || opr == TOP_dadd ||
-        opr == TOP_addu || opr == TOP_daddu ||
-        opr == TOP_or || 
-        opr == TOP_mov_s || opr== TOP_mov_d)
+    if (opr == TOP_add   ||  opr == TOP_addu ||
+        opr == TOP_sub   ||  opr == TOP_subu ||
+        opr == TOP_or    ||  opr == TOP_xor)
       return 0;
   }
 
@@ -1895,6 +1833,65 @@ CGTARG_Adjust_Latency(OP *pred_op, OP *succ_op, CG_DEP_KIND kind, UINT8 opnd, IN
 #endif
 }
 
+/* ===================================================================
+ * CGTARG_Mem_AR_Dep
+ *   Set OP is ARDEP when there is dependence between C3-MEM and Normal MEM
+ * ===================================================================
+ */
+void
+CGTARG_Mem_AR_Dep(OP *pred_op, OP *succ_op, CG_DEP_KIND kind)
+{
+  //  1) insert nop when C3 mem op points to same address with normal memory op in same BB
+  //     now implement version is based on sl0mpw
+  switch (kind) {
+    case CG_DEP_MEMIN:
+    {
+       /* case 1:  stw
+                   c3.mac.a
+          case 2:  c3.st      <- SL1 HW could identify kind 2-5 of memory dep
+                   c3.mac.a      sl0mpw didn't identify 1 and 2
+          case 3:  c3.st
+                   c3.ld
+          case 4:  c3.st
+                   ldw
+          case 5:  stw
+                   ldw
+       */
+       BOOL mac_load = OP_c3_load(succ_op) && (!OP_memtrap(succ_op));
+
+       if (OP_store(pred_op) && mac_load) {
+         Set_OP_ARdep(succ_op);
+       }
+       break;
+     }
+     case CG_DEP_MEMANTI:
+     {
+       //  if bb is loop body, MEMANTI will cause same problem as MEMIN
+       /* case 1: c3.mac.a
+                  stw
+          case 2: c3.mac.a   <- SL1 HW could identify kind 2-5 of memory dep
+                  c3.st         sl0mpw didn't identify 1 and 2
+          case 3: c3.ld
+                  c3.st
+          case 4: ldw
+                  c3.st
+          case 5: ldw
+                  stw
+       */
+       if ((BB_zdl_body(OP_bb(pred_op)) || BB_loophead(OP_bb(pred_op)))) {
+         BOOL mac_load = OP_c3_load(pred_op) && (!OP_memtrap(pred_op));
+         if (mac_load && OP_store(succ_op)) {
+           Set_OP_ARdep(pred_op);
+         }
+        }
+        break;
+    }
+    default:
+      break;
+  }
+  return;
+}
+
 /* ====================================================================
  *
  * CGTARG_Generate_Remainder_Branch
@@ -1973,7 +1970,8 @@ extern TN*
 CGTARG_TN_For_Asm_Operand (const char* constraint, 
                            const WN* load,
                            TN* pref_tn,
-                           ISA_REGISTER_SUBCLASS* subclass, TYPE_ID id)
+                           ISA_REGISTER_SUBCLASS* subclass,
+                           const WN* asm_wn, TYPE_ID id)
 {
   // skip constraint modifiers:
   // = input and output parameters are separated in the WHIRL for ASM

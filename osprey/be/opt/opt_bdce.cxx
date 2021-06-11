@@ -99,7 +99,6 @@
 #pragma hdrstop
 
 
-#define __STDC_LIMIT_MACROS
 #include <stdint.h>
 #include "defs.h"
 #include "errors.h"
@@ -531,6 +530,10 @@ BITWISE_DCE::Mark_tree_bits_live(CODEREP *cr, UINT64 live_bits,
     case OPR_REDUCE_MIN:
     case OPR_SHUFFLE:
     case OPR_ATOMIC_RSQRT:
+#endif
+#ifdef TARG_LOONGSON
+    case OPR_MPYU2:
+    case OPR_MPYI2:
 #endif
       if (visit_all)
 	Mark_tree_bits_live(cr->Opnd(0), Bits_in_type(dsctyp), stmt_visit);
@@ -1219,7 +1222,13 @@ BITWISE_DCE::Redundant_cvtl(BOOL sign_xtd, INT32 to_bit, INT32 from_bit,
        }
       return FALSE;
 
-#endif
+    case OPR_INTRINSIC_OP:
+      //  if INTRINSIC_OP type is I2, the computation based on 16 bit register and the CVTL could be deleted 
+      if ((from_bit == 16) && (to_bit == 32)) {
+        return (MTYPE_signed(dtyp) == sign_xtd);
+      }
+      return FALSE;  
+
     case OPR_EXTRACT_BITS:
       //     U4U4LDID 72 <1,4,.preg_U4>
       //   U4EXTRACT_BITS <bofst:27 bsize:4>
@@ -1231,15 +1240,7 @@ BITWISE_DCE::Redundant_cvtl(BOOL sign_xtd, INT32 to_bit, INT32 from_bit,
           return ! MTYPE_signed(dtyp);
       }
       return FALSE;
-#ifdef TARG_SL
-    case OPR_INTRINSIC_OP:
-      //  if INTRINSIC_OP type is I2, the computation based on 16 bit register and the CVTL could be deleted 
-      if ((from_bit == 16) && (to_bit == 32)) {
-        return (MTYPE_signed(dtyp) == sign_xtd);
-      }
-      return FALSE;  
 #endif
-
     default: ;
     }
     return FALSE;
@@ -1401,7 +1402,7 @@ BITWISE_DCE::Delete_cvtls(CODEREP *cr, STMTREP *use_stmt)
     else if (opr == OPR_CVT) {
 // NVISA: leave converts as they are represented by different size registers.
 // Revisit this if ever allow I1 or I2 CVT which would use same register.
-#if !defined(TARG_IA32) && !defined(TARG_NVISA)
+#if !defined(TARG_IA32) && !defined(TARG_NVISA) && !defined(TARG_SL)
       MTYPE dtyp = cr->Dtyp();
       MTYPE dsctyp = cr->Dsctyp();
       if (dsctyp == MTYPE_B)
@@ -1441,7 +1442,7 @@ BITWISE_DCE::Delete_cvtls(CODEREP *cr, STMTREP *use_stmt)
         }
 #endif
       }
-#endif /* !TARG_IA32 && !TARG_NVISA */
+#endif /* !TARG_IA32 && !TARG_NVISA && !TARG_SL */
     }
 #ifdef TARG_X8664
     else if (! Is_Target_64bit() && MTYPE_size_min(cr->Dtyp()) == 64 &&
@@ -1451,6 +1452,7 @@ BITWISE_DCE::Delete_cvtls(CODEREP *cr, STMTREP *use_stmt)
 	      opr == OPR_ADD || opr == OPR_SUB || opr == OPR_MPY ||
 	      opr == OPR_BAND || opr == OPR_BIOR || opr == OPR_BNOR ||
 	      opr == OPR_BXOR || opr == OPR_LAND || opr == OPR_LIOR)) {
+      INT index;
       // change the operation to 32-bit, which is good for 32-bit target
       cr->Set_dtyp(Mtype_TransferSize(MTYPE_I4, cr->Dtyp()));
       if (cr->Dsctyp() != MTYPE_V)
@@ -1458,6 +1460,18 @@ BITWISE_DCE::Delete_cvtls(CODEREP *cr, STMTREP *use_stmt)
       new_cr->Set_dtyp(Mtype_TransferSize(MTYPE_I4, new_cr->Dtyp()));
       if (new_cr->Dsctyp() != MTYPE_V)
         new_cr->Set_dsctyp(Mtype_TransferSize(MTYPE_I4, new_cr->Dsctyp()));
+
+      for (index = 0; index < new_cr->Kid_count(); index++) {
+          CODEREP *opnd = new_cr->Opnd(index);
+
+          if (new_cr->Dtyp() != opnd->Dtyp()) {
+              OPCODE   opc = OPCODE_make_op(OPR_CVT, new_cr->Dtyp(), opnd->Dtyp());
+              CODEREP *cvt_cr = Htable()->Add_unary_node(opc, opnd);
+
+              new_cr->Set_opnd(index, cvt_cr);
+              need_rehash = TRUE;
+          }
+      }
     }
 #endif
     // can also apply to some BAND and BIOR with constants

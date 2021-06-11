@@ -1,6 +1,8 @@
 # -*- Makefile -*-
 #
 #
+#  Copyright (C) 2009 Advanced Micro Devices, Inc.  All Rights Reserved.
+#
 #  Copyright (C) 2000, 2001 Silicon Graphics, Inc.  All Rights Reserved.
 #
 #  This program is free software; you can redistribute it and/or modify it
@@ -88,7 +90,7 @@ else
  SIZEDEFS += -D_MIPS_SZPTR=64
  ifeq ($(BUILD_ABI), W64BIT)
   # W64BIT is win64, which has 64bit ptr but 32bit long
-  SIZEDEFS += -D_MIPS_SZLONG=32
+  SIZEDEFS += -D_MIPS_SZLONG=32 -DWIN64
  else
   SIZEDEFS += -D_MIPS_SZLONG=64 -D_LP64
  endif
@@ -102,12 +104,16 @@ endif
 
 
 ifeq ($(BUILD_COMPILER), GNU)
-  ASNAME = gcc  
-  CCNAME = gcc 
-  C++NAME = g++ 
-  F90 = openf90
-  #F90 = gfortran
-  #F90_RTLIBS = -lgfortran
+  ASNAME = gcc 
+  ifeq ($(BUILD_HOST), PPC32)
+    CCNAME = gcc -DHOST_PPC32 
+    C++NAME = g++ -DHOST_PPC32 
+  else
+    CCNAME = gcc 
+    C++NAME = g++ 
+  endif
+  F90 = gfortran -fsecond-underscore
+  F90_RTLIBS = -Wl,-Bstatic -lgfortran -Wl,-Bdynamic
   #F90 = ifort -assume 2underscores
   #F90_RTLIBS = $(INTEL_COMPILER_FC_HOME)/lib/libifcore.a $(INTEL_COMPILER_FC_HOME)/lib/libimf.a
 
@@ -116,14 +122,14 @@ ifeq ($(BUILD_COMPILER), GNU)
     #
     CCNAME  += 
     C++NAME +=  
-    F90 += -march=anyx86 
+    F90 +=
   endif
   ifeq ($(BUILD_TARGET), IA32)
     # only 64bit libraries set the BUILD_ARCH to X8664 
     CCNAME  +=
     C++NAME +=
     ASNAME +=
-    F90 += -march=anyx86 
+    F90 +=
   endif
   ifeq ($(BUILD_TARGET), IA64)
     # only 64bit libraries set the BUILD_ARCH to X8664 
@@ -150,6 +156,11 @@ ifeq ($(BUILD_COMPILER), GNU)
   F77 = $(F90)
 endif # GNU
 
+ifeq ($(BUILD_COMPILER), SLC)
+  CCNAME = $(TOOLROOT)/usr/bin/slcc
+  C++NAME = $(TOOLROOT)/usr/bin/slCC
+endif
+
 ifeq ($(BUILD_COMPILER), PSC)
   ASNAME = pathcc 
   CCNAME = pathcc
@@ -174,7 +185,39 @@ ifeq ($(BUILD_COMPILER), OSP)
   CCNAME = opencc
   C++NAME = openCC
   F90 = openf90
-  F90_RTLIBS = -lfortran
+  F90_RTLIBS = -Wl,-Bstatic -lfortran -Wl,-Bdynamic
+
+  ifeq ($(BUILD_TARGET), X8664)
+    CCNAME  += -march=anyx86
+    C++NAME += -march=anyx86
+    F90 += -march=anyx86
+  endif
+  ifeq ($(BUILD_TARGET), IA32)
+    CCNAME  += -march=anyx86
+    C++NAME += -march=anyx86
+    F90 += -march=anyx86
+  endif
+  ifeq ($(BUILD_TARGET), IA64)
+    # only 64bit libraries set the BUILD_ARCH to X8664 
+    CCNAME  += 
+    C++NAME +=  
+    F90 += 
+  endif
+  F77 = $(F90)
+  AR      = ar
+endif
+
+ifeq ($(BUILD_COMPILER), SELF)
+  ASNAME = $(COMPILER_TARG_DIR)/driver/opencc
+  CCNAME = $(COMPILER_TARG_DIR)/driver/opencc
+  C++NAME = $(COMPILER_TARG_DIR)/driver/openCC
+  F90 = $(COMPILER_TARG_DIR)/driver/openf90
+  F90_RTLIBS = -Wl,-Bstatic -lfortran -Wl,-Bdynamic
+
+  ASNAME += -run-build=$(TOP_BUILDDIR)
+  CCNAME += -run-build=$(TOP_BUILDDIR) -L$(BUILD_AREA)/libopen64rt -L$(BUILD_AREA)/libacml_mv
+  C++NAME += -run-build=$(TOP_BUILDDIR)
+  F90 += -run-build=$(TOP_BUILDDIR)
 
   ifeq ($(BUILD_TARGET), X8664)
     CCNAME  += -march=anyx86
@@ -308,7 +351,7 @@ CSTYLE=
 
 GCOPTS	= $(CSTYLE) $(OPTIMIZER) $(ENDIAN) $(SIZEDEFS) $(MKDEPOPT)
 GCDEFS	=
-GCINCS  = -I$(INCLDIR)
+GCINCS  = $(INCLDIRS)
 
 #
 # Cc flags, composed of:
@@ -364,7 +407,7 @@ C++DEFS   = $(VC++DEFS) $(LC++DEFS) $(GC++DEFS)
 C++INCS   = $(VC++INCS) $(LC++INCS) $(GC++INCS)
 
 GC++OPTS  = $(CSTYLE) $(OPTIMIZER) $(ENDIAN) $(SIZEDEFS) $(MKDEPOPT)
-GC++INCS  = -I$(INCLDIR)
+GC++INCS  = $(INCLDIRS)
 GC++DEFS  = 
 
 #
@@ -478,7 +521,7 @@ F77OPTS	= $(VF77OPTS) $(LF77OPTS) $(GF77OPTS)
 F77DEFS	= $(VF77DEFS) $(LF77DEFS) $(GF77DEFS)
 F77INCS	= $(VF77INCS) $(LF77INCS) $(GF77INCS)
 
-GF77OPTS= $(CSTYLE) $(OPTIMIZER) $(ENDIAN) $(SIZEDEFS) $(MKDEPOPT)
+GF77OPTS= $(CSTYLE) $(OPTIMIZER) $(ENDIAN) $(SIZEDEFS)
 GF77DEFS= $(GCDEFS)
 GF77INCS= $(GCINCS)
 
@@ -526,9 +569,9 @@ LEXMKDEPFLAGS=
 # Include directory shorthands, used in CFLAGS and LDFLAGS components.
 #
 ifneq ($(BUILD_OS), IRIX)
-INCLDIR	= $(BUILD_AREA)/include
+INCLDIRS = -I$(BUILD_AREA)/include -I$(BUILD_OBJ_DIR) -I$(TARGDIR)/include -I$(BUILD_TOT)/include
 else
-INCLDIR = $(ROOT)/usr/include
+INCLDIRS = -I$(ROOT)/usr/include
 endif
 
 #

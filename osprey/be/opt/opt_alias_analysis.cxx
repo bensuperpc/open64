@@ -1,4 +1,8 @@
 /*
+ * Copyright (C) 2008-2009 Advanced Micro Devices, Inc.  All Rights Reserved.
+ */
+
+/*
  *  Copyright (C) 2006. QLogic Corporation. All Rights Reserved.
  */
 
@@ -90,7 +94,6 @@
 #pragma hdrstop
 
 
-#define __STDC_LIMIT_MACROS
 #include <stdint.h>
 #include "defs.h"			// INT32, INT64
 
@@ -981,7 +984,7 @@ void OPT_STAB::Analyze_Base_Flow_Sensitive(POINTS_TO *pt, WN *wn)
       }
     }
     break;
-#if defined(TARG_SL)
+
   case OPR_PARM:
     if( WN_Parm_Dereference(wn) ) {
       Simplify_Pointer( WN_kid0(wn), &ai );
@@ -1009,7 +1012,6 @@ void OPT_STAB::Analyze_Base_Flow_Sensitive(POINTS_TO *pt, WN *wn)
       }
       break;
     }
-#endif
 
   case OPR_ISTORE:
   case OPR_ISTBITS:
@@ -1509,6 +1511,8 @@ OPT_STAB::Create_entry_chi(void)
       AUX_ID auxid;
       FOR_ALL_NODE(auxid, aux_stab_iter, Init()) {
         AUX_STAB_ENTRY *sym = Aux_stab_entry(auxid);
+        if (sym->Stype() == VT_UNKNOWN)
+          continue; 
 	if ( !sym->Is_volatile() ) {
 	  CHI_NODE *cnode = chi->New_chi_node(auxid, Occ_pool());
 	  cnode->Set_opnd(auxid);
@@ -1740,26 +1744,8 @@ OPT_STAB::REGION_verify_bound(RID *rid, AUX_ID aux_id)
   Is_True(st != NULL, ("OPT_STAB::REGION_verify_bound, NULL st"));
 
   if (st && ST_class(st) == CLASS_PREG) { // pregs
-#if 1
     // ignore all pregs, they can be created by IVR or goto conversion
     return TRUE;
-#else
-    PREG_NUM pr = psym->St_ofst();
-
-    // ignore all dedicated pregs, they come from black regions
-    if (pr < 72)
-      return TRUE;
-
-    Is_True(REGION_search_preg_set(RID_pregs_in(rid), pr),
-	 ("OPT_STAB::REGION_verify_bound, PREG %d not in preg-in set, RGN %d",
-	  pr,RID_id(rid)));
-    if (RID_pregs_out(rid)) {
-      for (INT i=0; i<RID_num_exits(rid); i++)
-	Is_True(REGION_search_preg_set(RID_pregs_out_i(rid, i), pr),
-	  ("OPT_STAB::REGION_verify_bound, PREG %d not in preg-in set, RGN %d",
-		 pr,RID_id(rid)));
-    }
-#endif
   } else { // variables
 
     // if const LDA, ignore
@@ -2037,20 +2023,10 @@ OPT_STAB::Allocate_vsym(WN * memop_wn, POINTS_TO *memop_pt)
       return vp_idx;
     }
     else {
-#if 0
-      vp_idx = Find_vsym_with_base(occ->Based_sym());
-      if (vp_idx == NULL) {
-	vp_idx = Create_vsym(EXPR_IS_ANY);
-	AUX_STAB_ENTRY *vsym = Aux_stab_entry(vp_idx);
-	vsym->Points_to()->Set_based_sym(occ->Based_sym());
-	// What about vsym->Set_stype(something) here?
-      }
-#else
       // Replace the Based_sym() in the AUX_STAB_ENTRY with the
       // Based_sym() of the OCC_TAB_ENTRY. This should happen only
       // once, and we should never switch it back!
       pt->Set_based_sym(memop_pt->Based_sym());
-#endif
       return vp_idx;
     }
   }
@@ -2144,20 +2120,10 @@ OPT_STAB::Adjust_vsym(AUX_ID vp_idx, OCC_TAB_ENTRY *occ)
       return vp_idx;
     }
     else {
-#if 0
-      vp_idx = Find_vsym_with_base(occ->Based_sym());
-      if (vp_idx == NULL) {
-	vp_idx = Create_vsym(EXPR_IS_ANY);
-	AUX_STAB_ENTRY *vsym = Aux_stab_entry(vp_idx);
-	vsym->Points_to()->Set_based_sym(occ->Based_sym());
-	// What about vsym->Set_stype(something) here?
-      }
-#else
       // Replace the Based_sym() in the AUX_STAB_ENTRY with the
       // Based_sym() of the OCC_TAB_ENTRY. This should happen only
       // once, and we should never switch it back!
       pt->Set_based_sym(occ->Points_to()->Based_sym());
-#endif
       return vp_idx;
     }
   }
@@ -2348,11 +2314,7 @@ void OPT_STAB::Allocate_mu_chi_and_virtual_var(WN *wn, BB_NODE *bb)
     break;
 
   case OPR_PARM:
-#if defined(TARG_SL)
     if ( WN_Parm_By_Reference(wn) || WN_Parm_Dereference(wn) ) {
-#else
-    if ( WN_Parm_By_Reference(wn) ) {
-#endif
 #ifdef KEY
       if (WOPT_Enable_New_Vsym_Allocation) {
         POINTS_TO pt;
@@ -2360,11 +2322,6 @@ void OPT_STAB::Allocate_mu_chi_and_virtual_var(WN *wn, BB_NODE *bb)
         pt.Set_base_kind(BASE_IS_UNKNOWN);
         pt.Set_ofst_kind(OFST_IS_INVALID);
 
-#if 0   // This is "HACK" from Enter_occ_tab, so we disable it until
-	// we know why it is required.
-        if (WN_operator(wn) == OPR_PARM && aux_id == _default_vsym)
-	        occ->Points_to()->Set_expr_kind(EXPR_IS_ANY);
-#endif
         pt.Analyze_Parameter_Base(WN_kid0(wn), *this);
         Update_From_Restricted_Map(wn, &pt);
         Is_True(pt.Alias_class() == OPTIMISTIC_AC_ID ||
@@ -2648,8 +2605,8 @@ OPT_STAB::Has_read_only_parm(AUX_ID idx, WN *wn, INT32 num_parms)
 #include "be_ipa_util.h"
 // Brute force method for now
 // TODO: Keep a map internal to wopt so that we need to search once for a pu
-static void
-check_ipa_mod_ref_info (const ST * call_st, const ST * st, INT * mod, INT * ref)
+void
+OPT_STAB::check_ipa_mod_ref_info (const ST * call_st, const ST * st, INT * mod, INT * ref)
 {
   PU_IDX idx = ST_pu (call_st);
 
@@ -2674,6 +2631,37 @@ check_ipa_mod_ref_info (const ST * call_st, const ST * st, INT * mod, INT * ref)
       return;
     }
   }
+}
+
+// Similar to the above, this function checks if the input global variable's
+// exit value is the same as its entry value in the input function, or that the
+// exit value is 1.
+void
+OPT_STAB::check_ipa_same_entry_exit_value_or_1_info(const ST *call_st,
+  const ST *global_var_st, INT *same_entry_exit_value_or_1)
+{
+  PU_IDX pu_idx;
+  INT global_var_st_index;
+
+  *same_entry_exit_value_or_1 = 0; // default is to be conservative
+  pu_idx = ST_pu(call_st);
+  global_var_st_index = ST_IDX_index(ST_st_idx(global_var_st));
+  for (INT i = 0; i < Mod_Ref_Info_Table_Size(); i++)
+  {
+    if (Mod_Ref_Info_Table[i].pu_idx != pu_idx)
+      continue;
+    else
+    {
+      mUINT8 *same_entry_exit_value_or_1_info = Mod_Ref_Info_Table[i].
+        same_entry_exit_value_or_1;
+      if (global_var_st_index >= Mod_Ref_Info_Table[i].size * 8)
+        return;
+      *same_entry_exit_value_or_1 = (*(same_entry_exit_value_or_1_info +
+        global_var_st_index/8) >> (8 - 1 - (global_var_st_index % 8))) & 0x1;
+      return;
+    }
+  }
+  return;
 }
 #endif
 
@@ -2858,10 +2846,6 @@ OPT_STAB::Generate_asm_mu_chi(WN *wn, MU_LIST *mu, CHI_LIST *chi)
     }
 
     if (Asm_Memory || asm_clobbers_mem)
-#if 0 // bug 10016
-      if (Addr_saved(idx) || Addr_passed(idx) || Addr_used_locally(idx) ||
-	  idx == Default_vsym()) 
-#endif
       {
 	how = READ_AND_WRITE;
 	goto label_how;
@@ -2942,6 +2926,9 @@ OPT_STAB::Generate_exit_mu(WN *wn)
       
     // examining all variables (including volatile virtuals)
     // but excluding the default vsym.
+
+    if (psym->Stype() == VT_UNKNOWN) 
+      continue;
 
     if (psym->Is_volatile()) continue;
     if (idx == Default_vsym()) continue;
@@ -3223,11 +3210,7 @@ OPT_STAB::Generate_mu_and_chi_list(WN *wn, BB_NODE *bb)
 
   case OPR_PARM:
     // generating the mu-list for parameters.
-    if ( WN_Parm_By_Reference(wn) 
-#if defined(TARG_SL)
-         || WN_Parm_Dereference(wn)
-#endif
-		    ) {
+    if ( WN_Parm_By_Reference(wn) || WN_Parm_Dereference(wn) ) {
       occ = Get_occ(wn);
       AUX_ID vp_idx = occ->Aux_id();
       // With virtual var, PARM only cares about its own vp.
@@ -3378,11 +3361,7 @@ OPT_STAB::Transfer_alias_class_to_occ_and_aux(RID *const rid,
     if (OPCODE_is_load(opc) ||
 	OPCODE_is_store(opc) ||
 	opr == OPR_LDA ||
-#if defined(TARG_SL)
 	(opr == OPR_PARM && (WN_Parm_By_Reference(wn) || WN_Parm_Dereference(wn)))) {
-#else
-	(opr == OPR_PARM && WN_Parm_By_Reference(wn))) {
-#endif
       if (OPERATOR_is_scalar_load (opr) || OPERATOR_is_scalar_store (opr) ||
 	  opr == OPR_LDA) {
 	POINTS_TO *sym_pt = Aux_stab_entry(WN_aux(wn))->Points_to();
@@ -3394,6 +3373,7 @@ OPT_STAB::Transfer_alias_class_to_occ_and_aux(RID *const rid,
 	    !REGION_has_black_regions(rid)) {
 	  if (sym_pt->Alias_class() == OPTIMISTIC_AC_ID) {
 	    Is_True(WOPT_Enable_Tail_Recur ||	// Tail recursion elim introduces PREGs.
+                    WOPT_Enable_Reassociation_CSE || 
 		    (opr == OPR_LDA &&
 		     ST_class(Aux_stab_entry(WN_aux(wn))->st) == CLASS_FUNC) ||
 		    Aux_stab_entry(WN_aux(wn))->Is_dedicated_preg(),
@@ -3595,12 +3575,6 @@ OPT_STAB::Transfer_alias_class_to_occ_and_aux(RID *const rid,
 	  // and the copy overlap. The discarding of the alias class
 	  // information (and the IP alias class information) happens
 	  // inside POINTS_TO::Meet_info_from_alias_class(). -- RK
-#if 0
-	  Is_True((vsym_pt->Alias_class() == OPTIMISTIC_AC_ID) ||
-		  (vsym_pt->Alias_class() == alias_class),
-		  ("Transfer_alias_class_to_occ_and_aux: Inconsistent alias "
-		   "class for vsym"));
-#endif
 	  // Note: Since the above assertion doesn't hold in general,
 	  if (alias_class != OPTIMISTIC_AC_ID &&
 	      alias_class != PESSIMISTIC_AC_ID &&
@@ -3632,14 +3606,6 @@ OPT_STAB::Transfer_alias_class_to_occ_and_aux(RID *const rid,
 	  }
 	  // The following assertion removed 981116; see comments
 	  // above for the per-PU case that explain why. -- RK
-#if 0
-	  Is_True((vsym_pt->Ip_alias_class() == OPTIMISTIC_AC_ID) ||
-		  (vsym_pt->Ip_alias_class() ==
-		   WN_MAP32_Get(WN_MAP_ALIAS_CLASS, wn)) ||
-		  (WN_MAP32_Get(WN_MAP_ALIAS_CLASS, wn) == OPTIMISTIC_AC_ID),
-		  ("Transfer_alias_class_to_occ_and_aux: Inconsistent IP alias "
-		   "class for vsym"));
-#endif
 #if Is_True_On
 	  if ((WOPT_Ip_Alias_Class_Limit == UINT32_MAX) &&
 	      (WN_MAP32_Get(WN_MAP_ALIAS_CLASS, wn) ==
@@ -3667,6 +3633,79 @@ OPT_STAB::Transfer_alias_class_to_occ_and_aux(RID *const rid,
     }
   }
   return found_ip_alias_class_info;
+}
+
+void
+OPT_STAB::Transfer_alias_tag_to_occ_and_aux(RID *const rid,
+          WN  *const wn)
+{
+  BOOL   found_ip_alias_class_info = FALSE;
+  OPCODE opc = WN_opcode(wn);
+  AliasAnalyzer *aa = AliasAnalyzer::aliasAnalyzer();
+  if (!aa) return;
+
+  // BLOCK is allowed; it shows up as a kid of COMPGOTO, for example.
+  // Is_True(opc != OPC_BLOCK,
+  //         ("Transfer_alias_class_to_occ_and_aux: BLOCK not allowed"));
+  if (!OPCODE_is_black_box(opc)) {
+    OPERATOR opr = OPCODE_operator(opc);
+    if (OPCODE_is_load(opc) ||
+        OPCODE_is_store(opc) ||
+        opr == OPR_LDA ||
+        (opr == OPR_PARM && (WN_Parm_By_Reference(wn) || WN_Parm_Dereference(wn)))) {
+      if (OPERATOR_is_scalar_load (opr) || OPERATOR_is_scalar_store (opr) ||
+          opr == OPR_LDA) {
+        AUX_ID idx = WN_aux(wn);
+        AUX_STAB_ENTRY *psym = Aux_stab_entry(idx);
+        POINTS_TO *pt = psym->Points_to();
+
+        if (Get_Trace(TP_ALIAS,NYSTROM_SOLVER_FLAG))
+          fprintf(stderr,"xfer alias tag: IDX %d -> ST_IDX %d\n",
+                  idx,pt->Base()->st_idx);
+
+        // Extract the alias tag from the current WN and associate
+        // with the points-to of that symbol.  In the case of an LDA
+        // we appear to be producing an alias tag that covers the
+        // entire object, rather than the exact field being accessed.
+        // TODO: Revisit how this should be done in the context of
+        // field sensitive points-to information.
+        AliasTag aliasTag = aa->genAliasTag(pt->Base(),
+                                            pt->Byte_Ofst(),
+                                            pt->Byte_Size(),
+                                            true/*direct reference*/);
+
+        // Since I have just created an alias tag for a scalar wn, set the
+        // aliasTag on the wn
+        aa->setAliasTag(wn, aliasTag);
+        
+        pt->Set_alias_tag(aliasTag);
+      }
+      else {
+        Is_True(Get_occ(wn) != NULL,
+            ("Transfer_alias_tag_to_occ_and_aux: Indirect memop should have "
+                "OCC_TAB_ENTRY"));
+      }
+      // Direct memops can have OCC_TAB_ENTRY's corresponding to their
+      // vsyms. Set the alias class information in those POINTS_TO's,
+      // too, as well as for indirect memops.
+      OCC_TAB_ENTRY *occ = Get_occ(wn);
+      if (occ != NULL) {
+          POINTS_TO *occ_pt = occ->Points_to();
+          AliasTag tag = aa->getAliasTag(wn);
+          occ_pt->Set_alias_tag(tag);
+
+          POINTS_TO *vsym_pt = Aux_stab_entry(occ->Aux_id())->Points_to();
+          // Perform the part of POINTS_TO::Meet that is related to
+          // alias tag information, since Meet operations will already
+          // have been done before we finalize the full set of
+          // POINTS_TO's for the program.
+          vsym_pt->Meet_alias_tag(occ_pt,aa);
+        }
+      }
+      for (UINT i = 0; i < WN_kid_count(wn); ++i)
+        Transfer_alias_tag_to_occ_and_aux(rid, WN_kid(wn, i));
+    }
+    return;
 }
 
 #if defined(TARG_SL)
@@ -3882,9 +3921,16 @@ void OPT_STAB::Compute_FFA(RID *const rid)
     FOR_ALL_ELEM (wn, stmt_iter, Init(bb->Firststmt(), bb->Laststmt())) {
       Allocate_mu_chi_and_virtual_var(wn, bb);
       found_ip_alias_class_info |= Transfer_alias_class_to_occ_and_aux(rid, wn);
+      Transfer_alias_tag_to_occ_and_aux(rid,wn);
     }
   }
 
+  if (Get_Trace(TP_ALIAS, NYSTROM_ALIAS_TAG_FLAG)) {
+    AliasAnalyzer *aa = AliasAnalyzer::aliasAnalyzer();
+    if (aa) {
+      aa->print_All_AliasTag(stderr);
+    }
+  }
 
   // The following code is last-minute for v7.3 beta, and should be
   // deleted and replaced with something smarter after that
@@ -4085,12 +4131,10 @@ OPT_STAB::Compute_FSA_stmt_or_expr(WN *wn)
 	   OPCODE_name(opc)));
   
   OCC_TAB_ENTRY *occ;
-#if defined(TARG_SL)
+
   if (OPERATOR_is_scalar_iload (opr) || opr == OPR_MLOAD ||
       (opr == OPR_PARM && WN_Parm_Dereference(wn))) {
-#else
-  if (OPERATOR_is_scalar_iload (opr) || opr == OPR_MLOAD) {
-#endif
+
     // to be consistent with OPR_ISTORE
     occ = Get_occ(wn);
 

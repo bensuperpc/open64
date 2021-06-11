@@ -1,4 +1,8 @@
 /*
+ * Copyright (C) 2008-2009 Advanced Micro Devices, Inc.  All Rights Reserved.
+ */
+
+/*
  * Copyright 2004, 2005, 2006 PathScale, Inc.  All Rights Reserved.
  */
 
@@ -733,6 +737,7 @@ extern void Update_MP_Local_Var(ST* st, WN_OFFSET offset, WN *wn);
 extern void Dump_WN(WN*, FILE*, INT, INT = 2, INT = 2,
                     ARRAY_DIRECTED_GRAPH16* =NULL, WN** = NULL, WN* = NULL,
 		    BOOL recursive = TRUE);
+extern void Enum_loops(WN *);
 
 // Good stuff extracted from SNL codes.
 
@@ -821,6 +826,8 @@ extern BOOL Is_Permutation_Vector(const INT order[], INT count);
 extern BOOL Are_Permutations(const INT* order1, const INT* order2, INT count);
 extern BOOL Is_Loop_Invariant_Use(WN* wn, WN* outerloop);
 extern BOOL Is_Loop_Invariant_Exp(WN* wn, WN* outerloop);
+extern BOOL Is_Const_Array_Addr(WN *);
+extern BOOL Is_Loop_Invariant_Indir(WN *);
 extern HASH_TABLE<WN*,WN*>* Make_Loop_Mapping(WN*, WN*, MEM_POOL*);
 extern HASH_TABLE<WN*,BOOL>* Find_Loops_Within(WN* orig, MEM_POOL*);
 extern INT Num_Common_Loops(WN *wn1, WN *wn2); 
@@ -883,7 +890,7 @@ extern void Constant_Propogate(WN *stid, INT64 const_val);
 extern WN* Messy_Subscript(WN* wn_array);
 extern void Replace_Index_Variable(WN* loop, WN* cp_loop, const char prefix[]);
 extern WN* Enclosing_Proper_Do_Loop(WN* wn_ref);
-extern void Create_Single_Region(WN* wn_single, WN* wn_end); 
+extern void Create_Single_Region(WN* wn_parent, WN* wn_single, WN* wn_end); 
 
 #ifdef Is_True_On
 extern void LNO_Check_Du(WN* orig);
@@ -891,8 +898,12 @@ extern void LNO_Check_Graph(ARRAY_DIRECTED_GRAPH16* dg);
 extern void  MP_Sanity_Check_Func(WN *func_nd);
 #endif
 
-#ifdef TARG_X8664 //introduced by bug 10953
-extern WN *Simple_Invariant_Stride_Access(WN *array, WN *loop);
+#if defined(TARG_X8664) || defined(TARG_IA64) //introduced by bug 10953
+extern WN *Inductive_Base_Addr_Const_Stride(WN *array, WN *loop, WN **base, 
+               BOOL *inductive_use, BOOL *indirect_base, mINT32 *stride_val);
+
+extern WN *Simple_Invariant_Stride_Access(WN *array, WN *loop, BOOL ck_induc_base,
+                                  BOOL *inductive_use, BOOL *indirect_use);
 #endif
 
 #endif // LNOUTILS_DECLARE

@@ -1,3 +1,15 @@
+/********************************************************************\
+|*                                                                  *|   
+|*  Copyright (c) 2006 by SimpLight Nanoelectronics.                *|
+|*  All rights reserved                                             *|
+|*                                                                  *|
+|*  This program is free software; you can redistribute it and/or   *|
+|*  modify it under the terms of the GNU General Public License as  *|
+|*  published by the Free Software Foundation; either version 2,    *|
+|*  or (at your option) any later version.                          *|
+|*                                                                  *|
+\********************************************************************/
+
 /*
  * Module: disp_instr.cxx
  *
@@ -14,6 +26,7 @@
 #include "cg_flags.h"
 #include "annotations.h"
 #include "whirl2ops.h"
+#include "hb_hazards.h"
 #include <vector>
 using std::vector;
 /*
@@ -26,6 +39,11 @@ using std::vector;
  */
 #define Min_uINT5 0
 #define Max_uINT5 31
+/*
+ * 6-bit unsign immediate integer
+ */
+#define Min_uINT6 0
+#define Max_uINT6 63
 /*
  * 7-bit signed immediate integer
  */
@@ -105,6 +123,14 @@ Repl_Size16_Instr::Replace_CurOP (OP *newop) {
     Copy_WN_For_Memory_OP(newop, _cur_op);	
   }
   BB_Insert_Op_Before(OP_bb(_cur_op), _cur_op, newop);
+  
+  if (_cur_op == BB_entry_sp_adj_op(_cur_op->bb)) {
+    Set_BB_entry_sp_adj_op(_cur_op->bb,newop);
+  }
+  if (_cur_op == BB_exit_sp_adj_op(_cur_op->bb)) {
+    Set_BB_exit_sp_adj_op(_cur_op->bb,newop);
+  }
+
   OP_Change_To_Noop(_cur_op);
   _cur_op = newop;
   return; 
@@ -275,31 +301,39 @@ Repl_Size16_Instr::Replace_LDU () {
 }
 
 /*
- * Computer the pc-relative offset
+ * Compute the length of BB in byte
  */
-static int 
-Label_Offset (OP *op, LABEL_IDX lab) {
-  int i=0;
-  BB *cur_bb = OP_bb(op);
-  OP *tmp_op;
-  if (OP_bb(op) == NULL)   return (Max_INT5+1);//false
- 
-  BB *targ_bb = Get_Label_BB(lab);
-
-  i = 0;
-  cur_bb = OP_bb(op);
-
-  for (cur_bb = BB_next(cur_bb); cur_bb; cur_bb = BB_next(cur_bb)) {
-      if (BB_asm(cur_bb)) 
-	  return (Max_uINT5+1);
-      else if (BB_call(cur_bb) || BB_exit(cur_bb) || BB_zdl_prolog(cur_bb)) {
-	  i = i + 4;	 // jr/jplnk/loop/ret for quad-word alignment
-      } else if ((i > Max_uINT5) || (cur_bb == targ_bb)) 
-	  return i;
-      i = i + BB_length(cur_bb);
-    
+static int
+BB_Byte_Size(BB *bb){
+  OP *cur;
+  int length= 0;
+  for(cur = BB_first_op(bb); cur; cur = OP_next(cur)){
+    length += (OP_16bit_op(cur))? 2:4;
   }
-
+  return length;
+}
+/*
+ * check the pc-relative offset is in 64byte(br16 offset is 6bit)
+ */
+static BOOL
+Is_Br16_Offset (OP *op, LABEL_IDX lab) {
+  int offset=0;
+  BB *cur_bb = OP_bb(op);
+  if (OP_bb(op) == NULL)   return FALSE;
+  BB *targ_bb = Get_Label_BB(lab);
+  for (cur_bb = BB_next(cur_bb); cur_bb; cur_bb = BB_next(cur_bb)) {
+    if (BB_asm(cur_bb))
+       return FALSE;
+    else if (offset > Max_uINT6)
+       return FALSE;
+    else if (cur_bb == targ_bb)
+       return TRUE;
+    else if (BB_call(cur_bb) || BB_exit(cur_bb) || BB_zdl_prolog(cur_bb)){
+      offset = offset + 16; // jr/jplnk/loop/ret for quad-word alignment
+    }
+    offset = offset + BB_Byte_Size(cur_bb);
+  }
+  return FALSE;
 }
 
 /*replace br.eq br.ne */
@@ -321,9 +355,8 @@ Repl_Size16_Instr::Replace_BR() {
   
   if (tn_registers_identical(op2tn, Zero_TN)) {
   	if (TN_is_label(op3tn)) {
-	 LABEL_IDX lab = TN_label(op3tn); 
-      	 int offset = Label_Offset(_cur_op, lab);
-         if ((offset <=Max_INT5) && (offset >= Min_uINT5) ) {
+	 LABEL_IDX lab = TN_label(op3tn);
+         if (Is_Br16_Offset(_cur_op, lab)) { 
 	   OP_Change_Opcode(_cur_op, newtop);
            return TRUE;
          } 
@@ -661,6 +694,7 @@ BOOL Reback_Size32_Instr (OP *op) {
          Set_OP_opnd(op, 1, valuetn); 
        }
        OP_Change_Opcode(op, top32);
+       Reset_OP_16bit_op(op);
        return 1;  
      }
      return 0;
@@ -806,110 +840,6 @@ UINT32 Control_Register_Index( TN *tn) {
   return idx;
 }
 
-/*
- * mvtc/mvtc16 and its consumer could not exist in the same quadword block
- */
-void Check_QuadWord_Boundary_Absolute(void) {
-  BB *bb= NULL;
-  OP* op= NULL;
-  UINT32 pc = 0;
- 
-  MEM_POOL_Push(&MEM_local_pool);
-  vector<MVTCInfor *>  *mvtcop = CXX_NEW(vector<MVTCInfor *>, &MEM_local_pool);
-  vector<MVTCInfor *>  *mvfcop = CXX_NEW(vector<MVTCInfor *>, &MEM_local_pool);
-
-  for ( bb = REGION_First_BB; bb != NULL; bb = BB_next (bb) ) {
-    FOR_ALL_BB_OPs_FWD ( bb, op ) {
-	
-      if (TOP_is_mvtc(OP_code(op))) {
-         MVTCInfor *mvtcinfor = CXX_NEW((MVTCInfor), &MEM_local_pool) ;
-         UINT32 control_register_idx = Control_Register_Index(OP_result(op, 0));
-         mvtcinfor->cr_idx = control_register_idx;
-         mvtcinfor->pc = pc;
-         mvtcop->insert(mvtcop->begin(), mvtcinfor);	
-      } else if ( TOP_is_use_ctrl_reg(OP_code(op))) {
-         if (mvtcop->size() > 0) {
-           int cr_idx = -1;
-	   if (OP_code(op ) == TOP_loop) {
-	     cr_idx = Control_Register_Index(OP_opnd(op, 2));
-	   } else {
-	     cr_idx = Control_Register_Index(OP_opnd(op, 0));
-	   }
-	   
-           vector<MVTCInfor *>::iterator temp;
-           for (temp = mvtcop->begin(); temp != mvtcop->end(); temp++) {
-	     if ((*temp)->cr_idx == cr_idx) {
-	       BB *cur_bb = OP_bb(op);	
-	       INT num =(pc - ((*temp)->pc));	
-	       if (((16-num)%4)==0) 
-                 num = ((16-num)/4);	
-	       else
-	         num = ((16-num)/4)+1;
-               if (num < 0) {
-	         mvtcop->erase(temp);	
-		 break;
-	       }
-               Is_True( (num >=0 && num <=4), ("nop num is between 0-3"));
-               {
-                 for (int j =0; j< num ; j++) {
-		   OP *op1 = Mk_OP(TOP_nop);
-	           BB_Insert_Op_Before(cur_bb, op, op1);
-	           pc = pc + 4;		 
-                 }
-	       }
-
-	       mvtcop->erase(temp);	
-	       break;
-	    }
-          }  	
-	}
-     }
-     if ((OP_code(op) == TOP_mvfc16) && (Control_Register_Index(OP_opnd(op, 0)) == 4)) {
-            MVTCInfor *mvfcinfor = CXX_NEW((MVTCInfor), &MEM_local_pool) ;
-            mvfcinfor->cr_idx = 4;
-            mvfcinfor->pc = pc;
-            mvfcop->insert(mvfcop->begin(), mvfcinfor);
-     } else if ((mvfcop->size() > 0) && TOP_is_lnk(OP_code(op))) {
-        vector<MVTCInfor *>::iterator temp;
-        for (temp = mvfcop->begin(); temp != mvfcop->end(); temp++) {
-            BB *cur_bb = OP_bb(op);
-            INT num =(pc - ((*temp)->pc));
-            if (((16-num)%4)==0)
-               num = ((16-num)/4);
-            else
-               num = ((16-num)/4)+1;
-            if (num < 0) {
-               mvfcop->erase(temp);
-               break;
-            }
-            Is_True( (num >=0 && num <=4), ("nop num is between 0-3"));
-            {
-              for (int j =0; j< num ; j++) {
-	        OP *op1 = Mk_OP(TOP_nop);
-                BB_Insert_Op_Before(cur_bb, op, op1);
-                pc = pc + 4;
-              }
-             }
-             mvfcop->erase(temp);
-             break;
-          }
-     }
-     INT num_inst_words = OP_Real_Inst_Words (op);
-     pc = pc + (2*num_inst_words); // for SL, incr are in half words num_inst_words);
-   }
-  }
-  MEM_POOL_Pop(&MEM_local_pool);
-}
-
-
-inline OP*
-BB_last_real_op(BB *bb) {
-  OP *last_op;
-  for (last_op = BB_last_op(bb); last_op; last_op = OP_prev(last_op)) {
-    if (!OP_dummy(last_op)) break;
-  }
-  return last_op;
-}
 
 inline OP* 
 OP_prev_real_op(OP *op) {
@@ -920,7 +850,7 @@ OP_prev_real_op(OP *op) {
  return prev_op;
 }
 
-void Check_Br16 (int first=0) {
+void Check_Br16 () {
   BB *bb= NULL;
   OP* op= NULL;
   for ( bb = REGION_First_BB; bb != NULL; bb = BB_next (bb) ) {
@@ -933,13 +863,11 @@ void Check_Br16 (int first=0) {
       TN *op3tn = OP_opnd (op, 2);
       Is_True(tn_registers_identical(op2tn, Zero_TN), ("second operand is zero"));
       if (TN_is_label(op3tn)) {
-	 LABEL_IDX lab = TN_label(op3tn); 
-      	 int offset = Label_Offset(op, lab);
-         int upbound = first == 1 ? Max_uINT5 :Max_INT5 ;
-         if (offset > upbound) {
+	 LABEL_IDX lab = TN_label(op3tn);
+         if (Is_Br16_Offset(op, lab)) { 
 	   TOP newtop = (OP_code(op)==TOP_br16_eqz) ? TOP_beq : TOP_bne ;
            OP_Change_Opcode(op, newtop);
-	    OP *prev16 = OP_prev_real_op(op);
+	   OP *prev16 = OP_prev_real_op(op);
 	   
 	   if (OP_code(prev16) == TOP_nop16) {
 	     OP_Change_To_Noop(prev16);
@@ -953,6 +881,76 @@ void Check_Br16 (int first=0) {
 
 }
 
+/* SL1 hardware walkaround
+ *   case 1: memory dependence check:
+             AR and GPR point to same address in a same BB: insert nop instruction
+ */
+void SL1_patch() {
 
+  BB *bb = NULL;
+  OP *op = NULL;
+  INT32 nops = Is_Target_Sl1_pcore() ? 4 : (Is_Target_Sl1_dsp() ? 6 : 0); // kept 2 cycles after same address operation
 
+  Is_True((nops!=0), ("patch only work to SL1"));
 
+  for (bb = REGION_First_BB; bb != NULL; bb = BB_next(bb)) {
+    MEM_POOL_Push(&MEM_local_pool);
+    // transfer each op and record something
+    UINT16 num_c3mem_ops, num_mem_ops, i;
+    OP **mem_ops = TYPE_L_ALLOC_N(OP *, BB_length(bb));
+    num_c3mem_ops = num_mem_ops = i = 0;
+    FOR_ALL_BB_OPs(bb, op) {
+      if (OP_c3_load(op) || OP_c3_store(op)) {
+        num_c3mem_ops++;
+        mem_ops[i++] = op;
+      } else if (OP_load(op) || OP_store(op)) {
+        num_mem_ops++;
+        mem_ops[i++] = op;
+      }
+    }
+    if ((num_c3mem_ops < 1) && (num_mem_ops < 1))
+      continue;
+
+    if (BB_scheduled(bb)) {
+      for (i = 0; i < (num_c3mem_ops+num_mem_ops); i++) {
+        op = mem_ops[i];
+        if (OP_ARdep(op)) {
+          for (UINT j = 0; j < nops; j++) {
+            OP *nop = Mk_OP(TOP_nop);
+            OPS_Insert_Op_Before(&(bb->ops), op, nop);
+          }
+        }
+      }
+    } else {
+      // conservative to insert max nop for no mem dep analysis
+      UINT start = (BB_zdl_body(bb) || BB_loophead(bb)) ? 0 : 1;
+      for (i = start; i < (num_c3mem_ops+num_mem_ops); i++) {
+        op = mem_ops[i];
+        if (OP_c3_load(op) || OP_c3_store(op)) {
+          for (UINT j = 0; j < nops; j++) {
+            OP *nop = Mk_OP(TOP_nop);
+            OPS_Insert_Op_Before(&(bb->ops), op, nop);
+          }
+        }
+      }
+    }
+
+    // Insert nop if bb's entry has c3_load or c3_store instruction to make sure
+    // the correctness if there is a store instruction in the prev-BB.
+    if (CG_enbale_C3_AR_dependence_workaround) {
+      INT num_nop = nops;
+      for (op = BB_first_op(bb); (op != NULL) && (num_nop >= 0); op = OP_next(op)) {
+        if (OP_c3_load(op) || OP_c3_store(op)) {
+          for (UINT i=0; i<num_nop; i++) {
+            OP *op1 = Mk_OP(TOP_nop);
+            BB_Insert_Op_Before(bb, op, op1);
+          }
+          break;
+        } else if (OP_code(op) != TOP_noop){
+          num_nop--;
+        }
+      }
+    }
+    MEM_POOL_Pop(&MEM_local_pool);
+  }
+}

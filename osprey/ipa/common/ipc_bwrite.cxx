@@ -41,7 +41,6 @@
 */
 
 
-#define __STDC_LIMIT_MACROS
 #include <stdint.h>
 #if defined(BUILD_OS_DARWIN)
 #include <darwin_elf.h>
@@ -67,6 +66,7 @@
 
 #include "erglob.h"			// error codes
 
+#include "config_opt.h"
 #include "ipa_option.h"			// option flags
 #include "ipa_cg.h"			// call graph
 #include "ipaa.h"			// for Mod_Ref_Set
@@ -88,6 +88,7 @@
 #include "be_ipa_util.h"
 #endif
 
+#include "ipa_nystrom_alias_analyzer.h"
 
 extern "C" void add_to_tmp_file_list (char*);
 #pragma weak add_to_tmp_file_list
@@ -234,9 +235,21 @@ IP_WRITE_pu_internal (PU_Info* pu, Output_File *outfile)
   if (PU_Info_state (pu, WT_FEEDBACK) == Subsect_InMem)
       WN_write_feedback (pu, outfile);
 
-  WN_write_tree (pu, off_map, outfile);
+#if defined(BACK_END) || defined(IR_TOOLS)
+  if (PU_Info_state (pu, WT_SSA) == Subsect_InMem) {
+      // We should call
+      //    WN_write_SSA (pu, outfile);
+      // But since WSSA doesn't support IPA so far. Only set the status
+      Set_PU_Info_state(pu, WT_SSA, Subsect_Missing);
+      PU_Info_subsect_size(pu, WT_SSA) = 0;
+      PU_Info_subsect_offset(pu, WT_SSA) = 0;
+  }
+#endif
 
-  if (Write_ALIAS_CLASS_Map || Write_AC_INTERNAL_Map) {
+  WN_write_tree (pu, off_map, outfile);
+   
+  if (Write_ALIAS_CLASS_Map || Write_AC_INTERNAL_Map || 
+      Write_ALIAS_CGNODE_Map) {
 
     if (Write_AC_INTERNAL_Map) {
       WN_write_voidptr_map(pu, off_map, outfile, WT_AC_INTERNAL,
@@ -249,6 +262,11 @@ IP_WRITE_pu_internal (PU_Info* pu, Output_File *outfile)
 			 WN_MAP_ALIAS_CLASS, "alias class map");
     }
 
+    if (Write_ALIAS_CGNODE_Map) {
+      WN_write_INT32_map(pu, off_map, outfile, WT_ALIAS_CGNODE,
+			 WN_MAP_ALIAS_CGNODE, "alias cgnode map");
+    }
+
     WN_MAP_Delete(off_map);
     MEM_POOL_Pop(MEM_local_nz_pool_ptr);
   }
@@ -257,7 +275,6 @@ IP_WRITE_pu_internal (PU_Info* pu, Output_File *outfile)
 // Write a PU, and all of its children.  (But not its siblings.)
 void IP_write_PU_tree(Output_File* f, PU_Info* pu) {
   IP_WRITE_pu_internal(pu, f);
-
 
   PU_Info* prev_child = NULL;
   PU_Info* child = PU_Info_child(pu);
@@ -872,6 +889,9 @@ extern "C" void IP_WRITE_pu (IP_FILE_HDR *s , INT pindex)
     clean_up_deleted_nested_pu_info(pu);
 
     IPA_NODE* node = Get_Node_From_PU (pu);
+
+    if (Alias_Nystrom_Analyzer)
+      IPA_NystromAliasAnalyzer::aliasAnalyzer()->updateCGForBE(node);
 
     if (IPA_Enable_Alias_Class) {
       Temporary_Error_Phase ephase("Alias class analysis");

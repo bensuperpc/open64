@@ -1,4 +1,8 @@
 /*
+ * Copyright (C) 2008-2009 Advanced Micro Devices, Inc.  All Rights Reserved.
+ */
+
+/*
  *  Copyright (C) 2006. QLogic Corporation. All Rights Reserved.
  */
 
@@ -141,12 +145,6 @@ BOOL POINTS_TO::Same_base(const POINTS_TO *pt) const
 {
   BASE_ACTION a = base_action_tbl[this->Base_kind()][pt->Base_kind()];
   if ((a == COMP_BASE || a == SAME_BASE)) {
-#if defined(TARG_SL)
-    if(this->Base_kind()==BASE_IS_FIXED && pt->Base_kind()==BASE_IS_FIXED) {
-      if(Get_ST_base(this->Base())==Get_ST_base(pt->Base()))
-        return TRUE;
-    }  else  
-#endif
     if(this->Base() == pt->Base())
       return TRUE;
   }
@@ -283,6 +281,17 @@ void POINTS_TO::Meet_info_from_alias_class(const POINTS_TO *pt)
   }
     
   if (!pt->Not_alloca_mem())   Reset_not_alloca_mem();
+}
+
+// We are performing a meet operation on two AliasTags
+// The key assumption here is that we are performing the
+// meet such that AliasTag of 'pt' will be unioned with
+// that of 'this'.
+void POINTS_TO::Meet_alias_tag(const POINTS_TO *pt, AliasAnalyzer *aa)
+{
+  AliasTag tag = aa->meet(Alias_tag(),pt->Alias_tag());
+  if (tag != Alias_tag())
+    Set_alias_tag(tag);
 }
 
 //  Combine *this and *pt in a conservative manner.
@@ -464,6 +473,18 @@ Expand_ST_into_base_and_ofst(ST *st, INT64 st_ofst, ST **base, INT64 *ofst)
     if (ST_sclass(tmpbase) == SCLASS_FORMAL &&
 	ST_class(ST_base(tmpbase)) == CLASS_BLOCK)
       break;
+
+#ifdef TARG_X8664
+    // Allow extern syms which are about to flattened into a section
+    // to retain symbolic/type information.
+    if ((OPT_keep_extsyms) &&
+        ST_sclass(tmpbase) == SCLASS_EXTERN &&
+	ST_class(ST_base(tmpbase)) == CLASS_BLOCK) {
+      // Excluding C++.
+      if (PU_src_lang(Get_Current_PU()) != PU_CXX_LANG)
+        break;
+    }
+#endif
 
     // several places in wopt assumed that ST_sclass(st) == ST_sclass(ST_base(st))
     // and it is not always true.  
@@ -836,6 +857,8 @@ void POINTS_TO::Lower_to_base(WN *wn)
       return;
     }
 
+    if (TY_kind(ST_type(base)) == KIND_ARRAY)
+	Set_is_array();
     Expand_ST_into_base_and_ofst (base, 0, &base, &ofst);
 
     // if the pt already has an offset, shift it.
@@ -1056,6 +1079,7 @@ void POINTS_TO::Print(FILE *fp) const
   }
   fprintf(fp, "per-PU class %d, ", Alias_class());
   fprintf(fp, "global class %d, ", Ip_alias_class());
+  fprintf(fp, "alias tag %d, ", Alias_tag());
   fprintf(fp, "ty=%d, hlty=%d, ", Ty(), Highlevel_Ty ());
 
   // print attributes
@@ -1147,6 +1171,10 @@ void POINTS_TO::Print(FILE *fp) const
     pr_separator = "|";
   }
 #endif
+  if (Is_array()) {
+    fprintf(fp, "%sis_array", pr_separator);
+    pr_separator = "|";
+  }
 
 #ifdef _LP64
 #define UNDEFINED_PTR    (void *)0xa5a5a5a5a5a5a5a5LL

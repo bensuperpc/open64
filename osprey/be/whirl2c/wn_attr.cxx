@@ -1,4 +1,8 @@
 /*
+ * Copyright (C) 2009-2010 Advanced Micro Devices, Inc.  All Rights Reserved.
+ */
+
+/*
  * Copyright 2003, 2004, 2005, 2006 PathScale, Inc.  All Rights Reserved.
  */
 
@@ -247,6 +251,9 @@ WN_intrinsic_return_ty(OPCODE wn_opc, INTRINSIC intr_opc, const WN *call)
    case IRETURN_F8:
       ret_ty = Stab_Mtype_To_Ty(MTYPE_F8);
       break;
+   case IRETURN_F10:
+      ret_ty = Stab_Mtype_To_Ty(MTYPE_F10);
+      break;
    case IRETURN_FQ:
       ret_ty = Stab_Mtype_To_Ty(MTYPE_FQ);
       break;
@@ -255,6 +262,9 @@ WN_intrinsic_return_ty(OPCODE wn_opc, INTRINSIC intr_opc, const WN *call)
       break;
    case IRETURN_C8:
       ret_ty = Stab_Mtype_To_Ty(MTYPE_C8);
+      break;
+   case IRETURN_C10:
+      ret_ty = Stab_Mtype_To_Ty(MTYPE_C10);
       break;
    case IRETURN_CQ:
       ret_ty = Stab_Mtype_To_Ty(MTYPE_CQ);
@@ -306,6 +316,30 @@ WN_intrinsic_return_ty(OPCODE wn_opc, INTRINSIC intr_opc, const WN *call)
    case IRETURN_M8I4:
      ret_ty = Stab_Mtype_To_Ty(MTYPE_M8I4);
      break;     
+   case IRETURN_V32C4:
+     ret_ty = Stab_Mtype_To_Ty(MTYPE_V32C4);
+     break;
+   case IRETURN_V32C8:
+     ret_ty = Stab_Mtype_To_Ty(MTYPE_V32C8);
+     break;
+   case IRETURN_V32I1:
+     ret_ty = Stab_Mtype_To_Ty(MTYPE_V32I1);
+     break;
+   case IRETURN_V32I2:
+     ret_ty = Stab_Mtype_To_Ty(MTYPE_V32I2);
+     break;
+   case IRETURN_V32I4:
+     ret_ty = Stab_Mtype_To_Ty(MTYPE_V32I4);
+     break;
+   case IRETURN_V32I8:
+     ret_ty = Stab_Mtype_To_Ty(MTYPE_V32I8);
+     break;
+   case IRETURN_V32F4:
+     ret_ty = Stab_Mtype_To_Ty(MTYPE_V32F4);
+     break;
+   case IRETURN_V32F8:
+     ret_ty = Stab_Mtype_To_Ty(MTYPE_V32F8);
+     break;
 #endif
 #endif
    case IRETURN_PPU2:
@@ -447,9 +481,9 @@ WN_Tree_Type(const WN *wn)
 	   //We assume the type is always the latter, and use explicit casts to take care of the former case
 	   //(there will be a type mismatch)
 	   // Should we go for the inner array type here or for the element type?
-	   ty = Make_Pointer_Type(/*TY_etype*/ Get_Inner_Array_Type(TY_pointed(ty)));
+	   ty = Make_Pointer_Type(Get_Inner_Array_Type(TY_pointed(ty)));
 	 }
-
+         break; 
       case OPR_MLOAD:
 	 /* There is not much we can do about this case */
 	 if (WN_opc_operator(WN_kid1(wn)) == OPR_INTCONST &&
@@ -680,6 +714,7 @@ WN_Tree_Type(const WN *wn)
       case OPR_REDUCE_MAX:
       case OPR_REDUCE_MIN:
       case OPR_SHUFFLE:
+      case OPR_ATOMIC_RSQRT:
 	ty = Stab_Mtype_To_Ty(WN_opc_rtype(wn));
 	break;
 

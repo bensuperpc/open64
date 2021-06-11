@@ -1,3 +1,11 @@
+/* 
+ * Copyright (C) 2010, Hewlett-Packard Development Company, L.P. All Rights Reserved.
+ */
+
+/*
+ * Copyright (C) 2008-2010 Advanced Micro Devices, Inc.  All Rights Reserved.
+ */
+
 /*
  * Copyright 2003, 2004, 2005, 2006 PathScale, Inc.  All Rights Reserved.
  */
@@ -127,6 +135,7 @@
 #include "dra_export.h"             /* for DRA routines */
 #include "ti_init.h"		    /* for targ_info */
 #include "opt_alias_interface.h"    /* for Create_Alias_Manager */
+#include "alias_analyzer.h"         /* for AliasAnalyzer */
 #include "omp_lower.h"              /* for OMP pre-lowering interface */
 #include "cxx_memory.h"		    /* CXX_NEW */
 #include "options_stack.h"	    /* for Options_Stack */
@@ -154,6 +163,8 @@
 #include "ti_si.h"
 #include "isr.h"
 #endif
+#include "wn_mp.h"    // for Verify_No_MP()
+#include "comp_decl.h"
 
 extern ERROR_DESC EDESC_BE[], EDESC_CG[];
 
@@ -219,27 +230,6 @@ extern void EH_Generate_Range_List (WN *);
 #endif // __linux__
 #endif // SHARED_BUILD
 
-#if defined(TARG_SL)  || defined(TARG_MIPS)
-extern INT *SI_resource_count_p;
-#define SI_resource_count (*SI_resource_count_p)
-extern SI_RESOURCE* (*SI_resources_p)[];
-#define SI_resources (*SI_resources_p)
-extern SI* (*SI_top_si_p)[];
-#define SI_top_si (*SI_top_si_p)
-extern SI_RRW *SI_RRW_initializer_p;
-#define SI_RRW_initializer (*SI_RRW_initializer_p)
-extern SI_RRW *SI_RRW_overuse_mask_p;
-#define SI_RRW_overuse_mask (*SI_RRW_overuse_mask_p)
-extern INT *SI_issue_slot_count_p;
-#define SI_issue_slot_count (*SI_issue_slot_count_p)
-extern SI_ISSUE_SLOT *(*SI_issue_slots_p)[];
-#define SI_issue_slots (*SI_issue_slots_p)
-extern INT *SI_ID_count_p;
-#define SI_ID_count (*SI_ID_count_p)
-extern SI *(*SI_ID_si_p)[];
-#define SI_ID_si (*SI_ID_si_p)
-#endif // TARG_SL
-
 // symbols defined in wopt.so
 #if defined(SHARED_BUILD)
 #if defined(__linux__) || defined(BUILD_OS_DARWIN)|| defined(__CYGWIN__) || defined(__MINGW32__)
@@ -263,6 +253,9 @@ extern WN* (*Perform_Global_Optimization_p) (WN *, WN *, ALIAS_MANAGER *);
 extern WN* (*Pre_Optimizer_p) (INT32, WN*, DU_MANAGER*, ALIAS_MANAGER*);
 #define Pre_Optimizer (*Pre_Optimizer_p)
 
+extern void (*choose_from_complete_struct_for_relayout_candidates_p)();
+#define choose_from_complete_struct_for_relayout_candidates (*choose_from_complete_struct_for_relayout_candidates_p)
+
 extern DU_MANAGER* (*Create_Du_Manager_p) (MEM_POOL *);
 #define Create_Du_Manager (*Create_Du_Manager_p)
 
@@ -278,6 +271,7 @@ extern void Wopt_Fini ();
 extern WN* Perform_Preopt_Optimization (WN *, WN *);
 extern WN* Perform_Global_Optimization (WN *, WN *, ALIAS_MANAGER *);
 extern WN* Pre_Optimizer (INT32, WN*, DU_MANAGER*, ALIAS_MANAGER*);
+extern void choose_from_complete_struct_for_relayout_candidates();
 extern DU_MANAGER* Create_Du_Manager (MEM_POOL *);
 extern void Delete_Du_Manager (DU_MANAGER *, MEM_POOL *);
 extern BOOL Verify_alias (ALIAS_MANAGER *, WN *);
@@ -290,6 +284,7 @@ extern BOOL Verify_alias (ALIAS_MANAGER *, WN *);
 #pragma weak Perform_Global_Optimization
 #pragma weak Perform_Preopt_Optimization
 #pragma weak Pre_Optimizer
+#pragma weak choose_from_complete_struct_for_relayout_candidates
 #pragma weak Create_Du_Manager
 #pragma weak Delete_Du_Manager
 #pragma weak Verify_alias
@@ -595,6 +590,8 @@ Phase_Init (void)
 	Ipl_Init ();
     if (Run_lno || Run_Distr_Array || Run_autopar)
 	Lno_Init ();
+    if ( Opt_Level > 0 ) /* run VHO at -O1 and above */
+        Vho_Init ();
     if (Run_purple)
 	Prp_Init();
     if (Run_w2c || (Run_prompf && Anl_Needs_Whirl2c()))
@@ -628,7 +625,11 @@ Phase_Init (void)
 
     if (need_lno_output) {
 	Write_BE_Maps = TRUE;
-	ir_output = Open_Output_Info(New_Extension(output_file_name,".N"));
+	// Output IR after preopt to .P file, and IR after LNO to .N file.
+	if (Run_lno)
+	    ir_output = Open_Output_Info(New_Extension(output_file_name,".N"));
+	else
+	    ir_output = Open_Output_Info(New_Extension(output_file_name,".P"));
     }
     if (need_wopt_output) {
 	Write_ALIAS_CLASS_Map = TRUE;
@@ -675,6 +676,8 @@ Phase_Fini (void)
     if (Run_Dsm_Cloner || Run_Dsm_Common_Check)
       DRA_Finalize ();
 
+    if ( Opt_Level > 0 ) /* run VHO at -O1 and above */
+        Vho_Fini ();
     if (Run_lno || Run_Distr_Array || Run_autopar)
 	Lno_Fini ();
     if (Run_ipl)
@@ -873,8 +876,10 @@ Ipl_Processing (PU_Info *current_pu, WN *pu)
 
     if (Run_preopt) {
 	du_mgr = Create_Du_Manager(MEM_pu_nz_pool_ptr);
-	al_mgr = Create_Alias_Manager(MEM_pu_nz_pool_ptr);
+	al_mgr = Create_Alias_Manager(MEM_pu_nz_pool_ptr, pu);
+	Check_for_IR_Dump_Before_Phase(TP_IPL, pu, "Pre_Optimizer");
 	pu = Pre_Optimizer(PREOPT_IPA0_PHASE, pu, du_mgr, al_mgr);
+	Check_for_IR_Dump(TP_IPL, pu, "Pre_Optimizer");
 #ifdef Is_True_On
 	if (Get_Trace (TKIND_ALLOC, TP_IPA)) {
 	    fprintf (TFile, "\n%s%s\tMemory allocation information after"
@@ -888,6 +893,8 @@ Ipl_Processing (PU_Info *current_pu, WN *pu)
 	Set_Error_Phase ( "IPA Summary" );
 	Perform_Procedure_Summary_Phase (pu, du_mgr, al_mgr, 0);
     }
+
+    AliasAnalyzer::Delete_Alias_Analyzer();
 
     /* Write out the current proc */
     Set_PU_Info_tree_ptr(current_pu, pu);
@@ -1084,7 +1091,7 @@ Do_WOPT_and_CG_with_Regions (PU_Info *current_pu, WN *pu)
     // MainOpt and CG. Preopt uses it's own local alias manager,
     // one for each region. Deleted by Post_Process_PU.
     if ((Run_wopt || Run_region_bounds) && alias_mgr == 0)
-      alias_mgr = Create_Alias_Manager(MEM_pu_nz_pool_ptr);
+      alias_mgr = Create_Alias_Manager(MEM_pu_nz_pool_ptr, pu);
 
     // Create the region boundary sets, be/region/region_bounds.cxx
     if (Run_region_bounds) {
@@ -1165,10 +1172,6 @@ Do_WOPT_and_CG_with_Regions (PU_Info *current_pu, WN *pu)
 	if ( Cur_PU_Feedback ) {
 	  Cur_PU_Feedback->Verify("after WOPT");
 	}
-#if 0  // this is now unnecessary because the lowering is done inside wopt
-	if (Only_Unsigned_64_Bit_Ops && Delay_U64_Lowering)
-	  U64_lower_wn(rwn, FALSE);
-#endif
       }
 
       /* we may still have to print the .O file:		   */
@@ -1192,10 +1195,6 @@ Do_WOPT_and_CG_with_Regions (PU_Info *current_pu, WN *pu)
 	rwn = WN_Lower(rwn, LOWER_SCF, NULL, 
 		       "Lower structured control flow");
 	WN_Instrument(rwn, PROFILE_PHASE_BEFORE_CG);
-#if 0
-	extern void wb_gwe(WN*); // hack to check __profile calls.
-	wb_gwe(rwn);
-#endif
       } else if (Feedback_Enabled[PROFILE_PHASE_BEFORE_CG]) {
 	rwn = WN_Lower(rwn, LOWER_SCF, NULL, 
 		       "Lower structured control flow");
@@ -1219,7 +1218,11 @@ Do_WOPT_and_CG_with_Regions (PU_Info *current_pu, WN *pu)
 #endif
     }
  
+#if defined(EMULATE_FLOAT_POINT) && defined(TARG_SL)
+ 	rwn = WN_Lower(rwn, LOWER_TO_CG | LOWER_FP_EMULATE, alias_mgr, "Lowering to CG/Lowering float point emulate");
+#else
 	rwn = WN_Lower(rwn, LOWER_TO_CG, alias_mgr, "Lowering to CG");
+#endif
 #ifdef TARG_IA64
 	if (Only_Unsigned_64_Bit_Ops &&
 	    (!Run_wopt || Query_Skiplist (WOPT_Skip_List, Current_PU_Count()))) 	  U64_lower_wn(rwn, FALSE);
@@ -1321,6 +1324,8 @@ Post_Process_Backend (PU_Info *current_pu, WN *pu)
     Delete_Alias_Manager(alias_mgr, MEM_pu_nz_pool_ptr);
     alias_mgr = NULL;
   }
+
+  AliasAnalyzer::Delete_Alias_Analyzer();
 } /* Post_Process_Backend */
 
 
@@ -1466,6 +1471,7 @@ Backend_Processing (PU_Info *current_pu, WN *pu)
 	Set_Error_Phase ( "MP Lowering" );
         WB_LWR_Initialize(pu, NULL);
 	pu = WN_Lower (pu, LOWER_MP, NULL, "Before MP Lowering");
+        Verify_No_MP(WN_func_body(pu));
 //Bug 4688
 #ifdef KEY
         extern void Post_MP_Processing (WN *);
@@ -1654,6 +1660,10 @@ Preprocess_PU (PU_Info *current_pu)
   /* read from mmap area */
   Start_Timer ( T_ReadIR_CU );
 
+#ifdef TARG_LOONGSON
+  if (Instrumentation_Enabled)
+    Instrumentation_Enabled_Before = TRUE;
+#endif
   // The current PU could already be memory as happens when the
   // compiler creates it during back end compilation of an earlier PU. 
   if (PU_Info_state (current_pu, WT_TREE) != Subsect_InMem) {
@@ -1768,6 +1778,17 @@ Preprocess_PU (PU_Info *current_pu)
 #endif
 
   Stop_Timer (T_ReadIR_CU);
+
+  /* If -tf is set then IR_dump_wn_addr and IR_dump_wn_id
+   * won't be set in Configure().
+   */
+  if ( Get_Trace( TP_MISC, 0x200 ) ) {
+     IR_dump_wn_addr = TRUE;
+  }
+  if ( Get_Trace( TP_MISC, 0x400 ) ) {
+     IR_dump_wn_id = TRUE;
+  }
+
   Check_for_IR_Dump(TP_IR_READ,pu,"IR_READ");
 
   if (Show_Progress) {
@@ -1836,10 +1857,6 @@ Preprocess_PU (PU_Info *current_pu)
        && (Instrumentation_Phase_Num == PROFILE_PHASE_BEFORE_VHO)) {
     if (!is_mp_nested_pu )
       WN_Instrument(pu, PROFILE_PHASE_BEFORE_VHO); 
-#if 0
-    extern void wb_gwe(WN*); // hack to check __profile calls.
-    wb_gwe(pu);
-#endif
   } else if ( Feedback_Enabled[PROFILE_PHASE_BEFORE_VHO] ) {
     WN_Annotate(pu, PROFILE_PHASE_BEFORE_VHO, &MEM_pu_pool);
   }
@@ -1882,6 +1899,11 @@ Postprocess_PU (PU_Info *current_pu)
   if (Tlog_File) {
     fprintf (Tlog_File, "END %s\n", ST_name(PU_Info_proc_sym(current_pu)));
   }
+
+  if (Run_ipl != 0 && (Run_wopt || Run_preopt))
+    choose_from_complete_struct_for_relayout_candidates(); // among all the
+    // structures marked by ipl while compiling all the functions in this file,
+    // choose the most profitable one
 
   Current_Map_Tab = PU_Info_maptab(current_pu);
  
@@ -2119,65 +2141,6 @@ Process_Feedback_Options (OPTION_LIST* olist)
   }
 } // Process_Feedback_Options
 
-#ifdef TARG_SL
-// load target.so and initialize weak variable in target.so
-void init_ti_target(void *handle) {
-  char *soname;
-  if (Is_Target_Sl1_pcore()) {
-    soname = (char*)alloca( strlen("sl1_pcore.so")+1 );
-    strncpy( soname, "sl1_pcore.so", strlen("sl1_pcore.so")+1 );
-  } else if (Is_Target_Sl2_pcore()) {
-    soname = (char*)alloca( strlen("sl2_pcore.so")+1 );
-    strncpy( soname, "sl2_pcore.so", strlen("sl2_pcore.so")+1 );
-  } else if (Is_Target_Sl1_dsp()) {
-    soname = (char*)alloca( strlen("sl1_dsp.so")+1 );
-    strncpy( soname, "sl1_dsp.so", strlen("sl1_dsp.so")+1 );
-  }else if (Target == TARGET_UNDEF) {
-    Is_True(0, ("undefined target"));
-  }
-  handle = dlopen(soname, RTLD_LAZY);
-  if (!handle) {
-    fprintf (stderr, "Error loading %s: %s\n", soname, dlerror());
-    exit (RC_SYSTEM_ERROR);
-  }
-  SI_resource_count_p = (INT *)dlsym(handle, "SI_resource_count");
-  SI_resources_p = (SI_RESOURCE *(*)[])dlsym(handle, "SI_resources");
-  SI_top_si_p = (SI *(*)[])dlsym(handle, "SI_top_si");
-  SI_RRW_initializer_p = (SI_RRW *)dlsym(handle, "SI_RRW_initializer");
-  SI_RRW_overuse_mask_p = (SI_RRW *)dlsym(handle, "SI_RRW_overuse_mask");
-  SI_issue_slot_count_p = (INT *)dlsym(handle, "SI_issue_slot_count");
-  SI_issue_slots_p = (SI_ISSUE_SLOT *(*)[])dlsym(handle, "SI_issue_slots");
-  SI_ID_count_p = (INT *)dlsym(handle, "SI_ID_count");
-  SI_ID_si_p = (SI *(*)[])dlsym(handle, "SI_ID_si");
-  return;
-}
-#endif
-
-#if defined(TARG_MIPS) && !defined(TARG_SL)
-// load target.so and initialize weak variable in target.so
-void init_ti_target(void *handle) {
-  char *soname;
-  soname = (char*)alloca( strlen("r10000.so")+1 );
-  strncpy( soname, "r10000.so", strlen("r10000.so")+1 );
-  handle = dlopen(soname, RTLD_LAZY);
-  if (!handle) {
-    fprintf (stderr, "Error loading %s: %s\n", soname, dlerror());
-    exit (RC_SYSTEM_ERROR);
-  }
-  SI_resource_count_p = (INT *)dlsym(handle, "SI_resource_count");
-  SI_resources_p = (SI_RESOURCE *(*)[])dlsym(handle, "SI_resources");
-  SI_top_si_p = (SI *(*)[])dlsym(handle, "SI_top_si");
-  SI_RRW_initializer_p = (SI_RRW *)dlsym(handle, "SI_RRW_initializer");
-  SI_RRW_overuse_mask_p = (SI_RRW *)dlsym(handle, "SI_RRW_overuse_mask");
-  SI_issue_slot_count_p = (INT *)dlsym(handle, "SI_issue_slot_count");
-  SI_issue_slots_p = (SI_ISSUE_SLOT *(*)[])dlsym(handle, "SI_issue_slots");
-  SI_ID_count_p = (INT *)dlsym(handle, "SI_ID_count");
-  SI_ID_si_p = (SI *(*)[])dlsym(handle, "SI_ID_si");
-  return;
-}
-
-#endif
-
 // Provide a place to stop after components are loaded
 extern "C" {
   void be_debug(void) {}
@@ -2211,6 +2174,7 @@ main (INT argc, char **argv)
 
   Preconfigure ();
   Process_Command_Line (argc, argv);
+
   if (Inhibit_EH_opt && Opt_Level > 1) Opt_Level = 1;
   Reset_Timers ();
   Start_Timer(T_BE_Comp);
@@ -2229,9 +2193,7 @@ main (INT argc, char **argv)
   }
 
   Init_Operator_To_Opcode_Table();
-#if defined(TARG_SL)   || defined(TARG_MIPS)
-  init_ti_target(handle);
-#endif
+
   /* decide which phase to call */
   load_components (argc, argv);
   be_debug();
@@ -2271,6 +2233,7 @@ main (INT argc, char **argv)
   }
 #endif
 
+  Global_PU_Tree = (void *)pu_tree; // expose this pu_tree to the optimizer
   Stop_Timer (T_ReadIR_Comp);
 
   Initialize_Special_Global_Symbols ();
@@ -2285,6 +2248,10 @@ main (INT argc, char **argv)
 #ifdef KEY // bug 5684: deleting branches interferes with branch profiling
 	WOPT_Enable_Simple_If_Conv = FALSE;
 #endif
+	// Proactive loop nest transformation interferes with branch profiling.
+	WOPT_Enable_Pro_Loop_Fusion_Trans = FALSE;
+	WOPT_Enable_Pro_Loop_Interchange_Trans = FALSE;
+	
 	Instrumentation_Phase_Num = PROFILE_PHASE_NONE;
       }
   }

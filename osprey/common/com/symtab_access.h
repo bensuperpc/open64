@@ -1,4 +1,8 @@
 /*
+ * Copyright (C) 2009-2010 Advanced Micro Devices, Inc.  All Rights Reserved.
+ */
+
+/*
  * Copyright (C) 2007. QLogic Corporation. All Rights Reserved.
  */
 
@@ -653,6 +657,12 @@ inline BOOL
 ST_in_param_mem (const ST* s)     { return (s->memory_space == MEMORY_PARAM); }
 inline void
 Set_ST_in_param_mem (ST *s)       { s->memory_space = MEMORY_PARAM; }
+#else
+/* tls-model */
+inline ST_TLS_MODEL
+ST_tls_model (const ST* s)                   { return s->tls_model;  }
+inline void
+Set_ST_tls_model (ST* s, ST_TLS_MODEL model) { s->tls_model = model; }
 #endif /* TARG_NVISA */
 
 inline BOOL
@@ -676,6 +686,20 @@ inline void
 Reset_ST_is_thread_local (ST& s) { s.flags_ext &= ~ST_IS_THREAD_LOCAL; }
 inline void
 Clear_ST_is_thread_local (ST* s) { s->flags_ext &= ~ST_IS_THREAD_LOCAL; }
+
+inline BOOL
+ST_is_array_remapping_candidate(const ST *s) { return s->flags_ext & ST_IS_ARRAY_REMAPPING_CANDIDATE; }
+inline void
+Set_ST_is_array_remapping_candidate(ST *s) { s->flags_ext |= ST_IS_ARRAY_REMAPPING_CANDIDATE; }
+inline void
+Clear_ST_is_array_remapping_candidate(ST *s) { s->flags_ext &= ~ST_IS_ARRAY_REMAPPING_CANDIDATE; }
+
+inline BOOL
+ST_is_array_remapping_candidate_malloc(const ST *s) { return s->flags_ext & ST_IS_ARRAY_REMAPPING_CANDIDATE_MALLOC; }
+inline void
+Set_ST_is_array_remapping_candidate_malloc(ST *s) { s->flags_ext |= ST_IS_ARRAY_REMAPPING_CANDIDATE_MALLOC; }
+inline void
+Clear_ST_is_array_remapping_candidate_malloc(ST *s) { s->flags_ext &= ~ST_IS_ARRAY_REMAPPING_CANDIDATE_MALLOC; }
 #endif /* KEY */
 
 //----------------------------------------------------------------------
@@ -1009,13 +1033,6 @@ inline void
 Clear_PU_is_operator (PU& pu)    { pu.flags &= ~PU_IS_OPERATOR; }
 
 inline BOOL
-PU_is_malloc (const PU& pu)			{ return (pu.flags & PU_IS_MALLOC) != 0; } 
-inline void
-Set_PU_is_malloc (PU& pu)			{ pu.flags |= PU_IS_MALLOC; }
-inline void
-Clear_PU_is_malloc (PU& pu)			{ pu.flags &= ~PU_IS_MALLOC; }
-
-inline BOOL
 PU_has_attr_malloc (const PU& pu)      { return (pu.flags & PU_HAS_ATTR_MALLOC) != 0; } 
 inline void
 Set_PU_has_attr_malloc (PU& pu)        { pu.flags |= PU_HAS_ATTR_MALLOC; }
@@ -1081,6 +1098,20 @@ inline void
 Set_PU_is_cdecl (PU_IDX pui)		{ Pu_Table[pui].flags |= PU_IS_CDECL; }
 inline void
 Clear_PU_is_cdecl (PU_IDX pui)		{ Pu_Table[pui].flags &= ~PU_IS_CDECL; }
+
+inline BOOL
+PU_nothrow (const PU& pu)		{ return (pu.flags & PU_NOTHROW) != 0;}
+inline void
+Set_PU_nothrow (PU& pu)			{ pu.flags |= PU_NOTHROW; }
+inline void
+Clear_PU_nothrow (PU& pu)		{ pu.flags &= ~PU_NOTHROW; }
+
+inline BOOL
+PU_has_apply_args (const PU& pu)        { return (pu.flags & PU_HAS_APPLY_ARGS) != 0;}
+inline void
+Set_PU_has_apply_args (PU& pu)          { pu.flags |= PU_HAS_APPLY_ARGS; }
+inline void
+Clear_PU_has_apply_args (PU& pu)        { pu.flags &= ~PU_HAS_APPLY_ARGS; }
 
 inline UINT64
 PU_src_lang (const PU& pu)		{ return pu.src_lang; }
@@ -1449,6 +1480,25 @@ inline void
 Set_TY_no_split (TY_IDX tyi)    { Set_TY_no_split(Ty_Table[tyi]); }
 inline void
 Clear_TY_no_split (TY_IDX tyi)  { Clear_TY_no_split(Ty_Table[tyi]); }
+
+inline BOOL
+TY_complete_struct_relayout_candidate(const TY& ty)
+  { return ty.flags & TY_COMPLETE_STRUCT_RELAYOUT_CANDIDATE; }
+inline void
+Set_TY_complete_struct_relayout_candidate(TY& ty)
+  { ty.flags |= TY_COMPLETE_STRUCT_RELAYOUT_CANDIDATE; }
+inline void
+Clear_TY_complete_struct_relayout_candidate(TY& ty)
+  { ty.flags &= ~TY_COMPLETE_STRUCT_RELAYOUT_CANDIDATE; }
+inline BOOL
+TY_complete_struct_relayout_candidate(const TY_IDX tyi)
+  { return TY_complete_struct_relayout_candidate(Ty_Table[tyi]); }
+inline void
+Set_TY_complete_struct_relayout_candidate(TY_IDX tyi)
+  { Set_TY_complete_struct_relayout_candidate(Ty_Table[tyi]); }
+inline void
+Clear_TY_complete_struct_relayout_candidate(TY_IDX tyi)
+  { Clear_TY_complete_struct_relayout_candidate(Ty_Table[tyi]); }
 #endif
 
 // TY pu_flags
@@ -1547,6 +1597,42 @@ inline void
 Set_TY_register_parm (TY_IDX tyi, INT num) {
 	Set_TY_register_parm (Ty_Table[tyi], num);
 }
+
+inline BOOL
+TY_has_stdcall (const TY& ty) {
+	return ty.Pu_flags () & TY_HAS_STDCALL;
+}
+inline void
+Set_TY_has_stdcall (TY& ty) {
+	ty.Set_pu_flag (TY_HAS_STDCALL);
+}
+inline BOOL
+TY_has_stdcall (const TY_IDX tyi) {
+	return TY_has_stdcall(Ty_Table[tyi]);
+}
+inline void
+Set_TY_has_stdcall (TY_IDX tyi) {
+	Set_TY_has_stdcall(Ty_Table[tyi]);
+}
+
+inline BOOL
+TY_has_fastcall (const TY& ty) {
+	return ty.Pu_flags () & TY_HAS_FASTCALL;
+}
+inline void
+Set_TY_has_fastcall (TY& ty) {
+	ty.Set_pu_flag (TY_HAS_FASTCALL);
+	Set_TY_register_parm (ty, 2);  // fastcall uses ECX and EDX
+}
+inline BOOL
+TY_has_fastcall (const TY_IDX tyi) {
+	return TY_has_fastcall(Ty_Table[tyi]);
+}
+inline void
+Set_TY_has_fastcall (TY_IDX tyi) {
+	Set_TY_has_fastcall(Ty_Table[tyi]);
+}
+
 #endif
 
 //----------------------------------------------------------------------
@@ -1895,44 +1981,6 @@ Clear_FILE_INFO_has_mp (FILE_INFO& f){ f.flags &= ~FI_HAS_MP; }
 // access functions for the TABLES
 //----------------------------------------------------------------------
 
-#if 0
-inline ST&
-SYMBOL_TABLE::operator[] (ST_IDX idx)
-{
-    SYMTAB_IDX level = ST_IDX_level (idx);
-    UINT32 index = ST_IDX_index (idx);
-    return Scope_tab[level].st_tab->Entry (index);
-}
-
-inline ST&
-SYMBOL_TABLE::operator() (SYMTAB_IDX level, UINT32 index) {
-    Is_True (Scope_tab[level].st_tab != NULL, ("Uninitialized ST_TAB"));
-    return Scope_tab[level].st_tab->Entry (index);
-}
-
-
-inline INITO&
-INITO_TABLE::operator[] (INITO_IDX idx) {
-    SYMTAB_IDX level = INITO_IDX_level (idx);
-    UINT32 index = INITO_IDX_index (idx);
-    return Scope_tab[level].inito_tab->Entry (index);
-}
-
-inline INITO&
-INITO_TABLE::operator() (SYMTAB_IDX level, UINT32 index) {
-    Is_True (Scope_tab[level].inito_tab != NULL, ("Uninitialized INITO_TAB"));
-    return Scope_tab[level].inito_tab->Entry (index);
-}
-inline LABEL&
-LABEL_TABLE::operator[] (LABEL_IDX idx) {
-    return Scope_tab[CURRENT_SYMTAB].label_tab->Entry (idx);
-}
-
-inline LABEL&
-LABEL_TABLE::operator() (SYMTAB_IDX level, LABEL_IDX idx) {
-    return Scope_tab[level].label_tab->Entry (idx);
-}
-#endif
 
 inline PREG&
 PREG_TABLE::operator[] (PREG_IDX idx) {

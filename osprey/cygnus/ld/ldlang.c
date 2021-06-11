@@ -1,4 +1,8 @@
 /*
+ * Copyright (C) 2009 Advanced Micro Devices, Inc.  All Rights Reserved.
+ */
+
+/*
  * Copyright 2003, 2004, 2005, 2006 PathScale, Inc.  All Rights Reserved.
  */
 
@@ -65,6 +69,7 @@
 
 #ifdef IPA_LINK
 extern bfd_boolean is_ipa;
+int allow_mixed_libraries;
 
 extern bfd_boolean
 ipa_is_whirl(bfd *);
@@ -1900,6 +1905,12 @@ load_symbols (lang_input_statement_type *entry,
 			}
 
 			if(mixed) {
+				if (! allow_mixed_libraries) {
+					einfo(_("%F%B: cannot mix regular and ipa objects in same archive\n"),
+					      entry->the_bfd);
+					entry->loaded = FALSE;
+					return FALSE;
+				}
 				archive_fname = (char*)xmalloc(strlen(entry->filename)+1);
 				sprintf(archive_fname, "%s", entry->filename);
 				(*p_ipa_modify_link_flag)(archive_lname, archive_fname);

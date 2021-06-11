@@ -1,4 +1,8 @@
 /*
+ * Copyright (C) 2010 Advanced Micro Devices, Inc.  All Rights Reserved.
+ */
+
+/*
  * Copyright 2004, 2005, 2006 PathScale, Inc.  All Rights Reserved.
  */
 
@@ -629,8 +633,9 @@ static ST* Create_Tmp_Array(ST *array_st, WN *IO_node, WN **tmp_array_def,
     case MTYPE_I2: case MTYPE_U2: element_size=2; break;
     case MTYPE_I4: case MTYPE_U4: case MTYPE_F4: element_size=4; break;
     case MTYPE_I8: case MTYPE_U8: case MTYPE_F8: case MTYPE_C4: element_size=8; break;
-#if defined(TARG_IA64)
+#if defined(TARG_IA64) || defined(TARG_X8664)
     case MTYPE_F10: element_size=16; break;
+    case MTYPE_C10: element_size=32; break;
 #endif    
     case MTYPE_C8: case MTYPE_FQ: element_size=16; break;
     case MTYPE_CQ: element_size=32; break;
@@ -1179,7 +1184,7 @@ extern void Fix_Up_Loop_Info(WN *IO_node, WN **loops, INT num_loops)
   for (INT i=0; i<num_loops; i++) {
     DO_LOOP_INFO *dli = (DO_LOOP_INFO *)
 	CXX_NEW(DO_LOOP_INFO(&LNO_default_pool,NULL,NULL,NULL,FALSE,
-          FALSE,FALSE,FALSE,FALSE,FALSE,TRUE) ,&LNO_default_pool);
+          FALSE,FALSE,FALSE,FALSE,FALSE,FALSE,TRUE) ,&LNO_default_pool);
     dli->Depth = depth+i+1;
     dli->Is_Backward = FALSE;
     dli->Has_Calls=FALSE;

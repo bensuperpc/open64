@@ -1,4 +1,8 @@
 /*
+ * Copyright (C) 2008-2010 Advanced Micro Devices, Inc.  All Rights Reserved.
+ */
+
+/*
  *  Copyright (C) 2006, 2007. QLogic Corporation. All Rights Reserved.
  */
 
@@ -89,9 +93,10 @@ extern UINT32 WOPT_Ip_Alias_Class_Limit;
 extern BOOL WOPT_Ldx_Ratio_RegIns;
 extern BOOL WOPT_Enable_Add_Do_Loop_Info;
 extern BOOL WOPT_Enable_Add_Label_Loop_Info;
-extern BOOL WOPT_Enable_Aggressive_Code_Motion;
+extern UINT32 WOPT_Enable_Aggressive_Code_Motion;
 extern INT32 WOPT_Enable_Aggressive_CM_Limit;	
-extern INT32 WOPT_Enable_Aggressive_CM_Threshold;
+extern INT32 WOPT_Enable_Aggressive_CM_Switch_Threshold;
+extern INT32 WOPT_Enable_Aggressive_CM_Branch_Threshold;
 extern BOOL WOPT_Enable_Aggressive_dce;
 extern BOOL WOPT_Enable_Aggressive_dce_for_bbs;
 extern BOOL WOPT_Enable_Aggressive_Doloop_Promotion;
@@ -300,7 +305,22 @@ extern BOOL  WOPT_Enable_Pt_Keep_Track_Ptr;  // POINTS_TO keep track pointer of 
   // POINTS_TO keep track complex address of ilod/istore
 extern BOOL  WOPT_Enable_Aggr_Pt_Keep_Track_Ptr;  
 extern BOOL  WOPT_Enable_Noreturn_Attr_Opt;  // __attribute_((noreturn)) related opt
+extern BOOL  WOPT_Enable_Nothrow_Opt; // remove unneceesary RID for calls that won't throw exception
+extern BOOL  WOPT_Enable_Multiver_and_Unroll_Opt; // multi-versioning followed by fully unroll
 extern BOOL  WOPT_Enable_Pt_Summary;  // Points-to summary/annotation
+extern BOOL  WOPT_Enable_Reassociation_CSE; // Enables reassociative CSE
+extern BOOL  WOPT_Enable_Pro_Loop_Fusion_Trans; // Enables proactive loop fusion transformation
+extern BOOL  WOPT_Enable_Pro_Loop_Interchange_Trans; // Enables proactive loop interchange transformation.
+extern BOOL  WOPT_Enable_Mem_Clear_Remove;  // Enables removal of redundant mem clear after a calloc
+extern INT32 WOPT_Enable_Pro_Loop_Fusion_Func_Limit; // Enable proactive loop fusion transformation
+                                                     // for functions within the limit.
+extern INT32 WOPT_Enable_Pro_Loop_Interchange_Func_Limit; // Enable proactive loop interchange
+                                                          // transformation for functions within the limit.
+                                                         
+extern INT32 WOPT_Enable_Pro_Loop_Limit;  // Limit number of proactive loop transformations per function.
+extern INT32 WOPT_Tail_Dup_Max_Clone; // Limit code size bloats (in statement count)
+                                                    // due to tail-duplication.
+extern BOOL WOPT_Simplify_Bit_Op; // Enable specialized bit operation optimizations.
 
 #ifdef KEY
 extern BOOL  WOPT_Enable_Preserve_Mem_Opnds; // if TRUE, suppress EPRE on 
@@ -326,6 +346,8 @@ extern BOOL  WOPT_Enable_WOVP; // For running write-once variable promotion
 extern struct option_list *WOPT_Unroll_Skip;    // Skip unroll list 
 extern struct skiplist *WOPT_Unroll_Skip_List;  // Preprocessed unroll skip l 
 extern BOOL WOPT_Enable_Loop_Multiver;
+extern BOOL WOPT_Enable_Loop_Multiver_Aggressive;
+extern BOOL WOPT_Enable_Useless_Store_Elimination;
 #ifdef TARG_NVISA
 extern BOOL WOPT_Enable_Estr_Outer_Loop;  // strength reduce outer loops
 extern BOOL WOPT_Enable_Estr_Const_Opnds; // strength reduce ops with const kids
@@ -335,6 +357,10 @@ extern BOOL WOPT_Enable_Aggressive_Iload_CSE; // ignore potential iload vsym ali
 #endif
 
 extern BOOL WOPT_Enable_STR_Short;  // whether to assume 16bit IV can cross 16
+
+extern BOOL WOPT_Bottom_Test_Loop_Check;
+extern INT32 WOPT_Bottom_Test_Loop_Cond_Limit;
+extern INT32 WOPT_Bottom_Test_Loop_Body_Limit;
 
 #endif /* config_wopt_INCLUDED */
 

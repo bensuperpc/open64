@@ -1,3 +1,7 @@
+/*
+ * Copyright (C) 2010 Advanced Micro Devices, Inc.  All Rights Reserved.
+ */
+
 /* -*- c++ -*-
  *
  * Copyright 2003, 2004, 2005, 2006 PathScale, Inc.  All Rights Reserved.
@@ -275,14 +279,6 @@ SUMMARIZE<program>::Process_phi_jump_function (WN *orig_wn, PHI_NODE *phi)
 
     CODEREP *cr0 = phi->OPND (0);
     CODEREP *cr1 = phi->OPND (1);
-#if 0
-    CODEREP *res = phi->RESULT ();
-    printf("sym%dv%d (cr%d) = PHI[sym%dv%d (cr%d), sym%dv%d (cr%d)]\n",
-           res->Aux_id(), res->Version(), res->Coderep_id(),
-           cr0->Aux_id(), cr0->Version(), cr0->Coderep_id(),
-           cr1->Aux_id(), cr1->Version(), cr1->Coderep_id());
-    fflush(stdout);
-#endif    
     if (cr0->Is_flag_set(CF_IS_ZERO_VERSION) ||
 	cr1->Is_flag_set(CF_IS_ZERO_VERSION))
 	return -1;
@@ -399,10 +395,6 @@ INT
 SUMMARIZE<program>::Process_chi_jump_function (WN *wn,
 					       const SUMMARY_DESC &desc)
 {
-#if 0
-    FmtAssert (! desc.Is_addr_of (),
-	       ("LDA of a symbol cannot have chi node"));
-#endif
 
     CODEREP *cr = desc.Get_chi_cr ()->Defchi ()->OPND ();
 
@@ -422,16 +414,6 @@ SUMMARIZE<program>::Process_chi_jump_function (WN *wn,
         return -1;
 #endif // KEY
 
-#if 0
-    printf("sym%dv%d (cr%d) = CHI[sym%dv%d (cr%d)]\n",
-           desc.Get_chi_cr()->Aux_id(),
-           desc.Get_chi_cr()->Version(),
-           desc.Get_chi_cr()->Coderep_id(),
-           cr->Aux_id(),
-           cr->Version(),
-           cr->Coderep_id());
-    fflush(stdout);
-#endif
     
     // Check the hash table based on CODEREP/PHI_NODE pointers
     {
@@ -650,7 +632,7 @@ struct LOAD_STORE_ENTRY
   CODEREP* cr;
   ST* st;
   INT offset;
-  TYPE_ID type;
+  TYPE_ID type : 8;
   BOOL is_ptr;
   BOOL ret_val;
 
