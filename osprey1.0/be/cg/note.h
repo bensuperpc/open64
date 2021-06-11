@@ -41,9 +41,9 @@
  *
  *  Module: note.h
  *  $Revision: 1.1.1.1 $
- *  $Date: 2001/06/25 06:32:37 $
- *  $Author: llx $
- *  $Source: /u/merge/src/osprey1.0/be/cg/note.h,v $
+ *  $Date: 2005/10/21 19:00:00 $
+ *  $Author: marcel $
+ *  $Source: /proj/osprey/CVS/open64/osprey1.0/be/cg/note.h,v $
  *
  *  Revision comments:
  *
@@ -168,7 +168,7 @@
  * ======================================================================= */
 
 #ifdef _KEEP_RCS_ID
-static char *notes_rcs_id = "$Source: /u/merge/src/osprey1.0/be/cg/note.h,v $ $Revision: 1.1.1.1 $";
+static char *notes_rcs_id = "$Source: /proj/osprey/CVS/open64/osprey1.0/be/cg/note.h,v $ $Revision: 1.1.1.1 $";
 #endif /* _KEEP_RCS_ID */
 
 typedef enum {

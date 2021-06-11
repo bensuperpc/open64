@@ -41,10 +41,10 @@
 // ==============================================================
 //
 // Module: anl_file_mngr.h
-// $Revision: 1.5 $
-// $Date: 2001/03/10 02:51:03 $
-// $Author: mtibuild $
-// $Source: /isms/cmplrs.src/osprey1.0/be/prompf_anl/RCS/anl_file_mngr.h,v $
+// $Revision: 1.1.1.1 $
+// $Date: 2005/10/21 19:00:00 $
+// $Author: marcel $
+// $Source: /proj/osprey/CVS/open64/osprey1.0/be/prompf_anl/anl_file_mngr.h,v $
 //
 // Description:
 //

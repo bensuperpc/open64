@@ -38,10 +38,10 @@
  * ====================================================================
  *
  * Module: sinf.c
- * $Revision: 1.9 $
- * $Date: 2001/03/10 08:57:25 $
- * $Author: mtibuild $
- * $Source: /isms/cmplrs.src/osprey1.0/libm/mips/RCS/sinf.c,v $
+ * $Revision: 1.1.1.1 $
+ * $Date: 2005/10/21 19:00:00 $
+ * $Author: marcel $
+ * $Source: /proj/osprey/CVS/open64/osprey1.0/libm/mips/sinf.c,v $
  *
  * Revision history:
  *  09-Jun-93 - Original Version
@@ -52,7 +52,7 @@
  * ====================================================================
  */
 
-static char *rcs_id = "$Source: /isms/cmplrs.src/osprey1.0/libm/mips/RCS/sinf.c,v $ $Revision: 1.9 $";
+static char *rcs_id = "$Source: /proj/osprey/CVS/open64/osprey1.0/libm/mips/sinf.c,v $ $Revision: 1.1.1.1 $";
 
 #ifdef _CALL_MATHERR
 #include <stdio.h>

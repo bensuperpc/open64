@@ -36,7 +36,7 @@
 
 #ifndef __FMTLIB_H__
 #define __FMTLIB_H__
-/* $Header: /isms/cmplrs.src/osprey1.0/libI77/RCS/fmtlib.h,v 9.7 2001/03/10 04:50:41 mtibuild Exp $ */
+/* $Header: /proj/osprey/CVS/open64/osprey1.0/libI77/fmtlib.h,v 1.1.1.1 2005/10/21 19:00:00 marcel Exp $ */
 extern char *icvt(int, int *, int *, char *);
 extern char *llcvt(ftnll , int *, int *, char *);
 extern char *ozcvt(unsigned char *, int , int *, int, char * );

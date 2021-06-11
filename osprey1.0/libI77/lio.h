@@ -36,7 +36,7 @@
 
 #ifndef __LIO_H__
 #define __LIO_H__
-/* $Header: /isms/cmplrs.src/osprey1.0/libI77/RCS/lio.h,v 9.18 2001/03/10 04:52:05 mtibuild Exp $ */
+/* $Header: /proj/osprey/CVS/open64/osprey1.0/libI77/lio.h,v 1.1.1.1 2005/10/21 19:00:00 marcel Exp $ */
 /*	3.0 SID #	1.2	*/
 
 #define	LINTW	12

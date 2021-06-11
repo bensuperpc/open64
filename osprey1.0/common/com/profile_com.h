@@ -38,10 +38,10 @@
 // ====================================================================
 //
 // Module: profile_com.h
-// $Revision: 1.9 $
-// $Date: 2002/12/29 09:44:49 $
-// $Author: qzhao2 $ 
-// $Source: /u/merge/src/osprey1.0/common/com/profile_com.h,v $
+// $Revision: 1.1.1.1 $
+// $Date: 2005/10/21 19:00:00 $
+// $Author: marcel $ 
+// $Source: /proj/osprey/CVS/open64/osprey1.0/common/com/profile_com.h,v $
 //
 // Revision history:
 //  24-Jul-98 - Original Version
@@ -55,7 +55,7 @@
 #define profile_com_INCLUDED
 
 #include <string.h>
-#include <vector.h>
+#include <vector>
 #include "defs.h"
 
 #if defined(defs_INCLUDED) && ! defined(USE_STANDARD_TYPES)

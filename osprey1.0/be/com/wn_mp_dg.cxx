@@ -44,7 +44,7 @@
  * ====================================================================
  *
  * Module: wn_mp_dg.cxx  
- * $Revision: 1.24 $
+ * $Revision: 1.1.1.1 $
  *
  * Revision history:
  *  dd-mmm-94 - Original Version
@@ -56,7 +56,7 @@
  */
 
 #ifdef _KEEP_RCS_ID
-static char *rcs_id = "$Source: /isms/cmplrs.src/osprey1.0/be/com/RCS/wn_mp_dg.cxx,v $ $Revision: 1.24 $";
+static char *rcs_id = "$Source: /proj/osprey/CVS/open64/osprey1.0/be/com/wn_mp_dg.cxx,v $ $Revision: 1.1.1.1 $";
 #endif /* _KEEP_RCS_ID */
 
 #include <sys/types.h>

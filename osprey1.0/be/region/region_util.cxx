@@ -36,10 +36,10 @@
 /*-*-c++-*-*/
 /* ====================================================================
  * Module: opt_region_util.c
- * $Revision: 1.109 $
- * $Date: 2001/03/10 02:53:48 $
- * $Author: mtibuild $
- * $Source: /isms/cmplrs.src/osprey1.0/be/region/RCS/region_util.cxx,v $
+ * $Revision: 1.1.1.1 $
+ * $Date: 2005/10/21 19:00:00 $
+ * $Author: marcel $
+ * $Source: /proj/osprey/CVS/open64/osprey1.0/be/region/region_util.cxx,v $
  *
  * Revision history:
  *  31-MAY-95 wdl - Original Version
@@ -269,7 +269,7 @@ void REGION_fix_up_exits(RID *rid, WN *rwn)
     INT32 i, limit;
     PREG_LIST **new_pregs_out = TYPE_MEM_POOL_ALLOC_N(PREG_LIST *,
 					      &REGION_mem_pool, new_exits);
-    limit = max(new_exits, RID_num_exits(rid));
+    limit = MAX(new_exits, RID_num_exits(rid));
     for (i=0; i<limit; i++) {
       if (i < RID_num_exits(rid))	/* copy old exit list pointers */
 	new_pregs_out[i] = RID_pregs_out_i(rid, i);

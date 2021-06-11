@@ -42,8 +42,8 @@ in 64-bit compile they are 64 bit.
 
 xlatebase.h
 
-$Revision: 1.4 $
-$Date: 2001/03/10 05:14:38 $
+$Revision: 1.1.1.1 $
+$Date: 2005/10/21 19:00:00 $
 
 */
 

@@ -35,7 +35,7 @@
 
 
 
-/* $Header: /isms/cmplrs.src/osprey1.0/libI77/RCS/backspace.c,v 9.16 2001/03/10 04:48:39 mtibuild Exp $ */
+/* $Header: /proj/osprey/CVS/open64/osprey1.0/libI77/backspace.c,v 1.1.1.1 2005/10/21 19:00:00 marcel Exp $ */
 /*	3.0 SID #	1.2	*/
 
 #include <cmplrs/fio.h>

@@ -34,7 +34,7 @@
 */
 
 
-/* $Header: /isms/cmplrs.src/osprey1.0/libF77/RCS/d_tand.c,v 8.7 2001/03/10 04:34:11 mtibuild Exp $ */
+/* $Header: /proj/osprey/CVS/open64/osprey1.0/libF77/d_tand.c,v 1.1.1.1 2005/10/21 19:00:00 marcel Exp $ */
 /*   VMS Compatibility Version  @(#)d_tand.c	1.1    9/28/87 */
 
 #include <math.h>

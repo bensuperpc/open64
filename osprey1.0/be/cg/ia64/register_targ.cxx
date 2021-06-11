@@ -133,18 +133,18 @@ void REGISTER_Request_Stacked_Rotating_Register()
   // Should choose a better balance between callee/caller saved registers!
   
   const INT max_callee = 96 - 8;  // 8 registers required by ABI as output registers?
-  INT n_callee = min(max_callee, num_rotating);
-  INT n_caller = max(0, num_rotating - max_callee);
+  INT n_callee = MIN(max_callee, num_rotating);
+  INT n_caller = MAX(0, num_rotating - max_callee);
   REGISTER r;
 
-  stacked_callee_next = max(stacked_callee_next, (INT) (FIRST_INPUT_REG - 1 + n_callee));
+  stacked_callee_next = MAX(stacked_callee_next, (INT) (FIRST_INPUT_REG - 1 + n_callee));
   for (r = FIRST_ROTATING_INTEGER_REG; 
        r <= stacked_callee_next;
        r++) {
     stacked_callee_used = REGISTER_SET_Union1(stacked_callee_used, r);
   }
 
-  stacked_caller_next = min(stacked_caller_next, (INT) (FIRST_OUTPUT_REG - n_caller));
+  stacked_caller_next = MIN(stacked_caller_next, (INT) (FIRST_OUTPUT_REG - n_caller));
   num_caller = FIRST_OUTPUT_REG - stacked_caller_next;
   for (r = FIRST_OUTPUT_REG;
        r > stacked_caller_next;
@@ -164,14 +164,24 @@ void REGISTER_Request_Stacked_Rotating_Register()
   }
 }
 
-INT Get_Stacked_Callee_Next() {
+INT32 Get_Stacked_Callee_Used() {
+    INT32 stacked_callee_used = stacked_callee_next - 32;
+    return stacked_callee_used;
+}
+ 
+INT32 Get_Stacked_Caller_Used() {
+    INT32 stacked_caller_used = 128 - stacked_caller_next;
+    return stacked_caller_used;
+}
+ 
+INT32 Get_Stacked_Callee_Next() {
     return stacked_callee_next;
 }
-
-INT Get_Stacked_Caller_Next() {
+ 
+INT32 Get_Stacked_Caller_Next() {
     return stacked_caller_next;
 }
-
+ 
 /////////////////////////////////////
 REGISTER REGISTER_Request_Stacked_Register(INT has_abi_property,
 					   ISA_REGISTER_CLASS rclass)
@@ -557,7 +567,7 @@ void REGISTER_Reserve_Rotating_Registers(ISA_REGISTER_CLASS rclass, INT n)
 //
 /////////////////////////////////////
 {
-  num_rotating = max(num_rotating, n);
+  num_rotating = MAX(num_rotating, n);
   // roundup to next multiple of 8
   if ((num_rotating & 7) != 0) {
     num_rotating &= ~7;

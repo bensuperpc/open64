@@ -3,10 +3,10 @@
 // ====================================================================
 //
 // Module: opt_dbg.cxx
-// $Revision: 1.21 $
-// $Date: 2001/03/10 02:40:13 $
-// $Author: mtibuild $
-// $Source: /isms/cmplrs.src/osprey1.0/be/opt/RCS/opt_dbg.cxx,v $
+// $Revision: 1.1.1.1 $
+// $Date: 2005/10/21 19:00:00 $
+// $Author: marcel $
+// $Source: /proj/osprey/CVS/open64/osprey1.0/be/opt/opt_dbg.cxx,v $
 //
 // Revision history:
 //  28-NOV-94 fchow - Original Version
@@ -62,7 +62,7 @@
 
 #ifdef _KEEP_RCS_ID
 #define opt_dbg_CXX	"opt_dbg.cxx"
-static char *rcs_id = 	opt_dbg_CXX"$Revision: 1.21 $";
+static char *rcs_id = 	opt_dbg_CXX"$Revision: 1.1.1.1 $";
 #endif /* _KEEP_RCS_ID */
 
 #include "defs.h"
@@ -205,7 +205,7 @@ static FILE *fp = stdout;
 
 static void show_graph_core(successor_graph& g)
 {
-  vector<bool> visited(g.size(), false);
+  std::vector<bool> visited(g.size(), false);
   int i;
 
   fprintf(fp,"[");

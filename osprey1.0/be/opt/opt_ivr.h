@@ -3,10 +3,10 @@
 // ====================================================================
 //
 // Module: opt_ivr.h
-// $Revision: 1.38 $
-// $Date: 2001/03/10 02:43:39 $
-// $Author: mtibuild $
-// $Source: /isms/cmplrs.src/osprey1.0/be/opt/RCS/opt_ivr.h,v $
+// $Revision: 1.1.1.1 $
+// $Date: 2005/10/21 19:00:00 $
+// $Author: marcel $
+// $Source: /proj/osprey/CVS/open64/osprey1.0/be/opt/opt_ivr.h,v $
 //
 // Revision history:
 //  27-JAN-95 shin - Original Version
@@ -109,7 +109,7 @@
 #ifndef opt_ivr_INCLUDED
 #define opt_ivr_INCLUDED	"opt_ivr.h"
 #ifdef _KEEP_RCS_ID
-static char *opt_ivrrcs_id = 	opt_ivr_INCLUDED"$Revision: 1.38 $";
+static char *opt_ivrrcs_id = 	opt_ivr_INCLUDED"$Revision: 1.1.1.1 $";
 #endif /* _KEEP_RCS_ID */
 
 #define USE_STANDARD_TYPES
@@ -206,7 +206,7 @@ private:
   CODEREP   *_guarded_trip_count;
   CODEREP   *_entry_test;  // a predicate that is TRUE inside the loop
   CODEREP   *_trip_count_primary_IV;
-  vector<IV_CAND*> iv_cand_container;
+  std::vector<IV_CAND*> iv_cand_container;
   BOOL       ivr_generated_primary;
 
   BB_LOOP   *Loop() const       { return _loop; }

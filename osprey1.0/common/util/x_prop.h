@@ -37,10 +37,10 @@
  * ====================================================================
  *
  *  Module: tn_prop.h
- *  $Revision: 1.10 $
- *  $Date: 2001/03/10 03:31:16 $
- *  $Author: mtibuild $
- *  $Source: /isms/cmplrs.src/osprey1.0/common/util/RCS/x_prop.h,v $
+ *  $Revision: 1.1.1.1 $
+ *  $Date: 2005/10/21 19:00:00 $
+ *  $Author: marcel $
+ *  $Source: /proj/osprey/CVS/open64/osprey1.0/common/util/x_prop.h,v $
  *
  *  Revision history:
  *   13-Dec-91 - Original Version
@@ -130,7 +130,7 @@ extern "C" {
 
 
 
-static const char _X_RCS_ID_[] = "$Source: /isms/cmplrs.src/osprey1.0/common/util/RCS/x_prop.h,v $ $Revision: 1.10 $";
+static const char _X_RCS_ID_[] = "$Source: /proj/osprey/CVS/open64/osprey1.0/common/util/x_prop.h,v $ $Revision: 1.1.1.1 $";
 
 #if defined(_MIPS_ISA) && _MIPS_ISA >= 3
 typedef UINT64 _X_PROP_TYPE_;

@@ -29,8 +29,8 @@
 //
 //  Module : ekapi_ia64.h
 //  $Date  : $
-//  $Author: sxyang $
-//  $Source: /u/merge/src/osprey1.0/common/ipfec_targ_info/access/ekapi_ia64.h,v $
+//  $Author: marcel $
+//  $Source: /proj/osprey/CVS/open64/osprey1.0/common/ipfec_targ_info/access/ekapi_ia64.h,v $
 //
 //  Description:
 //  ============
@@ -434,6 +434,12 @@ extern void EKAPI_ClearResource(void);
 // Return odd latency list of src operand and
 // Place number of list into listnum;
 extern ODD_LATENCY *EKAPI_OddLatencyList(void *pknobs, kapi_fu_t fuid, int *listnum);
+
+/*************  bypass functions  **********************/
+// Return Cache name count.
+extern int EKAPI_CacheNameCount(void *pknobs);
+// Return Cache name
+extern char *EKAPI_CacheName(void *pknobs, int index);
 
 #ifdef __cplusplus
 }

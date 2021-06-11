@@ -37,7 +37,7 @@
 /* --------------------------------------------------- */
 /* | All Rights Reserved.                            | */
 /* --------------------------------------------------- */
-/* $Header: /isms/cmplrs.src/osprey1.0/libF77/RCS/d_abs.c,v 7.6 2001/03/10 04:31:10 mtibuild Exp $ */
+/* $Header: /proj/osprey/CVS/open64/osprey1.0/libF77/d_abs.c,v 1.1.1.1 2005/10/21 19:00:00 marcel Exp $ */
 
 double d_abs (double *x)
 {

@@ -40,8 +40,8 @@ Given an fd, open up an xlate consumer handle
 
 xlate_named_init_fd.c
 
-$Revision: 1.5 $
-$Date: 2001/03/10 05:13:42 $
+$Revision: 1.1.1.1 $
+$Date: 2005/10/21 19:00:00 $
 
 */
 #include "xlateincl.h"

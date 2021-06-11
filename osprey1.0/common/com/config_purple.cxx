@@ -36,7 +36,7 @@
 /* ====================================================================
  * ====================================================================
  *
- * $Source: /isms/cmplrs.src/osprey1.0/common/com/RCS/config_purple.cxx,v $
+ * $Source: /proj/osprey/CVS/open64/osprey1.0/common/com/config_purple.cxx,v $
  *
  * Revision history:
  *  25-Mar-97 - Original Version

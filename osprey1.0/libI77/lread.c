@@ -34,7 +34,7 @@
 */
 
 
-/* $Header: /isms/cmplrs.src/osprey1.0/libI77/RCS/lread.c,v 9.33 2001/03/10 04:52:11 mtibuild Exp $ */
+/* $Header: /proj/osprey/CVS/open64/osprey1.0/libI77/lread.c,v 1.1.1.1 2005/10/21 19:00:00 marcel Exp $ */
 
 #include <ctype.h>
 #include <mutex.h>

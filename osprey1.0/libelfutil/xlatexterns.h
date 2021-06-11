@@ -40,8 +40,8 @@
 
    xlatexterns.h
 
-   $Revision: 1.7 $
-   $Date: 2001/03/10 05:14:49 $
+   $Revision: 1.1.1.1 $
+   $Date: 2005/10/21 19:00:00 $
 
 */
 

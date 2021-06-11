@@ -36,10 +36,10 @@
 /* ====================================================================
  * ====================================================================
  * Module: cgdwarf.c
- * $Revision: 1.3 $
- * $Date: 2002/03/22 07:03:44 $
- * $Author: llx $
- * $Source: /u/merge/src/osprey1.0/be/cg/cgdwarf.cxx,v $
+ * $Revision: 1.1.1.1 $
+ * $Date: 2005/10/21 19:00:00 $
+ * $Author: marcel $
+ * $Source: /proj/osprey/CVS/open64/osprey1.0/be/cg/cgdwarf.cxx,v $
  *
  * Description:
  *
@@ -59,7 +59,7 @@
 #include <elf.h>
 #include <elfaccess.h>
 #include <libelf.h>
-#include <vector.h>
+#include <vector>
 
 #define	USE_STANDARD_TYPES 1
 #include "defs.h"
@@ -134,7 +134,7 @@ struct CGD_SYMTAB_ENTRY {
       { }
 };
 
-vector <CGD_SYMTAB_ENTRY, mempool_allocator<CGD_SYMTAB_ENTRY> > CGD_Symtab;
+std::vector <CGD_SYMTAB_ENTRY, mempool_allocator<CGD_SYMTAB_ENTRY> > CGD_Symtab;
 
 Dwarf_Unsigned Cg_Dwarf_Symtab_Entry(CGD_SYMTAB_ENTRY_TYPE  type,
 				     Dwarf_Unsigned         index,
@@ -146,7 +146,7 @@ Dwarf_Unsigned Cg_Dwarf_Symtab_Entry(CGD_SYMTAB_ENTRY_TYPE  type,
   if (type == CGD_LABIDX && pu == (PU_IDX) 0) {
     pu = ST_pu(Get_Current_PU_ST());
   }
-  vector <CGD_SYMTAB_ENTRY,
+  std::vector <CGD_SYMTAB_ENTRY,
 	  mempool_allocator<CGD_SYMTAB_ENTRY> >::iterator p;
   for (p = CGD_Symtab.begin(); p != CGD_Symtab.end(); ++p) {
     if (p->type == type &&
@@ -1988,7 +1988,7 @@ Cg_Dwarf_Begin (BOOL is_64bit)
 		    cu_die);
 
   // Invalid entry up front to keep from using the zero index.
-  CGD_Symtab.push_back(CGD_SYMTAB_ENTRY(CGD_ELFSYM, -1));
+  CGD_Symtab.push_back(CGD_SYMTAB_ENTRY(CGD_ELFSYM, Dwarf_Unsigned(-1)));
 }
 
 

@@ -38,7 +38,7 @@
 #define iface_scn_INCLUDED
 
 #ifdef _KEEP_RCS_ID
-static char *iface_scn_rcs_id = "$Source: /u/merge/src/osprey1.0/be/cg/iface_scn.h,v $ $Revision: 1.1.1.1 $";
+static char *iface_scn_rcs_id = "$Source: /proj/osprey/CVS/open64/osprey1.0/be/cg/iface_scn.h,v $ $Revision: 1.1.1.1 $";
 #endif /* _KEEP_RCS_ID */
 
 #include "symtab.h"

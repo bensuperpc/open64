@@ -38,10 +38,10 @@
 * ====================================================================
 *
 * Module: opt_alias_mgr.cxx
-* $Revision: 1.3 $
-* $Date: 2002/06/06 06:57:58 $
-* $Author: sxyang $
-* $Source: /u/merge/src/osprey1.0/be/com/opt_alias_mgr.cxx,v $
+* $Revision: 1.1.1.1 $
+* $Date: 2005/10/21 19:00:00 $
+* $Author: marcel $
+* $Source: /proj/osprey/CVS/open64/osprey1.0/be/com/opt_alias_mgr.cxx,v $
 *
 * Revision history:
 *  04-APR-95 lo - Split from opt_alias.cxx
@@ -58,7 +58,7 @@
 #pragma hdrstop
 #ifdef _KEEP_RCS_ID
 #define opt_alias_mgr_CXX	"opt_alias_mgr.cxx"
-static char *rcs_id = 	opt_alias_mgr_CXX"$Revision: 1.3 $";
+static char *rcs_id = 	opt_alias_mgr_CXX"$Revision: 1.1.1.1 $";
 #endif /* _KEEP_RCS_ID */
 
 #include "string.h"
@@ -102,7 +102,7 @@ class RESTRICTED_MAP {
   ALIAS_MANAGER      *_am;
   WN_MAP              _map;
   MEM_POOL           *_pu_pool;
-  vector<const ST *,
+  std::vector<const ST *,
     mempool_allocator<const ST *> > _invalid_based_syms;
 
 public:
@@ -368,7 +368,7 @@ ALIAS_MANAGER::ALIAS_MANAGER(void)
 
 #if 0
   _invalid_ip_alias_classes =
-    CXX_NEW(vector<IDTYPE, mempool_allocator<IDTYPE> > (&_mem_pool),
+    CXX_NEW(std::vector<IDTYPE, mempool_allocator<IDTYPE> > (&_mem_pool),
 	    &mem_pool);
 #else
   // Note: C++ is broken in that it uses the same preprocessor as C,
@@ -377,7 +377,7 @@ ALIAS_MANAGER::ALIAS_MANAGER(void)
   // properly to construct instances of template classes, so I've had
   // to introduce a stupid typedef. Yucky.
 
-  typedef vector<IDTYPE, mempool_allocator<IDTYPE> > STUPID_COMPILER;
+  typedef std::vector<IDTYPE, mempool_allocator<IDTYPE> > STUPID_COMPILER;
   _invalid_ip_alias_classes =
     CXX_NEW(STUPID_COMPILER(&_mem_pool), &_mem_pool);
 #endif

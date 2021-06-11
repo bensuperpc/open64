@@ -38,9 +38,9 @@
 //
 //  Module: igls.cxx
 //  $Revision: 1.1.1.1 $
-//  $Date: 2001/06/25 06:32:37 $
-//  $Author: llx $
-//  $Source: /u/merge/src/osprey1.0/be/cg/igls.cxx,v $
+//  $Date: 2005/10/21 19:00:00 $
+//  $Author: marcel $
+//  $Source: /proj/osprey/CVS/open64/osprey1.0/be/cg/igls.cxx,v $
 //
 //  Description:
 //  ============
@@ -56,7 +56,7 @@
 #include <math.h>
 #include "defs.h"
 #include "config.h"
-#include "config_TARG.h"
+#include "config_targ_opt.h"
 #include "mempool.h"
 #include "bb.h"
 #include "bb_set.h"
@@ -203,14 +203,14 @@ IGLS_Schedule_Region (BOOL before_regalloc)
     if (IGLS_Enable_HB_Scheduling && IGLS_Enable_PRE_HB_Scheduling &&
 	should_we_global_schedule) {
       HB_Remove_Deleted_Blocks();
-      list<HB*>::iterator hbi;
+      std::list<HB*>::iterator hbi;
       FOR_ALL_BB_STLLIST_ITEMS_FWD(HB_list, hbi) {
 	if (!Sched) {
 	  Sched = CXX_NEW(HB_Schedule(), &MEM_local_pool);
 	}
 
 	// Check to see if not SWP'd.
-	list<BB*> hb_blocks;
+	std::list<BB*> hb_blocks;
 	Get_HB_Blocks_List(hb_blocks,*hbi);
 	if (Can_Schedule_HB(hb_blocks)) {
 	  Sched->Init(hb_blocks, hbs_type, NULL);
@@ -299,13 +299,13 @@ IGLS_Schedule_Region (BOOL before_regalloc)
 	should_we_schedule && should_we_global_schedule) {
 
       HB_Remove_Deleted_Blocks();
-      list<HB*>::iterator hbi;
+      std::list<HB*>::iterator hbi;
       FOR_ALL_BB_STLLIST_ITEMS_FWD(HB_list, hbi) {
 	if (!Sched) {
 	  Sched = CXX_NEW(HB_Schedule(), &MEM_local_pool);
 	}
 	// Check to see if not SWP'd.
-	list<BB*> hb_blocks;
+	std::list<BB*> hb_blocks;
 	Get_HB_Blocks_List(hb_blocks,*hbi);
 	if (Can_Schedule_HB(hb_blocks)) {
 	  Sched->Init(hb_blocks, hbs_type, NULL);

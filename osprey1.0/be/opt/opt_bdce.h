@@ -3,10 +3,10 @@
 // ====================================================================
 //
 // Module: opt_bdce.h
-// $Revision: 1.14 $
-// $Date: 2001/03/10 02:38:54 $
-// $Author: mtibuild $
-// $Source: /isms/cmplrs.src/osprey1.0/be/opt/RCS/opt_bdce.h,v $
+// $Revision: 1.1.1.1 $
+// $Date: 2005/10/21 19:00:00 $
+// $Author: marcel $
+// $Source: /proj/osprey/CVS/open64/osprey1.0/be/opt/opt_bdce.h,v $
 //
 // ====================================================================
 //
@@ -48,7 +48,7 @@
 #define opt_bdce_INCLUDED	"opt_bdce.h"
 
 #ifdef _KEEP_RCS_ID
-static char *opt_bdcercs_id = 	opt_bdce_INCLUDED"$Revision: 1.14 $";
+static char *opt_bdcercs_id = 	opt_bdce_INCLUDED"$Revision: 1.1.1.1 $";
 #endif /* _KEEP_RCS_ID */
 
 

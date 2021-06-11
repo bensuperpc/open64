@@ -35,7 +35,7 @@
 
 
 static char *source_file = __FILE__;
-static char *rcs_id = "$Source: /osprey.src/osprey1.0/common/com/ia64/RCS/config_host.c,v $ $Revision: 1.5 $";
+static char *rcs_id = "$Source: /proj/osprey/CVS/open64/osprey1.0/common/com/ia64/config_host.c,v $ $Revision: 1.1.1.1 $";
 
 #include "defs.h"
 #include "config.h"

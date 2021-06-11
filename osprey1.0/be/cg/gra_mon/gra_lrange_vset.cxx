@@ -36,9 +36,9 @@
 /////////////////////////////////////
 
 //  $Revision: 1.1.1.1 $
-//  $Date: 2001/06/25 06:32:37 $
-//  $Author: llx $
-//  $Source: /u/merge/src/osprey1.0/be/cg/gra_mon/gra_lrange_vset.cxx,v $
+//  $Date: 2005/10/21 19:00:00 $
+//  $Author: marcel $
+//  $Source: /proj/osprey/CVS/open64/osprey1.0/be/cg/gra_mon/gra_lrange_vset.cxx,v $
 
 #ifdef USE_PCH
 #include "cg_pch.h"
@@ -46,7 +46,7 @@
 #pragma hdrstop
 
 #ifdef _KEEP_RCS_ID
-static char *rcs_id = "$Source: /u/merge/src/osprey1.0/be/cg/gra_mon/gra_lrange_vset.cxx,v $ $Revision: 1.1.1.1 $";
+static char *rcs_id = "$Source: /proj/osprey/CVS/open64/osprey1.0/be/cg/gra_mon/gra_lrange_vset.cxx,v $ $Revision: 1.1.1.1 $";
 #endif
 
 #include "defs.h"

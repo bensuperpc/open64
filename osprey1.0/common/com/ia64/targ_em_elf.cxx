@@ -37,10 +37,10 @@
  * ====================================================================
  *
  * Module: em_elf.c
- * $Revision: 1.17 $
- * $Date: 2001/03/10 01:15:33 $
- * $Author: mtibuild $
- * $Source: /osprey.src/osprey1.0/common/com/ia64/RCS/targ_em_elf.cxx,v $
+ * $Revision: 1.1.1.1 $
+ * $Date: 2005/10/21 19:00:00 $
+ * $Author: marcel $
+ * $Source: /proj/osprey/CVS/open64/osprey1.0/common/com/ia64/targ_em_elf.cxx,v $
  *
  * Description:
  *

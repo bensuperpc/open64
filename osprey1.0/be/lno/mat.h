@@ -247,17 +247,17 @@
 ***	    Return the current default mem pool.
 **/
 
-/** $Revision: 1.17 $
-*** $Date: 2001/03/10 02:30:12 $
-*** $Author: mtibuild $
-*** $Source: /isms/cmplrs.src/osprey1.0/be/lno/RCS/mat.h,v $
+/** $Revision: 1.1.1.1 $
+*** $Date: 2005/10/21 19:00:00 $
+*** $Author: marcel $
+*** $Source: /proj/osprey/CVS/open64/osprey1.0/be/lno/mat.h,v $
 **/
 
 #ifndef mat_INCLUDED
 #define mat_INCLUDED "mat.h"
 
 #ifdef _KEEP_RCS_ID
-static char *mat_rcs_id = mat_INCLUDED "$Revision: 1.17 $";
+static char *mat_rcs_id = mat_INCLUDED "$Revision: 1.1.1.1 $";
 #endif /* _KEEP_RCS_ID */
 
 // system  headers
@@ -525,7 +525,7 @@ MAT<T> MAT<T>::operator +(const MAT<T>& a) const
 
   MAT<T> m(Rows(), Cols(), Default_Pool());
 
-  for (INT r = 0; r < Rows(); rr++) {
+  for (INT r = 0; r < Rows(); r++) {
     T* pm = &m._data[r*m._cx];
     T* p = &_data[r*_cx];
     T* pa = &a._data[r*a._cx];
@@ -636,7 +636,7 @@ MAT<T>& MAT<T>::operator *=(const MAT<T>& a)
 template<class T>
 MAT<T>& MAT<T>::D_Submul(const MAT<T>& mat, INT m, INT n)
 {
-  MAT<T> mm(m, n, &LNO_local_pool);
+  MAT<T> mm(m, n, Default_Pool());
   INT i;
   for (i = 0; i < m; i++) {
     for (INT j = 0; j < n; j++) {

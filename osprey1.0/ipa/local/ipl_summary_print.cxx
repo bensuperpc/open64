@@ -37,7 +37,7 @@
 /* ====================================================================
  *
  * Module: ipl_summary_print.cxx
- * $Source: /u/merge/src/osprey1.0/ipa/local/ipl_summary_print.cxx,v $
+ * $Source: /proj/osprey/CVS/open64/osprey1.0/ipa/local/ipl_summary_print.cxx,v $
  *
  * Description:
  *	all the print functions for summary info.

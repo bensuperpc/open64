@@ -33,7 +33,7 @@
 */
 
 
-/* $Header: /isms/cmplrs.src/osprey1.0/include/cmplrs/RCS/host.h,v 1.13 2001/03/10 03:57:16 mtibuild Exp $ */
+/* $Header: /proj/osprey/CVS/open64/osprey1.0/include/cmplrs/host.h,v 1.1.1.1 2005/10/21 19:00:00 marcel Exp $ */
 
 #ifndef _HOST_H
 #define _HOST_H
@@ -93,8 +93,6 @@ typedef longlong_t int64;
 typedef ulonglong_t uint64;
 
 typedef void *pointer;          /* a generic pointer type */
-typedef double double_t;
-typedef float float_t;
 typedef int32 fsize_t; /* Size of a "hidden length" when passing Fortran CHARACTER arguments */
 /* Another reasonable choice:  (requires <string.h>)
 **    typedef size_t fsize_t;

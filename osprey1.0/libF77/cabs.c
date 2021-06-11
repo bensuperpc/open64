@@ -34,7 +34,7 @@
 */
 
 
-/* $Header: /isms/cmplrs.src/osprey1.0/libF77/RCS/cabs.c,v 8.7 2001/03/10 04:30:46 mtibuild Exp $ */
+/* $Header: /proj/osprey/CVS/open64/osprey1.0/libF77/cabs.c,v 1.1.1.1 2005/10/21 19:00:00 marcel Exp $ */
 
 /* <math.h> defines another prototype for "cabs" from libm, thus results
    in name conflict with this function */

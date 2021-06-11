@@ -66,12 +66,12 @@ static void elf_link_adjust_relocs
 #endif
 
 #ifdef IPA_LINK
+#pragma weak ld_set_ndx
 int
 ld_set_ndx (bfd *abfd)
 {
     return 0;
 }
-#pragma weak ld_set_ndx
 #endif
 
 /* Given an ELF BFD, add symbols to the global hash table as
@@ -1650,6 +1650,9 @@ elf_link_add_object_symbols (abfd, info)
 		    new_flag |= ELF_LINK_HASH_REF_REGULAR_NONWEAK;
 		}
 	      else
+#ifdef IPA_LINK
+		  if (!ipa_is_whirl(abfd)) 
+#endif
 		new_flag = ELF_LINK_HASH_DEF_REGULAR;
 	      if (info->shared
 		  || (old_flags & (ELF_LINK_HASH_DEF_DYNAMIC

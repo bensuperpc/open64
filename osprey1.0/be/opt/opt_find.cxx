@@ -3,10 +3,10 @@
 // ====================================================================
 //
 // Module: opt_find.cxx
-// $Revision: 1.2 $
-// $Date: 2001/06/29 03:04:58 $
-// $Author: llx $
-// $Source: /u/merge/src/osprey1.0/be/opt/opt_find.cxx,v $
+// $Revision: 1.1.1.1 $
+// $Date: 2005/10/21 19:00:00 $
+// $Author: marcel $
+// $Source: /proj/osprey/CVS/open64/osprey1.0/be/opt/opt_find.cxx,v $
 //
 // Revision history:
 //  08-APR-95 dahl - Original Version
@@ -64,7 +64,7 @@
 
 #ifdef _KEEP_RCS_ID
 #define opt_find_CXX	"opt_find.cxx"
-static char *rcs_id = 	opt_find_CXX"$Revision: 1.2 $";
+static char *rcs_id = 	opt_find_CXX"$Revision: 1.1.1.1 $";
 #endif /* _KEEP_RCS_ID */
 
 #include "defs.h"

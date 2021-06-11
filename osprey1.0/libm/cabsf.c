@@ -39,10 +39,10 @@
  * ====================================================================
  *
  * Module: cabsf.c
- * $Revision: 1.9 $
- * $Date: 2001/03/10 08:58:12 $
- * $Author: mtibuild $
- * $Source: /isms/cmplrs.src/osprey1.0/libm/RCS/cabsf.c,v $
+ * $Revision: 1.1.1.1 $
+ * $Date: 2005/10/21 19:00:00 $
+ * $Author: marcel $
+ * $Source: /proj/osprey/CVS/open64/osprey1.0/libm/cabsf.c,v $
  *
  * Revision history:
  *  20-Jun-93 - Original Version
@@ -53,7 +53,7 @@
  * ====================================================================
  */
 
-static char *rcs_id = "$Source: /isms/cmplrs.src/osprey1.0/libm/RCS/cabsf.c,v $ $Revision: 1.9 $";
+static char *rcs_id = "$Source: /proj/osprey/CVS/open64/osprey1.0/libm/cabsf.c,v $ $Revision: 1.1.1.1 $";
 
 #include "libm.h"
 

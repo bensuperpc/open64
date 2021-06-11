@@ -40,10 +40,10 @@
 //
 /////////////////////////////////////
 //
-//  $Revision: 1.8 $
-//  $Date: 2001/03/10 03:23:05 $
-//  $Author: mtibuild $
-//  $Source: /isms/cmplrs.src/osprey1.0/common/targ_info/generate/RCS/isa_decode_gen.cxx,v $
+//  $Revision: 1.1.1.1 $
+//  $Date: 2005/10/21 19:00:00 $
+//  $Author: marcel $
+//  $Source: /proj/osprey/CVS/open64/osprey1.0/common/targ_info/generate/isa_decode_gen.cxx,v $
 
 #include <stddef.h>
 #include <stdlib.h>
@@ -52,7 +52,7 @@
 #include <stdio.h>
 #include <assert.h>
 #include <alloca.h>
-#include <list.h>
+#include <list>
 #include "topcode.h"
 #include "gen_util.h"
 #include "isa_decode_gen.h"
@@ -93,7 +93,7 @@ struct state {
 };
 
 static STATE initial_state;
-static list <STATE> all_states;
+static std::list <STATE> all_states;
 
 static const char * const interface[] = {
   "/* ====================================================================",
@@ -356,7 +356,7 @@ void ISA_Decode_End(void)
 //  See interface description.
 /////////////////////////////////////
 {
-  list <STATE>::iterator state_iter;
+  std::list <STATE>::iterator state_iter;
   char buf[1000];
 #define FNAME "targ_isa_decode"
   sprintf (buf, "%s.h", FNAME);

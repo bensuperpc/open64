@@ -30,9 +30,9 @@
 //*****************************************************************************
 //
 // Module: if_conv.cxx
-// $Date: 2003/01/15 07:59:34 $
-// $Author: sxyang $
-// $Source: /u/merge/src/osprey1.0/be/cg/orc_intel/if_conv.cxx,v $
+// $Date: 2005/10/21 19:00:00 $
+// $Author: marcel $
+// $Source: /proj/osprey/CVS/open64/osprey1.0/be/cg/orc_intel/if_conv.cxx,v $
 //
 //
 //
@@ -40,11 +40,11 @@
 // See if-conv.h for the description.
 //
 //*****************************************************************************
-#include "stdlib.h"
-#include "stdio.h"
-#include <vector.h>
+#include <vector>
+#include <set>
+#include <stdlib.h>
+#include <stdio.h>
 #include "bb.h"
-#include "set.h"
 #include "defs.h"
 #include "mempool.h"
 #include "error.h"
@@ -723,8 +723,8 @@ IF_CONVERTOR::Suitable_For_If_Conv(BB *bb)
             // If it's not defined in the block, we will give up. 
             if (!def_op) 
             {    
-                DevWarn("Predicated instruction with no reaching def in BB%d 
-                         in Suitable_For_If_Conv.", BB_id(bb));
+                DevWarn("Predicated instruction with no reaching def in BB%d "
+                        "in Suitable_For_If_Conv.", BB_id(bb));
                 return UNSUITABLE;
             }    
 
@@ -732,8 +732,8 @@ IF_CONVERTOR::Suitable_For_If_Conv(BB *bb)
             // give up because it is very complicated.
             if (OP_bb(def_op)!= bb)
             {    
-                DevWarn("An up-exposed predicate use stops if-converter BB%d
-                         in Suitable_For_If_Conv.",BB_id(bb));
+                DevWarn("An up-exposed predicate use stops if-converter BB%d "
+                        "in Suitable_For_If_Conv.",BB_id(bb));
                 return UNSUITABLE;
             }
         }
@@ -1878,8 +1878,8 @@ IF_CONVERTOR::Record_Para_Comp_Info(IF_CONV_AREA *area,
     // solve the non-parallel-compare-candidates
     if (!pred_info -> Has_Start_Node()) 
     {
-        Is_True(BB_SET_Size(cds) <=1,("non-parallel-comparea-candidate 
-            can only has one control dependentor!\n"));
+        Is_True(BB_SET_Size(cds) <=1,("non-parallel-comparea-candidate "
+            "can only has one control dependentor!\n"));
 
         if (BB_SET_Size(cds) == 0) return;
         TN *true_tn = NULL; 
@@ -4303,6 +4303,12 @@ IF_CONVERTOR::Force_If_Convert(LOOP_DESCR *loop, BOOL allow_multi_bb)
     {
         fprintf(TFile, " ======start to force_if_convert\n\n");
     }
+
+    if ( Is_In_Infinite_Loop(region) ) 
+    {
+        return NULL;
+    }
+
     If_Conversion_Init(region,areas);
     if (Get_Trace(TP_A_IFCONV, TT_IF_CONV_DETAILED)) 
     {
@@ -4541,7 +4547,7 @@ IF_CONVERTOR::Print_BB_Merge_Type(BB_MERGE_TYPE merge_type,FILE* file)
     }
 }
 void
-IF_CONVERTOR::Print_All_Areas(AREA_CONTAINER& areas, FILE* file = stderr)
+IF_CONVERTOR::Print_All_Areas(AREA_CONTAINER& areas, FILE* file)
 {
     AREA_CONTAINER::iterator iter;
     for (iter = areas.begin(); 
@@ -4553,7 +4559,7 @@ IF_CONVERTOR::Print_All_Areas(AREA_CONTAINER& areas, FILE* file = stderr)
     }
 }
 void     
-IF_CONV_AREA::Print(FILE* file = stderr)
+IF_CONV_AREA::Print(FILE* file)
 {
     fprintf(file, 
         "\nIF_CONV_AREA_%d: (", 
@@ -4739,7 +4745,7 @@ IF_CONV_AREA::Print(FILE* file = stderr)
 }
 
 void     
-IF_CONV_AREA::Print_IR(FILE *file = stderr)
+IF_CONV_AREA::Print_IR(FILE *file)
 {
     fprintf(file, 
         "\nIF_CONV_AREA_%d:========================\n", 

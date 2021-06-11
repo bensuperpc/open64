@@ -64,10 +64,10 @@
  * ====================================================================
  *
  * Module: lego_io.cxx
- * $Revision: 1.27 $
- * $Date: 2001/03/10 02:26:49 $
- * $Author: mtibuild $
- * $Source: /isms/cmplrs.src/osprey1.0/be/lno/RCS/lego_io.cxx,v $
+ * $Revision: 1.1.1.1 $
+ * $Date: 2005/10/21 19:00:00 $
+ * $Author: marcel $
+ * $Source: /proj/osprey/CVS/open64/osprey1.0/be/lno/lego_io.cxx,v $
  *
  * Revision history:
  *  09-07-96 - Original Version
@@ -84,7 +84,7 @@
 #pragma hdrstop
 
 static char *source_file = __FILE__;
-static char *rcs_id = "$Source: /isms/cmplrs.src/osprey1.0/be/lno/RCS/lego_io.cxx,v $ $Revision: 1.27 $";
+static char *rcs_id = "$Source: /proj/osprey/CVS/open64/osprey1.0/be/lno/lego_io.cxx,v $ $Revision: 1.1.1.1 $";
 
 #include <sys/types.h>
 #include <alloca.h>

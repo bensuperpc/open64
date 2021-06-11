@@ -1072,4 +1072,4 @@ ar_host(void)
 
 
 static char USMID [] = "\n%Z%%M%	%I%	%G% %U%\n";
-static char rcsid [] = "$Id: miscmath.c,v 2.12 1997/04/25 19:23:20 gbt Exp $";
+static char rcsid [] = "$Id: miscmath.c,v 1.1.1.1 2005/10/21 19:00:00 marcel Exp $";

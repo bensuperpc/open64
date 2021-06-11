@@ -37,10 +37,10 @@
  * ====================================================================
  *
  * Module: mtypes.c
- * $Revision: 1.2 $
- * $Date: 2002/03/19 08:40:49 $
- * $Author: ltuo $
- * $Source: /u/merge/src/osprey1.0/common/com/mtypes.cxx,v $
+ * $Revision: 1.1.1.1 $
+ * $Date: 2005/10/21 19:00:00 $
+ * $Author: marcel $
+ * $Source: /proj/osprey/CVS/open64/osprey1.0/common/com/mtypes.cxx,v $
  *
  * Revision history:
  *

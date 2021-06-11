@@ -38,9 +38,9 @@
  *
  *  Module: cg_loop.h
  *  $Revision: 1.1.1.1 $
- *  $Date: 2001/06/25 06:32:37 $
- *  $Author: llx $
- *  $Source: /u/merge/src/osprey1.0/be/cg/cg_loop.h,v $
+ *  $Date: 2005/10/21 19:00:00 $
+ *  $Author: marcel $
+ *  $Source: /proj/osprey/CVS/open64/osprey1.0/be/cg/cg_loop.h,v $
  *
  *  Revision comments:
  *
@@ -610,7 +610,7 @@ struct SWP_FIXUP {
     prolog(bb1),body(bb2),epilog(bb3), control_loc(cntrl_loc) {}
 };
 
-typedef vector<SWP_FIXUP> SWP_FIXUP_VECTOR;
+typedef std::vector<SWP_FIXUP> SWP_FIXUP_VECTOR;
 
 
 #include "tn_map.h"
@@ -632,8 +632,8 @@ struct CG_LOOP_DEF {
 //
 struct OP_VECTOR {
   typedef int index_type;
-  typedef vector<OP *>::iterator iterator;
-  vector<OP *> op_vec;
+  typedef std::vector<OP *>::iterator iterator;
+  std::vector<OP *> op_vec;
   
   iterator begin() { return op_vec.begin(); }
 
@@ -658,13 +658,8 @@ struct OP_VECTOR {
 
 extern CG_LOOP *Current_CG_LOOP;
 
-//#ifdef IPFEC
 extern void Perform_Loop_Optimizations(void *rgn_loop_update=NULL);
 extern BOOL CG_LOOP_Optimize(LOOP_DESCR *loop, SWP_FIXUP_VECTOR& fixup, void **, void *);
-//#else
-//extern void Perform_Loop_Optimizations();
-//extern BOOL CG_LOOP_Optimize(LOOP_DESCR *loop, SWP_FIXUP_VECTOR& fixup);
-//#endif
 
 
 extern BOOL Perform_SWP(CG_LOOP& cl, SWP_FIXUP_VECTOR& fixup, bool is_doloop);

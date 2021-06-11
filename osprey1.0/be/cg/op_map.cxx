@@ -37,10 +37,10 @@
  * =======================================================================
  *
  *  Module: op_map.c
- *  $Revision: 1.3 $
- *  $Date: 2002/09/23 01:28:59 $
- *  $Author: wjj $
- *  $Source: /u/merge/src/osprey1.0/be/cg/op_map.cxx,v $
+ *  $Revision: 1.1.1.1 $
+ *  $Date: 2005/10/21 19:00:00 $
+ *  $Author: marcel $
+ *  $Source: /proj/osprey/CVS/open64/osprey1.0/be/cg/op_map.cxx,v $
  *
  *  Revision comments:
  *
@@ -62,7 +62,7 @@
 
 #ifdef _KEEP_RCS_ID
 static const char *source_file = __FILE__;
-static const char *rcs_id = "$Source: /u/merge/src/osprey1.0/be/cg/op_map.cxx,v $ $Revision: 1.3 $";
+static const char *rcs_id = "$Source: /proj/osprey/CVS/open64/osprey1.0/be/cg/op_map.cxx,v $ $Revision: 1.1.1.1 $";
 #endif /* _KEEP_RCS_ID */
 
 #include "defs.h"

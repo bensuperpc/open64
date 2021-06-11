@@ -36,10 +36,10 @@
 //-*-c++-*-
 /* ====================================================================
  * Module: privatize_common.cxx
- * $Revision: 1.14 $
- * $Date: 2001/03/10 02:15:14 $
- * $Author: mtibuild $
- * $Source: /isms/cmplrs.src/osprey1.0/be/com/RCS/privatize_common.cxx,v $
+ * $Revision: 1.1.1.1 $
+ * $Date: 2005/10/21 19:00:00 $
+ * $Author: marcel $
+ * $Source: /proj/osprey/CVS/open64/osprey1.0/be/com/privatize_common.cxx,v $
  *
  * Revision history:
  *  11-12-97 : First created by Dave Kohr

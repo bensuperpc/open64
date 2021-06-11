@@ -38,10 +38,10 @@
  * =======================================================================
  *
  *  Module: cg_dep_graph.cxx
- *  $Revision: 1.22 $
- *  $Date: 2003/01/07 09:38:02 $
- *  $Author: wyz $
- *  $Source: /u/merge/src/osprey1.0/be/cg/cg_dep_graph.cxx,v $
+ *  $Revision: 1.1.1.1 $
+ *  $Date: 2005/10/21 19:00:00 $
+ *  $Author: marcel $
+ *  $Source: /proj/osprey/CVS/open64/osprey1.0/be/cg/cg_dep_graph.cxx,v $
  *
  *  Description:
  *  ============
@@ -59,9 +59,9 @@
 
 #define USE_STANDARD_TYPES
 #include <sys/types.h>
-#include <list.h>
-#include <vector.h>
-#include <map.h>
+#include <list>
+#include <vector>
+#include <map>
 #include "defs.h"
 #include "mempool.h"
 #include "errors.h"
@@ -114,17 +114,19 @@
 #include "data_layout.h"
 
 /* for ORC's dag constructor */
-#include <set.h>
-#include <hash_map.h>
+#include <set>
+#include <ext/hash_map>
 #include "ipfec_defs.h"
 #include "region_bb_util.h"
 #include "dag.h"
 #include "prdb.h"
-#include "pair.h"
 #include "op_targ.h"
 #include "dag.h"
 
-#include "ipfec_options.h"
+/* for cache information */
+#include "targ_cache_info.h"
+#include "cache_analysis.h"
+
 // #include "w2op.h"
 
 /* Without this, C++ inlines even with -g */
@@ -240,7 +242,7 @@ INT32 CG_DEP_Mem_Arc_Pruning = PRUNE_NONE;	/* exported */
 BB * _cg_dep_bb; // exported to cg_dep_graph_update.h so it can 
 		 // be used in an inline function there.
 
-static list<BB*> _cg_dep_bbs;
+static std::list<BB*> _cg_dep_bbs;
 MEM_POOL dep_map_nz_pool;
 MEM_POOL dep_nz_pool;
 BOOL include_assigned_registers;
@@ -249,6 +251,7 @@ BOOL include_memread_arcs;
 BOOL include_memin_arcs;
 BOOL include_control_arcs;
 BOOL tracing;
+
 
 
 //
@@ -903,7 +906,6 @@ ARC *new_arc_with_latency(CG_DEP_KIND kind, OP *pred, OP *succ,
   Set_ARC_is_dotted(arc, FALSE);
 
   attach_arc(arc);
-
   return arc;
 }
 
@@ -1077,9 +1079,9 @@ static void delete_gtn_use_arc(OP *op, UINT8 opnd)
   }
 }
 
-#undef ARC_LIST_prev ARC_rest_succs
-#undef Set_ARC_LIST_prev Set_ARC_rest_succs
-#undef Set_ARC_LIST_rest Set_ARC_rest_preds
+#undef ARC_LIST_prev
+#undef Set_ARC_LIST_prev
+#undef Set_ARC_LIST_rest
 
 
 /* =====================================================================
@@ -1189,7 +1191,6 @@ CG_DEP_Oper_Latency(TOP pred_oper, TOP succ_oper, CG_DEP_KIND kind, UINT8 opnd)
   return latency;
 }
 
-//
 // -----------------------------------------------------------------------
 // See "cg_dep_graph.h" for interface description.
 // -----------------------------------------------------------------------
@@ -1239,10 +1240,14 @@ CG_DEP_Latency(OP *pred, OP *succ, CG_DEP_KIND kind, UINT8 opnd)
 	  }
 	}
       }
-
+      // we need update the latency by using L2 cycle;
+      if (Cache_L2_Has_Data(pred)) {
+         ld_latency_adjust = Cache_Read_Cycle(CACHE_L2) - Cache_Read_Cycle(CACHE_L1D); 
+      }
       ld_latency_adjust = MAX(ld_latency_adjust, CG_ld_latency);
 
       latency += ld_latency_adjust;
+      
     }
   }
 
@@ -1379,7 +1384,7 @@ CG_DEP_Trace_Graph(BB *bb)
 }
 
 void 
-CG_DEP_Trace_HB_Graph(list<BB*> bblist)
+CG_DEP_Trace_HB_Graph(std::list<BB*> bblist)
 {
 
   if (bblist.empty()) {
@@ -1387,7 +1392,7 @@ CG_DEP_Trace_HB_Graph(list<BB*> bblist)
     return;
   }
 
-  list<BB*>::iterator bbi;
+  std::list<BB*>::iterator bbi;
   FOR_ALL_BB_STLLIST_ITEMS_FWD(bblist, bbi) {
     CG_DEP_Trace_Graph(*bbi);
   }
@@ -2164,6 +2169,7 @@ BOOL get_mem_dep(OP *pred_op, OP *succ_op, BOOL *definite, UINT8 *omega)
   /* Don't check for MEMREAD (load-load) dependence when:
    *  (a) we're not including MEMREAD arcs in the graph, or
    *  (b) either load is restoring a spill
+   *  (c) don;t access same cache line
    */
   if (memread &&
       (!include_memread_arcs ||
@@ -2668,6 +2674,7 @@ CG_DEP_Mem_Ops_Alias(OP *memop1, OP *memop2, BOOL *identical)
   return TRUE;
 }
 
+
 // ======================================================================
 // Can_OP_Move_Across_Call
 // returns TRUE if <cur_op> can be moved across <call_op>. It first 
@@ -2797,9 +2804,9 @@ inline ARC_LIST *first_definite_mem_arc(ARC_LIST *arcs)
   return NULL;
 }
 
-inline INT16 get_bb_idx(BB *bb, list<BB*> bb_list)
+inline INT16 get_bb_idx(BB *bb, std::list<BB*> bb_list)
 {
-  list<BB*>::iterator bb_iter;
+  std::list<BB*>::iterator bb_iter;
   INT idx = -1;
   
   // Assumes <bb> is present in <bb_list>.
@@ -2818,7 +2825,7 @@ inline INT16 get_bb_idx(BB *bb, list<BB*> bb_list)
 // -----------------------------------------------------------------------
 //
 void 
-Add_BRANCH_Arcs(BB* bb, list<BB*> bb_list, BOOL include_latency)
+Add_BRANCH_Arcs(BB* bb, std::list<BB*> bb_list, BOOL include_latency)
 {
 
   INT16 pred_idx;
@@ -3189,7 +3196,7 @@ void add_mem_arcs_from(UINT16 op_idx)
 
     if (OP_volatile(succ) && OP_volatile(op)) kind = CG_DEP_MEMVOL;
 
-    if (kind == CG_DEP_MEMREAD && !include_memread_arcs)
+    if (kind == CG_DEP_MEMREAD && !include_memread_arcs) 
       continue;
 
     if (!cyclic && CG_DEP_Mem_Arc_Pruning >= PRUNE_NON_CYCLIC ||
@@ -3216,6 +3223,8 @@ void add_mem_arcs_from(UINT16 op_idx)
       if (!have_latency) latency =
         (CG_DEP_Adjust_OOO_Latency && PROC_is_out_of_order() && !definite) ? 
 	0 : CG_DEP_Latency(op, succ, kind, 0);
+      
+      if (omega == 0) Cache_Adjust_Latency(op,succ,kind,&latency);
 
       /* Build a mem dep arc from <op> to <succ> */
       arc = new_arc_with_latency(kind, op, succ, latency, omega, 0, definite);
@@ -3705,8 +3714,8 @@ Add_Bkwd_REG_Arcs(BB *bb, TN_SET *need_anti_out_dep)
 //  - used by Build_Cyclic_Arcs
 //
 struct TN_2_DEFS_VECTOR_MAP {
-  typedef vector<int> DEFS_VECTOR_TYPE;
-  typedef map<TN*, DEFS_VECTOR_TYPE> TN_2_DEFS_VECTOR_MAP_TYPE;
+  typedef std::vector<int> DEFS_VECTOR_TYPE;
+  typedef std::map<TN*, DEFS_VECTOR_TYPE> TN_2_DEFS_VECTOR_MAP_TYPE;
   typedef TN_2_DEFS_VECTOR_MAP_TYPE::iterator iterator;
 
 private:
@@ -4030,7 +4039,7 @@ Compute_BB_Graph(BB *bb, TN_SET *need_anti_out_dep)
   // Build memory arcs
   Add_MEM_Arcs(bb);
 
-  list<BB*> bb_list;
+  std::list<BB*> bb_list;
   bb_list.push_back(bb);
   // Build control arcs
   if (include_control_arcs) {
@@ -4074,10 +4083,10 @@ CYCLIC_DEP_GRAPH::~CYCLIC_DEP_GRAPH()
  * -----------------------------------------------------------------------
  */
 static void
-Compute_Region_Graph(list<BB*> bb_list)
+Compute_Region_Graph(std::list<BB*> bb_list)
 {
 
-  list<BB*>::iterator bb_iter;
+  std::list<BB*>::iterator bb_iter;
   FOR_ALL_BB_STLLIST_ITEMS_FWD(bb_list, bb_iter) {
     BB_OP_MAP omap = BB_OP_MAP_Create(*bb_iter, &dep_map_nz_pool);
     BB_MAP_Set(_cg_dep_op_info, *bb_iter, omap);
@@ -4101,7 +4110,7 @@ Compute_Region_Graph(list<BB*> bb_list)
   defop_finish();
 
   defop_init();
-  list<BB*>::reverse_iterator bb_riter;
+  std::list<BB*>::reverse_iterator bb_riter;
   FOR_ALL_BB_STLLIST_ITEMS_BKWD(bb_list, bb_riter) {
 
     // Build other arcs in a backwards pass:
@@ -4452,6 +4461,7 @@ Invoke_Init_Routines()
   MEM_POOL_Push(&dep_nz_pool);
   MEM_POOL_Push(&dep_map_nz_pool);
 
+  
   // Initiliaze preparatory routines.
   init_op_info();
   init_reg_assignments();
@@ -4536,11 +4546,11 @@ Update_Entry_For_TN(
 // -----------------------------------------------------------------------
 //
 void 
-CG_DEP_Prune_Dependence_Arcs(list<BB*>    bblist,
+CG_DEP_Prune_Dependence_Arcs(std::list<BB*>    bblist,
 			     BOOL         prune_predicate_arcs,
 			     BOOL         trace)
 {
-  list<BB*>::iterator bbi;
+  std::list<BB*>::iterator bbi;
   TN_MAP tn_usage_map = TN_MAP_Create();
   void *reg_ops[ISA_REGISTER_CLASS_MAX+1][REGISTER_MAX+1];
   OP_MAP omap = OP_MAP_Create();
@@ -4733,7 +4743,7 @@ CG_DEP_Compute_Graph(BB      *bb,
 // -----------------------------------------------------------------------
 //
 void 
-CG_DEP_Compute_Region_Graph(list<BB*>    bb_region, 
+CG_DEP_Compute_Region_Graph(std::list<BB*>    bb_region, 
 			    BOOL         assigned_regs,
 			    BOOL         memread_arcs,
 			    BOOL         control_arcs)
@@ -4952,7 +4962,8 @@ DAG_BUILDER::Build_Mem_Arcs(OP *op)
     if (kind == CG_DEP_MEMREAD &&
         OP_volatile(pred) && OP_volatile(op)) kind = CG_DEP_MEMVOL;
 
-    if (kind == CG_DEP_MEMREAD && !_include_memread_arcs)
+    if (kind == CG_DEP_MEMREAD && !_include_memread_arcs && 
+       !Cache_Has_Conflict(pred,op,kind))
       continue;
 
     if (!_cyclic && CG_DEP_Mem_Arc_Pruning >= PRUNE_NON_CYCLIC ||
@@ -4968,7 +4979,8 @@ DAG_BUILDER::Build_Mem_Arcs(OP *op)
       have_latency = TRUE;
     }
 
-    if (get_mem_dep(pred, op, &definite, _cyclic ? &omega : NULL)) {
+    if (get_mem_dep(pred, op, &definite, _cyclic ? &omega : NULL) ||
+        (kind == CG_DEP_MEMREAD && Cache_Has_Conflict(pred,op,kind))) {
 
       // For OOO machine (eg. T5), non-definite memory dependences can be 
       // relaxed to edges with zero latency. The belief is that this can 
@@ -4977,7 +4989,9 @@ DAG_BUILDER::Build_Mem_Arcs(OP *op)
       if (!have_latency) latency =
         (CG_DEP_Adjust_OOO_Latency && PROC_is_out_of_order() && !definite) ? 
         0 : CG_DEP_Latency(pred, op, kind, 0);
-
+      
+      if (omega == 0)
+          Cache_Adjust_Latency(pred,op,kind, &latency);
       /* Build a mem dep arc from <op> to <succ> */
 
       if(!definite) {
@@ -5075,7 +5089,8 @@ DAG_BUILDER::Build_Reg_Arcs(OP* op)
   TN * tn_ptr = OP_opnd (op, OP_PREDICATE_OPND);
 
   // Start building REGIN Arcs .
-  // The switch DAG_BITSET_SWITCH_ON  is used to switch between the old and new version.
+  // The switch DAG_BITSET_SWITCH_ON  is used to switch between the old and 
+  // new version.
   
   for (i = 0; i < OP_opnds(op); i++) {
 
@@ -5088,8 +5103,8 @@ DAG_BUILDER::Build_Reg_Arcs(OP* op)
          ops_iter++) {
             
 #else
-    
-    Get_Define_OPs(op, i, CG_DEP_REGIN);  // get the relative def ops into vect : _Define_OPs[]
+    // get the relative def ops into vect : _Define_OPs[]
+    Get_Define_OPs(op, i, CG_DEP_REGIN); 
     for(DEFINE_OPS_ITER ops_iter=_Define_OPs.begin();
                 ops_iter!=_Define_OPs.end();
                 ops_iter++  ){
@@ -5116,7 +5131,8 @@ DAG_BUILDER::Build_Reg_Arcs(OP* op)
   
 
   // Start building REGOUT Arcs .
-  // The switch DAG_BITSET_SWITCH_ON  is used to switch between the old and new version.
+  // The switch DAG_BITSET_SWITCH_ON  is used to switch between the old and
+  // new version.
   
   for (i = 0; i < OP_results(op); i++) {
 
@@ -5129,8 +5145,8 @@ DAG_BUILDER::Build_Reg_Arcs(OP* op)
          ops_iter++) {
     
 #else
-    
-    Get_Define_OPs(op, i, CG_DEP_REGOUT); // get the relative def ops into vect : _Define_OPs[]
+    // get the relative def ops into vect : _Define_OPs[]
+    Get_Define_OPs(op, i, CG_DEP_REGOUT);
     for(DEFINE_OPS_ITER ops_iter=_Define_OPs.begin();
                 ops_iter!=_Define_OPs.end();
                 ops_iter++  ){
@@ -5148,7 +5164,8 @@ DAG_BUILDER::Build_Reg_Arcs(OP* op)
 
 
   // Start building REGANTI Arcs .
-  // The switch DAG_BITSET_SWITCH_ON  is used to switch between the old and new version.
+  // The switch DAG_BITSET_SWITCH_ON  is used to switch between the old and 
+  // new version.
   
 #ifndef  DAG_BITSET_SWITCH_ON
   // Build Non-cyclic REGANTI arcs
@@ -5164,7 +5181,8 @@ DAG_BUILDER::Build_Reg_Arcs(OP* op)
       // if (_include_assigned_registers ||
       //    !OP_has_disjoint_predicate(*ops_iter,op)) {
       TN * tn = OP_result(op,i) ;
-      if (TN_is_register(tn) && TN_register_class(tn) == ISA_REGISTER_CLASS_predicate) {
+      if (TN_is_register(tn) && TN_register_class(tn) == 
+          ISA_REGISTER_CLASS_predicate) {
         tn_def_found = TRUE;
         INT16 opnd_idx = get_opnd_idx (*ops_iter,tn);
         Is_True (opnd_idx >= 0, ("fail to find opnd!"));
@@ -5177,7 +5195,8 @@ DAG_BUILDER::Build_Reg_Arcs(OP* op)
 
           INT16 opnd_idx = get_opnd_idx (*ops_iter,tn);
           Is_True (opnd_idx >= 0, ("fail to find opnd!"));
-          ARC * arc = new_arc(CG_DEP_REGANTI, *ops_iter, op, 0, (UINT8)opnd_idx, FALSE);
+          ARC * arc = new_arc(CG_DEP_REGANTI, *ops_iter, op, 0,
+                              (UINT8)opnd_idx, FALSE);
           adjust_reganti_latency (arc) ;
         }
       }// else
@@ -5187,8 +5206,8 @@ DAG_BUILDER::Build_Reg_Arcs(OP* op)
 #else // defined DAG_BITSET_SWITCH_ON  
   
   for(i = 0; i < OP_opnds(op); i++){
-
-    Get_Define_OPs(op, i, CG_DEP_REGANTI); // get the relative def ops into vect : _Define_OPs[]
+    // get the relative def ops into vect : _Define_OPs[]
+    Get_Define_OPs(op, i, CG_DEP_REGANTI);
     for(DEFINE_OPS_ITER ops_iter=_Define_OPs.begin();
                 ops_iter!=_Define_OPs.end();
                 ops_iter++  ){
@@ -5203,7 +5222,8 @@ DAG_BUILDER::Build_Reg_Arcs(OP* op)
           
         // the following has exchanged *ops_iter and op to each other
         TN * tn = OP_result(*ops_iter,j) ;
-        if (TN_is_register(tn) && TN_register_class(tn) == ISA_REGISTER_CLASS_predicate) {
+        if (TN_is_register(tn) && TN_register_class(tn) == 
+            ISA_REGISTER_CLASS_predicate) {
           tn_def_found = TRUE;
 
           new_arc(CG_DEP_REGANTI, op, *ops_iter, 0, (UINT8)i, FALSE);
@@ -5231,4 +5251,3 @@ DAG_BUILDER::Build_Reg_Arcs(OP* op)
 
 
 }
-

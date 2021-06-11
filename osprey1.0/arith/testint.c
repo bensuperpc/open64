@@ -4403,4 +4403,4 @@ test_compare()
 
 
 static char USMID [] = "\n%Z%%M%	%I%	%G% %U%\n";
-static char rcsid [] = "$Id: testint.c,v 2.5 1997/06/02 19:14:20 gbt Exp $";
+static char rcsid [] = "$Id: testint.c,v 1.1.1.1 2005/10/21 19:00:00 marcel Exp $";

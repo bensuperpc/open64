@@ -37,13 +37,13 @@
  * ====================================================================
  *
  * Module: dst.c
- * $Revision: 1.18 $
- * $Date: 2001/03/10 03:53:30 $
- * $Author: mtibuild $
- * $Revision: 1.18 $
- * $Date: 2001/03/10 03:53:30 $
- * $Author: mtibuild $
- * $Source: /isms/cmplrs.src/osprey1.0/g++fe/RCS/wfe_dst.cxx,v $
+ * $Revision: 1.1.1.1 $
+ * $Date: 2005/10/21 19:00:00 $
+ * $Author: marcel $
+ * $Revision: 1.1.1.1 $
+ * $Date: 2005/10/21 19:00:00 $
+ * $Author: marcel $
+ * $Source: /proj/osprey/CVS/open64/osprey1.0/g++fe/wfe_dst.cxx,v $
  *
  * Revision history:
  *  01-May-93 - Original Version
@@ -64,7 +64,7 @@
 
 static char *source_file = __FILE__;
 #ifdef _KEEP_RCS_ID
-static char *rcs_id = "$Source: /isms/cmplrs.src/osprey1.0/g++fe/RCS/wfe_dst.cxx,v $ $Revision: 1.18 $";
+static char *rcs_id = "$Source: /proj/osprey/CVS/open64/osprey1.0/g++fe/wfe_dst.cxx,v $ $Revision: 1.1.1.1 $";
 #endif /* _KEEP_RCS_ID */
 
 #include <values.h>

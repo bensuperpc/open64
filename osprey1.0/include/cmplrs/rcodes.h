@@ -43,7 +43,7 @@
 #define __RCODES_H
 
 #ifdef INCLUDE_ID
-static char *rcodes_h_id="$Header: /isms/cmplrs.src/osprey1.0/include/cmplrs/RCS/rcodes.h,v 1.8 2001/03/10 03:57:31 mtibuild Exp $";
+static char *rcodes_h_id="$Header: /proj/osprey/CVS/open64/osprey1.0/include/cmplrs/rcodes.h,v 1.1.1.1 2005/10/21 19:00:00 marcel Exp $";
 #endif
 
 /* 

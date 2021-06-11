@@ -3,10 +3,10 @@
 // ====================================================================
 //
 // Module: opt_alias_class.h
-// $Revision: 1.74 $
-// $Date: 2001/03/10 02:37:45 $
-// $Author: mtibuild $
-// $Source: /isms/cmplrs.src/osprey1.0/be/opt/RCS/opt_alias_class.cxx,v $
+// $Revision: 1.1.1.1 $
+// $Date: 2005/10/21 19:00:00 $
+// $Author: marcel $
+// $Source: /proj/osprey/CVS/open64/osprey1.0/be/opt/opt_alias_class.cxx,v $
 //
 // ====================================================================
 //
@@ -78,7 +78,7 @@
 
 // For the interface to clients, see opt_alias_class.h
 
-#include <set.h>
+#include <set>
 
 #ifdef USE_PCH
 #include "opt_pch.h"
@@ -923,7 +923,7 @@ ALIAS_CLASSIFICATION::Classify_deref_of_expr(WN  *const expr,
       //
       // See the related comments in OPT_STAB::Count_syms(WN *) in
       // opt_sym.cxx.
-      set<AUX_ID> processed_ids;
+      std::set<AUX_ID> processed_ids;
 
       AUX_ID lhs_aux_id = WN_aux(expr);
       ST *lhs_st = Opt_stab()->Aux_stab_entry(lhs_aux_id)->St();

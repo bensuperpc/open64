@@ -39,10 +39,10 @@
  * ====================================================================
  *
  * Module: tcon2c.c
- * $Revision: 1.9 $
- * $Date: 2001/03/10 02:56:05 $
- * $Author: mtibuild $
- * $Source: /isms/cmplrs.src/osprey1.0/be/whirl2c/RCS/tcon2c.h,v $
+ * $Revision: 1.1.1.1 $
+ * $Date: 2005/10/21 19:00:00 $
+ * $Author: marcel $
+ * $Source: /proj/osprey/CVS/open64/osprey1.0/be/whirl2c/tcon2c.h,v $
  *
  * Revision history:
  *  07-Oct-94 - Original Version

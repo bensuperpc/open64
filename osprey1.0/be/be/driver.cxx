@@ -37,7 +37,7 @@
  * ====================================================================
  *
  * Module: driver.cxx
- * $Source: /u/merge/src/osprey1.0/be/be/driver.cxx,v $
+ * $Source: /proj/osprey/CVS/open64/osprey1.0/be/be/driver.cxx,v $
  *
  * Revision history:
  *  13-Feb-95 - Original Version
@@ -279,7 +279,7 @@ extern void (*Perform_Procedure_Summary_Phase_p) (WN*, DU_MANAGER*,
 #ifndef __GNUC__
 #pragma weak Prompf_Emit_Whirl_to_Source__GP7pu_infoP2WN
 #else
-#pragma weak Prompf_Emit_Whirl_to_Source__FP7pu_infoP2WN
+#pragma weak _Z27Prompf_Emit_Whirl_to_SourceP7pu_infoP2WN
 #endif
 
 extern void Prompf_Emit_Whirl_to_Source(PU_Info* current_pu, WN* func_nd);

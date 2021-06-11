@@ -33,6 +33,6 @@
 */
 
 
-/*  $Header: /isms/cmplrs.src/osprey1.0/libF77/mips/quad/RCS/qcmplx.h,v 1.4 2001/03/10 04:25:33 mtibuild Exp $ */
+/*  $Header: /proj/osprey/CVS/open64/osprey1.0/libF77/mips/quad/qcmplx.h,v 1.1.1.1 2005/10/21 19:00:00 marcel Exp $ */
 
 typedef struct { long double qreal, qimag; } qcomplex;

@@ -38,9 +38,9 @@
 //
 //  Module: cg_thr.cxx
 //  $Revision: 1.1.1.1 $
-//  $Date: 2001/06/25 06:32:37 $
-//  $Author: llx $
-//  $Source: /u/merge/src/osprey1.0/be/cg/cg_thr.cxx,v $
+//  $Date: 2005/10/21 19:00:00 $
+//  $Author: marcel $
+//  $Source: /proj/osprey/CVS/open64/osprey1.0/be/cg/cg_thr.cxx,v $
 //
 //  Description:
 //  ============
@@ -54,7 +54,7 @@
 #include <math.h>
 #include "defs.h"
 #include "config.h"
-#include "config_TARG.h"
+#include "config_targ_opt.h"
 #include "mempool.h"
 #include "bb.h"
 #include "bb_set.h"
@@ -136,7 +136,7 @@ void
 CG_THR::Check_THR_Profitability ()
 {
   OP *op;
-  list<ARC*> arc_list;
+  std::list<ARC*> arc_list;
   ARC *arc;
 
   _candidate_list.clear();  // empty the list
@@ -165,7 +165,7 @@ CG_THR::Check_THR_Profitability ()
   // if THR profitable, update the _candidate_list, otherwise reset the
   // ARC_is_dotted flag.
 
-  list<ARC*>::iterator arc_iter;
+  std::list<ARC*>::iterator arc_iter;
   for (arc_iter = arc_list.begin(); arc_iter != arc_list.end(); arc_iter++) {
     if (_thr_type & THR_DATA_SPECULATION_NO_RB) {
       OP *pred_op = ARC_pred(*arc_iter);
@@ -201,7 +201,7 @@ void
 CG_THR::Perform_THR_Code_Generation ()
 {
   if (_thr_type & THR_DATA_SPECULATION_NO_RB) {
-    list<ARC*>::iterator arc_iter;
+    std::list<ARC*>::iterator arc_iter;
     for (arc_iter = _candidate_list.begin(); 
 	 arc_iter != _candidate_list.end(); arc_iter++) {
 

@@ -35,7 +35,7 @@
 
 
 
-/* $Header: /isms/cmplrs.src/osprey1.0/libI77/RCS/lib.c,v 9.8 2001/03/10 04:51:48 mtibuild Exp $ */
+/* $Header: /proj/osprey/CVS/open64/osprey1.0/libI77/lib.c,v 1.1.1.1 2005/10/21 19:00:00 marcel Exp $ */
 #include <string.h>
 #include <cmplrs/fio.h>
 

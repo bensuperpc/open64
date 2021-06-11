@@ -38,10 +38,10 @@
  * =======================================================================
  *
  *  Module: annotations.h
- *  $Revision: 1.2 $
- *  $Date: 2002/09/17 01:58:28 $
- *  $Author: gange $
- *  $Source: /u/merge/src/osprey1.0/be/cg/annotations.h,v $
+ *  $Revision: 1.1.1.1 $
+ *  $Date: 2005/10/21 19:00:00 $
+ *  $Author: marcel $
+ *  $Source: /proj/osprey/CVS/open64/osprey1.0/be/cg/annotations.h,v $
  *
  *  Description:
  *  ============
@@ -217,9 +217,9 @@ struct ROTATING_KERNEL_INFO {
   struct ti_res_count *res_counts;
   REGISTER_SET live_in[ISA_REGISTER_CLASS_MAX+1];
   REGISTER_SET kill[ISA_REGISTER_CLASS_MAX+1];
-  vector<struct tn *> copyin;
-  vector<struct tn *> copyout;
-  vector<struct tn *> localdef;
+  std::vector<struct tn *> copyin;
+  std::vector<struct tn *> copyout;
+  std::vector<struct tn *> localdef;
 };
 
 #define ROTATING_KERNEL_INFO_succeeded(x)     ((x)->succeeded)

@@ -37,10 +37,10 @@
  * =======================================================================
  *
  *  Module: ebo_special.cxx
- *  $Revision: 1.15 $
- *  $Date: 2003/01/15 03:27:19 $
- *  $Author: gange $
- *  $Source: /u/merge/src/osprey1.0/be/cg/ia64/ebo_special.cxx,v $
+ *  $Revision: 1.1.1.1 $
+ *  $Date: 2005/10/21 19:00:00 $
+ *  $Author: marcel $
+ *  $Source: /proj/osprey/CVS/open64/osprey1.0/be/cg/ia64/ebo_special.cxx,v $
  *
  *  Revision comments:
  *
@@ -66,7 +66,7 @@ static const char source_file[] = __FILE__;
 
 #include <stdarg.h>
 #include "defs.h"
-#include "config_TARG.h"
+#include "config_targ_opt.h"
 #include "errors.h"
 #include "mempool.h"
 #include "tracing.h"

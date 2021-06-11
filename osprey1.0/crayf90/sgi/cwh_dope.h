@@ -37,10 +37,10 @@
  * ====================================================================
  *
  * Module: cwh_dope.h
- * $Revision: 1.11 $
- * $Date: 2001/03/10 03:44:37 $
- * $Author: mtibuild $
- * $Source: /isms/cmplrs.src/osprey1.0/crayf90/sgi/RCS/cwh_dope.h,v $
+ * $Revision: 1.1.1.1 $
+ * $Date: 2005/10/21 19:00:00 $
+ * $Author: marcel $
+ * $Source: /proj/osprey/CVS/open64/osprey1.0/crayf90/sgi/cwh_dope.h,v $
  *
  * Revision history:
  *  dd-mmm-95 - Original Version
@@ -55,7 +55,7 @@
 #define CWH_DOPE_INCLUDED
 
 #ifdef _KEEP_RCS_ID
-static char *rcs_id = "$Source: /isms/cmplrs.src/osprey1.0/crayf90/sgi/RCS/cwh_dope.h,v $ $Revision: 1.11 $";
+static char *rcs_id = "$Source: /proj/osprey/CVS/open64/osprey1.0/crayf90/sgi/cwh_dope.h,v $ $Revision: 1.1.1.1 $";
 #endif /* _KEEP_RCS_ID */
 
 extern WN * cwh_dope_from_expression(WN *expr, WN *array, WN *char_len, TY_IDX ty, WN *craytype);

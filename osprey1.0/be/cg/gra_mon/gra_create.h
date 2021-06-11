@@ -60,10 +60,10 @@
 
 
 /*
- *  $Revision: 1.2 $
- *  $Date: 2001/12/21 01:54:11 $
- *  $Author: lrq $
- *  $Source: /u/merge/src/osprey1.0/be/cg/gra_mon/gra_create.h,v $
+ *  $Revision: 1.1.1.1 $
+ *  $Date: 2005/10/21 19:00:00 $
+ *  $Author: marcel $
+ *  $Source: /proj/osprey/CVS/open64/osprey1.0/be/cg/gra_mon/gra_create.h,v $
  */
 
 
@@ -73,7 +73,7 @@
 #ifndef CREATE_RCS_ID
 #define CREATE_RCS_ID
 #ifdef _KEEP_RCS_ID
-static char *create_rcs_id = "$Source: /u/merge/src/osprey1.0/be/cg/gra_mon/gra_create.h,v $ $Revision: 1.2 $";
+static char *create_rcs_id = "$Source: /proj/osprey/CVS/open64/osprey1.0/be/cg/gra_mon/gra_create.h,v $ $Revision: 1.1.1.1 $";
 #endif
 #endif
 

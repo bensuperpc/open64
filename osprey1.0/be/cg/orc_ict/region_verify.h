@@ -31,9 +31,9 @@
 //
 // Module: region_verify.h
 // Author: lren
-// $Revision: 1.6 $
-// $Date: 2003/01/21 12:57:08 $
-// $Source: /u/merge/src/osprey1.0/be/cg/orc_ict/region_verify.h,v $
+// $Revision: 1.1.1.1 $
+// $Date: 2005/10/21 19:00:00 $
+// $Source: /proj/osprey/CVS/open64/osprey1.0/be/cg/orc_ict/region_verify.h,v $
 //
 //=============================================================================
 //=============================================================================
@@ -50,9 +50,9 @@
 
 #include "region.h"
 #include "bb.h"
-#include "stack.h"
-#include "vector.h"
-#include "list.h"
+#include <stack>
+#include <vector>
+#include <list>
 #include "defs.h"
 #include "cxx_memory.h"
 #include "region_bb_util.h"

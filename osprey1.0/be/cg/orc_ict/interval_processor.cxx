@@ -30,10 +30,10 @@
 //======================================================================
 //
 // Module: interval_processor.cxx
-// $Revision: 1.9 $
-// $Date: 2003/01/21 12:56:44 $
-// $Author: sxyang $
-// $Source: /u/merge/src/osprey1.0/be/cg/orc_ict/interval_processor.cxx,v $
+// $Revision: 1.1.1.1 $
+// $Date: 2005/10/21 19:00:00 $
+// $Author: marcel $
+// $Source: /proj/osprey/CVS/open64/osprey1.0/be/cg/orc_ict/interval_processor.cxx,v $
 //
 //======================================================================
 
@@ -225,15 +225,15 @@ INTERVAL_PROCESSOR::Collect_Backedges(void) {
             _backedges.push_back(e);
         }        
         else {
-            if (!Find_In_Vector(src,_improper_node)) {
+            if (Find_In_Vector(src,_improper_node) == _improper_node.end()) {
                 _improper_node.push_back(src);
-            }    
-            if (!Find_In_Vector(dest,_improper_node)) {
+            }
+            if (Find_In_Vector(dest,_improper_node) == _improper_node.end()) {
                 _improper_node.push_back(dest);
-            }    
-        }    
+            }
+        }
     }
-}    
+}
 
 //====================================================================
 //
@@ -360,7 +360,7 @@ INTERVAL_PROCESSOR::Construct_Loops(void) {
                 REGIONAL_CFG_EDGE *front = tar_edges.front();
                 tar_edges.pop();
 
-                if (!Find_In_Vector(front->Src(),loop_nodes)) {
+                if (Find_In_Vector(front->Src(),loop_nodes) == loop_nodes.end()) {
                     REGIONAL_CFG_EDGE *new_edge = cfg->Find_Edge(front->Src(),r_node);
                     
                     if (new_edge != NULL) {

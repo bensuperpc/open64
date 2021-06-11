@@ -37,10 +37,10 @@
  * ====================================================================
  *
  * Module: flags.h
- * $Revision: 2.22 $
- * $Date: 2001/03/10 03:28:05 $
- * $Author: mtibuild $
- * $Source: /isms/cmplrs.src/osprey1.0/common/util/RCS/flags.h,v $
+ * $Revision: 1.1.1.1 $
+ * $Date: 2005/10/21 19:00:00 $
+ * $Author: marcel $
+ * $Source: /proj/osprey/CVS/open64/osprey1.0/common/util/flags.h,v $
  *
  * Revision history:
  *  08-Sep-89 - Original Version
@@ -272,7 +272,7 @@
 #define flags_INCLUDED
 
 #ifdef _KEEP_RCS_ID
-static char *flags_rcs_id = "$Source: /isms/cmplrs.src/osprey1.0/common/util/RCS/flags.h,v $ $Revision: 2.22 $";
+static char *flags_rcs_id = "$Source: /proj/osprey/CVS/open64/osprey1.0/common/util/flags.h,v $ $Revision: 1.1.1.1 $";
 #endif /* _KEEP_RCS_ID */
 
 #ifdef __cplusplus

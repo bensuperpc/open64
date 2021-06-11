@@ -45,10 +45,10 @@
 // of increasing numbers of operands.
 /////////////////////////////////////
 //
-//  $Revision: 1.47 $
-//  $Date: 2001/03/10 01:16:39 $
-//  $Author: mtibuild $
-//  $Source: /osprey.src/osprey1.0/common/targ_info/isa/ia64/RCS/isa_operands.cxx,v $
+//  $Revision: 1.1.1.1 $
+//  $Date: 2005/10/21 19:00:00 $
+//  $Author: marcel $
+//  $Source: /proj/osprey/CVS/open64/osprey1.0/common/targ_info/isa/ia64/isa_operands.cxx,v $
 
 #include <stddef.h>
 #include "topcode.h"

@@ -62,17 +62,17 @@
 /////////////////////////////////////
 
 
-//  $Revision: 1.2 $
-//  $Date: 2001/12/21 01:55:09 $
-//  $Author: lrq $
-//  $Source: /u/merge/src/osprey1.0/be/cg/gra_mon/gra.h,v $
+//  $Revision: 1.1.1.1 $
+//  $Date: 2005/10/21 19:00:00 $
+//  $Author: marcel $
+//  $Source: /proj/osprey/CVS/open64/osprey1.0/be/cg/gra_mon/gra.h,v $
 
 #ifndef GRA_INCLUDED
 #define GRA_INCLUDED
 #ifndef GRA_RCS_ID
 #define GRA_RCS_ID
 #ifdef _KEEP_RCS_ID
-static char *gra_rcs_id = "$Source: /u/merge/src/osprey1.0/be/cg/gra_mon/gra.h,v $ $Revision: 1.2 $";
+static char *gra_rcs_id = "$Source: /proj/osprey/CVS/open64/osprey1.0/be/cg/gra_mon/gra.h,v $ $Revision: 1.1.1.1 $";
 #endif
 #endif
 
@@ -105,5 +105,18 @@ extern BOOL GRA_split_lranges; 		// controlled by -CG:split_lranges=
 extern INT GRA_non_split_tn_id;		// controlled by -CG:non_split_tn=
 extern INT GRA_non_preference_tn_id;	// controlled by -CG:non_preference_tn=
 extern BOOL GRA_optimize_placement;	// controlled by -CG:optimize_placement=
+typedef struct Init_Use_Only_GTN
+{
+     INT TN_Number;
+     INT Used_In_BB;
+     INT Used_Time;
+     Init_Use_Only_GTN *next;
+} INIT_USE_ONLY_GTN ;
 
+extern INIT_USE_ONLY_GTN* GTN_USE_ONLY;
+void Init_GTN_LIST(void );
+INIT_USE_ONLY_GTN* Build_Use_Only_GTN(MEM_POOL* pool);
+extern BOOL Search_Used_Only_Once_GTN(TN *find_tn,BB* def_bb);
+extern INIT_USE_ONLY_GTN* Search_GTN_In_List (TN *find_tn);
+extern void Build_GTN_In_List (TN *tn,BB* bb);
 #endif

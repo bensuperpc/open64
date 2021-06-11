@@ -35,7 +35,7 @@
 
 #ifdef _KEEP_RCS_ID
 static const char source_file[] = __FILE__;
-static const char rcs_id[] = "$Source: /isms/cmplrs.src/osprey1.0/common/com/RCS/em_dwarf.cxx,v $ $Revision: 1.46 $";
+static const char rcs_id[] = "$Source: /proj/osprey/CVS/open64/osprey1.0/common/com/em_dwarf.cxx,v $ $Revision: 1.1.1.1 $";
 #endif
 
 #include <stdio.h>

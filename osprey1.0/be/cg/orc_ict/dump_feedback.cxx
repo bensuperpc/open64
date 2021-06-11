@@ -30,9 +30,9 @@
 //*********************************************************************
 //
 // Module: dump_feedback.cxx
-// $Date: 2003/01/21 12:56:38 $
-// $Author: sxyang $
-// $Source: /u/merge/src/osprey1.0/be/cg/orc_ict/dump_feedback.cxx,v $
+// $Date: 2005/10/21 19:00:00 $
+// $Author: marcel $
+// $Source: /proj/osprey/CVS/open64/osprey1.0/be/cg/orc_ict/dump_feedback.cxx,v $
 //
 // Description:
 // 
@@ -48,7 +48,7 @@ extern char* Cur_PU_Name;
 extern char* Src_File_Name;
 
 /* dump an edge's feedback info  */
-void Dump_Edge_Info(BB* source_bb,BBLIST* edge,FILE* fp=TFile)
+void Dump_Edge_Info(BB* source_bb,BBLIST* edge,FILE* fp)
 {
   BB* target_bb = BBLIST_item(edge);
   fprintf(fp,"Freq:%f Source BB:%d-->Target BB:%d\n",BBLIST_freq(edge),
@@ -56,7 +56,7 @@ void Dump_Edge_Info(BB* source_bb,BBLIST* edge,FILE* fp=TFile)
 }
 
 /* dump current PU's feedback data */
-void Dump_Fb_Data(PU_PROFILE_HANDLES fb_handles,FILE* fp=TFile)
+void Dump_Fb_Data(PU_PROFILE_HANDLES fb_handles,FILE* fp)
 {
   
   fprintf(fp,"\n======= Cur PU Name:");

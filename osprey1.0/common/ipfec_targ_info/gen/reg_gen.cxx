@@ -30,9 +30,9 @@
 //*********************************************************************
 //
 // Module: reg_gen.cxx
-// $Date: 2003/01/15 08:07:05 $
-// $Author: sxyang $
-// $Source: /u/merge/src/osprey1.0/common/ipfec_targ_info/gen/reg_gen.cxx,v $
+// $Date: 2005/10/21 19:00:00 $
+// $Author: marcel $
+// $Source: /proj/osprey/CVS/open64/osprey1.0/common/ipfec_targ_info/gen/reg_gen.cxx,v $
 //
 // Description:
 //   Generate the definition of registers.
@@ -584,6 +584,7 @@ void Register_Generator(void *pknobs, GEN_MODE mode)
     }
     fprintf(c_file, "    { 0 } },\n");
   }
+  free(members);
   fprintf(c_file, "};\n\n");
 
   fprintf(c_file, init_reg_func); 
@@ -687,6 +688,7 @@ void Register_Generator(void *pknobs, GEN_MODE mode)
     }
     fprintf(c_file, "    },\n  },\n");
   }
+  free(reg_class_info);
   fprintf(c_file, "};\n\n");
 
   ///////////////////////////////////////////////////////////////

@@ -43,10 +43,10 @@ extern "C" {
  * ====================================================================
  *
  * Module: glob.h
- * $Revision: 1.6 $
- * $Date: 2002/04/25 07:15:48 $
- * $Author: bcheng $
- * $Source: /u/merge/src/osprey1.0/common/com/glob.h,v $
+ * $Revision: 1.1.1.1 $
+ * $Date: 2005/10/21 19:00:00 $
+ * $Author: marcel $
+ * $Source: /proj/osprey/CVS/open64/osprey1.0/common/com/glob.h,v $
  *
  * Revision history:
  *  15-Sep-89 - Original Version

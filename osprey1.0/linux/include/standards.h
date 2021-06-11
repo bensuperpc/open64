@@ -35,7 +35,7 @@
 
 #ifndef __STANDARDS_H__
 #define __STANDARDS_H__
-#ident "$Id: standards.h,v 1.5 2001/03/10 10:24:44 mtibuild Exp $"
+#ident "$Id: standards.h,v 1.1.1.1 2005/10/21 19:00:00 marcel Exp $"
 
 #include "features.h"
 

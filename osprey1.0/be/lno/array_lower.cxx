@@ -38,10 +38,10 @@
 // ====================================================================
 //
 // Module: array_lower.cxx
-// $Revision: 1.29 $
-// $Date: 2001/03/10 02:21:04 $
-// $Author: mtibuild $
-// $Source: /isms/cmplrs.src/osprey1.0/be/lno/RCS/array_lower.cxx,v $
+// $Revision: 1.1.1.1 $
+// $Date: 2005/10/21 19:00:00 $
+// $Author: marcel $
+// $Source: /proj/osprey/CVS/open64/osprey1.0/be/lno/array_lower.cxx,v $
 //
 // Revision history:
 //  dd-mmm-95 - Original Version
@@ -87,7 +87,7 @@
 static char *source_file = __FILE__;
 
 #ifdef _KEEP_RCS_ID
-static char *rcs_id = "$Source: /isms/cmplrs.src/osprey1.0/be/lno/RCS/array_lower.cxx,v $ $Revision: 1.29 $";
+static char *rcs_id = "$Source: /proj/osprey/CVS/open64/osprey1.0/be/lno/array_lower.cxx,v $ $Revision: 1.1.1.1 $";
 #endif /* _KEEP_RCS_ID */
 
 #include <sys/types.h>

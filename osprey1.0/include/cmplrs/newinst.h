@@ -33,7 +33,7 @@
 */
 
 
-/* $Header: /isms/cmplrs.src/osprey1.0/include/cmplrs/RCS/newinst.h,v 7.17 2001/03/10 03:57:26 mtibuild Exp $ */
+/* $Header: /proj/osprey/CVS/open64/osprey1.0/include/cmplrs/newinst.h,v 1.1.1.1 2005/10/21 19:00:00 marcel Exp $ */
 #define fli_op 0x26
 
 /* this should eventually go into sys/inst.h */

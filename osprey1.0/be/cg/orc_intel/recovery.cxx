@@ -32,8 +32,8 @@
 //
 //  Module :  recovery.h
 //  $Date  :  2001/02/20 21:12:34 $
-//  $Author: gange $
-//  $Source: /u/merge/src/osprey1.0/be/cg/orc_intel/recovery.cxx,v $
+//  $Author: marcel $
+//  $Source: /proj/osprey/CVS/open64/osprey1.0/be/cg/orc_intel/recovery.cxx,v $
 //
 //  Description:
 //  ============
@@ -43,6 +43,13 @@
 //=============================================================================
 //=============================================================================
 
+#include <list>
+#include <map>
+#include <set>
+#include <utility>
+#include <vector>
+#include <unistd.h>
+
 #include "region.h"
 #include "region_bb_util.h"
 #include "speculation.h"
@@ -50,7 +57,6 @@
 #include "label_util.h"
 #include "gra_live.h"
 #include "op.h"
-#include "map.h"
 #include "vt_region.h"
 #include "defs.h"
 #include "cg_flags.h"
@@ -60,9 +66,10 @@
 #include "cgtarget.h"
 #include "ipfec_options.h"
 #include "whirl2ops.h"
-#include <unistd.h>
 
-vector<OP*>  chk_vector;
+typedef mempool_allocator<TN*> TN_ALLOC; 
+typedef mempool_allocator<OP*> OP_ALLOC;    
+std::vector<OP*, OP_ALLOC>  chk_vector;
 
 //=============================================================================
 //Function:  Match_Chk_Ld
@@ -110,7 +117,7 @@ Get_Recovery_BB(OP* chk)
     Is_True(OP_chk(chk),("Input a non-chk OP!"));
 
     TN *target_tn;
-    target_tn = Get_chk_tar(chk);   
+    target_tn = Get_chk_tgt(chk);   
 
     Is_True(TN_is_label(target_tn),("Not a label!"));
 
@@ -137,7 +144,7 @@ Get_Recovery_BB(OP* chk)
 //                    Predicate register   
 //============================================================================= 
 inline void
-Collect_Results(set<TN*, compare_tn>& result_set, OP* op)
+Collect_Results(std::set<TN*, compare_tn, TN_ALLOC>& result_set, OP* op)
 {
     for(INT i = 0; i < OP_results(op); i++){
         TN* result = OP_result(op, i);
@@ -225,14 +232,14 @@ BB* Divide_BB(BB *bb, OP *point)
 static BOOL
 Find_Path_in_Region(REGIONAL_CFG_NODE* from, 
                     REGIONAL_CFG_NODE* to, 
-                    vector<REGIONAL_CFG_NODE *>& path, 
-                    vector<REGIONAL_CFG_NODE *>& visited)
+                    std::vector<REGIONAL_CFG_NODE *>& path, 
+                    std::vector<REGIONAL_CFG_NODE *>& visited)
 {
     Is_True(to != NULL,("to node is NULL."));
 
     if(from == NULL)  
         return FALSE;
-    for(vector<REGIONAL_CFG_NODE *>::iterator iter = visited.begin(); iter != visited.end(); iter++){
+    for(std::vector<REGIONAL_CFG_NODE *>::iterator iter = visited.begin(); iter != visited.end(); iter++){
         if(from == *iter) 
             return FALSE;
     }
@@ -267,7 +274,7 @@ Find_Path_in_Region(REGIONAL_CFG_NODE* from,
 //    - Push all ops on the bb path into a op list. 
 //============================================================================= 
  
-static list<OP *>
+static std::list<OP *>
 Find_Execution_Path(OP *from, OP *to)
 {
     Is_True(CGTARG_Is_OP_Speculative(from), ("op is not a speculative ld!"));
@@ -276,8 +283,8 @@ Find_Execution_Path(OP *from, OP *to)
         
     REGIONAL_CFG_NODE* from_node = Regional_Cfg_Node(OP_bb(from));
     REGIONAL_CFG_NODE* to_node   = Regional_Cfg_Node(OP_bb(to));
-    vector<REGIONAL_CFG_NODE *>  regional_cfg_path;
-    vector<REGIONAL_CFG_NODE *>  visited_node;
+    std::vector<REGIONAL_CFG_NODE *>  regional_cfg_path;
+    std::vector<REGIONAL_CFG_NODE *>  visited_node;
 
     if( from_node == to_node ){
         regional_cfg_path.push_back(from_node);
@@ -286,8 +293,8 @@ Find_Execution_Path(OP *from, OP *to)
             FmtAssert(FALSE,("Can not find a regional cfg path!"));
     }
     
-    list<OP *>  OP_path;
-    for(vector<REGIONAL_CFG_NODE *>::reverse_iterator iter = regional_cfg_path.rbegin(); iter != regional_cfg_path.rend(); iter++){
+    std::list<OP *>  OP_path;
+    for(std::vector<REGIONAL_CFG_NODE *>::reverse_iterator iter = regional_cfg_path.rbegin(); iter != regional_cfg_path.rend(); iter++){
         if ((*iter)->Is_Region()) continue;
         BB* bb = (*iter)->BB_Node();
         if(BB_length(bb) == 0)   continue;
@@ -303,6 +310,19 @@ Find_Execution_Path(OP *from, OP *to)
     }
     return OP_path;
 }
+
+
+static inline BOOL
+In_OP_Vector(std::vector<OP*, OP_ALLOC>& opv, OP* op)
+{
+    for(std::vector<OP*, OP_ALLOC>::iterator iter = opv.begin(); iter != opv.end(); iter++){
+        if(op == *iter){
+            return TRUE;
+        }
+    }
+    return FALSE;
+}
+
 
 //=============================================================================
 //Function:  Do_Build_Recovery_Block
@@ -320,12 +340,15 @@ Find_Execution_Path(OP *from, OP *to)
 //============================================================================= 
 
 static BB *
-Do_Build_Recovery_Block(list<OP*>& Exec_Path)
+Do_Build_Recovery_Block(std::list<OP*>& Exec_Path)
 {
          
-    OP *spec_ld = Exec_Path.front();
-    OP *chk = Exec_Path.back();
+    OP* spec_ld = Exec_Path.front();
+    OP* chk = Exec_Path.back();
         
+    TN* spec_ld_ptn = OP_opnd(spec_ld,0);
+    TN* chk_ptn = OP_opnd(chk,0);
+
     Is_True(CGTARG_Is_OP_Speculative(spec_ld),("op is not a speculative load!"));
     Is_True(OP_chk(chk),("op is not a chk op!"));
     Is_True(Match_Chk_Ld(chk,spec_ld),("chk and spec_ld do not match!"));
@@ -333,89 +356,89 @@ Do_Build_Recovery_Block(list<OP*>& Exec_Path)
     Exec_Path.pop_front();
     Exec_Path.pop_back();
 
-    
-    set<OP*, compare_op>  candidate_ops;
-    set<OP*, compare_op>  cascaded_ops;
-    vector<OP*>  cascaded_loads;
-    set<TN*, compare_tn> spec_def;
-    set<TN*, compare_tn> cascaded_def;
-    Collect_Results(spec_def, spec_ld);
+    std::vector<OP*, OP_ALLOC>  candidate_ops;
+    std::vector<OP*, OP_ALLOC>  cascaded_ops;
+    std::vector<OP*, OP_ALLOC>  cascaded_loads;
+  
+    std::set<TN*, compare_tn, TN_ALLOC> speculative_chain_def;
+    std::set<TN*, compare_tn, TN_ALLOC> cascaded_chain_def;
 
+    Collect_Results(speculative_chain_def, spec_ld);
     
     //==== Identify Flow Dependence Instructions On Speculative Chain ====//
     
-    for(list<OP*>::iterator iter = Exec_Path.begin(); iter != Exec_Path.end(); iter++){
+    for(std::list<OP*, OP_ALLOC>::iterator iter = Exec_Path.begin(); iter != Exec_Path.end(); iter++){
         OP* op = *iter;
-        BOOL is_cascaded_op = FALSE;
+        BOOL on_cascaded_chain = FALSE;
+        BOOL on_speculative_chain = FALSE;
+        BOOL depend_by_predicate = FALSE;
         for(INT i = 0; i < OP_opnds(op); i++){
             TN* opnd = OP_opnd(op,i);
-            if(!TN_is_register(opnd) || TN_is_const_reg(opnd))
+            if(!TN_is_register(opnd) || TN_is_const_reg(opnd)){
                 continue;
-            if(cascaded_def.find(opnd) == cascaded_def.end())
-                continue;
-            is_cascaded_op = TRUE;
-            break;
-        }
-        if(is_cascaded_op){
-            Collect_Results(cascaded_def,op);
-            cascaded_ops.insert(op);
-            continue;
-        }
-        BOOL on_speculative_chain = FALSE;
-        BOOL predicate_dep = FALSE;
-        if(OP_has_predicate(op) && spec_def.find(OP_opnd(op,0)) != spec_def.end()){
-            predicate_dep = TRUE;
-            on_speculative_chain = TRUE;
-        }else{
-            for(INT i = 0; i < OP_opnds(op); i++)
-            {
-                TN* opnd = OP_opnd(op,i);
-                if(!TN_is_register(opnd) || TN_is_const_reg(opnd))
-                    continue;
-                if(spec_def.find(opnd) == spec_def.end())
-                    continue;
+            }
+            if(cascaded_chain_def.find(opnd) != cascaded_chain_def.end()){
+                on_cascaded_chain = TRUE;
+            }
+            if(speculative_chain_def.find(opnd) != speculative_chain_def.end()){
                 on_speculative_chain = TRUE;
-                break;
+                if(i == 0 && OP_has_predicate(op)){ 
+                    depend_by_predicate = TRUE;
+                }
             }
         }
+        if(on_cascaded_chain){
+            cascaded_ops.push_back(op);
+            Collect_Results(cascaded_chain_def,op);
+            continue;
+        }
         if(on_speculative_chain){
+            TN* cur_ptn = OP_opnd(op,0);
             if(OP_baneful(op)){
-                // We should use PRDB here.
-                Is_True(!TN_is_const_reg(OP_opnd(op,0)) && OP_opnd(op,0) != OP_opnd(spec_ld,0),("Find a baneful op on speculative chain!"));
+                // Here we accomodate baneful op on speculative chain because we can not prevent
+                // such kind of cases from occurring currently:
+                // Suppose: P1 and P2 are disjoint.
+                //           (P1)st  [ ]=r36
+                //                ...
+                //           (P2)ld  r36=[ ]
+                // When building reg arcs in dag construction phase, prdb is used to analyze
+                // the relationship between P1 and P2. Thus, we know P1 and P2 are disjoint.
+                // So, no arc will be build between them. However, prdb is not used when
+                // building mem arcs. So there is a memin(dotted) arc from to st to ld.
+                // When global scheduler goes through this code, it will schedule ld across
+                // st and deem it as a data speculation. So the code will be transformed to:
+                //            (P2)ld  r36=[ ]
+                //                 ...
+                //            (P1)st  [ ]=r36
+                //                 ...
+                //                chk  r36 ...
+                //  Hence, we will find a baneful op(the st) on speculative chain from data flow. 
+                Is_True(    cur_ptn != spec_ld_ptn 
+                         && cur_ptn != chk_ptn
+                         && cur_ptn != True_TN,("find a baneful op on speculative chain!"));
+            }else if(depend_by_predicate){
+                candidate_ops.push_back(op);
+                Collect_Results(speculative_chain_def,op);
             }else{
-                if(OP_load(op)){ 
-                    if(CGTARG_Is_OP_Speculative(op)){ 
-                        if(predicate_dep){
-                            candidate_ops.insert(op);
-                            Collect_Results(spec_def,op);
-                            DevWarn("Do_Build_Recovery_Block: {BB%d,id%d} cascaded load's flow dependent opnd is predicate register!", BB_id(OP_bb(op)), OP_map_idx(op));
-                        }else{
-                            cascaded_loads.push_back(op);
-                            cascaded_ops.insert(op);
-                            Collect_Results(cascaded_def,op);
-                        }
+                if(    cur_ptn == spec_ld_ptn 
+                    || cur_ptn == chk_ptn
+                    || cur_ptn == True_TN){
+                    if(OP_load(op)){ 
+                        Is_True(CGTARG_Is_OP_Speculative_Load(op),("cascaded load is not a speculative load!"));
+                        cascaded_loads.push_back(op);
+                        cascaded_ops.push_back(op);
+                        Collect_Results(cascaded_chain_def,op);
                     }else{
-                        // We should use PRDB here.
-                        if(predicate_dep || (!TN_is_const_reg(OP_opnd(op,0)) && OP_opnd(op,0) != OP_opnd(spec_ld,0))){
-                            if(OP_opnd(spec_ld,0) == OP_opnd(op,0) || TN_is_const_reg(OP_opnd(op,0))){
-                                Is_True(CGTARG_Is_OP_Speculative_Load(spec_ld) && !CGTARG_Is_OP_Advanced_Load(spec_ld),("Incorrect cascaded speculative chain: ld.a--->ld"));
-                            }
-                            candidate_ops.insert(op);
-                            Collect_Results(spec_def,op);
-                        }else{
-                            FmtAssert(FALSE,("a non-speculative cascaded load!"));
-                        }
+                        candidate_ops.push_back(op);
+                        Collect_Results(speculative_chain_def,op);
                     }
-                }else{
-                    candidate_ops.insert(op);
-                    Collect_Results(spec_def,op);
                 }
             }
         }        
     }
 
     if(CGTARG_Is_OP_Speculative_Load(spec_ld)){
-        for(set<TN*>::iterator iter = spec_def.begin(); iter != spec_def.end(); iter++){
+        for(std::set<TN*>::iterator iter = speculative_chain_def.begin(); iter != speculative_chain_def.end(); iter++){
             TN* tn = *iter;
             Set_TN_is_take_nat(tn);
         }
@@ -423,23 +446,22 @@ Do_Build_Recovery_Block(list<OP*>& Exec_Path)
    
     //==== Identify Output Dependence Instructions On Speculative Chain ====//
 
-    spec_def.clear();
-    Collect_Results(spec_def, spec_ld);         
-    for(list<OP *>::iterator iter = Exec_Path.begin(); iter != Exec_Path.end(); iter++){
-        OP* op = *iter;        
-        if(candidate_ops.find(op) != candidate_ops.end() ){
-            Collect_Results(spec_def, op);
-        } else {
-            if(cascaded_ops.find(op) != cascaded_ops.end()) 
-                continue;
-            for(INT i = 0; i < OP_results(op); i++) {
-                TN *target = OP_result(op, i);
-                if(spec_def.find(target) != spec_def.end()){
-                    Is_True(!OP_baneful(op),("Find a baneful op in identify output dependence stage!"));    
-                    candidate_ops.insert(op);
-                    Collect_Results(spec_def, op);                   
-                    break;
-                }
+    for(std::list<OP*, OP_ALLOC>::iterator iter = Exec_Path.begin(); iter != Exec_Path.end(); iter++){
+        OP* op = *iter;
+        BOOL is_candidate = FALSE;
+        if(In_OP_Vector(candidate_ops,op)){
+            continue;
+        }
+        if(In_OP_Vector(cascaded_ops,op)){
+            continue;
+        }
+        for(INT i = 0; i < OP_results(op); i++) {
+            TN *rslt = OP_result(op, i);
+            if(speculative_chain_def.find(rslt) != speculative_chain_def.end()){
+                Is_True(!OP_baneful(op),("Find a baneful op in identify output dependence stage!"));    
+                candidate_ops.push_back(op);
+                Collect_Results(speculative_chain_def, op);                   
+                break;
             }
         }
     }
@@ -447,9 +469,9 @@ Do_Build_Recovery_Block(list<OP*>& Exec_Path)
     //========= Build Recovery Block=========//
             
     if( candidate_ops.empty() && CGTARG_Is_OP_Advanced_Load(spec_ld) ){
-        OP *check_ld = Dup_OP(spec_ld);
-        TN *pr_tn = OP_opnd(chk, 0);
-        TN *ldtype_tn = OP_Is_Float_Mem(spec_ld) ? Gen_Enum_TN(ECV_fldtype_c_nc) : Gen_Enum_TN(ECV_ldtype_c_nc);
+        OP* check_ld = Dup_OP(spec_ld);
+        TN* pr_tn = OP_opnd(chk, 0);
+        TN* ldtype_tn = OP_Is_Float_Mem(spec_ld) ? Gen_Enum_TN(ECV_fldtype_c_nc) : Gen_Enum_TN(ECV_ldtype_c_nc);
         Set_OP_opnd(check_ld, 0, pr_tn);
         Set_OP_opnd(check_ld, enum_ldtype_pos, ldtype_tn);
         Set_OP_cond_def_kind(check_ld, OP_ALWAYS_COND_DEF); 
@@ -460,32 +482,34 @@ Do_Build_Recovery_Block(list<OP*>& Exec_Path)
         return NULL;
     }
     
-    BB *last_bb = OP_bb(chk);
+    BB* last_bb = OP_bb(chk);
     while(BB_next(last_bb) != NULL)  
         last_bb = BB_next(last_bb);
-    BB *recovery_bb = Gen_And_Insert_BB_After(last_bb);
+    BB* recovery_bb = Gen_And_Insert_BB_After(last_bb);
 
-    OP *recovery_op = Dup_OP ( spec_ld );
-    TN *ldtype_tn = OP_Is_Float_Mem(recovery_op) ? Gen_Enum_TN(ECV_fldtype) : Gen_Enum_TN(ECV_ldtype);    
+    OP* recovery_op = Dup_OP ( spec_ld );
+    TN* ldtype_tn = OP_Is_Float_Mem(recovery_op) ? Gen_Enum_TN(ECV_fldtype) : Gen_Enum_TN(ECV_ldtype);    
     Set_OP_opnd ( recovery_op, enum_ldtype_pos, ldtype_tn );
     Reset_OP_speculative (recovery_op);
     BB_Append_Op (recovery_bb, recovery_op);
  
-    for(list<OP *>::iterator iter = Exec_Path.begin(); iter != Exec_Path.end(); iter++){
-        OP *op = *iter;
-        if( candidate_ops.find(op) != candidate_ops.end() ){
-            for(INT i=0; i < OP_results(op); i++){
-                TN *result_tn = OP_result(op,i);
-                if(TN_Is_Allocatable(result_tn))
-                     GTN_UNIVERSE_Add_TN(result_tn);
+    for(std::list<OP*>::iterator exec_path_iter = Exec_Path.begin(); exec_path_iter != Exec_Path.end(); exec_path_iter++){
+        OP* op = *exec_path_iter;
+        for(std::vector<OP*, OP_ALLOC>::iterator cand_iter = candidate_ops.begin(); cand_iter != candidate_ops.end(); cand_iter++){
+            if(op == *cand_iter){
+                for(INT i=0; i < OP_results(op); i++){
+                    TN *result_tn = OP_result(op,i);
+                    if(TN_Is_Allocatable(result_tn))
+                         GTN_UNIVERSE_Add_TN(result_tn);
+                }
+                for(INT i=0; i < OP_opnds(op); i++){
+                    TN *opnd_tn = OP_opnd(op,i);
+                    if(TN_Is_Allocatable(opnd_tn))
+                         GTN_UNIVERSE_Add_TN(opnd_tn);
+                }
+                recovery_op = Dup_OP(op);
+                BB_Append_Op(recovery_bb, recovery_op);
             }
-            for(INT i=0; i < OP_opnds(op); i++){
-                TN *opnd_tn = OP_opnd(op,i);
-                if(TN_Is_Allocatable(opnd_tn))
-                     GTN_UNIVERSE_Add_TN(opnd_tn);
-            }
-            recovery_op = Dup_OP(op);
-            BB_Append_Op (recovery_bb, recovery_op);
         }
     }
 
@@ -496,7 +520,7 @@ Do_Build_Recovery_Block(list<OP*>& Exec_Path)
         return  recovery_bb;
 
     // spec_ld == ld.a or ld.sa
-    for(vector<OP *>::iterator iter = cascaded_loads.begin(); iter != cascaded_loads.end(); iter++){        
+    for(std::vector<OP *, OP_ALLOC>::iterator iter = cascaded_loads.begin(); iter != cascaded_loads.end(); iter++){        
         OP *op = *iter;               
         if( CGTARG_Is_OP_Speculative_Load(op) &&  CGTARG_Is_OP_Advanced_Load(op) ){  // ld.sa
             TN *reg_tn = OP_result(op, 0);
@@ -533,21 +557,19 @@ static void
 Build_Recovery_Block()
 {
 
-    map<OP *, OP *, compare_op>::iterator  iter;
-    for(iter = Recovery_Info.begin(); iter != Recovery_Info.end(); ++iter) {
+    std::vector< std::pair<OP*,OP*> >::iterator iter;
+    for(iter = load_chk_pairs.begin(); iter != load_chk_pairs.end(); ++iter){
 
-        OP* chk_op = iter->first;
-        OP *load_op = iter->second;
+        OP* load_op = iter->first;
+        OP* chk_op  = iter->second;
+        Is_True(Match_Chk_Ld(chk_op,load_op),("chk and spec_ld do not match!"));
 
-        Is_True(OP_chk(chk_op),("not a chk op!"));
-        Is_True(CGTARG_Is_OP_Speculative(load_op),("not a speculative load!")); 
-
-        list<OP *> OP_exec_path = Find_Execution_Path(load_op, chk_op); 
+	std::list<OP *> OP_exec_path = Find_Execution_Path(load_op, chk_op); 
         BB *recovery_bb = Do_Build_Recovery_Block(OP_exec_path);
         if( recovery_bb ){
             Set_BB_recovery(recovery_bb);
             TN *label_tn = Gen_Label_TN(Gen_Label_For_BB(recovery_bb), 0);            
-            Set_chk_tar(chk_op, label_tn); 
+            Set_chk_tgt(chk_op, label_tn); 
             chk_vector.push_back(chk_op);     
         }
     }
@@ -568,7 +590,7 @@ Update_CFG()
 {
     INT16 count = 0;
 
-    vector<OP*>::iterator iter;
+    std::vector<OP*, OP_ALLOC>::iterator iter;
     for(iter = chk_vector.begin(); iter != chk_vector.end(); iter++){
         
         OP *chk_op = *iter;
@@ -650,10 +672,11 @@ INT16
 Generate_Recovery_Code()
 {
     INT16 count;
+    Set_Error_Phase("recovery block generation");   
     chk_vector.clear();
     Build_Recovery_Block();
     count = Update_CFG();
-    Recovery_Info.clear();
+    load_chk_pairs.clear();
     return count;   
 }
 
@@ -993,11 +1016,9 @@ Handle_Chk_Split_Bunch(BB* head_bb)
     // in the same BB.
 
     BB* tail_bb = head_bb;
-    BOOL intact = BB_scheduled(head_bb);
     for(BB* bb = BB_next(head_bb); bb; bb = BB_next(bb)){
         if(BB_chk_split(bb) && !BB_chk_split_head(bb)){
             tail_bb = bb;
-            intact = intact && BB_scheduled(bb);
             continue;            
         }
         if(BB_length(bb) == 0){
@@ -1033,12 +1054,10 @@ Handle_Chk_Split_Bunch(BB* head_bb)
         bb = head_bb;
     }
 
-    // If the bunches are not disarrayed, do not do local scheduling.
-    
-    if(!intact || !BB_Check_Bundle_Integrity(head_bb)){
-        SCHEDULER local_scheduler(head_bb, FALSE);
-        local_scheduler.Schedule_BB();
-    }
+
+    SCHEDULER local_scheduler(head_bb, FALSE);
+    local_scheduler.Schedule_BB();
+
     Set_BB_scheduled(head_bb);
     Set_BB_chk_split(head_bb);   
     BB* end_bb = head_bb;
@@ -1053,65 +1072,68 @@ Handle_Chk_Split_Bunch(BB* head_bb)
             BB* rec_bb  = Get_Recovery_BB(chk);
             BB* back_bb = NULL;
             BB* btm_bb  = NULL;
-            if(chk == BB_last_op(home_bb)){
-                back_bb = BB_Fall_Thru_Successor(OP_bb(chk));        
-                Is_True(back_bb != NULL,("A dangling chk!"));		
-                Link_Pred_Succ_with_Prob(home_bb,rec_bb,rec_prob);
-                Add_Goto(rec_bb,back_bb);
-            }else if(OP_start_bundle(OP_next(chk))){
-                back_bb = Divide_BB(home_bb,chk);
-                Link_Pred_Succ_with_Prob(home_bb,back_bb,btm_prob);
-                BB_freq(back_bb) = BB_freq(home_bb);
-                Set_BB_chk_split(back_bb);
-                Set_BB_scheduled(back_bb);
-                Link_Pred_Succ_with_Prob(home_bb,rec_bb,rec_prob);
-                Add_Goto(rec_bb,back_bb);
-            }else{
-                BOOL has_chk = FALSE;
-                BOOL has_br  = FALSE;
-                OP* bar = NULL;
-                for(OP* op = OP_next(chk); (op != NULL && !OP_start_bundle(op)); op = OP_next(op)){
+            BOOL has_chk = FALSE;
+            BOOL has_br  = FALSE;
+            OP* bar = chk;
+            OP* tmp = chk;
+            float fall_thru_prob = 0;
+            
+            // Try divide it at a bundle && group boundary. If fail, divide it at a bundle boundary 
+            
+            while (tmp && !OP_end_group(tmp)) tmp = OP_next(tmp);
+            if(tmp && (!OP_next(tmp) ||OP_start_bundle(OP_next(tmp)))) {
+                OP* op = chk;
+                while(op != NULL && !OP_end_group(op)) {
+                    op = OP_next(op);
                     bar = op;
                     OP* dup_op = Dup_OP(op);
                     BB_Append_Op(rec_bb,dup_op);
                     if(OP_chk(op))  has_chk = TRUE;
-                    if(TOP_is_xfer(OP_code(op)) || OP_call(op))  has_br = TRUE;
+                    if(TOP_is_xfer(OP_code(op)) || OP_call(op)) has_br = TRUE;
+                }	
+            } else {
+                for(OP* op = OP_next(chk); (op != NULL && !OP_start_bundle(op)); op = OP_next(op)) {
+                    bar = op;
+                    OP* dup_op = Dup_OP(op);
+                    BB_Append_Op(rec_bb,dup_op);
+                    if(OP_chk(op))  has_chk = TRUE;
+                    if(TOP_is_xfer(OP_code(op)) || OP_call(op)) has_br = TRUE;
                 }
-                back_bb = Divide_BB(home_bb,bar);
-                float fall_thru_prob = 0;	
-                if(back_bb == NULL){
-                    back_bb = BB_Fall_Thru_Successor(home_bb);
-                    if(back_bb != NULL){
-                        BBLIST *succ = BB_Find_Succ(home_bb,back_bb);
-                        fall_thru_prob = BBLIST_prob(succ);
-                    }
-                }else{
-                    Is_True(has_br == FALSE,("Branch op should be in the last bundle of its' home BB!"));
-                    Link_Pred_Succ_with_Prob(home_bb,back_bb,btm_prob);
-                    BB_freq(back_bb) = BB_freq(home_bb);
-                    Set_BB_chk_split(back_bb);
-                    Set_BB_scheduled(back_bb);
+            }
+            
+            back_bb = Divide_BB(home_bb,bar);
+            if(back_bb == NULL){
+                back_bb = BB_Fall_Thru_Successor(home_bb);
+                if(back_bb != NULL){
+                    BBLIST *succ = BB_Find_Succ(home_bb,back_bb);
+                    fall_thru_prob = BBLIST_prob(succ);
                 }
-                if(back_bb != NULL){		
-                    Add_Goto(rec_bb,back_bb);
-                }
-                if(has_chk || has_br){
-                    btm_bb = Divide_BB(home_bb,chk);
-                    Link_Pred_Succ_with_Prob(home_bb,btm_bb,btm_prob);
-                    BB_freq(btm_bb) = BB_freq(home_bb);
-                    Set_BB_chk_split(btm_bb);
-                    Set_BB_scheduled(btm_bb);
-                }
-                Link_Pred_Succ_with_Prob(home_bb,rec_bb,rec_prob);
-                if(has_br && back_bb != NULL){
-		    BB* frag_bb = Divide_BB(rec_bb,OP_prev(BB_last_op(rec_bb)));
-                    BB_Copy_All_Succs(rec_bb,btm_bb);
-                    Change_Succ(rec_bb,back_bb,frag_bb);
-                    BB_freq(frag_bb) = BB_freq(rec_bb) * fall_thru_prob;
-                    Reset_BB_scheduled(rec_bb);
-                    Reset_BB_scheduled(frag_bb);
-                    Set_BB_recovery(frag_bb);
-                }
+            }else{
+                Is_True(has_br == FALSE,("Branch op should be in the last bundle of its' home BB!"));
+                Link_Pred_Succ_with_Prob(home_bb,back_bb,btm_prob);
+                BB_freq(back_bb) = BB_freq(home_bb);
+                Set_BB_chk_split(back_bb);
+                Set_BB_scheduled(back_bb);
+            }
+            if(back_bb != NULL){		
+                Add_Goto(rec_bb,back_bb);
+            }
+            if(has_chk || has_br){
+                btm_bb = Divide_BB(home_bb,chk);
+                Link_Pred_Succ_with_Prob(home_bb,btm_bb,btm_prob);
+                BB_freq(btm_bb) = BB_freq(home_bb);
+                Set_BB_chk_split(btm_bb);
+                Set_BB_scheduled(btm_bb);
+            }
+            Link_Pred_Succ_with_Prob(home_bb,rec_bb,rec_prob);
+            if(has_br && back_bb != NULL){
+	            BB* frag_bb = Divide_BB(rec_bb,OP_prev(BB_last_op(rec_bb)));
+                BB_Copy_All_Succs(rec_bb,btm_bb);
+                Change_Succ(rec_bb,back_bb,frag_bb);
+                BB_freq(frag_bb) = BB_freq(rec_bb) * fall_thru_prob;
+                Reset_BB_scheduled(rec_bb);
+                Reset_BB_scheduled(frag_bb);
+                Set_BB_recovery(frag_bb);
             }
         }
         if(cur_op == last_op){

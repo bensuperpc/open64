@@ -22,7 +22,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #endif /* HAVE_CONFIG_H */
 
 #ifndef lint
-static const char rcsid[] = "@(#) $Id: memset.c,v 1.1 2000/03/08 22:26:20 mpm Exp $";
+static const char rcsid[] = "@(#) $Id: memset.c,v 1.1.1.1 2005/10/21 19:00:00 marcel Exp $";
 #endif /* lint */
 
 #include <sys/types.h>

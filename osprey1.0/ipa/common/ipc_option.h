@@ -37,10 +37,10 @@
  * ====================================================================
  *
  * Module: ipc_option.h
- * $Revision: 1.16 $
- * $Date: 2001/03/10 04:02:21 $
- * $Author: mtibuild $
- * $Source: /isms/cmplrs.src/osprey1.0/ipa/common/RCS/ipc_option.h,v $
+ * $Revision: 1.1.1.1 $
+ * $Date: 2005/10/21 19:00:00 $
+ * $Author: marcel $
+ * $Source: /proj/osprey/CVS/open64/osprey1.0/ipa/common/ipc_option.h,v $
  *
  * Revision history:
  *  31-Jul-95 - Original Version
@@ -61,9 +61,7 @@
 #include "strtab.h"             // STRTAB_TYPE
 #endif
 
-#ifndef __SGI_STL_HASH_MAP_H
-#include <hash_map.h>
-#endif
+#include <ext/hash_map>
 
 #ifndef mempool_allocator_INCLUDED
 #include "mempool_allocator.h"
@@ -85,8 +83,8 @@ struct eqint
   }
 };
 
-typedef  hash_map<const char*, UINT, hash<const char*>, eqstr > INLINE_PU_MAP;
-typedef  hash_map<const INT, UINT, hash<INT> > INLINE_EDGE_MAP;
+typedef __gnu_cxx::hash_map<const char*, UINT, __gnu_cxx::hash<const char*>, eqstr > INLINE_PU_MAP;
+typedef __gnu_cxx::hash_map<const INT, UINT, __gnu_cxx::hash<INT> > INLINE_EDGE_MAP;
 
 extern UINT User_Specified_Name_Info(char *);
 extern UINT User_Specified_Edge_Info(INT);

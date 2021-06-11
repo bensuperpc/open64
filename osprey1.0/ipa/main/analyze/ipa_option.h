@@ -37,10 +37,10 @@
  * ====================================================================
  *
  * Module: ipa_option.h
- * $Revision: 1.58 $
- * $Date: 2001/03/10 04:12:52 $
- * $Author: mtibuild $
- * $Source: /isms/cmplrs.src/osprey1.0/ipa/main/analyze/RCS/ipa_option.h,v $
+ * $Revision: 1.1.1.1 $
+ * $Date: 2005/10/21 19:00:00 $
+ * $Author: marcel $
+ * $Source: /proj/osprey/CVS/open64/osprey1.0/ipa/main/analyze/ipa_option.h,v $
  *
  * Revision history:
  *  08-Jun-95 - Original Version

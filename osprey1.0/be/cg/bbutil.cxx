@@ -37,10 +37,10 @@
  * ====================================================================
  *
  * Module: bbutil.c
- * $Revision: 1.13 $
- * $Date: 2002/09/13 03:31:59 $
- * $Author: flv $
- * $Source: /u/merge/src/osprey1.0/be/cg/bbutil.cxx,v $
+ * $Revision: 1.1.1.1 $
+ * $Date: 2005/10/21 19:00:00 $
+ * $Author: marcel $
+ * $Source: /proj/osprey/CVS/open64/osprey1.0/be/cg/bbutil.cxx,v $
  *
  * Revision history:
  *  22-Sept-89 - Original Version
@@ -57,7 +57,7 @@
 
 #include <alloca.h>
 #include <stdio.h>
-#include <iterator.h>
+#include <iterator>
 #include "defs.h"
 #include "symtab.h"
 #include "config.h"
@@ -97,7 +97,7 @@
 #include "region_bb_util.h"
 #include "region.h"
 
-#include "vector.h"
+#include <vector>
 #include "if_conv.h"
 
 /* Allocate basic blocks for the duration of the PU. */
@@ -1818,6 +1818,39 @@ BB *BB_Unique_Successor( BB *bb )
   return succ;
 }
 
+void
+Remove_Explicit_Branch (BB *bb)
+/* -----------------------------------------------------------------------
+ * Remove useless explicit branch to BB_next(bb) 
+ * -----------------------------------------------------------------------
+ */
+{
+  if ( bb == NULL) return;
+  BB *next = BB_next(bb);
+
+  if (next && BB_Find_Succ(bb, next)) {
+    /* Make sure it's not a branch target (direct or indirect). */
+    OP *br_op = BB_branch_op(bb);
+    if (br_op) {
+      INT tfirst, tcount;
+      CGTARG_Branch_Info(br_op, &tfirst, &tcount);
+      if (tcount != 0) {
+        TN *dest = OP_opnd(br_op, tfirst);
+        DevAssert(tcount == 1, ("%d branch targets, expected 1", tcount));
+        DevAssert(TN_is_label(dest), ("expected label"));
+        if (Is_Label_For_BB(TN_label(dest), next)) {
+          /* Remove useless explicit branch to <next> */
+          BB_Remove_Op(bb, br_op);
+        } else {
+          DevAssert(OP_cond(br_op), ("BB_succs(BB:%d) wrongly contains BB:%d",
+                                     BB_id(bb), BB_id(next)));
+        }
+      }
+    }
+  }
+}
+
+
 /* =======================================================================
  *
  *  BB_Fall_Thru_Successor
@@ -2852,7 +2885,7 @@ static BB_REGION_SET region_temp;
  *
  *========================================================================
  */
-void BB_REGION_to_Vector(vector<BB*>& bv, const BB_REGION& r)
+void BB_REGION_to_Vector(std::vector<BB*>& bv, const BB_REGION& r)
 {
   BB_REGION_SET region_temp;
 
@@ -2865,7 +2898,7 @@ void BB_REGION_to_Vector(vector<BB*>& bv, const BB_REGION& r)
   // Recursively put bbs reachable from the entries blocks without 
   // passing through an exit block into the bitset.  Process each BB
   // at most once.
-  vector<BB*> stack(r.entries.begin(), r.entries.end());
+  std::vector<BB*> stack(r.entries.begin(), r.entries.end());
   while (!stack.empty()) {
     BB *bb = stack.back();
     stack.pop_back();
@@ -2907,7 +2940,7 @@ BB_SET *BB_REGION_to_BB_SET(BB_SET *bbs, const BB_REGION& r, MEM_POOL *pool)
   // Recursively put bbs reachable from the entries blocks without 
   // passing through an exit block into the bitset.  Process each BB
   // at most once.
-  vector<BB*> stack(r.entries.begin(), r.entries.end());
+  std::vector<BB*> stack(r.entries.begin(), r.entries.end());
   while (!stack.empty()) {
     BB *bb = stack.back();
     stack.pop_back();
@@ -3013,7 +3046,7 @@ void BB_REGION::Verify() const
   // Verify that all OPs has CG_LOOP_INFO
   if (Has_omega()) {
     
-    vector<BB*> stack(entries.begin(), entries.end());
+    std::vector<BB*> stack(entries.begin(), entries.end());
     while (!stack.empty()) {
       BB *bb = stack.back();
       stack.pop_back();

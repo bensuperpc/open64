@@ -3,10 +3,10 @@
 // ====================================================================
 //
 // Module: opt_revise_ssa.cxx
-// $Revision: 1.5 $
-// $Date: 2002/09/24 10:50:22 $
-// $Author: gange $
-// $Source: /u/merge/src/osprey1.0/be/opt/opt_revise_ssa.cxx,v $
+// $Revision: 1.1.1.1 $
+// $Date: 2005/10/21 19:00:00 $
+// $Author: marcel $
+// $Source: /proj/osprey/CVS/open64/osprey1.0/be/opt/opt_revise_ssa.cxx,v $
 //
 // ====================================================================
 //

@@ -33,7 +33,7 @@ C  http://oss.sgi.com/projects/GenInfo/NoticeExplan
 C
 C
 
-C $Header: /isms/cmplrs.src/osprey1.0/libF77/RCS/c_sinf.F,v 8.3 2001/03/10 04:30:28 mtibuild Exp $ 
+C $Header: /proj/osprey/CVS/open64/osprey1.0/libF77/c_sinf.F,v 1.1.1.1 2005/10/21 19:00:00 marcel Exp $ 
 
 	complex function c_sin(z)
 	real z(2), r, i

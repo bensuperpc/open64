@@ -38,10 +38,10 @@
  * ====================================================================
  *
  * Module: stblock.h
- * $Revision: 1.56 $
- * $Date: 2001/03/10 02:16:14 $
- * $Author: mtibuild $
- * $Source: /isms/cmplrs.src/osprey1.0/be/com/RCS/stblock.h,v $
+ * $Revision: 1.1.1.1 $
+ * $Date: 2005/10/21 19:00:00 $
+ * $Author: marcel $
+ * $Source: /proj/osprey/CVS/open64/osprey1.0/be/com/stblock.h,v $
  *
  * Revision history:
  *  11-Nov-94 - Original Version

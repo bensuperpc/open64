@@ -3,9 +3,9 @@
 // ====================================================================
 //
 // Module: opt_leaf_iter.cxx
-// $Revision: 1.8 $
-// $Date: 2001/03/10 02:43:45 $
-// $Author: mtibuild $
+// $Revision: 1.1.1.1 $
+// $Date: 2005/10/21 19:00:00 $
+// $Author: marcel $
 // $Source: /isms/cmplrs.src/osprey1.0/be/opt/RCS/opt_leaf_iter.cxx
 //
 // ====================================================================

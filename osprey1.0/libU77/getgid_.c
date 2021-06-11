@@ -27,7 +27,7 @@
 
 */
 
-/* $Header: /isms/cmplrs.src/osprey1.0/libU77/RCS/getgid_.c,v 8.4 2001/02/20 23:39:47 mtibuild Exp $ */
+/* $Header: /proj/osprey/CVS/open64/osprey1.0/libU77/getgid_.c,v 1.1.1.1 2005/10/21 19:00:00 marcel Exp $ */
 
 #include <sys/types.h>
 #include <unistd.h>

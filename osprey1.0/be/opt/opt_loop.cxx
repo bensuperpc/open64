@@ -3,10 +3,10 @@
 // ====================================================================
 //
 // Module: opt_loop.cxx
-// $Revision: 1.63 $
-// $Date: 2001/03/10 02:44:06 $
-// $Author: mtibuild $
-// $Source: /isms/cmplrs.src/osprey1.0/be/opt/RCS/opt_loop.cxx,v $
+// $Revision: 1.1.1.1 $
+// $Date: 2005/10/21 19:00:00 $
+// $Author: marcel $
+// $Source: /proj/osprey/CVS/open64/osprey1.0/be/opt/opt_loop.cxx,v $
 //
 // Revision history:
 //  28-JAN-95 shin - Original Version
@@ -73,12 +73,12 @@
 
 #ifdef _KEEP_RCS_ID
 #define opt_loop_CXX	"opt_loop.cxx"
-static char *rcs_id = 	opt_loop_CXX"$Revision: 1.63 $";
+static char *rcs_id = 	opt_loop_CXX"$Revision: 1.1.1.1 $";
 #endif /* _KEEP_RCS_ID */
 
 #define USE_STANDARD_TYPES
-#include <set.h>
-#include <algo.h>
+#include <set>
+#include <algorithm>
 
 #include "defs.h"
 #include "config.h"
@@ -1065,18 +1065,18 @@ BOOL mod_iter(STMTREP *stmt, BOOL_FUNC f)
 
 
 struct collect_use {
-  set<AUX_ID> *use;
+  std::set<AUX_ID> *use;
   BOOL operator()(CODEREP *cr) {
     if (cr->Kind() == CK_VAR)
       use->insert(cr->Aux_id());
     return FALSE;
   }
-  collect_use(set<AUX_ID> *u) : use(u) {}
+  collect_use(std::set<AUX_ID> *u) : use(u) {}
 };
 
 
 struct collect_def {
-  set<AUX_ID> *def;
+  std::set<AUX_ID> *def;
   BOOL operator()(CODEREP *cr) {
     if (cr->Kind() == CK_VAR)
       def->insert(cr->Aux_id());
@@ -1086,7 +1086,7 @@ struct collect_def {
     def->insert(id);
     return FALSE;
   }
-  collect_def(set<AUX_ID> *d) : def(d) {}
+  collect_def(std::set<AUX_ID> *d) : def(d) {}
 };
 
 
@@ -1112,8 +1112,8 @@ Compute_dependence(STMTREP *stmt, BB_NODE *end_bb, STMTREP *after_this_stmt)
   Is_True(stmt->Bb()->Dominates(end_bb), 
 	  ("Compute_dependence: inconsistency input"));  // this impl didn't know liveness
 
-  set<AUX_ID> use;
-  set<AUX_ID> def;
+  std::set<AUX_ID> use;
+  std::set<AUX_ID> def;
   {
     collect_use collect_use(&use);
     collect_def collect_def(&def);
@@ -1126,8 +1126,8 @@ Compute_dependence(STMTREP *stmt, BB_NODE *end_bb, STMTREP *after_this_stmt)
   STMTREP *begin_stmt;
   STMTREP *end_stmt;
 
-  set<AUX_ID> path_use;
-  set<AUX_ID> path_def;
+  std::set<AUX_ID> path_use;
+  std::set<AUX_ID> path_def;
   collect_use collect_use(&path_use);
   collect_def collect_def(&path_def);
 
@@ -1158,7 +1158,7 @@ Compute_dependence(STMTREP *stmt, BB_NODE *end_bb, STMTREP *after_this_stmt)
 
   DEPENDENCE_KIND ret = NO_DEPENDENCE;
   
-  vector<AUX_ID> dummy_vec;
+  std::vector<AUX_ID> dummy_vec;
 
   // anti-dependence
   set_intersection(use.begin(), use.end(), path_def.begin(), path_def.end(), 

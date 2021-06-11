@@ -38,10 +38,10 @@
 // ====================================================================
 //
 // Module: opt_ipaa_io.h
-// $Revision: 1.6 $
-// $Date: 2001/03/10 02:14:29 $
-// $Author: mtibuild $
-// $Source: /isms/cmplrs.src/osprey1.0/be/com/RCS/opt_ipaa_io.h,v $
+// $Revision: 1.1.1.1 $
+// $Date: 2005/10/21 19:00:00 $
+// $Author: marcel $
+// $Source: /proj/osprey/CVS/open64/osprey1.0/be/com/opt_ipaa_io.h,v $
 //
 // Revision history:
 //  22-Nov-95 - Original Version
@@ -60,7 +60,7 @@
 #define cxx_opt_ipaa_io_INCLUDED
 
 #ifdef _KEEP_RCS_ID
-static char *opt_ipaa_io_rcs_id = "$Source: /isms/cmplrs.src/osprey1.0/be/com/RCS/opt_ipaa_io.h,v $ $Revision: 1.6 $";
+static char *opt_ipaa_io_rcs_id = "$Source: /proj/osprey/CVS/open64/osprey1.0/be/com/opt_ipaa_io.h,v $ $Revision: 1.1.1.1 $";
 #endif /* _KEEP_RCS_ID */
 
 extern "C" {

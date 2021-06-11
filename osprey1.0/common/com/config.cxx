@@ -37,10 +37,10 @@
  * ====================================================================
  *
  * Module: config.c
- * $Revision: 1.10 $
- * $Date: 2002/12/27 03:22:11 $
- * $Author: lhb $
- * $Source: /u/merge/src/osprey1.0/common/com/config.cxx,v $
+ * $Revision: 1.1.1.1 $
+ * $Date: 2005/10/21 19:00:00 $
+ * $Author: marcel $
+ * $Source: /proj/osprey/CVS/open64/osprey1.0/common/com/config.cxx,v $
  *
  * Revision history:
  *  06-Jun-90 -	Original Version (moved	from cdriver.c)
@@ -61,7 +61,7 @@
 
 #ifdef _KEEP_RCS_ID
 /*REFERENCED*/
-static char *rcs_id = "$Source: /u/merge/src/osprey1.0/common/com/config.cxx,v $ $Revision: 1.10 $";
+static char *rcs_id = "$Source: /proj/osprey/CVS/open64/osprey1.0/common/com/config.cxx,v $ $Revision: 1.1.1.1 $";
 #endif /* _KEEP_RCS_ID */
 
 #ifdef FRONT_END	/* For setting fullwarn, woff in front end */
@@ -96,7 +96,7 @@ static INT32 Ignore_Int;
 /* The following contains the phase-specific option groups and their
  * associated variable definitions:
  */
-#include "config_TARG.cxx"
+#include "config_targ_opt.cxx"
 #include "config_debug.cxx"
 #include "config_ipa.cxx"
 #include "config_list.cxx"

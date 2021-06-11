@@ -233,7 +233,8 @@ BE_ORC_SRCS = 		\
 	vt_partition.cxx	\
 	vt_region.cxx		\
 	init.cxx		\
-        stride_prefetch.cxx      
+    stride_prefetch.cxx     \
+    loop_invar_hoist.cxx
 
 ifneq "$(ORC_TARG)" "KAPI"
   BE_ORC_SRCS += targ_issue_port.cxx
@@ -374,8 +375,8 @@ endif
 	cd $(TARG_BE) && $(MAKE)
 #	cd $(TARG_CG) && $(MAKE)
 ifeq ($(BUILD_OS), LINUX)
-	if ! test -a be.so; then ln -sf $(TARG_BE)/be.so .; fi
-#	if ! test -a $(TARGET_SO); then ln -sf $(TARG_TARG_INFO)/$(TARGET_SO) .; fi
+	if ! test -e be.so; then ln -sf $(TARG_BE)/be.so .; fi
+#	if ! test -e $(TARGET_SO); then ln -sf $(TARG_TARG_INFO)/$(TARGET_SO) .; fi
 endif
 ## verify that  if up to date
 ifeq ($(BUILD_PCH), USE_PCH)
@@ -434,13 +435,13 @@ orc_ict.so:	$(ORC_OBJS) $(ORC_CXX_OBJS) $(BE_ORC_ICT_DIR)/Exported \
 	$(ORC_OBJS) $(ORC_CXX_OBJS) $(ORC_DSOS) $(LLDLIBS)
 
 cg.so:	
-	if ! test -a cg.so; then ln -sf $(TARG_CG)/cg.so .; fi
+	if ! test -e cg.so; then ln -sf $(TARG_CG)/cg.so .; fi
 
 be.so:	
-	if ! test -a be.so; then ln -sf $(TARG_BE)/be.so .; fi
+	if ! test -e be.so; then ln -sf $(TARG_BE)/be.so .; fi
 
 orc_intel.so:	
-	if ! test -a orc_intel.so; then ln -sf $(TARG_ORC_INTEL)/orc_intel.so .; fi
+	if ! test -e orc_intel.so; then ln -sf $(TARG_ORC_INTEL)/orc_intel.so .; fi
 
 :	
 

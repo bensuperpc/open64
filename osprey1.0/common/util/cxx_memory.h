@@ -116,10 +116,10 @@
 ***
 **/
 
-/** $Revision: 1.13 $
-*** $Date: 2001/03/10 03:27:18 $
-*** $Author: mtibuild $
-*** $Source: /isms/cmplrs.src/osprey1.0/common/util/RCS/cxx_memory.h,v $
+/** $Revision: 1.1.1.1 $
+*** $Date: 2005/10/21 19:00:00 $
+*** $Author: marcel $
+*** $Source: /proj/osprey/CVS/open64/osprey1.0/common/util/cxx_memory.h,v $
 **/
 
 #ifndef CXX_MEMORY_INCLUDED
@@ -145,7 +145,7 @@
 
 #else
 
-#include <new.h>
+#include <new>
   extern MEM_POOL* Delete_Mem_Pool;
 
 extern MEM_POOL* _dummy_new_mempool;

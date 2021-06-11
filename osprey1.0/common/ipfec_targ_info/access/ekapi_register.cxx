@@ -30,8 +30,8 @@
 //
 //  Module : ekapi_register.cxx
 //  $Date  : $
-//  $Author: sxyang $
-//  $Source: /u/merge/src/osprey1.0/common/ipfec_targ_info/access/ekapi_register.cxx,v $
+//  $Author: marcel $
+//  $Source: /proj/osprey/CVS/open64/osprey1.0/common/ipfec_targ_info/access/ekapi_register.cxx,v $
 //
 //  Description:
 //  ============
@@ -399,12 +399,13 @@ int EKAPI_RegPropMask(void *pknobs, int regclass, bv32_t flags[])
                      );
             while (str = StrTrim(strtok(NULL, ","))) /*Get flags*/
             {
-                if (atoi(str) == -1) break;
-                Is_True( (atoi(str) >= 0)&&(atoi(str) < regnum), 
-                          ("register number violation boundary!")
-                         );
+		int idx;
+		idx = atoi(str);
+                if (idx == -1) break;
+                Is_True(idx >= 0 && idx < regnum,
+                          ("register number violation boundary!"));
                 Is_True(propid!=0, ("entry_ptr should not be used!\n"));
-                flags[atoi(str)] |= 1ULL << (propid - 1);
+                flags[idx] |= 1ULL << (propid - 1);
             }
                     
         }

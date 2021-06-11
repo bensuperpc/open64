@@ -37,10 +37,10 @@
  * ====================================================================
  *
  * Module: ir_gdar.c
- * $Revision: 1.5 $
- * $Date: 2001/03/10 04:18:18 $
- * $Author: mtibuild $
- * $Source: /isms/cmplrs.src/osprey1.0/ir_tools/RCS/ir_gdar.c,v $
+ * $Revision: 1.1.1.1 $
+ * $Date: 2005/10/21 19:00:00 $
+ * $Author: marcel $
+ * $Source: /proj/osprey/CVS/open64/osprey1.0/ir_tools/ir_gdar.c,v $
  *
  * Revision history:
  *  20-Jun-97 - Original Version

@@ -38,9 +38,9 @@
 *
 * Module: cg_thr.h
 * $Revision: 1.1.1.1 $
-* $Date: 2001/06/25 06:32:37 $
-* $Author: llx $
-* $Source: /u/merge/src/osprey1.0/be/cg/cg_thr.h,v $
+* $Date: 2005/10/21 19:00:00 $
+* $Author: marcel $
+* $Source: /proj/osprey/CVS/open64/osprey1.0/be/cg/cg_thr.h,v $
 *
 * Description:
 *
@@ -93,7 +93,7 @@ private:
   THR_TYPE     _thr_type;
   BOOL         _thr_before_regalloc;
   BB_MAP       _thr_map;
-  list<ARC*>   _candidate_list;
+  std::list<ARC*>   _candidate_list;
   BOOL         _chk_instr_inserted;
 
 public:

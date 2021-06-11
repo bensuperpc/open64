@@ -37,10 +37,10 @@
  * ====================================================================
  *
  * Module: cwh_expr.h
- * $Revision: 1.24 $
- * $Date: 2001/03/10 03:45:03 $
- * $Author: mtibuild $
- * $Source: /isms/cmplrs.src/osprey1.0/crayf90/sgi/RCS/cwh_expr.h,v $
+ * $Revision: 1.1.1.1 $
+ * $Date: 2005/10/21 19:00:00 $
+ * $Author: marcel $
+ * $Source: /proj/osprey/CVS/open64/osprey1.0/crayf90/sgi/cwh_expr.h,v $
  *
  * Revision history:
  *  dd-mmm-95 - Original Version
@@ -55,7 +55,7 @@
 #define CWH_EXPR_INCLUDED
 
 #ifdef _KEEP_RCS_ID
-static char *rcs_id = "$Source: /isms/cmplrs.src/osprey1.0/crayf90/sgi/RCS/cwh_expr.h,v $ $Revision: 1.24 $";
+static char *rcs_id = "$Source: /proj/osprey/CVS/open64/osprey1.0/crayf90/sgi/cwh_expr.h,v $ $Revision: 1.1.1.1 $";
 #endif /* _KEEP_RCS_ID */
 
 typedef enum {

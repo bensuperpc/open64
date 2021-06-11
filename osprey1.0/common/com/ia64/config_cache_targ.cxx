@@ -70,8 +70,44 @@ void MHD::Initialize()
     Loop_Overhead_Memref    = 1;
     TLB_Trustworthiness     = 75;
     TLB_NoBlocking_Model    = TRUE;
+   
+    if (Target == TARGET_ITANIUM2) {
+	
+      MHD_LEVEL l0(MHD_TYPE_CACHE, 	// Type
+                     16*1024, 		// Size
+                     64,		// Line Size
+                     21,		// Clean Miss Penalty
+                     21,		// Dirty Miss Penalty
+                     4,			// Associativity
+                     32,		// TLB Entries
+                     32*1024,		// Page Size
+                     50,		// TLB Clean Miss Penalty ?
+                     50,		// TLB Dirty Miss Penalty ?
+                     3.0,		// Typical Outstanding Loads ?
+                     0.8,		// Load_OP_Overlap_1 ?
+                     0.4,		// Load_OP_Overlap_2 ?
+                     50);		// Pct_Excess_Writes_Nonhidable ?
+      L[0] = l0;
 
-    L[0] = MHD_LEVEL(MHD_TYPE_CACHE, 	// Type
+      // TODO: this might be too generous: in multiple processor situations,
+      // there is a cost to loading the shared bus/memory.
+      MHD_LEVEL l1(MHD_TYPE_CACHE, 
+                     256*1024, 
+                     128, 
+                     120, // ?
+                     200, // ? 
+                     8,  
+                     -1, 
+                     -1, 
+                     -1, 
+                     -1,
+                     (LNO_Run_Prefetch ? 1.8 : 1.0),  // ?
+                     (LNO_Run_Prefetch ? 0.7 : 0.1),  // ?
+                     (LNO_Run_Prefetch ? 0.3 : 0.05), // ?
+                     (LNO_Run_Prefetch ? 25  : 50));  // ?
+      L[1] = l1;
+    } else {
+      MHD_LEVEL l0(MHD_TYPE_CACHE, 	// Type
                      96*1024, 		// Size
                      64,		// Line Size
                      21,		// Clean Miss Penalty
@@ -85,10 +121,11 @@ void MHD::Initialize()
                      0.8,		// Load_OP_Overlap_1 ?
                      0.4,		// Load_OP_Overlap_2 ?
                      50);		// Pct_Excess_Writes_Nonhidable ?
+      L[0] = l0;
 
-    // TODO: this might be too generous: in multiple processor situations,
-    // there is a cost to loading the shared bus/memory.
-    L[1] = MHD_LEVEL(MHD_TYPE_CACHE, 
+      // TODO: this might be too generous: in multiple processor situations,
+      // there is a cost to loading the shared bus/memory.
+      MHD_LEVEL l1(MHD_TYPE_CACHE, 
                      4*1024*1024, 
                      64, 
                      120, // ?
@@ -102,7 +139,8 @@ void MHD::Initialize()
                      (LNO_Run_Prefetch ? 0.7 : 0.1),  // ?
                      (LNO_Run_Prefetch ? 0.3 : 0.05), // ?
                      (LNO_Run_Prefetch ? 25  : 50));  // ?
-
+       L[1] = l1;
+    }
 #ifdef Is_True_On
     if (LNO_Verbose)
       printf ("Target Processor: TARGET_ITANIUM/ITANIUM2. %lld (%d), %lld (%d)\n", 

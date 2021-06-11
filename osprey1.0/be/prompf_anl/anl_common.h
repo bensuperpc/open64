@@ -39,10 +39,10 @@
  * ==============================================================
  *
  * Module: anl_common.h
- * $Revision: 1.13 $
- * $Date: 2001/03/10 02:50:31 $
- * $Author: mtibuild $
- * $Source: /isms/cmplrs.src/osprey1.0/be/prompf_anl/RCS/anl_common.h,v $
+ * $Revision: 1.1.1.1 $
+ * $Date: 2005/10/21 19:00:00 $
+ * $Author: marcel $
+ * $Source: /proj/osprey/CVS/open64/osprey1.0/be/prompf_anl/anl_common.h,v $
  *
  * Description:
  *

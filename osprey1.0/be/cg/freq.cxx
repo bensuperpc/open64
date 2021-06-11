@@ -36,10 +36,10 @@
 /* ====================================================================
  *
  * Module: freq.cxx
- * $Revision: 1.3 $
- * $Date: 2002/03/26 07:48:17 $
- * $Author: xlp $
- * $Source: /u/merge/src/osprey1.0/be/cg/freq.cxx,v $
+ * $Revision: 1.1.1.1 $
+ * $Date: 2005/10/21 19:00:00 $
+ * $Author: marcel $
+ * $Source: /proj/osprey/CVS/open64/osprey1.0/be/cg/freq.cxx,v $
  *
  * Description:
  *
@@ -52,7 +52,7 @@
 
 #include <math.h>
 #include <alloca.h>
-#include <map.h>
+#include <map>
 
 #include "defs.h"
 #include "config.h"

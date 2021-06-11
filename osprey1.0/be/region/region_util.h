@@ -37,10 +37,10 @@
 /* ====================================================================
  *
  * Module: region_util.h
- * $Revision: 1.68 $
- * $Date: 2001/03/10 02:53:53 $
- * $Author: mtibuild $
- * $Source: /isms/cmplrs.src/osprey1.0/be/region/RCS/region_util.h,v $
+ * $Revision: 1.1.1.1 $
+ * $Date: 2005/10/21 19:00:00 $
+ * $Author: marcel $
+ * $Source: /proj/osprey/CVS/open64/osprey1.0/be/region/region_util.h,v $
  *
  * Revision history:
  *  31-MAY-95 wdl - Original Version

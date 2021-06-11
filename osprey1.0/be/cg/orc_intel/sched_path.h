@@ -32,10 +32,10 @@
   * =========================================================================
   * 
   * Module: sched_path.h
-  * $Revision: 1.4 $ 
-  * $Date: 2003/01/15 08:05:30 $
-  * $Author: sxyang $ 
-  * $Source: /u/merge/src/osprey1.0/be/cg/orc_intel/sched_path.h,v $
+  * $Revision: 1.1.1.1 $ 
+  * $Date: 2005/10/21 19:00:00 $
+  * $Author: marcel $ 
+  * $Source: /proj/osprey/CVS/open64/osprey1.0/be/cg/orc_intel/sched_path.h,v $
   *
   * Description:
   * ===========
@@ -50,8 +50,8 @@
 #ifndef sched_path_INCLUDED
 #define sched_path_INCLUDED
 
-#include <list.h> 
-#include <vector.h> 
+#include <list> 
+#include <vector> 
 
 #include "ipfec_defs.h"
 
@@ -141,7 +141,7 @@ public:
 }; /* end of tagPATH_NODE_INFO */
 
 typedef mempool_allocator<PATH_NODE_INFO>      PATH_NODE_ALLOC; 
-typedef vector<PATH_NODE_INFO,PATH_NODE_ALLOC> PATH_NODE_INFO_VECT;
+typedef std::vector<PATH_NODE_INFO,PATH_NODE_ALLOC> PATH_NODE_INFO_VECT;
 typedef PATH_NODE_INFO_VECT::iterator          PATH_NODE_INFO_VECT_ITER;
 typedef PATH_NODE_INFO_VECT::const_iterator   
         PATH_NODE_INFO_VECT_CONST_ITER;
@@ -241,9 +241,6 @@ public:
          */
     EXEC_PATH  (EXEC_PATH_ID id, MEM_POOL* mp) ;
     EXEC_PATH  (const EXEC_PATH& ep, MEM_POOL *mp) ;
-    BOOL Extract_Path_Segment (EXEC_PATH& ep, 
-                               REGIONAL_CFG_NODE * from, 
-                               REGIONAL_CFG_NODE * to=NULL);
 
     ~EXEC_PATH (void) { /* do nothing */ }
     EXEC_PATH& operator = (const EXEC_PATH& ep);
@@ -299,7 +296,7 @@ public:
     /* EXEC_PATH vector as well as its iterator 
      */
 typedef mempool_allocator<EXEC_PATH*>       EXEC_PATH_ALLOC;
-typedef vector<EXEC_PATH*,EXEC_PATH_ALLOC>  EXEC_PATH_VECTOR;
+typedef std::vector<EXEC_PATH*,EXEC_PATH_ALLOC>  EXEC_PATH_VECTOR;
 typedef EXEC_PATH_VECTOR::iterator          EXEC_PATH_VECT_ITER;
 typedef EXEC_PATH_VECTOR::const_iterator    EXEC_PATH_VECT_CONST_ITER;
 
@@ -487,11 +484,10 @@ public:
                                }
 
         /* Size () :   query this set can handle how many path.
-         * Resize () : change the capacity of this set, and return
-         *             the old size
+         * Resize () : change the capacity of this set.
          */
     INT32 Size (void) const         { return _size ; }
-    INT32 Resize (INT32 new_size) ;  /* change the size */ 
+    void Resize (INT32 new_size) ;  /* change the size */ 
 
 
         /* check to see whether <path> is a member of this set

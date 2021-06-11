@@ -37,10 +37,10 @@
  * ====================================================================
  *
  * Module: ipc_daVinci.cxx
- * $Revision: 1.7 $
- * $Date: 2001/03/10 04:00:33 $
- * $Author: mtibuild $
- * $Source: /isms/cmplrs.src/osprey1.0/ipa/common/RCS/ipc_daVinci.cxx,v $
+ * $Revision: 1.1.1.1 $
+ * $Date: 2005/10/21 19:00:00 $
+ * $Author: marcel $
+ * $Source: /proj/osprey/CVS/open64/osprey1.0/ipa/common/ipc_daVinci.cxx,v $
  *
  * Description:
  *	interface to daVinci, a visualization system for displaying

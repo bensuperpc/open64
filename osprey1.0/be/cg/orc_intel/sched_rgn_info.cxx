@@ -32,10 +32,10 @@
   * =========================================================================
   * 
   * Module: sched_rgn_info.cxx
-  * $Revision: 1.6 $
-  * $Date: 2003/01/15 08:05:31 $
-  * $Author: sxyang $
-  * $Source: /u/merge/src/osprey1.0/be/cg/orc_intel/sched_rgn_info.cxx,v $
+  * $Revision: 1.1.1.1 $
+  * $Date: 2005/10/21 19:00:00 $
+  * $Author: marcel $
+  * $Source: /proj/osprey/CVS/open64/osprey1.0/be/cg/orc_intel/sched_rgn_info.cxx,v $
   *
   * Revision comments:
   *
@@ -417,7 +417,7 @@ REGION_INFO_MGR :: Acquire_Rgn_Info (void) {
     extern BOOL Is_Abnormal_Loop (REGION* region) ;
     rgn_info->in_abnormal_loop = Is_Abnormal_Loop (rgn_info->rgn);
   
-    list<RGN_INFO *,mempool_allocator<RGN_INFO *> > queue(&_mem_pool) ;
+    std::list<RGN_INFO *,mempool_allocator<RGN_INFO *> > queue(&_mem_pool) ;
     queue.push_back (rgn_info);
 
     while (!queue.empty ()) {
@@ -483,7 +483,7 @@ REGION_INFO_MGR :: Acquire_Rgn_Info (void) {
      */
 void
 REGION_INFO_MGR :: Build_Rgn_Summary (REGION *rgn, 
-                                      RGN_CFLOW_MGR * rgn_cflow_info=NULL) {
+                                      RGN_CFLOW_MGR * rgn_cflow_info) {
     
     RGN_INFO * rgn_info = Get_Rgn_Info (rgn) ;
     Is_True (rgn_info, ("RGN_INFO associated with <rgn> does not exist!"));

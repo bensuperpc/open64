@@ -37,9 +37,9 @@
  * ====================================================================
  *
  * Module: ipc_utils.h
- * $Revision: 1.4 $
- * $Date: 2001/03/10 04:04:02 $
- * $Author: mtibuild $
+ * $Revision: 1.1.1.1 $
+ * $Date: 2005/10/21 19:00:00 $
+ * $Author: marcel $
  * $Source: /hosts/bonnie.engr/depot/cmplrs.src/mongoose/ipa/common/RCS/ipc_utils.h,
 v $
  *

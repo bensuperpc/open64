@@ -41,10 +41,13 @@
 // This file should contain only inlined functions for accessing various
 // fields in the symbol table classes.
 
-#ifndef __SGI_STL_SLIST_H
+#if defined(__GNUC__) && __GNUC__ >= 3
+#include <ext/slist>
+using __gnu_cxx::slist;
+#else
 #include <slist>
 using std::slist;
-#endif // __SGI_STL_SLIST_H
+#endif
 
 #ifndef segmented_array_INCLUDED
 #include "segmented_array.h"

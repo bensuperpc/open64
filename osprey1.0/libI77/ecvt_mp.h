@@ -38,7 +38,7 @@
 #define __ECVT_H__
 
 
-#ident "$Revision: 1.7 $"
+#ident "$Revision: 1.1.1.1 $"
 
 
 #if defined(_LANGUAGE_C) || defined(_LANGUAGE_C_PLUS_PLUS)

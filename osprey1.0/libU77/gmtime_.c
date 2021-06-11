@@ -27,7 +27,7 @@
 
 */
 
-/* $Header: /isms/cmplrs.src/osprey1.0/libU77/RCS/gmtime_.c,v 8.5 2001/02/20 23:39:53 mtibuild Exp $ */
+/* $Header: /proj/osprey/CVS/open64/osprey1.0/libU77/gmtime_.c,v 1.1.1.1 2005/10/21 19:00:00 marcel Exp $ */
 /*
  *
  * return broken down time

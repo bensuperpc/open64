@@ -37,10 +37,10 @@
 // ====================================================================
 //
 // Module: profile_errors.h
-// $Revision: 1.6 $
-// $Date: 2001/03/10 03:19:22 $
-// $Author: mtibuild $
-// $Source: /isms/cmplrs.src/osprey1.0/common/instrument/RCS/profile_errors.h,v $
+// $Revision: 1.1.1.1 $
+// $Date: 2005/10/21 19:00:00 $
+// $Author: marcel $
+// $Source: /proj/osprey/CVS/open64/osprey1.0/common/instrument/profile_errors.h,v $
 //
 // Revision history:
 //  24-July-98 - Original Version

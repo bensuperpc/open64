@@ -522,10 +522,10 @@
  */
 
 /* 
- * $Revision: 1.5 $
- * $Date: 2002/11/27 09:49:37 $
- * $Author: llx $
- * $Source: /u/merge/src/osprey1.0/be/cg/cgtarget.h,v $
+ * $Revision: 1.1.1.1 $
+ * $Date: 2005/10/21 19:00:00 $
+ * $Author: marcel $
+ * $Source: /proj/osprey/CVS/open64/osprey1.0/be/cg/cgtarget.h,v $
  */
 
 #ifndef CGTARGET_INCLUDED
@@ -831,6 +831,7 @@ extern BOOL CGTARG_Check_OP_For_HB_Suitability(OP *op);
 extern BOOL OP_def_use_stack_regs(OP* op);
 
 typedef mempool_allocator<SCHED_INFO_CLASS>  SIC_MEM_ALLOC;
-typedef	vector<SCHED_INFO_CLASS, SIC_MEM_ALLOC>  TOP_SET;
+typedef	std::vector<SCHED_INFO_CLASS, SIC_MEM_ALLOC>  TOP_SET;
 void Fix_MM_Latency ( BB *bb, TOP_SET *src_op_class, TOP_SET *tgt_op_class, UINT8 cycles_apart);
+void Fix_Cache_Conflict_latency( BB *bb);
 #endif /* CGTARGET_INCLUDED */

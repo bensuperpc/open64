@@ -40,18 +40,18 @@
 //
 /////////////////////////////////////
 //
-//  $Revision: 1.33 $
-//  $Date: 2001/03/10 03:24:18 $
-//  $Author: mtibuild $
-//  $Source: /isms/cmplrs.src/osprey1.0/common/targ_info/generate/RCS/isa_print_gen.cxx,v $
+//  $Revision: 1.1.1.1 $
+//  $Date: 2005/10/21 19:00:00 $
+//  $Author: marcel $
+//  $Source: /proj/osprey/CVS/open64/osprey1.0/common/targ_info/generate/isa_print_gen.cxx,v $
 
 #include <stddef.h>
 #include <stdlib.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <assert.h>
-#include <list.h>
-#include <vector.h>
+#include <list>
+#include <vector>
 #include "topcode.h"
 #include "targ_isa_properties.h"
 #include "gen_util.h"
@@ -94,10 +94,10 @@ struct op_pr {
   struct op_pr *next;
 };
 
-static list<LISTING_INFO> all_prints;  // all the different print formats
+static std::list<LISTING_INFO> all_prints;  // all the different print formats
 static LISTING_INFO current_print_desc;
 static op_pr *op_prints[TOP_count+1];
-static list<op_pr*> op_prints_list;
+static std::list<op_pr*> op_prints_list;
 static int list_index;
 static const char *(*asmname)(TOP topcode);
 static bool top_specified[TOP_count];
@@ -318,7 +318,7 @@ void ISA_Print_End(void)
 //  See interface description.
 /////////////////////////////////////
 {
-  list<LISTING_INFO>::iterator isi;
+  std::list<LISTING_INFO>::iterator isi;
 
 #define FNAME "targ_isa_print"
   char buf[1000];

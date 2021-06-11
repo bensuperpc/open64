@@ -37,10 +37,10 @@
 
 /**
 *** Module: graph_template.cxx
-*** $Revision: 1.11 $
-*** $Date: 2001/03/10 02:11:21 $
-*** $Author: mtibuild $
-*** $Source: /isms/cmplrs.src/osprey1.0/be/com/RCS/graph_template.cxx,v $
+*** $Revision: 1.1.1.1 $
+*** $Date: 2005/10/21 19:00:00 $
+*** $Author: marcel $
+*** $Source: /proj/osprey/CVS/open64/osprey1.0/be/com/graph_template.cxx,v $
 ***
 *** Revision history:
 ***

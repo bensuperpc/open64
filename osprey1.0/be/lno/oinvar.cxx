@@ -57,10 +57,10 @@
  * ====================================================================
  *
  * Module: oinvar.cxx
- * $Revision: 1.27 $
- * $Date: 2001/03/10 02:31:08 $
- * $Author: mtibuild $
- * $Source: /isms/cmplrs.src/osprey1.0/be/lno/RCS/oinvar.cxx,v $
+ * $Revision: 1.1.1.1 $
+ * $Date: 2005/10/21 19:00:00 $
+ * $Author: marcel $
+ * $Source: /proj/osprey/CVS/open64/osprey1.0/be/lno/oinvar.cxx,v $
  *
  * Revision history:
  *  30-12-96 - Original Version
@@ -76,7 +76,7 @@
 #pragma hdrstop
 
 static char *source_file = __FILE__;
-static char *rcs_id = "$Source: /isms/cmplrs.src/osprey1.0/be/lno/RCS/oinvar.cxx,v $ $Revision: 1.27 $";
+static char *rcs_id = "$Source: /proj/osprey/CVS/open64/osprey1.0/be/lno/oinvar.cxx,v $ $Revision: 1.1.1.1 $";
 
 #include <sys/types.h>
 #include "lnopt_main.h"

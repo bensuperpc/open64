@@ -3,10 +3,10 @@
 // ====================================================================
 //
 // Module: opt_defs.h
-// $Revision: 1.2 $
-// $Date: 2002/04/10 09:08:29 $
-// $Author: zdu $
-// $Source: /u/merge/src/osprey1.0/be/opt/opt_defs.h,v $
+// $Revision: 1.1.1.1 $
+// $Date: 2005/10/21 19:00:00 $
+// $Author: marcel $
+// $Source: /proj/osprey/CVS/open64/osprey1.0/be/opt/opt_defs.h,v $
 //
 // Revision history:
 //  30-AUG-94 - Original Version
@@ -65,7 +65,7 @@
 #ifndef opt_defs_INCLUDED
 #define opt_defs_INCLUDED       "opt_defs.h"
 #ifdef _KEEP_RCS_ID
-static char *opt_defsrcs_id =	opt_defs_INCLUDED"$Revision: 1.2 $";
+static char *opt_defsrcs_id =	opt_defs_INCLUDED"$Revision: 1.1.1.1 $";
 #endif /* _KEEP_RCS_ID */
 
 #ifndef defs_INCLUDED

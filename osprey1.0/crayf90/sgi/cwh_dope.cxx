@@ -37,9 +37,9 @@
  * ====================================================================
  *
  * Module: cwh_dope
- * $Revision: 1.61 $
- * $Date: 2001/03/10 03:44:32 $
- * $Author: mtibuild $
+ * $Revision: 1.1.1.1 $
+ * $Date: 2005/10/21 19:00:00 $
+ * $Author: marcel $
  * $Source: 
  *
  * Revision history:
@@ -58,7 +58,7 @@ static char *source_file = __FILE__;
 
 #ifdef _KEEP_RCS_ID
 /*REFERENCED*/
-static char *rcs_id = "$Source: /isms/cmplrs.src/osprey1.0/crayf90/sgi/RCS/cwh_dope.cxx,v $ $Revision: 1.61 $";
+static char *rcs_id = "$Source: /proj/osprey/CVS/open64/osprey1.0/crayf90/sgi/cwh_dope.cxx,v $ $Revision: 1.1.1.1 $";
 #endif /* _KEEP_RCS_ID */
 
 /* sgi includes */

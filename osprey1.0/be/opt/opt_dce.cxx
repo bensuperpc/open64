@@ -3,10 +3,10 @@
 // ====================================================================
 //
 // Module: opt_dce.cxx
-// $Revision: 1.230 $
-// $Date: 2001/03/10 02:40:24 $
-// $Author: mtibuild $
-// $Source: /isms/cmplrs.src/osprey1.0/be/opt/RCS/opt_dce.cxx,v $
+// $Revision: 1.1.1.1 $
+// $Date: 2005/10/21 19:00:00 $
+// $Author: marcel $
+// $Source: /proj/osprey/CVS/open64/osprey1.0/be/opt/opt_dce.cxx,v $
 //
 // ====================================================================
 //
@@ -998,12 +998,12 @@ DCE::Check_conditional_branches_pred( CFG *cfg ) const
     // back_blocks is given sufficent capacity for the entire search, and
     // new blocks are appended only to the end of back_blocks.
 
-    vector<BB_NODE *> back_blocks(1, bb);
+    std::vector<BB_NODE *> back_blocks(1, bb);
     back_blocks.reserve(WOPT_Enable_DCE_Branch_Pred_Limit);
 
     if (Tracing()) fprintf(TFile,"back_blocks: ");
 
-    for (vector<BB_NODE *>::const_iterator current_iter = back_blocks.begin();
+    for (std::vector<BB_NODE *>::const_iterator current_iter = back_blocks.begin();
 	 current_iter != back_blocks.end(); ++current_iter) {
       BB_NODE *current_bb = *current_iter;
 

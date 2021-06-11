@@ -36,13 +36,13 @@
 #define opcode_core_C      "opcode_core.c"
 
 #ifdef _KEEP_RCS_ID
-static const char rcs_id[] =   opcode_core_C "$Revision: 1.10 $";
+static const char rcs_id[] =   opcode_core_C "$Revision: 1.1.1.1 $";
 #endif
 
-/** $Revision: 1.10 $
-*** $Date: 2001/03/10 03:12:37 $
-*** $Author: mtibuild $
-*** $Source: /isms/cmplrs.src/osprey1.0/common/com/RCS/opcode_core.cxx,v $
+/** $Revision: 1.1.1.1 $
+*** $Date: 2005/10/21 19:00:00 $
+*** $Author: marcel $
+*** $Source: /proj/osprey/CVS/open64/osprey1.0/common/com/opcode_core.cxx,v $
 **/
 
 #include "defs.h"

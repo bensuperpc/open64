@@ -38,8 +38,8 @@
     
    lebdecodes64.c
 
-    $Revision: 1.5 $  
-    $Date: 2001/03/10 05:11:30 $
+    $Revision: 1.1.1.1 $  
+    $Date: 2005/10/21 19:00:00 $
 */
 
 #ifndef _LP64

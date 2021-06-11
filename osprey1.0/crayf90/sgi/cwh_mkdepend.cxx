@@ -37,9 +37,9 @@
  * ====================================================================
  *
  * Module: cwh_pdgcs
- * $Revision: 1.9 $
- * $Date: 2001/03/10 03:45:46 $
- * $Author: mtibuild $
+ * $Revision: 1.1.1.1 $
+ * $Date: 2005/10/21 19:00:00 $
+ * $Author: marcel $
  * $Source: 
  *
  * Revision history:
@@ -59,7 +59,7 @@ static char *source_file = __FILE__;
 
 #ifdef _KEEP_RCS_ID
 /*REFERENCED*/
-static char *rcs_id = "$Source: /isms/cmplrs.src/osprey1.0/crayf90/sgi/RCS/cwh_mkdepend.cxx,v $ $Revision: 1.9 $";
+static char *rcs_id = "$Source: /proj/osprey/CVS/open64/osprey1.0/crayf90/sgi/cwh_mkdepend.cxx,v $ $Revision: 1.1.1.1 $";
 #endif /* _KEEP_RCS_ID */
 
 #include <ctype.h>

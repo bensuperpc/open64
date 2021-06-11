@@ -38,17 +38,17 @@
 /**
 **/
 
-/** $Revision: 1.26 $
-*** $Date: 2001/03/10 02:35:36 $
-*** $Author: mtibuild $
-*** $Source: /isms/cmplrs.src/osprey1.0/be/lno/RCS/snl_nest.h,v $
+/** $Revision: 1.1.1.1 $
+*** $Date: 2005/10/21 19:00:00 $
+*** $Author: marcel $
+*** $Source: /proj/osprey/CVS/open64/osprey1.0/be/lno/snl_nest.h,v $
 **/
 
 #ifndef snl_nest_INCLUDED
 #define snl_nest_INCLUDED "snl_nest.h"
 
 #ifdef _KEEP_RCS_ID
-static char *snl_nest_rcs_id = snl_nest_INCLUDED "$Revision: 1.26 $";
+static char *snl_nest_rcs_id = snl_nest_INCLUDED "$Revision: 1.1.1.1 $";
 #endif /* _KEEP_RCS_ID */
 
 class ACCESS_VECTOR;

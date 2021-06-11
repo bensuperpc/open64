@@ -39,10 +39,10 @@
 ***
 ***-------------------------------------------------------------------*/
 
-/** $Revision: 1.3 $
-*** $Date: 2002/09/24 10:50:23 $
-*** $Author: gange $
-*** $Source: /u/merge/src/osprey1.0/common/com/wn_util.cxx,v $
+/** $Revision: 1.1.1.1 $
+*** $Date: 2005/10/21 19:00:00 $
+*** $Author: marcel $
+*** $Source: /proj/osprey/CVS/open64/osprey1.0/common/com/wn_util.cxx,v $
 **/
 #ifdef USE_PCH
 #include "common_com_pch.h"

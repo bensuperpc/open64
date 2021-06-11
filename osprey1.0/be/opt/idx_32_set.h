@@ -3,10 +3,10 @@
 // ====================================================================
 //
 // Module: idx_32_set.h
-// $Revision: 1.15 $
-// $Date: 2001/03/10 02:38:01 $
-// $Author: mtibuild $
-// $Source: /isms/cmplrs.src/osprey1.0/be/opt/RCS/idx_32_set.h,v $
+// $Revision: 1.1.1.1 $
+// $Date: 2005/10/21 19:00:00 $
+// $Author: marcel $
+// $Source: /proj/osprey/CVS/open64/osprey1.0/be/opt/idx_32_set.h,v $
 //
 // ====================================================================
 //
@@ -539,7 +539,7 @@
 #ifndef idx_32_set_INCLUDED
 #define idx_32_set_INCLUDED      "idx_32_set.h"
 #ifdef _KEEP_RCS_ID
-static char *idx_32_set_rcs_id = idx_32_set_INCLUDED"$Revision: 1.15 $";
+static char *idx_32_set_rcs_id = idx_32_set_INCLUDED"$Revision: 1.1.1.1 $";
 #endif /* _KEEP_RCS_ID */
 
 #include "mempool.h"	// our clients should probably include this

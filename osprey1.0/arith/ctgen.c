@@ -594,4 +594,4 @@ ar_internal_error (int msgnum, char *file, int line) {
 
 
 static char USMID [] = "\n%Z%%M%	%I%	%G% %U%\n";
-static char rcsid [] = "$Id: ctgen.c,v 2.2 1995/02/08 19:55:17 jk Exp $";
+static char rcsid [] = "$Id: ctgen.c,v 1.1.1.1 2005/10/21 19:00:00 marcel Exp $";

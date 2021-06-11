@@ -40,10 +40,10 @@
  * ====================================================================
  *
  * Module: config.h
- * $Revision: 1.6 $
- * $Date: 2002/12/15 10:30:28 $
- * $Author: wjj $
- * $Source: /u/merge/src/osprey1.0/common/com/config.h,v $
+ * $Revision: 1.1.1.1 $
+ * $Date: 2005/10/21 19:00:00 $
+ * $Author: marcel $
+ * $Source: /proj/osprey/CVS/open64/osprey1.0/common/com/config.h,v $
  *
  * Revision history:
  *  09-Apr-90 - Original Version
@@ -252,7 +252,7 @@
 
 
 #ifdef _KEEP_RCS_ID
-static char *config_rcs_id = "$Source: /u/merge/src/osprey1.0/common/com/config.h,v $ $Revision: 1.6 $";
+static char *config_rcs_id = "$Source: /proj/osprey/CVS/open64/osprey1.0/common/com/config.h,v $ $Revision: 1.1.1.1 $";
 #endif /* _KEEP_RCS_ID */
 
 #include "config_host.h"	/* in TARGET/com */

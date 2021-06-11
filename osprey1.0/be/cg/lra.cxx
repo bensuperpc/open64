@@ -37,10 +37,10 @@
  * =======================================================================
  *
  *  Module: lra.c
- *  $Revision: 1.12 $
- *  $Date: 2003/01/16 05:27:50 $
- *  $Author: cwu $
- *  $Source: /u/merge/src/osprey1.0/be/cg/lra.cxx,v $
+ *  $Revision: 1.1.1.1 $
+ *  $Date: 2005/10/21 19:00:00 $
+ *  $Author: marcel $
+ *  $Source: /proj/osprey/CVS/open64/osprey1.0/be/cg/lra.cxx,v $
  *
  *  Description:
  *  ============
@@ -144,7 +144,7 @@ static BOOL livethrough_computed;
 
 /* If a result of an undeletable OP is not needed, */
 /* it may be replaced with one of these TNs.         */
-static TN *unused_tn_def[ISA_REGISTER_CLASS_MAX];
+static TN *unused_tn_def[ISA_REGISTER_CLASS_MAX+1];
 
 
 static BOOL do_global_locking = FALSE;

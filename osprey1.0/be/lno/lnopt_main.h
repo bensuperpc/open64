@@ -651,10 +651,10 @@
  * ====================================================================
  *
  * Module: lnopt_main.h
- * $Revision: 1.166 $
- * $Date: 2001/03/10 02:28:29 $
- * $Author: mtibuild $
- * $Source: /isms/cmplrs.src/osprey1.0/be/lno/RCS/lnopt_main.h,v $
+ * $Revision: 1.1.1.1 $
+ * $Date: 2005/10/21 19:00:00 $
+ * $Author: marcel $
+ * $Source: /proj/osprey/CVS/open64/osprey1.0/be/lno/lnopt_main.h,v $
  *
  * Revision history:
  *  27-NOV-94 - Original Version

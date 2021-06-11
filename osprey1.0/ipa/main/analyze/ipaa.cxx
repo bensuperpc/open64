@@ -37,7 +37,7 @@
 // ====================================================================
 //
 // Module: ipaa.cxx
-// $Source: /isms/cmplrs.src/osprey1.0/ipa/main/analyze/RCS/ipaa.cxx,v $
+// $Source: /proj/osprey/CVS/open64/osprey1.0/ipa/main/analyze/ipaa.cxx,v $
 //
 // Revision history:
 //  14-Jun-95 - Original Version
@@ -483,12 +483,12 @@ IPAA_FORMAL_MAP::Union_2 ( const IPAA_FORMAL_MAP *map )
   // There are at least two elements in map -- look at this:
   if ( this->_count == 0 ) {
     Expand ( map->_count );
-    bcopy ( _mvec, map->_mvec, map->_count * sizeof(MAP_ELMT *) );
+    bcopy ( _mvec, map->_mvec, map->_count * sizeof(MAP_ELMT) );
     return TRUE;
   } else if ( this->_count <= 1 || this->_mvec[1] == MAP_NONE ) {
     valt = ( this->_count <= 1 ) ? this->_single : this->_mvec[0];
     Expand ( map->_count );
-    bcopy ( _mvec, map->_mvec, map->_count * sizeof(MAP_ELMT *) );
+    bcopy ( _mvec, map->_mvec, map->_count * sizeof(MAP_ELMT) );
     (void) Add_elmt ( valt );
     return TRUE;
   }

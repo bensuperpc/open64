@@ -33,7 +33,7 @@
 */
 
 
-/* $Header: /u/merge/src/osprey1.0/include/stamp.h,v 1.3483 2003/01/22 15:13:38 cwu Exp $ */
+/* $Header: /proj/osprey/CVS/open64/osprey1.0/include/stamp.h,v 1.1.1.1 2005/10/21 19:00:00 marcel Exp $ */
 
 #ifndef __STAMP_H__
 #define __STAMP_H__
@@ -45,7 +45,7 @@ extern "C" {
 #ifdef __linux
 #define	MS_STAMP 0
 #define	LS_STAMP 9
-#define INCLUDE_STAMP "2.0.0"
+#define INCLUDE_STAMP "2.1"
 #else
 #define	MS_STAMP 7
 #define	LS_STAMP 40

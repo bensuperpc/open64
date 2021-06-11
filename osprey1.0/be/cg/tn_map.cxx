@@ -38,10 +38,10 @@
  * =======================================================================
  *
  *  Module: tn_map.cxx
- *  $Revision: 1.2 $
- *  $Date: 2001/07/03 03:23:12 $
- *  $Author: lyz $
- *  $Source: /u/merge/src/osprey1.0/be/cg/tn_map.cxx,v $
+ *  $Revision: 1.1.1.1 $
+ *  $Date: 2005/10/21 19:00:00 $
+ *  $Author: marcel $
+ *  $Source: /proj/osprey/CVS/open64/osprey1.0/be/cg/tn_map.cxx,v $
  *
  *  Description:
  *  ============

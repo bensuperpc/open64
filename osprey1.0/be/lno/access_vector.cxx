@@ -39,9 +39,9 @@
 // ====================================================================
 //
 // Module: access_vector.cxx
-// $Revision: 1.4 $
-// $Date: 2002/12/27 03:25:50 $
-// $Author: lhb $
+// $Revision: 1.1.1.1 $
+// $Date: 2005/10/21 19:00:00 $
+// $Author: marcel $
 //
 // Revision history:
 //  dd-mmm-94 - Original Version
@@ -87,7 +87,7 @@ extern void Initialize_Access_Vals(DU_MANAGER* du_mgr, FILE *tfile);
 extern void Finalize_Access_Vals();
 extern WN* LNO_Common_Loop(WN* wn1, WN* wn2);
 extern WN* UBvar (WN *end);	/* In lieu of lnoutils.h for IPL */
-MEM_POOL* MAT<mINT32>::_default_pool = &LNO_local_pool;
+template<> MEM_POOL* MAT<mINT32>::_default_pool = &LNO_local_pool;
 // since wopt.so is loaded dynamically in ipl
 #pragma weak Add_Def_Use__10DU_MANAGERGP2WNT1
 #endif

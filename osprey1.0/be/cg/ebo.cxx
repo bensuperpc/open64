@@ -37,10 +37,10 @@
  * =======================================================================
  *
  *  Module: ebo.cxx
- *  $Revision: 1.18 $
- *  $Date: 2003/01/06 09:50:57 $
- *  $Author: gange $
- *  $Source: /u/merge/src/osprey1.0/be/cg/ebo.cxx,v $
+ *  $Revision: 1.1.1.1 $
+ *  $Date: 2005/10/21 19:00:00 $
+ *  $Author: marcel $
+ *  $Source: /proj/osprey/CVS/open64/osprey1.0/be/cg/ebo.cxx,v $
  *
  *  Revision comments:
  *
@@ -2076,7 +2076,9 @@ void EBO_Remove_Unused_Ops (BB *bb, BOOL BB_completely_processed)
           has_assigned_reg(tn) &&
           (copy_operand(op) >= 0) &&
           has_assigned_reg(OP_opnd(op,copy_operand(op))) &&
-          (tn_registers_identical(tn, OP_opnd(op,copy_operand(op))))) {
+          (tn_registers_identical(tn, OP_opnd(op,copy_operand(op)))) && 
+          !(OP_has_predicate(op) && tn_registers_identical(tn, OP_opnd(op,OP_PREDICATE_OPND)))
+         ) {
         INT cpo = copy_operand(op);
 
        /* We may be able to get rid of the copy, but be

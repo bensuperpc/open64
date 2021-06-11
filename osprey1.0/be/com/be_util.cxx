@@ -37,10 +37,10 @@
  * ====================================================================
  *
  * Module: be_util.c
- * $Revision: 1.9 $
- * $Date: 2001/03/10 02:07:28 $
- * $Author: mtibuild $
- * $Source: /isms/cmplrs.src/osprey1.0/be/com/RCS/be_util.cxx,v $
+ * $Revision: 1.1.1.1 $
+ * $Date: 2005/10/21 19:00:00 $
+ * $Author: marcel $
+ * $Source: /proj/osprey/CVS/open64/osprey1.0/be/com/be_util.cxx,v $
  *
  * Revision history:
  *  06-Dec -95 - Original Version

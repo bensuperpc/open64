@@ -35,7 +35,7 @@
 
 #ifndef __OBJLIST_H
 #define __OBJLIST_H
-/* $Header: /isms/cmplrs.src/osprey1.0/include/RCS/objlist.h,v 1.4 2001/03/10 03:59:24 mtibuild Exp $ */
+/* $Header: /proj/osprey/CVS/open64/osprey1.0/include/objlist.h,v 1.1.1.1 2005/10/21 19:00:00 marcel Exp $ */
 
 typedef struct {
         Elf32_Word      oi_magic; /* to distinguish from old obj struct */

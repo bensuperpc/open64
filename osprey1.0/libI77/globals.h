@@ -38,7 +38,7 @@
 #define __GLOBALS_H__
 
 
-#ident "$Revision: 1.7 $"
+#ident "$Revision: 1.1.1.1 $"
 
 #include <stdio.h>
 #include <cmplrs/fio.h>

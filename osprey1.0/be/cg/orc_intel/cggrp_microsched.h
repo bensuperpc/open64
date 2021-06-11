@@ -38,8 +38,8 @@
 //
 //  Module :  cggrp_microsched.h
 //  $Date  : $
-//  $Author: sxyang $
-//  $Source: /u/merge/src/osprey1.0/be/cg/orc_intel/cggrp_microsched.h,v $
+//  $Author: marcel $
+//  $Source: /proj/osprey/CVS/open64/osprey1.0/be/cg/orc_intel/cggrp_microsched.h,v $
 //
 //  Description:
 //  ============
@@ -100,7 +100,8 @@ inline void CGGRP_End_BB(void)
 
 extern void CGGRP_Bundle(void);
 extern void Calculate_BB_Cycle(BB* bb, BOOL dag_exist);
-extern BOOL CGGRP_Bundle_OPS(OPS *ops,OP *op, INT stop_idx);
+extern BOOL CGGRP_Bundle_OPS(OPS *ops,OPS *new_ops, INT stop_idx, BOOL cyclic=FALSE);
+extern BOOL CGGRP_Bundle_OPS(OPS *ops,OP *op, INT stop_idx, BOOL cyclic=FALSE);
 
 extern BOOL CGGRP_Check_Split_BB(BB* split_bb, BB** end_bbp);
 

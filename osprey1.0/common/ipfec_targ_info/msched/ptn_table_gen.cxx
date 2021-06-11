@@ -25,11 +25,12 @@
   SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <memory.h>
 
-#include "vector.h"
+#include <vector>
 #include "targ_isa_bundle.h" 
 #include "targ_issue_port.h"
 #include "targ_proc.h"
@@ -39,8 +40,8 @@
  *
  *  Module :  ptn_table_gen.cxx
  *  $Date  : $
- *  $Author: sxyang $
- *  $Source: /u/merge/src/osprey1.0/common/ipfec_targ_info/msched/ptn_table_gen.cxx,v $
+ *  $Author: marcel $
+ *  $Source: /proj/osprey/CVS/open64/osprey1.0/common/ipfec_targ_info/msched/ptn_table_gen.cxx,v $
  *
  *  Description:
  *  ============
@@ -187,9 +188,9 @@ PATTERN_TYPE::Has_Multbranch_Template (void) {
 
 PATTERN_TYPE empty_ptn;
 
-typedef vector<PATTERN_TYPE> PTN_TABLE_LINE;
+typedef std::vector<PATTERN_TYPE> PTN_TABLE_LINE;
 
-typedef vector<PATTERN_TYPE> PTN_VECTOR;
+typedef std::vector<PATTERN_TYPE> PTN_VECTOR;
 
 INT PTN_TABLE_SIZE=(1<<ip_number);
 

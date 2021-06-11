@@ -40,14 +40,14 @@
 *** not adequate.  Thus 'textra' => 'template extra'.
 **/
 
-/** $Revision: 1.9 $
-*** $Date: 2001/03/10 02:29:36 $
-*** $Author: mtibuild $
-*** $Source: /isms/cmplrs.src/osprey1.0/be/lno/RCS/mat_textra.cxx,v $
+/** $Revision: 1.1.1.1 $
+*** $Date: 2005/10/21 19:00:00 $
+*** $Author: marcel $
+*** $Source: /proj/osprey/CVS/open64/osprey1.0/be/lno/mat_textra.cxx,v $
 **/
 
 #define mat_textra_CXX      "mat_textra.cxx"
-static char *rcs_id =   mat_textra_CXX "$Revision: 1.9 $";
+static char *rcs_id =   mat_textra_CXX "$Revision: 1.1.1.1 $";
 
 
 #include "mat.h"
@@ -55,9 +55,9 @@ static char *rcs_id =   mat_textra_CXX "$Revision: 1.9 $";
 
 // ********************* Required for instantiation **********************
 
-MEM_POOL* MAT<mINT32>::_default_pool = NULL;
-MEM_POOL* MAT<FRAC>::_default_pool = NULL;
-MEM_POOL* MAT<double>::_default_pool = NULL;
+template<> MEM_POOL* MAT<mINT32>::_default_pool = NULL;
+template<> MEM_POOL* MAT<FRAC>::_default_pool = NULL;
+template<> MEM_POOL* MAT<double>::_default_pool = NULL;
 
 // Integer matrix inversion can be performed by making the equivalent fraction
 // matrix and inverting that.

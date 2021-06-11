@@ -34,7 +34,7 @@
 */
 
 
-/* $Header: /isms/cmplrs.src/osprey1.0/libF77/RCS/d_asin.c,v 8.6 2001/03/10 04:31:27 mtibuild Exp $ */
+/* $Header: /proj/osprey/CVS/open64/osprey1.0/libF77/d_asin.c,v 1.1.1.1 2005/10/21 19:00:00 marcel Exp $ */
 
 #include <math.h>
 #include "moremath.h"

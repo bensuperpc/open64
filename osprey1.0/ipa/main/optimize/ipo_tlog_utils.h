@@ -38,10 +38,10 @@
  * ====================================================================
  *
  * Module: ipo_tlog_util.h
- * $Revision: 1.6 $
- * $Date: 2001/03/10 04:17:30 $
- * $Author: mtibuild $
- * $Source: /isms/cmplrs.src/osprey1.0/ipa/main/optimize/RCS/ipo_tlog_utils.h,v $
+ * $Revision: 1.1.1.1 $
+ * $Date: 2005/10/21 19:00:00 $
+ * $Author: marcel $
+ * $Source: /proj/osprey/CVS/open64/osprey1.0/ipa/main/optimize/ipo_tlog_utils.h,v $
  *
  * Description: Defines tlog utilities for IPA, originated from OPT
  *
@@ -52,7 +52,7 @@
 #ifndef ipo_tlog_util_INCLUDED
 #define ipo_tlog_util_INCLUDED	"ipo_tlog_util.h"
 #ifdef _KEEP_RCS_ID
-static char *rcs_id = 	ipo_tlog_util_INCLUDE"$Revision: 1.6 $";
+static char *rcs_id = 	ipo_tlog_util_INCLUDE"$Revision: 1.1.1.1 $";
 #endif /* _KEEP_RCS_ID */
 
 #ifndef srcpos_INCLUDED

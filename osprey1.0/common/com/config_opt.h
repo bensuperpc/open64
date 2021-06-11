@@ -37,10 +37,10 @@
  * ====================================================================
  *
  * Module: config_opt.h
- * $Revision: 1.5 $
- * $Date: 2002/09/09 07:52:27 $
- * $Author: bcheng $
- * $Source: /u/merge/src/osprey1.0/common/com/config_opt.h,v $
+ * $Revision: 1.1.1.1 $
+ * $Date: 2005/10/21 19:00:00 $
+ * $Author: marcel $
+ * $Source: /proj/osprey/CVS/open64/osprey1.0/common/com/config_opt.h,v $
  *
  * Revision history:
  *  05-May-96 - Extracted from be/opt/opt_config.h.

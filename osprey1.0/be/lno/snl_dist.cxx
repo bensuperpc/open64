@@ -35,10 +35,10 @@
 
 // -*-C++-*-
 
-/** $Revision: 1.73 $
-*** $Date: 2001/03/10 02:34:58 $
-*** $Author: mtibuild $
-*** $Source: /isms/cmplrs.src/osprey1.0/be/lno/RCS/snl_dist.cxx,v $
+/** $Revision: 1.1.1.1 $
+*** $Date: 2005/10/21 19:00:00 $
+*** $Author: marcel $
+*** $Source: /proj/osprey/CVS/open64/osprey1.0/be/lno/snl_dist.cxx,v $
 **/
 
 #ifdef USE_PCH
@@ -47,7 +47,7 @@
 #pragma hdrstop
 
 #define snl_dist_CXX      "snl_dist.cxx"
-static char *rcs_id =   snl_dist_CXX "$Revision: 1.73 $";
+static char *rcs_id =   snl_dist_CXX "$Revision: 1.1.1.1 $";
 
 #include <sys/types.h>
 #include <alloca.h>

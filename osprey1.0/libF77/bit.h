@@ -36,7 +36,7 @@
 
 #ifndef __BIT_H__
 #define __BIT_H__
-/*  $Header: /isms/cmplrs.src/osprey1.0/libF77/RCS/bit.h,v 8.10 2001/03/10 04:28:22 mtibuild Exp $ */
+/*  $Header: /proj/osprey/CVS/open64/osprey1.0/libF77/bit.h,v 1.1.1.1 2005/10/21 19:00:00 marcel Exp $ */
 /*	  All Rights Reserved  	*/
 
 /*	THIS IS UNPUBLISHED PROPRIETARY SOURCE CODE OF AT&T	*/

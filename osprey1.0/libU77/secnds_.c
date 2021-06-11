@@ -27,7 +27,7 @@
 
 */
 
-/* $Header: /isms/cmplrs.src/osprey1.0/libU77/RCS/secnds_.c,v 8.5 2001/02/20 23:40:04 mtibuild Exp $ */
+/* $Header: /proj/osprey/CVS/open64/osprey1.0/libU77/secnds_.c,v 1.1.1.1 2005/10/21 19:00:00 marcel Exp $ */
 /*
  *
  * return the elapsed time since midnight minus the argument as a real

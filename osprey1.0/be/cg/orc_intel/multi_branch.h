@@ -37,8 +37,8 @@
 //
 //  Module :  multibranch.h
 //  $Date  : $
-//  $Author: sxyang $
-//  $Source: /u/merge/src/osprey1.0/be/cg/orc_intel/multi_branch.h,v $
+//  $Author: marcel $
+//  $Source: /proj/osprey/CVS/open64/osprey1.0/be/cg/orc_intel/multi_branch.h,v $
 //
 //  Description:
 //  ============
@@ -54,5 +54,5 @@
 
 extern void Check_Cross_Boundary(void);
 extern void Post_Multi_Branch(void);
-extern BOOL Multi_Branch_Valid_OP(OP *op, BB *partial_head);
+extern void Post_Multi_Branch_Collect(void);
 #endif

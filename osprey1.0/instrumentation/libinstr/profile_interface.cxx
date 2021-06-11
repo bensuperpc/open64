@@ -3,10 +3,10 @@
 // ====================================================================
 //
 // Module: profile_interface.cxx
-// $Revision: 1.2 $
-// $Date: 2002/12/29 09:44:52 $
-// $Author: qzhao2 $
-// $Source: /u/merge/src/osprey1.0/instrumentation/libinstr/profile_interface.cxx,v $
+// $Revision: 1.1.1.1 $
+// $Date: 2005/10/21 19:00:00 $
+// $Author: marcel $
+// $Source: /proj/osprey/CVS/open64/osprey1.0/instrumentation/libinstr/profile_interface.cxx,v $
 //
 // ====================================================================
 //

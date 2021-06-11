@@ -38,10 +38,10 @@
 /* ======================================================================
  *
  * Module: mfmc.h
- * $Revision: 1.6 $
- * $Date: 2001/03/10 02:12:58 $
- * $Author: mtibuild $
- * $Source: /isms/cmplrs.src/osprey1.0/be/com/RCS/mfmc.h,v $
+ * $Revision: 1.1.1.1 $
+ * $Date: 2005/10/21 19:00:00 $
+ * $Author: marcel $
+ * $Source: /proj/osprey/CVS/open64/osprey1.0/be/com/mfmc.h,v $
  *
  * Revision history:
  * 17-Jul-96 - Original version

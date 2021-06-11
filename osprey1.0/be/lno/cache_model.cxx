@@ -1389,7 +1389,7 @@
 
 #ifdef _KEEP_RCS_ID
 /*REFERENCED*/
-static char *rcs_id = cache_model_CXX "$Revision: 1.141 $";
+static char *rcs_id = cache_model_CXX "$Revision: 1.1.1.1 $";
 #endif /* _KEEP_RCS_ID */
 
 #include <sys/types.h>

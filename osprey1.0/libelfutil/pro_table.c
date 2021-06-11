@@ -37,6 +37,6 @@
 /*
     pro_table.c
 
-    $Revision: 1.6 $				$Date: 2001/03/10 05:12:14 $
+    $Revision: 1.1.1.1 $				$Date: 2005/10/21 19:00:00 $
 */
 no longer used

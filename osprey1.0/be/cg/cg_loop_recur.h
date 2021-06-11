@@ -38,9 +38,9 @@
  *
  *  Module: cg_loop_recur.h
  *  $Revision: 1.1.1.1 $
- *  $Date: 2001/06/25 06:32:37 $
- *  $Author: llx $
- *  $Source: /u/merge/src/osprey1.0/be/cg/cg_loop_recur.h,v $
+ *  $Date: 2005/10/21 19:00:00 $
+ *  $Author: marcel $
+ *  $Source: /proj/osprey/CVS/open64/osprey1.0/be/cg/cg_loop_recur.h,v $
  *
  *  Revision history:
  *   03-Mar-94 - Original Version
@@ -83,7 +83,7 @@
 #define cg_loop_recur_INCLUDED
 
 #ifdef _KEEP_RCS_ID
-static const char cg_loop_recur_rcs_id[] = "$Source: /u/merge/src/osprey1.0/be/cg/cg_loop_recur.h,v $ $Revision: 1.1.1.1 $";
+static const char cg_loop_recur_rcs_id[] = "$Source: /proj/osprey/CVS/open64/osprey1.0/be/cg/cg_loop_recur.h,v $ $Revision: 1.1.1.1 $";
 #endif /* _KEEP_RCS_ID */
 
 class CG_LOOP;

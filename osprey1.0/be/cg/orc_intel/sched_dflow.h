@@ -33,10 +33,10 @@
   * =========================================================================
   * 
   * Module: sched_dflow.h
-  * $Revision: 1.7 $
-  * $Date: 2003/01/15 08:05:23 $
-  * $Author: sxyang $
-  * $Source: /u/merge/src/osprey1.0/be/cg/orc_intel/sched_dflow.h,v $
+  * $Revision: 1.1.1.1 $
+  * $Date: 2005/10/21 19:00:00 $
+  * $Author: marcel $
+  * $Source: /proj/osprey/CVS/open64/osprey1.0/be/cg/orc_intel/sched_dflow.h,v $
   *
   * Description:
   * ============

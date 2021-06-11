@@ -3,10 +3,10 @@
 // ====================================================================
 //
 // Module: opt_vn_expr_taxonomy.h
-// $Revision: 1.10 $
-// $Date: 2001/03/10 02:49:10 $
-// $Author: mtibuild $
-// $Source: /isms/cmplrs.src/osprey1.0/be/opt/RCS/opt_vn_expr_taxonomy.h,v $
+// $Revision: 1.1.1.1 $
+// $Date: 2005/10/21 19:00:00 $
+// $Author: marcel $
+// $Source: /proj/osprey/CVS/open64/osprey1.0/be/opt/opt_vn_expr_taxonomy.h,v $
 //
 // ====================================================================
 //
@@ -112,11 +112,7 @@
 #include "opt_vn_expr.h"
 #include "wutil.h"
 
-#ifdef __STL_USE_NAMESPACES
-using std::pair;
-#endif
-
-typedef pair<VN_VALNUM,VN_VALNUM> VN_VALNUM_PAIR;
+typedef std::pair<VN_VALNUM,VN_VALNUM> VN_VALNUM_PAIR;
 
 
 // The classes defined in this file.

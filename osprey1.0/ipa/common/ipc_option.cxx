@@ -37,10 +37,10 @@
  * ====================================================================
  *
  * Module: ipc_option.c
- * $Revision: 1.32 $
- * $Date: 2001/03/10 04:02:15 $
- * $Author: mtibuild $
- * $Source: /isms/cmplrs.src/osprey1.0/ipa/common/RCS/ipc_option.cxx,v $
+ * $Revision: 1.1.1.1 $
+ * $Date: 2005/10/21 19:00:00 $
+ * $Author: marcel $
+ * $Source: /proj/osprey/CVS/open64/osprey1.0/ipa/common/ipc_option.cxx,v $
  *
  * Description: Option processing for -INLINE options.
  * 
@@ -93,11 +93,9 @@ INT number_of_partitions = 1;
  * ====================================================================
  */
 
-#ifndef __SGI_STL_VECTOR_H
-#include <vector.h>
-#endif // __SGI_STL_VECTOR_H
+#include <vector>
 
-typedef vector <char *, mempool_allocator<char *> > ARRAY_OF_STRINGS;
+typedef std::vector <char *, mempool_allocator<char *> > ARRAY_OF_STRINGS;
 
 #define USER_NOT_SPEC          0x0     // User did not specify anything regarding this symbol
 #define USER_MUST_INLINE       0x1     // User specified Must inline this pu

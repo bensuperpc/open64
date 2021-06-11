@@ -3,10 +3,10 @@
 // ====================================================================
 //
 // Module: opt_htable.h
-// $Revision: 1.3 $
-// $Date: 2002/05/21 07:21:30 $
-// $Author: lfei $
-// $Source: /u/merge/src/osprey1.0/be/opt/opt_htable.h,v $
+// $Revision: 1.1.1.1 $
+// $Date: 2005/10/21 19:00:00 $
+// $Author: marcel $
+// $Source: /proj/osprey/CVS/open64/osprey1.0/be/opt/opt_htable.h,v $
 //
 // Revision history:
 //  27-SEP-94 shin - Original Version
@@ -143,9 +143,9 @@ struct CONSTRAINT_PRAGMA_INFO {
 };
 
 struct ASM_PRAGMA_INFO {
-  vector<CLOBBER_PRAGMA_INFO,
+  std::vector<CLOBBER_PRAGMA_INFO,
          mempool_allocator<CLOBBER_PRAGMA_INFO> > clobber_info;
-  vector<CONSTRAINT_PRAGMA_INFO,
+  std::vector<CONSTRAINT_PRAGMA_INFO,
          mempool_allocator<CONSTRAINT_PRAGMA_INFO> > constraint_info;
 
   ASM_PRAGMA_INFO(MEM_POOL *pool) :

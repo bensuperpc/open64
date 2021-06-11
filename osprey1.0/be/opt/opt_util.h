@@ -3,10 +3,10 @@
 // ====================================================================
 //
 // Module: opt_util.h
-// $Revision: 1.21 $
-// $Date: 2001/03/10 02:48:26 $
-// $Author: mtibuild $
-// $Source: /isms/cmplrs.src/osprey1.0/be/opt/RCS/opt_util.h,v $
+// $Revision: 1.1.1.1 $
+// $Date: 2005/10/21 19:00:00 $
+// $Author: marcel $
+// $Source: /proj/osprey/CVS/open64/osprey1.0/be/opt/opt_util.h,v $
 //
 // Revision history:
 //  15-SEP-94 shin - Original Version
@@ -54,7 +54,7 @@
 #ifndef opt_util_INCLUDED
 #define opt_util_INCLUDED	"opt_util.h"
 #ifdef _KEEP_RCS_ID
-static char *opt_utilrcs_id = 	opt_util_INCLUDED"$Revision: 1.21 $";
+static char *opt_utilrcs_id = 	opt_util_INCLUDED"$Revision: 1.1.1.1 $";
 #endif /* _KEEP_RCS_ID */
 
 #ifndef srcpos_INCLUDED
@@ -158,7 +158,7 @@ using std::vector;
 #endif
 
 typedef mempool_allocator<bool>         BVECTOR_ALLOCATOR;
-typedef vector<bool, BVECTOR_ALLOCATOR> BVECTOR; // TODO add range checks
+typedef std::vector<bool, BVECTOR_ALLOCATOR> BVECTOR; // TODO add range checks
 
 // For each coderep (i), determines whether it contains a reference
 // to a volatile memory location or a volatile OPC, and if this is 

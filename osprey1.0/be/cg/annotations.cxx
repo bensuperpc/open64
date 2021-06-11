@@ -39,9 +39,9 @@
  *
  *  Module: annotations.c
  *  $Revision: 1.1.1.1 $
- *  $Date: 2001/06/25 06:32:36 $
- *  $Author: llx $
- *  $Source: /u/merge/src/osprey1.0/be/cg/annotations.cxx,v $
+ *  $Date: 2005/10/21 19:00:00 $
+ *  $Author: marcel $
+ *  $Source: /proj/osprey/CVS/open64/osprey1.0/be/cg/annotations.cxx,v $
  *
  *  Description:
  *  ============

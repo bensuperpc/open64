@@ -37,10 +37,10 @@
 // ====================================================================
 // ====================================================================
 //
-// $Revision: 1.19 $
-// $Date: 2001/03/10 04:16:51 $
-// $Author: mtibuild $
-// $Source: /isms/cmplrs.src/osprey1.0/ipa/main/optimize/RCS/ipo_pad.cxx,v $
+// $Revision: 1.1.1.1 $
+// $Date: 2005/10/21 19:00:00 $
+// $Author: marcel $
+// $Source: /proj/osprey/CVS/open64/osprey1.0/ipa/main/optimize/ipo_pad.cxx,v $
 //
 // Revision history:
 //  2-May-98 - Original Version

@@ -33,7 +33,7 @@
 */
 
 
-/* $Header: /isms/cmplrs.src/osprey1.0/include/cmplrs/RCS/f_errno.h,v 7.16 2001/03/10 03:56:44 mtibuild Exp $ */
+/* $Header: /proj/osprey/CVS/open64/osprey1.0/include/cmplrs/f_errno.h,v 1.1.1.1 2005/10/21 19:00:00 marcel Exp $ */
 /*
  *
  * f77 I/O error definitions

@@ -36,10 +36,10 @@
 /* ====================================================================
  *
  * Module: findloops.c
- * $Revision: 1.27 $
- * $Date: 2001/03/10 01:58:51 $
- * $Author: mtibuild $
- * $Source: /isms/cmplrs.src/osprey1.0/be/cg/RCS/findloops.cxx,v $
+ * $Revision: 1.1.1.1 $
+ * $Date: 2005/10/21 19:00:00 $
+ * $Author: marcel $
+ * $Source: /proj/osprey/CVS/open64/osprey1.0/be/cg/findloops.cxx,v $
  *
  * Description:
  *
@@ -48,7 +48,7 @@
  * ====================================================================
  */
 #ifdef _KEEP_RCS_ID
-static const char rcs_id[] = "$Source: /isms/cmplrs.src/osprey1.0/be/cg/RCS/findloops.cxx,v $ $Revision: 1.27 $";
+static const char rcs_id[] = "$Source: /proj/osprey/CVS/open64/osprey1.0/be/cg/findloops.cxx,v $ $Revision: 1.1.1.1 $";
 #endif /* _KEEP_RCS_ID */
 
 #include "defs.h"
@@ -327,6 +327,16 @@ LOOP_DESCR_Detect_Loops (MEM_POOL *pool)
 }
 
 
+static void
+LOOP_DESCR_Add_BB_Helper (LOOP_DESCR *loop, BB *bb) {
+
+    LOOP_DESCR* l = LOOP_DESCR_Next_Enclosing_Loop(loop);
+    if (l) { LOOP_DESCR_Add_BB_Helper (l, bb); }
+
+    LOOP_DESCR_bbset(loop) = BB_SET_Union1D(LOOP_DESCR_bbset(loop), 
+                            bb, loop->mem_pool);
+}
+
 /* ====================================================================
  * See "findloops.h" for interface description.
  * ====================================================================
@@ -338,12 +348,8 @@ LOOP_DESCR_Add_BB(LOOP_DESCR *loop, BB *bb)
 	    ("BB:%d already in a loop", BB_id(bb)));
 
   BB_MAP_Set(LOOP_DESCR_map, bb, loop);
-
-  do {
-    LOOP_DESCR_bbset(loop) = BB_SET_Union1D(LOOP_DESCR_bbset(loop), bb,
-					    loop->mem_pool);
-    loop = LOOP_DESCR_Next_Enclosing_Loop(loop);
-  } while (loop);
+    
+  LOOP_DESCR_Add_BB_Helper (loop, bb);
 }
 
 

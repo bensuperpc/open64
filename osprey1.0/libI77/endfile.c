@@ -35,7 +35,7 @@
 
 
 
-/* $Header: /isms/cmplrs.src/osprey1.0/libI77/RCS/endfile.c,v 9.14 2001/03/10 04:49:51 mtibuild Exp $ */
+/* $Header: /proj/osprey/CVS/open64/osprey1.0/libI77/endfile.c,v 1.1.1.1 2005/10/21 19:00:00 marcel Exp $ */
 /* sjc  #1951	10Dec87		Use ftruncate rather than fork/exec of  */
 /* 				/bin/cp                                 */
 

@@ -38,10 +38,10 @@
 // ====================================================================
 //
 // Module: fb_whirl.cxx
-// $Revision: 1.3 $
-// $Date: 2002/12/29 09:44:47 $
-// $Author: qzhao2 $
-// $Source: /u/merge/src/osprey1.0/be/com/fb_whirl.cxx,v $
+// $Revision: 1.1.1.1 $
+// $Date: 2005/10/21 19:00:00 $
+// $Author: marcel $
+// $Source: /proj/osprey/CVS/open64/osprey1.0/be/com/fb_whirl.cxx,v $
 //
 // Description:
 //
@@ -82,7 +82,6 @@
 #include "com_whirlview.h"
 
 #include "cxx_graph.h"
-#include <pair.h>         // STL pair.
 
 #include "DaVinci.h"      // for DaVinci viewer (for FB CFG).
 #include "wb_util.h"      // more: move this to another file (gwe).
@@ -102,6 +101,15 @@ ADDRESS_PUSIZE_MAP PU_Addr_Pusize_Map;
 
 
 // ====================================================================
+void
+FEEDBACK::FB_hoist_case( WN *wn_switch, std::vector<FB_FREQ>::size_type wcase)
+{
+   FB_Info_Switch info_switch = Query_switch( wn_switch );
+   FB_FREQ freq_taken = info_switch[wcase];
+   info_switch[wcase] = FB_FREQ_ZERO;
+   Annot_switch( wn_switch, info_switch );
+}
+
 
 FEEDBACK *Cur_PU_Feedback = NULL;
 
@@ -301,7 +309,7 @@ FEEDBACK::Add_index_invoke( WN *wn )
 
   if ( fb_index == 0 ) {
     fb_index = _invokes.size();
-    _invokes.push_back();
+    _invokes.push_back(FB_Info_Invoke());
     IPA_WN_MAP32_Set( _maptab, WN_MAP_FEEDBACK, wn, fb_index );
   }
   return fb_index;
@@ -316,7 +324,7 @@ FEEDBACK::Add_index_branch( WN *wn )
 
   if ( fb_index == 0 ) {
     fb_index = _branches.size();
-    _branches.push_back();
+    _branches.push_back(FB_Info_Branch());
     IPA_WN_MAP32_Set( _maptab, WN_MAP_FEEDBACK, wn, fb_index );
   }
   return fb_index;
@@ -331,7 +339,7 @@ FEEDBACK::Add_index_loop( WN *wn )
 
   if ( fb_index == 0 ) {
     fb_index = _loops.size();
-    _loops.push_back();
+    _loops.push_back(FB_Info_Loop());
     IPA_WN_MAP32_Set( _maptab, WN_MAP_FEEDBACK, wn, fb_index );
   }
   return fb_index;
@@ -346,7 +354,7 @@ FEEDBACK::Add_index_circuit( WN *wn )
 
   if ( fb_index == 0 ) {
     fb_index = _circuits.size();
-    _circuits.push_back();
+    _circuits.push_back(FB_Info_Circuit());
     IPA_WN_MAP32_Set( _maptab, WN_MAP_FEEDBACK, wn, fb_index );
   }
   return fb_index;
@@ -375,7 +383,7 @@ FEEDBACK::Add_index_call( WN *wn )
 
   if (fb_index == 0) {
     fb_index = _calls.size();
-    _calls.push_back();
+    _calls.push_back(FB_Info_Call());
     IPA_WN_MAP32_Set( _maptab, WN_MAP_FEEDBACK, wn, fb_index );
   }
 
@@ -397,7 +405,7 @@ FEEDBACK::Add_index_icall( WN *wn )
 
   if (fb_index == 0) {
     fb_index = _icalls.size();
-    _icalls.push_back();
+    _icalls.push_back(FB_Info_Icall());
     IPA_WN_MAP32_Set( _maptab, WN_MAP_FEEDBACK, wn, fb_index );
   }
   return fb_index;
@@ -412,7 +420,7 @@ FEEDBACK::Add_index_switch( WN *wn )
 
   if ( fb_index == 0 ) {
     fb_index = _switches.size();
-    _switches.push_back();
+    _switches.push_back(FB_Info_Switch());
     IPA_WN_MAP32_Set( _maptab, WN_MAP_FEEDBACK, wn, fb_index );
   }
   return fb_index;

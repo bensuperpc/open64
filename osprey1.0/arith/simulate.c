@@ -1073,4 +1073,4 @@ char *strnstrn(char *str1, long n1, char *str2, long n2)
 #endif
 
 static char USMID [] = "\n%Z%%M%	%I%	%G% %U%\n";
-static char rcsid [] = "$Id: simulate.c,v 2.9 1997/04/25 02:56:32 gbt Exp $";
+static char rcsid [] = "$Id: simulate.c,v 1.1.1.1 2005/10/21 19:00:00 marcel Exp $";

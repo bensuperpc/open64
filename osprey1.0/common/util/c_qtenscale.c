@@ -37,10 +37,10 @@
  * ====================================================================
  *
  * Module: c_qtenscale:
- * $Revision: 1.5 $
- * $Date: 2001/03/10 03:27:07 $
- * $Author: mtibuild $
- * $Source: /isms/cmplrs.src/osprey1.0/common/util/RCS/c_qtenscale.c,v $
+ * $Revision: 1.1.1.1 $
+ * $Date: 2005/10/21 19:00:00 $
+ * $Author: marcel $
+ * $Source: /proj/osprey/CVS/open64/osprey1.0/common/util/c_qtenscale.c,v $
  *
  * Revision history:
  *  29-jun-93 - Original Version
@@ -52,7 +52,7 @@
  */
 
 static char *source_file = __FILE__;
-static char *rcs_id = "$Source: /isms/cmplrs.src/osprey1.0/common/util/RCS/c_qtenscale.c,v $ $Revision: 1.5 $";
+static char *rcs_id = "$Source: /proj/osprey/CVS/open64/osprey1.0/common/util/c_qtenscale.c,v $ $Revision: 1.1.1.1 $";
 
 #include <values.h>
 #include "defs.h"

@@ -37,10 +37,10 @@
  * ====================================================================
  *
  * Module: whirl2c_common.c
- * $Revision: 1.20 $
- * $Date: 2001/03/10 02:57:10 $
- * $Author: mtibuild $
- * $Source: /isms/cmplrs.src/osprey1.0/be/whirl2c/RCS/whirl2c_common.cxx,v $
+ * $Revision: 1.1.1.1 $
+ * $Date: 2005/10/21 19:00:00 $
+ * $Author: marcel $
+ * $Source: /proj/osprey/CVS/open64/osprey1.0/be/whirl2c/whirl2c_common.cxx,v $
  *
  * Revision history:
  *  07-Nov-94 - Original Version

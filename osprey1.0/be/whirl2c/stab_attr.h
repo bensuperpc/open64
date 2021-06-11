@@ -39,10 +39,10 @@
  * ====================================================================
  *
  * Module: stab_attr.h
- * $Revision: 1.61 $
- * $Date: 2001/03/10 02:55:54 $
- * $Author: mtibuild $
- * $Source: /isms/cmplrs.src/osprey1.0/be/whirl2c/RCS/stab_attr.h,v $
+ * $Revision: 1.1.1.1 $
+ * $Date: 2005/10/21 19:00:00 $
+ * $Author: marcel $
+ * $Source: /proj/osprey/CVS/open64/osprey1.0/be/whirl2c/stab_attr.h,v $
  *
  * Revision history:
  *  07-Mar-95 - Original Version

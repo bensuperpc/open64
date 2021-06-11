@@ -36,8 +36,8 @@
  * ====================================================================
  *
  * Module: inttypes.h
- * $Revision: 1.4 $
- * $Date: 2001/03/10 10:25:58 $
+ * $Revision: 1.1.1.1 $
+ * $Date: 2005/10/21 19:00:00 $
  *
  * Revision history:
  *  14-Sep-92 - Original Version

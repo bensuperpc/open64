@@ -30,10 +30,10 @@
   * =========================================================================
   * 
   * Module: sched_seq.cxx
-  * $Revision: 1.2 $
-  * $Date: 2003/01/15 08:05:36 $
-  * $Author: sxyang $
-  * $Source: /u/merge/src/osprey1.0/be/cg/orc_intel/sched_seq.cxx,v $
+  * $Revision: 1.1.1.1 $
+  * $Date: 2005/10/21 19:00:00 $
+  * $Author: marcel $
+  * $Source: /proj/osprey/CVS/open64/osprey1.0/be/cg/orc_intel/sched_seq.cxx,v $
   *
   * Revision comments:
   *
@@ -209,7 +209,7 @@ DEEPDOWN_SCHED_SEQ :: Next (void) {
         #define FREQ_DEVATION (0.1f)
         float u = node_freq * (1 + FREQ_DEVATION);
         float l = node_freq * (1 - FREQ_DEVATION);
-        #undef FREQ_DEVATION (0.1f)
+        #undef FREQ_DEVATION
 
         if (u < most_freq) { continue; } 
         if (l > most_freq || 

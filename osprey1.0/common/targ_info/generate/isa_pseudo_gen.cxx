@@ -40,10 +40,10 @@
 //
 /////////////////////////////////////
 //
-//  $Revision: 1.7 $
-//  $Date: 2001/03/10 03:24:38 $
-//  $Author: mtibuild $
-//  $Source: /isms/cmplrs.src/osprey1.0/common/targ_info/generate/RCS/isa_pseudo_gen.cxx,v $
+//  $Revision: 1.1.1.1 $
+//  $Date: 2005/10/21 19:00:00 $
+//  $Author: marcel $
+//  $Source: /proj/osprey/CVS/open64/osprey1.0/common/targ_info/generate/isa_pseudo_gen.cxx,v $
 
 #include <stddef.h>
 #include <stdlib.h>
@@ -52,8 +52,8 @@
 #include <assert.h>
 #include <strings.h>
 #include <alloca.h>
-#include <list.h>
-#include <vector.h>
+#include <list>
+#include <vector>
 #include "topcode.h"
 #include "gen_util.h"
 #include "targ_isa_operands.h"
@@ -80,7 +80,7 @@ typedef struct pseudo_op {
 } PSEUDO_OP_INFO;
 
 static int num_pseudos;
-static list <PSEUDO_OP_INFO *> pseudos;
+static std::list <PSEUDO_OP_INFO *> pseudos;
 static PSEUDO_OP_INFO *cur_pseudo;
 static int max_require;
 static int max_map;
@@ -327,7 +327,7 @@ void order_pseudos(int *machine_to_pseudo_index, int *pseudo_to_machine_index)
 /////////////////////////////////////
 {
   int i;
-  list <PSEUDO_OP_INFO *>::iterator ps_iter;
+  std::list <PSEUDO_OP_INFO *>::iterator ps_iter;
   PSEUDO_OP_INFO **vec = (PSEUDO_OP_INFO **)alloca(sizeof(PSEUDO_OP_INFO *) * num_pseudos);
 
   for (i = 0; i < TOP_count; ++i) {
@@ -382,7 +382,7 @@ void ISA_Pseudo_End(void)
   DIRECTION last_dir = UNKNOWN_DIRECTION;
   int machine_to_pseudo_index[TOP_count];
   int pseudo_to_machine_index[TOP_count];
-  list <PSEUDO_OP_INFO *>::iterator ps_iter;
+  std::list <PSEUDO_OP_INFO *>::iterator ps_iter;
   int i;
   EXPR *e;
   char buf[1000];

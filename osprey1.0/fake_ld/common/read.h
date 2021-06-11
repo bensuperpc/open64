@@ -33,7 +33,7 @@
 */
 
 
-/* $Header: /isms/cmplrs.src/osprey1.0/fake_ld/common/RCS/read.h,v 1.5 2001/03/10 03:52:08 mtibuild Exp $ */
+/* $Header: /proj/osprey/CVS/open64/osprey1.0/fake_ld/common/read.h,v 1.1.1.1 2005/10/21 19:00:00 marcel Exp $ */
 
 #ifndef __READ_H__
 #define __READ_H__

@@ -30,8 +30,8 @@
 //
 //  Module : ekapi_enum.cxx_
 //  $Date  : $
-//  $Author: sxyang $
-//  $Source: /u/merge/src/osprey1.0/common/ipfec_targ_info/access/ekapi_enums.cxx,v $
+//  $Author: marcel $
+//  $Source: /proj/osprey/CVS/open64/osprey1.0/common/ipfec_targ_info/access/ekapi_enums.cxx,v $
 //
 //  Description:
 //  ============

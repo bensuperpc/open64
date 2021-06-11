@@ -30,8 +30,8 @@
 //
 //  Module : operands_gen.cxx
 //  $Date  : $
-//  $Author: sxyang $
-//  $Source: /u/merge/src/osprey1.0/common/ipfec_targ_info/gen/operands_gen.cxx,v $
+//  $Author: marcel $
+//  $Source: /proj/osprey/CVS/open64/osprey1.0/common/ipfec_targ_info/gen/operands_gen.cxx,v $
 //
 //  Description:
 //  ============
@@ -502,6 +502,10 @@ void Operands_Generator(void *pknobs, GEN_MODE mode)
         fprintf(c_file, "} },                       /* O_%d */\n", grp_i);
     }
 
+    free(opnd_grp.source);
+    free(opnd_grp.opnduse);
+    free(opnd_grp.result);
+
     fprintf(c_file, "};\n\n");
 
     int op_i;
@@ -539,6 +543,7 @@ void Operands_Generator(void *pknobs, GEN_MODE mode)
     fprintf(export_file, "TOP_Find_Operand_Use\n");
     fprintf(export_file, "TOP_Operand_Uses\n");
 
+    free(reg_class_info);
 
     Emit_Tailer(h_file);
     Close_Module_Files(mode, &c_file, &h_file, &export_file);

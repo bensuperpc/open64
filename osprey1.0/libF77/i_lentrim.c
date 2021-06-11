@@ -34,7 +34,7 @@
 */
 
 
-/* $Header: /isms/cmplrs.src/osprey1.0/libF77/RCS/i_lentrim.c,v 1.5 2001/03/10 04:35:36 mtibuild Exp $ */
+/* $Header: /proj/osprey/CVS/open64/osprey1.0/libF77/i_lentrim.c,v 1.1.1.1 2005/10/21 19:00:00 marcel Exp $ */
 
 /*
  *		Returns index of last nonblank character in string s

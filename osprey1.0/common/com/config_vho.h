@@ -37,10 +37,10 @@
  * ====================================================================
  *
  * Module: config_vho.h
- * $Revision: 1.2 $
- * $Date: 2002/12/29 09:44:49 $
- * $Author: qzhao2 $
- * $Source: /u/merge/src/osprey1.0/common/com/config_vho.h,v $
+ * $Revision: 1.1.1.1 $
+ * $Date: 2005/10/21 19:00:00 $
+ * $Author: marcel $
+ * $Source: /proj/osprey/CVS/open64/osprey1.0/common/com/config_vho.h,v $
  *
  * Revision history:
  *  05-May-96 - Extracted from be/opt/opt_config.h.
@@ -66,6 +66,7 @@ extern INT32 VHO_Switch_Density;
 extern INT32 VHO_Switch_If_Else_Limit;
 extern INT32 VHO_Switch_Compgoto_Limit;
 extern BOOL  VHO_Switch_Opt;
+extern INT32 VHO_Switch_Opt_Threshold;
 extern BOOL  VHO_Cselect_Opt;
 extern BOOL  VHO_Iload_Opt;
 extern BOOL  VHO_Istore_Opt;

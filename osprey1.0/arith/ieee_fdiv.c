@@ -585,4 +585,4 @@ ar_ifdiv128(AR_IEEE_128 *x,
 
 
 static char USMID [] = "\n%Z%%M%	%I%	%G% %U%\n";
-static char rcsid [] = "$Id: ieee_fdiv.c,v 2.5 1997/07/22 23:31:26 gbt Exp $";
+static char rcsid [] = "$Id: ieee_fdiv.c,v 1.1.1.1 2005/10/21 19:00:00 marcel Exp $";

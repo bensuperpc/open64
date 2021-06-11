@@ -32,10 +32,10 @@
   * =========================================================================
   * 
   * Module: sched_cflow.h
-  * $Revision: 1.7 $
-  * $Date: 2003/01/15 08:05:20 $
-  * $Author: sxyang $
-  * $Source: /u/merge/src/osprey1.0/be/cg/orc_intel/sched_cflow.h,v $
+  * $Revision: 1.1.1.1 $
+  * $Date: 2005/10/21 19:00:00 $
+  * $Author: marcel $
+  * $Source: /proj/osprey/CVS/open64/osprey1.0/be/cg/orc_intel/sched_cflow.h,v $
   *
   * Revision comments:
   *
@@ -157,10 +157,7 @@
 #ifndef sched_cflow_INCLUDED  
 #define sched_cflow_INCLUDED 
 
-#include <slist.h> 
-#include <list.h>
-#include <vector.h> 
-#include <map.h>
+#include <vector> 
 
 /* definition used globally in backend */
 #include "ipfec_defs.h"
@@ -369,7 +366,7 @@ private :
 
 
     typedef mempool_allocator<_NODE_CFLOW_INFO >  _NODE_CFLOW_INFO_ALLOC;
-    typedef vector<_NODE_CFLOW_INFO, _NODE_CFLOW_INFO_ALLOC> 
+    typedef std::vector<_NODE_CFLOW_INFO, _NODE_CFLOW_INFO_ALLOC> 
                                                   _NODE_CFLOW_VECT;                              
     typedef _NODE_CFLOW_VECT::iterator      	  _NODE_CFLOW_VECT_ITER;
 

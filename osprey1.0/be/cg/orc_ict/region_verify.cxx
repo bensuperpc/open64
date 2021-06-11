@@ -31,17 +31,17 @@
 //
 // Module: region_verify.cxx
 // Author: lren
-// $Revision: 1.6 $
-// $Date: 2003/01/21 12:57:07 $
-// $Source: /u/merge/src/osprey1.0/be/cg/orc_ict/region_verify.cxx,v $
+// $Revision: 1.1.1.1 $
+// $Date: 2005/10/21 19:00:00 $
+// $Source: /proj/osprey/CVS/open64/osprey1.0/be/cg/orc_ict/region_verify.cxx,v $
 //
 //=============================================================================
 
 
 #include "bb.h"
-#include "stack.h"
-#include "vector.h"
-#include "list.h"
+#include <stack>
+#include <vector>
+#include <list>
 #include "defs.h"
 #include "cxx_memory.h"
 #include "region.h"
@@ -217,7 +217,8 @@ void Verify_Cfg(REGIONAL_CFG *cfg){
     for(TOPOLOGICAL_REGIONAL_CFG_ITER iter(cfg); iter!=0; ++iter){
         REGIONAL_CFG_NODE *node = *iter;
         for(CFG_PRED_NODE_ITER pred_iter(node); pred_iter!=0; ++pred_iter)
-            Is_True(Find_In_Vector(*pred_iter, nodes),("verify topological_cfg_iter"));
+             Is_True(Find_In_Vector(*pred_iter, nodes) != (NODE_VECTOR_ITER)0,
+                     ("verify topological_cfg_iter"));
         nodes.push_back(node);
     }
 
@@ -227,7 +228,8 @@ void Verify_Cfg(REGIONAL_CFG *cfg){
     for(REVERSE_TOPO_REGIONAL_CFG_ITER iter(cfg); iter!=0; ++iter){
         REGIONAL_CFG_NODE *node = *iter;
         for(CFG_SUCC_NODE_ITER succ_iter(node); succ_iter!=0; ++succ_iter)
-            Is_True(Find_In_Vector(*succ_iter, nodes),("verify topological_cfg_iter"));
+            Is_True (Find_In_Vector(*succ_iter, nodes) != (NODE_VECTOR_ITER)0,
+                ("verify topological_cfg_iter"));
         nodes.push_back(node);
     }
 }

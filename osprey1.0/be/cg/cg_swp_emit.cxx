@@ -37,10 +37,10 @@
  * =======================================================================
  *
  *  Module: cg_swp_emit.cxx
- *  $Revision: 1.9 $
- *  $Date: 2002/10/09 01:54:16 $
- *  $Author: jy $
- *  $Source: /u/merge/src/osprey1.0/be/cg/cg_swp_emit.cxx,v $
+ *  $Revision: 1.1.1.1 $
+ *  $Date: 2005/10/21 19:00:00 $
+ *  $Author: marcel $
+ *  $Source: /proj/osprey/CVS/open64/osprey1.0/be/cg/cg_swp_emit.cxx,v $
  *
  *  Description:
  *  ============
@@ -180,12 +180,12 @@ SWP_Reorder_OPs(const SWP_OP_vector& op_state,
   BB_Remove_All(body);  // remove all OPs
 
   INT         i;
-  vector<INT> sorted_op;
+  std::vector<INT> sorted_op;
   for (i = 0; i < op_state.size(); i++) {
     if (op_state[i].op) 
       sorted_op.push_back(i);
   }
-  sort(sorted_op.begin(), sorted_op.end(), Order_Op_State_by_Modulo_Cycles(op_state));
+  std::sort(sorted_op.begin(), sorted_op.end(), Order_Op_State_by_Modulo_Cycles(op_state));
 
   INT ii = op_state.ii;
   for (i = 0; i < sorted_op.size(); i++) {

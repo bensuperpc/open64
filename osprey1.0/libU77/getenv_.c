@@ -28,7 +28,7 @@
 */
 
 
-/* $Header: /isms/cmplrs.src/osprey1.0/libU77/RCS/getenv_.c,v 8.5 2001/02/20 23:39:46 mtibuild Exp $ */
+/* $Header: /proj/osprey/CVS/open64/osprey1.0/libU77/getenv_.c,v 1.1.1.1 2005/10/21 19:00:00 marcel Exp $ */
  /*
  * getenv - f77 subroutine to return environment variables
  *

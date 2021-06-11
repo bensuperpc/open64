@@ -36,7 +36,7 @@
 #ifndef __SYS_ELF_WHIRL_H__
 #define __SYS_ELF_WHIRL_H__
 
-/* $Header: /isms/cmplrs.src/osprey1.0/include/sys/RCS/elf_whirl.h,v 1.48 2001/03/10 03:57:49 mtibuild Exp $ */
+/* $Header: /proj/osprey/CVS/open64/osprey1.0/include/sys/elf_whirl.h,v 1.1.1.1 2005/10/21 19:00:00 marcel Exp $ */
 
 /* Elf extension for WHIRL object files */
 

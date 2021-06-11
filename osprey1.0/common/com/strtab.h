@@ -40,10 +40,10 @@
  * ====================================================================
  *
  * Module: strtab.h
- * $Revision: 1.35 $
- * $Date: 2001/03/10 03:15:51 $
- * $Author: mtibuild $
- * $Source: /isms/cmplrs.src/osprey1.0/common/com/RCS/strtab.h,v $
+ * $Revision: 1.1.1.1 $
+ * $Date: 2005/10/21 19:00:00 $
+ * $Author: marcel $
+ * $Source: /proj/osprey/CVS/open64/osprey1.0/common/com/strtab.h,v $
  *
  * Description:
  *
@@ -129,7 +129,7 @@ Index_to_char_array (UINT32 idx);
 #ifdef MONGOOSE_BE
 
 #ifndef __SGI_STL_HASH_MAP_H
-#include <hash_map.h>
+#include <ext/hash_map>
 #endif
 
 #ifndef mempool_allocator_INCLUDED
@@ -146,8 +146,9 @@ private:
   typedef hash_map<STR_IDX, STR_IDX, hash<STR_IDX>, equal_to<STR_IDX>,
       mempool_allocator<STR_IDX> > rep_type;
 #else
-  typedef hash_map<STR_IDX, STR_IDX, hash<STR_IDX>, equal_to<STR_IDX>,
-      mempool_allocator<pair<const STR_IDX, STR_IDX> > > rep_type;
+  typedef __gnu_cxx::hash_map<STR_IDX, STR_IDX, __gnu_cxx::hash<STR_IDX>,
+	  __gnu_cxx::equal_to<STR_IDX>,
+	  mempool_allocator<std::pair<const STR_IDX, STR_IDX> > > rep_type;
 #endif
   rep_type rep;  
 

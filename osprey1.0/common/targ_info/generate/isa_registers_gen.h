@@ -102,10 +102,10 @@
 /////////////////////////////////////
 
 
-//  $Revision: 1.9 $
-//  $Date: 2001/03/10 03:24:53 $
-//  $Author: mtibuild $
-//  $Source: /isms/cmplrs.src/osprey1.0/common/targ_info/generate/RCS/isa_registers_gen.h,v $
+//  $Revision: 1.1.1.1 $
+//  $Date: 2005/10/21 19:00:00 $
+//  $Author: marcel $
+//  $Source: /proj/osprey/CVS/open64/osprey1.0/common/targ_info/generate/isa_registers_gen.h,v $
 
 
 #ifndef ISA_REGISTERS_GEN_INCLUDED
@@ -116,7 +116,7 @@ extern "C" {
 #ifndef ISA_REGISTERS_GEN_RCS_ID
 #define ISA_REGISTERS_GEN_RCS_ID
 #ifdef _KEEP_RCS_ID
-static const char isa_registers_gen_rcs_id[] = "$Source: /isms/cmplrs.src/osprey1.0/common/targ_info/generate/RCS/isa_registers_gen.h,v $ $Revision: 1.9 $";
+static const char isa_registers_gen_rcs_id[] = "$Source: /proj/osprey/CVS/open64/osprey1.0/common/targ_info/generate/isa_registers_gen.h,v $ $Revision: 1.1.1.1 $";
 #endif
 #endif
 

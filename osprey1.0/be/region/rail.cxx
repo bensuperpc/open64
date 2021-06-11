@@ -37,10 +37,10 @@
 //============================================================================
 //
 // Module: rail.cxx
-// $Revision: 1.20 $
-// $Date: 2001/03/10 02:52:51 $
-// $Author: mtibuild $
-// $Source: /isms/cmplrs.src/osprey1.0/be/region/RCS/rail.cxx,v $
+// $Revision: 1.1.1.1 $
+// $Date: 2005/10/21 19:00:00 $
+// $Author: marcel $
+// $Source: /proj/osprey/CVS/open64/osprey1.0/be/region/rail.cxx,v $
 //
 // Revision history:
 //  24-AUG-95 dahl - Original Version
@@ -55,7 +55,7 @@
 
 #define rail_CXX	"rail.cxx"
 #ifdef _KEEP_RCS_ID
-static char *rcs_id = rail_CXX"$Revision: 1.20 $";
+static char *rcs_id = rail_CXX"$Revision: 1.1.1.1 $";
 #endif /* _KEEP_RCS_ID */
 
 #include "wn.h"			/* WN type		*/

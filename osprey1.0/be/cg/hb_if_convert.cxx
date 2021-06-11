@@ -32,8 +32,7 @@
 
 */
 
-#include <stack.h>
-#include <vector.h>
+#include <vector>
 #include "defs.h"
 #include "config.h"
 #include "tracing.h"
@@ -134,6 +133,7 @@ Calculate_Control_Dependences(HB* hb, BB_MAP control_dependences,
     FOR_ALL_BB_SUCCS(bb,bl) {
       BB* bb_dep;
       BB* bb_succ = BBLIST_item(bl);
+      Remove_Explicit_Branch(bb);
       BOOL true_edge = (BB_Fall_Thru_Successor(bb) != bb_succ);
       //
       // bb_to_add is set to (pdom(bb_succ) - pdom(bb)) & HB_Blocks. 
@@ -214,6 +214,7 @@ Reset_Freq_Data_For_BB(BB *bb, BB_MAP freq_map)
 {
    BBLIST *bl;
    FREQ_DATA *bb_freq_data = (FREQ_DATA *) BB_MAP_Get(freq_map,bb);
+   Remove_Explicit_Branch(bb);
    bb_freq_data->fall_thru = BB_Fall_Thru_Successor(bb);
    if (bb_freq_data->fall_thru) {
       bb_freq_data->branch_prob = 
@@ -294,8 +295,8 @@ replace_block_walk(BB *bb_first, BB *bb_second, HB_CAND_TREE* c, BOOL walk_kids)
   // Walk the children
   //
   if (walk_kids) {
-    list<HB_CAND_TREE*> kids = HB_CAND_TREE_Kids(c);
-    list<HB_CAND_TREE*>::iterator k;
+    std::list<HB_CAND_TREE*> kids = HB_CAND_TREE_Kids(c);
+    std::list<HB_CAND_TREE*>::iterator k;
     for (k = kids.begin(); k != kids.end(); k++) {
       replace_block_walk(bb_first,bb_second,*k,walk_kids);
     }
@@ -303,9 +304,9 @@ replace_block_walk(BB *bb_first, BB *bb_second, HB_CAND_TREE* c, BOOL walk_kids)
 }
 
 static void
-Replace_Block(BB *bb_first, BB *bb_second, list<HB_CAND_TREE*>& candidate_regions)
+Replace_Block(BB *bb_first, BB *bb_second, std::list<HB_CAND_TREE*>& candidate_regions)
 {
-  list<HB_CAND_TREE*>::iterator hbct;
+  std::list<HB_CAND_TREE*>::iterator hbct;
   for (hbct = candidate_regions.begin(); hbct != candidate_regions.end(); 
        hbct++) {
     replace_block_walk(bb_first,bb_second,*hbct,TRUE);
@@ -329,8 +330,8 @@ add_block_walk(BB *bb, BB *bb_to_add, HB_CAND_TREE* c, BOOL walk_kids)
   // Walk the children
   //
   if (walk_kids) {
-    list<HB_CAND_TREE*> kids = HB_CAND_TREE_Kids(c);
-    list<HB_CAND_TREE*>::iterator k;
+    std::list<HB_CAND_TREE*> kids = HB_CAND_TREE_Kids(c);
+    std::list<HB_CAND_TREE*>::iterator k;
     for (k = kids.begin(); k != kids.end(); k++) {
       add_block_walk(bb,bb_to_add,*k,walk_kids);
     }
@@ -338,9 +339,9 @@ add_block_walk(BB *bb, BB *bb_to_add, HB_CAND_TREE* c, BOOL walk_kids)
 }
 
 static void
-Add_Block(BB *bb, BB *bb_to_add, list<HB_CAND_TREE*>& candidate_regions)
+Add_Block(BB *bb, BB *bb_to_add, std::list<HB_CAND_TREE*>& candidate_regions)
 {
-  list<HB_CAND_TREE*>::iterator hbct;
+  std::list<HB_CAND_TREE*>::iterator hbct;
   for (hbct = candidate_regions.begin(); hbct != candidate_regions.end(); 
        hbct++) {
     add_block_walk(bb,bb_to_add,*hbct,TRUE);
@@ -355,7 +356,7 @@ Merge_Blocks(HB*                  hb,
 	     BB*                  bb_second, 
 	     BB_MAP               freq_map,
 	     BOOL                 last_block,
-	     list<HB_CAND_TREE*>& candidate_regions)
+	     std::list<HB_CAND_TREE*>& candidate_regions)
 /////////////////////////////////////
 //
 //  Merge bb_first and bb_second, leaving bb_first as the block. Last_block
@@ -745,7 +746,7 @@ Make_Fall_Thru_Goto(BB*                  bb,
 		    float                block_freq,
 		    float                fall_thru_prob,
 		    float                goto_executes_prob,
-		    list<HB_CAND_TREE*>& candidate_regions,
+		    std::list<HB_CAND_TREE*>& candidate_regions,
 		    BOOL last_block,
 		    BB_SET *hb_blocks)
 {
@@ -787,6 +788,7 @@ Classify_BB(BB *bb, HB *hb)
     result |= NO_MERGE;
   }
   
+  Remove_Explicit_Branch(bb);
   fall_thru = BB_Fall_Thru_Successor(bb);
   other_succ = NULL;
 
@@ -867,10 +869,10 @@ Classify_BB(BB *bb, HB *hb)
 
 static BOOL
 Order_And_Classify_Blocks(HB* hb, 
-			  vector<BB *> &block_order,
-			  vector<INT>  &block_class)
+			  std::vector<BB *> &block_order,
+			  std::vector<INT>  &block_class)
 {
-  queue<BB *>  blocks_to_do;
+  std::queue<BB *>  blocks_to_do;
   BB * bb;
   BBLIST *bl;
   BB *succ;
@@ -975,7 +977,7 @@ Check_Block_Frequencies(BB_SET* bbs, char *label)
 // Set up the frequency map for the blocks in the hyperblock.
 //
 static void
-Compute_Block_Frequencies(vector<BB *> &block_order, BB_MAP freq_map)
+Compute_Block_Frequencies(std::vector<BB *> &block_order, BB_MAP freq_map)
 {
   INT idx;
   FREQ_DATA *bb_freq_data;
@@ -1022,9 +1024,9 @@ Compute_Block_Frequencies(vector<BB *> &block_order, BB_MAP freq_map)
 static BB *
 Remove_Branches(HB*                  hb, 
 		BB_MAP               predicate_tns, 
-		vector<BB *>         &block_order,
-		vector<INT>          &block_class,
-		list<HB_CAND_TREE*>& candidate_regions)
+		std::vector<BB *>         &block_order,
+		std::vector<INT>          &block_class,
+		std::list<HB_CAND_TREE*>& candidate_regions)
 {
    BB * bb;
    BB * last_ft_block = NULL;    // keeps track of the last fall-though block inserted
@@ -1326,8 +1328,8 @@ struct equiv_classes {
 struct control_dep_data {
   TN* true_tn;
   TN* false_tn;
-  vector <TN*> true_or_tns;
-  vector <TN*> false_or_tns;
+  std::vector <TN*> true_or_tns;
+  std::vector <TN*> false_or_tns;
 
   control_dep_data() {
     true_tn = NULL;
@@ -1425,8 +1427,8 @@ Insert_Predicates(HB* hb, BB_MAP control_dependences, BB_MAP true_edges,
 {
   BB* bb;
   BB* bb_cd;
-  vector <equiv_classes *> eclass;
-  vector <equiv_classes *>::iterator ec_iter; 
+  std::vector <equiv_classes *> eclass;
+  std::vector <equiv_classes *>::iterator ec_iter; 
   equiv_classes *ec;
 
   control_dep_data *bb_cdep_data;
@@ -1627,15 +1629,15 @@ HB_Safe_For_If_Conversion(HB* hb)
 
 /////////////////////////////////////
 void
-HB_If_Convert(HB* hb, list<HB_CAND_TREE*>& candidate_regions)
+HB_If_Convert(HB* hb, std::list<HB_CAND_TREE*>& candidate_regions)
 /////////////////////////////////////
 //
 //  See interface description.
 //
 /////////////////////////////////////
 {
-  vector<BB *>         block_order;
-  vector<INT>          block_class;
+  std::vector<BB *>         block_order;
+  std::vector<INT>          block_class;
   MEM_POOL_Push(&MEM_local_pool);
   BB_MAP true_edges = BB_MAP_Create();
   BB_MAP control_dependences = BB_MAP_Create();
@@ -1717,8 +1719,8 @@ Force_If_Convert(LOOP_DESCR *loop, BOOL allow_multi_bb)
 //
 /////////////////////////////////////
 {
-  vector<BB *>         block_order;
-  vector<INT>          block_class;
+  std::vector<BB *>         block_order;
+  std::vector<INT>          block_class;
   BOOL one_bb;
   BOOL ok_to_convert;
   BOOL all_blocks_ok;
@@ -1728,7 +1730,7 @@ Force_If_Convert(LOOP_DESCR *loop, BOOL allow_multi_bb)
   BB *bb_entry;
   HB hbs;
   HB *hb=&hbs;
-  list<HB_CAND_TREE*> candidate_regions;
+  std::list<HB_CAND_TREE*> candidate_regions;
 
   MEM_POOL_Push(&MEM_local_pool);
   fall_thru_block = NULL;

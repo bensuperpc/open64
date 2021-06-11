@@ -35,14 +35,14 @@
 
 /* CGEXP routines for loads and stores */
 #include <elf.h>
-#include <vector.h>
+#include <vector>
 #include "defs.h"
 #include "em_elf.h"
 #include "erglob.h"
 #include "ercg.h"
 #include "tracing.h"
 #include "config.h"
-#include "config_TARG.h"
+#include "config_targ_opt.h"
 #include "config_debug.h"
 #include "xstats.h"
 #include "topcode.h"

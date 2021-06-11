@@ -38,10 +38,10 @@
  * ====================================================================
  *
  * Module: vlogftab.c
- * $Revision: 1.6 $
- * $Date: 2001/03/10 09:01:43 $
- * $Author: mtibuild $
- * $Source: /isms/cmplrs.src/osprey1.0/libm/RCS/vlogftab.c,v $
+ * $Revision: 1.1.1.1 $
+ * $Date: 2005/10/21 19:00:00 $
+ * $Author: marcel $
+ * $Source: /proj/osprey/CVS/open64/osprey1.0/libm/vlogftab.c,v $
  *
  * Revision history:
  *  02-Dec-94 - Original Version
@@ -52,7 +52,7 @@
  * ====================================================================
  */
 
-static char *rcs_id = "$Source: /isms/cmplrs.src/osprey1.0/libm/RCS/vlogftab.c,v $ $Revision: 1.6 $";
+static char *rcs_id = "$Source: /proj/osprey/CVS/open64/osprey1.0/libm/vlogftab.c,v $ $Revision: 1.1.1.1 $";
 
 #include "libm.h"
 

@@ -38,10 +38,10 @@
  * ====================================================================
  *
  * Module: vtanf.c
- * $Revision: 1.13 $
- * $Date: 2001/03/10 09:02:32 $
- * $Author: mtibuild $
- * $Source: /isms/cmplrs.src/osprey1.0/libm/RCS/vtanf.c,v $
+ * $Revision: 1.1.1.1 $
+ * $Date: 2005/10/21 19:00:00 $
+ * $Author: marcel $
+ * $Source: /proj/osprey/CVS/open64/osprey1.0/libm/vtanf.c,v $
  *
  * Revision history:
  *  03-Dec-94 - Original Version
@@ -52,7 +52,7 @@
  * ====================================================================
  */
 
-static char *rcs_id = "$Source: /isms/cmplrs.src/osprey1.0/libm/RCS/vtanf.c,v $ $Revision: 1.13 $";
+static char *rcs_id = "$Source: /proj/osprey/CVS/open64/osprey1.0/libm/vtanf.c,v $ $Revision: 1.1.1.1 $";
 
 #include "libm.h"
 

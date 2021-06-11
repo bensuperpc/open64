@@ -3,10 +3,10 @@
 // ====================================================================
 //
 // Module: opt_bdce.cxx
-// $Revision: 1.2 $
-// $Date: 2002/07/09 12:43:25 $
-// $Author: qzhao2 $
-// $Source: /u/merge/src/osprey1.0/be/opt/opt_bdce.cxx,v $
+// $Revision: 1.1.1.1 $
+// $Date: 2005/10/21 19:00:00 $
+// $Author: marcel $
+// $Source: /proj/osprey/CVS/open64/osprey1.0/be/opt/opt_bdce.cxx,v $
 //
 // ====================================================================
 //

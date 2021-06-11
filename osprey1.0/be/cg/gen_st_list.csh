@@ -3,10 +3,10 @@
 ### ======================================================================
 ###
 ### Module: gen_st_list.csh
-### $Revision: 1.2 $
-### $Date: 1997/08/22 02:26:24 $
-### $Author: ho $
-### $Source: /isms/cmplrs.src/osprey1.0/be/cg/RCS/gen_st_list.csh,v $
+### $Revision: 1.1.1.1 $
+### $Date: 2005/10/21 19:00:00 $
+### $Author: marcel $
+### $Source: /proj/osprey/CVS/open64/osprey1.0/be/cg/gen_st_list.csh,v $
 ### Revision history:
 ###   27-Feb-92 - Original version
 ###

@@ -38,10 +38,10 @@
 * ====================================================================
 *
 * Module: opt_alias_rule.h
-* $Revision: 1.27 $
-* $Date: 2001/03/10 02:14:00 $
-* $Author: mtibuild $
-* $Source: /isms/cmplrs.src/osprey1.0/be/com/RCS/opt_alias_rule.h,v $
+* $Revision: 1.1.1.1 $
+* $Date: 2005/10/21 19:00:00 $
+* $Author: marcel $
+* $Source: /proj/osprey/CVS/open64/osprey1.0/be/com/opt_alias_rule.h,v $
 *
 * Revision history:
 *  04-APR-95 lo - Split from opt_alias.h
@@ -55,7 +55,7 @@
 #ifndef opt_alias_rule_INCLUDED
 #define opt_alias_rule_INCLUDED	"opt_alias_rule.h"
 #ifdef _KEEP_RCS_ID
-static char *opt_alias_rulercs_id = 	opt_alias_rule_INCLUDED"$Revision: 1.27 $";
+static char *opt_alias_rulercs_id = 	opt_alias_rule_INCLUDED"$Revision: 1.1.1.1 $";
 #endif /* _KEEP_RCS_ID */
 
 

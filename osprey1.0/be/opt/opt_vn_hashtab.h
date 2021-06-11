@@ -3,10 +3,10 @@
 // ====================================================================
 //
 // Module: opt_vn_hashtab.h
-// $Revision: 1.7 $
-// $Date: 2001/03/10 02:49:15 $
-// $Author: mtibuild $
-// $Source: /isms/cmplrs.src/osprey1.0/be/opt/RCS/opt_vn_hashtab.h,v $
+// $Revision: 1.1.1.1 $
+// $Date: 2005/10/21 19:00:00 $
+// $Author: marcel $
+// $Source: /proj/osprey/CVS/open64/osprey1.0/be/opt/opt_vn_hashtab.h,v $
 //
 // ====================================================================
 //
@@ -162,13 +162,9 @@
 #ifndef opt_vn_hashtab_INCLUDED
 #define opt_vn_hashtab_INCLUDED "opt_vn_hashtab.h"
 
-#include <hash_map>
+#include <ext/hash_map>
 #include "mempool_allocator.h"
 #include "opt_vn_expr.h"
-
-#ifdef __STL_USE_NAMESPACES
-using std::hash_map;
-#endif
 
 // Function object for determining equality between hash table keys.
 //
@@ -196,9 +192,9 @@ class VN_HASHTAB
 {
 private:
    
-   typedef pair<const VN_EXPR::PTR, VN_VALNUM>  HTABLE_VALUE_TYPE;
+   typedef std::pair<const VN_EXPR::PTR, VN_VALNUM>  HTABLE_VALUE_TYPE;
    typedef mempool_allocator<HTABLE_VALUE_TYPE> HTABLE_ALLOCATOR;
-   typedef hash_map <VN_EXPR::PTR, 
+   typedef __gnu_cxx::hash_map <VN_EXPR::PTR, 
       VN_VALNUM, VN_KEY_HASHVAL, VN_KEY_EQ, HTABLE_ALLOCATOR> HTABLE;
    
    HTABLE _tab;

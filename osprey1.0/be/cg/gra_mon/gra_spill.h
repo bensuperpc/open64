@@ -34,10 +34,10 @@
 
 //  Spill functions for GRA
 
-//  $Revision: 1.2 $
-//  $Date: 2001/11/15 03:37:51 $
-//  $Author: lrq $
-//  $Source: /u/merge/src/osprey1.0/be/cg/gra_mon/gra_spill.h,v $
+//  $Revision: 1.1.1.1 $
+//  $Date: 2005/10/21 19:00:00 $
+//  $Author: marcel $
+//  $Source: /proj/osprey/CVS/open64/osprey1.0/be/cg/gra_mon/gra_spill.h,v $
 
 
 #ifndef GRA_SPILL_INCLUDED
@@ -46,7 +46,7 @@
 #ifndef GRA_SPILL_RCS_ID
 #define GRA_SPILL_RCS_ID
 #ifdef _KEEP_RCS_ID
-static char *gra_spill_rcs_id = "$Source: /u/merge/src/osprey1.0/be/cg/gra_mon/gra_spill.h,v $ $Revision: 1.2 $";
+static char *gra_spill_rcs_id = "$Source: /proj/osprey/CVS/open64/osprey1.0/be/cg/gra_mon/gra_spill.h,v $ $Revision: 1.1.1.1 $";
 #endif
 #endif
 

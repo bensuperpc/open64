@@ -3,10 +3,10 @@
 // ====================================================================
 //
 // Module: opt_mu_chi.h
-// $Revision: 1.32 $
-// $Date: 2001/03/10 02:44:55 $
-// $Author: mtibuild $
-// $Source: /isms/cmplrs.src/osprey1.0/be/opt/RCS/opt_mu_chi.h,v $
+// $Revision: 1.1.1.1 $
+// $Date: 2005/10/21 19:00:00 $
+// $Author: marcel $
+// $Source: /proj/osprey/CVS/open64/osprey1.0/be/opt/opt_mu_chi.h,v $
 //
 // ====================================================================
 //
@@ -47,7 +47,7 @@
 #ifndef opt_mu_chi_INCLUDED
 #define opt_mu_chi_INCLUDED "opt_mu_chi.h"
 #ifdef _KEEP_RCS_ID
-static char *opt_mu_chircs_id = opt_mu_chi_INCLUDED"$ $Revision: 1.32 $";
+static char *opt_mu_chircs_id = opt_mu_chi_INCLUDED"$ $Revision: 1.1.1.1 $";
 #endif /* _KEEP_RCS_ID */
 
 #include "opcode.h"

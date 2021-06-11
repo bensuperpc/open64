@@ -51,10 +51,10 @@ extern "C" {
  * ====================================================================
  *
  * Module: tracing.h
- * $Revision: 1.6 $
- * $Date: 2002/09/09 07:52:27 $
- * $Author: bcheng $
- * $Source: /u/merge/src/osprey1.0/common/util/tracing.h,v $
+ * $Revision: 1.1.1.1 $
+ * $Date: 2005/10/21 19:00:00 $
+ * $Author: marcel $
+ * $Source: /proj/osprey/CVS/open64/osprey1.0/common/util/tracing.h,v $
  *
  * Revision history:
  *  08-Sep-89 - Original Version
@@ -75,7 +75,7 @@ extern "C" {
 
 
 #ifdef _KEEP_RCS_ID
-static char *tracing_rcs_id = "$Source: /u/merge/src/osprey1.0/common/util/tracing.h,v $ $Revision: 1.6 $";
+static char *tracing_rcs_id = "$Source: /proj/osprey/CVS/open64/osprey1.0/common/util/tracing.h,v $ $Revision: 1.1.1.1 $";
 #endif /* _KEEP_RCS_ID */
 
 /* Is_Trace */
@@ -245,13 +245,14 @@ extern char *Sharps;	/* Sharps w/NL, full page width */
 #define TP_CYCLE_COUNT  69      /* "TCC", */
 #define TP_CYCLE_PU     70      /* "TCP", */  
 #define TP_A_MLBR       71      /* "AMB",  "Ipfec post multiple branch"*/
-#define TP_OUTLINING	72		/* OUTLINING^$ tracing */
+#define TP_OUTLINING	72	/* OUTLINING^$ tracing */
+#define TP_A_CANA	73	/* ACA "Ipfec cache analysis and opt" */
 
 /* WARNING: TP_LAST must be at least as large as the largest phase
  * number above, and TP_COUNT must be at least one larger.
  */
-#define TP_LAST		72  /* Largest valid phase number */ //OUTLINING^$ modify
-#define TP_COUNT	73	/* Number of valid phase numbers */ //OUTLINING^$ modify
+#define TP_LAST		73  /* Largest valid phase number */ //cache  modify
+#define TP_COUNT	74	/* Number of valid phase numbers */ // cache modify
 
 /* Extract the phase number from a trace option: */
 extern INT32 Get_Trace_Phase_Number ( char **cp, char *arg );

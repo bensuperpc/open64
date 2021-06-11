@@ -38,10 +38,10 @@
  * =======================================================================
  *
  *  Module: gcm.cxx
- *  $Revision: 1.2 $
- *  $Date: 2002/10/26 05:21:48 $
- *  $Author: jczhang $
- *  $Source: /u/merge/src/osprey1.0/be/cg/gcm.cxx,v $
+ *  $Revision: 1.1.1.1 $
+ *  $Date: 2005/10/21 19:00:00 $
+ *  $Author: marcel $
+ *  $Source: /proj/osprey/CVS/open64/osprey1.0/be/cg/gcm.cxx,v $
  *
  *  Description:
  *  ============
@@ -2494,6 +2494,7 @@ Adjust_Qualifying_Predicate(OP *cand_op, BB *src_bb, BB *tgt_bb,
 	TN *tn1, *tn2;
 	OP *cmp;
 	CGTARG_Analyze_Compare(tgt_br_op, &tn1, &tn2, &cmp);
+        Remove_Explicit_Branch(tgt_bb);
 	BOOL fall_thru = BB_Fall_Thru_Successor(tgt_bb) == src_bb;
 	
 	// If <!fall_through> set the predicate of <cand_op> to the

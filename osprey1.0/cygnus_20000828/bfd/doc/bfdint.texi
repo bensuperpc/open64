@@ -19,7 +19,7 @@ This document describes some BFD internal information which may be
 helpful when working on BFD.  It is very incomplete.
 
 This document is not updated regularly, and may be out of date.  It was
-last modified on $Date: 2000/11/03 22:02:20 $.
+last modified on $Date: 2005/10/21 19:00:00 $.
 
 The initial version of this document was written by Ian Lance Taylor
 @email{ian@@cygnus.com}.

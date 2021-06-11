@@ -49,7 +49,7 @@
 #pragma hdrstop
 
 #define snl_CXX      "snl.cxx"
-static char *rcs_id =   snl_CXX "$Revision: 1.23 $";
+static char *rcs_id =   snl_CXX "$Revision: 1.1.1.1 $";
 
 #include <sys/types.h>
 #include <alloca.h>

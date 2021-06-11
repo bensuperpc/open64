@@ -3,10 +3,10 @@
 // ====================================================================
 //
 // Module: opt_wn.cxx
-// $Revision: 1.2 $
-// $Date: 2002/05/21 07:26:00 $
-// $Author: lfei $
-// $Source: /u/merge/src/osprey1.0/be/opt/opt_wn.cxx,v $
+// $Revision: 1.1.1.1 $
+// $Date: 2005/10/21 19:00:00 $
+// $Author: marcel $
+// $Source: /proj/osprey/CVS/open64/osprey1.0/be/opt/opt_wn.cxx,v $
 //
 // Revision history:
 //  12-SEP-94 shin - Original Version
@@ -59,7 +59,7 @@
 
 #ifdef _KEEP_RCS_ID
 #define opt_wn_CXX	"opt_wn.cxx"
-static char *rcs_id = 	opt_wn_CXX"$Revision: 1.2 $";
+static char *rcs_id = 	opt_wn_CXX"$Revision: 1.1.1.1 $";
 #endif /* _KEEP_RCS_ID */
 
 #include <sys/types.h>

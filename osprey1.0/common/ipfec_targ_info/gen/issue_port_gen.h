@@ -28,10 +28,10 @@
 //-*-c++-*-
 //=============================================================================
 //
-//  Module : ekapi_register.cxx
+//  Module : issue_port_gen.h
 //  $Date  : $
-//  $Author: sxyang $
-//  $Source: /u/merge/src/osprey1.0/common/ipfec_targ_info/gen/issue_port_gen.h,v $
+//  $Author: marcel $
+//  $Source: /proj/osprey/CVS/open64/osprey1.0/common/ipfec_targ_info/gen/issue_port_gen.h,v $
 //
 //  Description:
 //  ============

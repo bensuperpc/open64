@@ -34,7 +34,7 @@
 */
 
 
-/* $Header: /isms/cmplrs.src/osprey1.0/libF77/RCS/r_dim.c,v 8.5 2001/03/10 04:42:57 mtibuild Exp $ */
+/* $Header: /proj/osprey/CVS/open64/osprey1.0/libF77/r_dim.c,v 1.1.1.1 2005/10/21 19:00:00 marcel Exp $ */
 #include "cmplrs/host.h"
 
 float_t r_dim(float_t *a,float_t *b)

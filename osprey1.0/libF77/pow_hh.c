@@ -34,7 +34,7 @@
 */
 
 
-/* $Header: /isms/cmplrs.src/osprey1.0/libF77/RCS/pow_hh.c,v 8.5 2001/03/10 04:40:50 mtibuild Exp $ */
+/* $Header: /proj/osprey/CVS/open64/osprey1.0/libF77/pow_hh.c,v 1.1.1.1 2005/10/21 19:00:00 marcel Exp $ */
 #include "cmplrs/host.h"
 
 int16 pow_hh(int16 *ap, int16 *bp)

@@ -30,9 +30,9 @@
 //*********************************************************************
 //
 // Module: vt_region.h
-// $Date: 2003/01/21 12:57:21 $
-// $Author: sxyang $
-// $Source: /u/merge/src/osprey1.0/be/cg/orc_ict/vt_region.h,v $
+// $Date: 2005/10/21 19:00:00 $
+// $Author: marcel $
+// $Source: /proj/osprey/CVS/open64/osprey1.0/be/cg/orc_ict/vt_region.h,v $
 //
 // Description:
 //

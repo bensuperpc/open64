@@ -2,10 +2,10 @@
  * ====================================================================
  *
  * Module: opt_error.c
- * $Revision: 1.6 $
- * $Date: 2001/03/10 02:41:57 $
- * $Author: mtibuild $
- * $Source: /isms/cmplrs.src/osprey1.0/be/opt/RCS/opt_error.c,v $
+ * $Revision: 1.1.1.1 $
+ * $Date: 2005/10/21 19:00:00 $
+ * $Author: marcel $
+ * $Source: /proj/osprey/CVS/open64/osprey1.0/be/opt/opt_error.c,v $
  *
  * Revision history:
  *  30-AUG-94 - Original Version
@@ -47,7 +47,7 @@
  */
 
 static char *source_file = __FILE__;
-static char *rcs_id = "$Source: /isms/cmplrs.src/osprey1.0/be/opt/RCS/opt_error.c,v $ $Revision: 1.6 $";
+static char *rcs_id = "$Source: /proj/osprey/CVS/open64/osprey1.0/be/opt/opt_error.c,v $ $Revision: 1.1.1.1 $";
 
 #include <stdio.h>
 #include <stdarg.h>

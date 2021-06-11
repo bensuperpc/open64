@@ -37,10 +37,10 @@
  * =======================================================================
  *
  *  Module: cg_spill.h
- *  $Revision: 1.2 $
- *  $Date: 2002/06/27 07:46:04 $
- *  $Author: llx $
- *  $Source: /u/merge/src/osprey1.0/be/cg/cg_spill.h,v $
+ *  $Revision: 1.1.1.1 $
+ *  $Date: 2005/10/21 19:00:00 $
+ *  $Author: marcel $
+ *  $Source: /proj/osprey/CVS/open64/osprey1.0/be/cg/cg_spill.h,v $
  *
  *  Description:
  *  ============

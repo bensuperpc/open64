@@ -1395,4 +1395,4 @@ ar_crnd128 (AR_CRAY_128 *rnd,
 
 
 static char USMID [] = "\n%Z%%M%	%I%	%G% %U%\n";
-static char rcsid [] = "$Id: convert.c,v 2.11 1997/07/22 23:31:18 gbt Exp $";
+static char rcsid [] = "$Id: convert.c,v 1.1.1.1 2005/10/21 19:00:00 marcel Exp $";

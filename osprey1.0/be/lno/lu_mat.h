@@ -200,16 +200,16 @@
 //  and U = L_0 * H_s 
 // 						-- Comments by RJC   
 
-/** $Revision: 1.11 $
-*** $Date: 2001/03/10 02:29:00 $
-*** $Author: mtibuild $
-*** $Source: /isms/cmplrs.src/osprey1.0/be/lno/RCS/lu_mat.h,v $
+/** $Revision: 1.1.1.1 $
+*** $Date: 2005/10/21 19:00:00 $
+*** $Author: marcel $
+*** $Source: /proj/osprey/CVS/open64/osprey1.0/be/lno/lu_mat.h,v $
 **/
 
 #ifndef lu_mat_INCLUDED
 #define lu_mat_INCLUDED "lu_mat.h"
 
-static char *lu_mat_rcs_id = lu_mat_INCLUDED "$Revision: 1.11 $";
+static char *lu_mat_rcs_id = lu_mat_INCLUDED "$Revision: 1.1.1.1 $";
 
 // system  headers
 
@@ -263,6 +263,7 @@ class LU_MAT {
   INT			Cfactor(T*, INT) const;	// factor column, given pivot
   BOOL			Cfactor_And_Insert(T*, BOOL);	// overwrites first p.
   LU_MAT<T>&		operator =(const LU_MAT<T>&);
+  MEM_POOL *		pool() const { return _pool; };
 
  private:
 
@@ -344,8 +345,8 @@ LU_MAT<T>::LU_MAT(const LU_MAT<T>& a, MEM_POOL* pool) :
 
 template<class T>
 LU_MAT<T>::LU_MAT(const LU_MAT<T>& a) :
-        _pool(a.pool),
-        _lu(0,0,pool),
+        _pool(a.pool()),
+        _lu(0,0,_pool),
         _interch(NULL),
         _cpvt(NULL),
         _interch_sz(0),

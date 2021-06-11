@@ -46,7 +46,7 @@
 #include "config.h"
 #include "config_debug.h"
 #include "config_opt.h"
-#include "config_TARG.h"
+#include "config_targ_opt.h"
 #include "errors.h"
 #include "erglob.h"
 #include "tracing.h"
@@ -60,23 +60,6 @@
 #include "fb_whirl.h"
 #include "be_symtab.h"
 #include "intrn_info.h"
-
-
-#if defined(__GNUC__)
-//
-// Provide trunc(), which doesn't exist in the GNU library. This is a
-// quick and dirty hack, and should be handled elsehow.
-//
-static inline double trunc(double d)
-{
-  if (d < 0.0) {
-    return 1.0 + floor(d);
-  }
-  else {
-    return floor(d);
-  }
-}
-#endif
 
 
 /*

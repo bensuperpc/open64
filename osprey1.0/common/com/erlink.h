@@ -42,7 +42,7 @@ extern "C" {
 
 
 #ifdef _KEEP_RCS_ID
-static char *erlink_rcs_id = "$Source: /isms/cmplrs.src/osprey1.0/common/com/RCS/erlink.h,v $ $Revision: 1.6 $";
+static char *erlink_rcs_id = "$Source: /proj/osprey/CVS/open64/osprey1.0/common/com/erlink.h,v $ $Revision: 1.1.1.1 $";
 #endif /* _KEEP_RCS_ID */
 
 #include "errors.h"	/* Always needed */

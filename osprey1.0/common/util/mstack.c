@@ -33,7 +33,7 @@
 */
 
 
-static char *Version = "$Source: /isms/cmplrs.src/osprey1.0/common/util/RCS/mstack.c,v $ $Revision: 1.16 $";
+static char *Version = "$Source: /proj/osprey/CVS/open64/osprey1.0/common/util/mstack.c,v $ $Revision: 1.1.1.1 $";
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

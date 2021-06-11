@@ -3,10 +3,10 @@
 // ====================================================================
 //
 // Module: opt_tail.cxx
-// $Revision: 1.23 $
-// $Date: 2001/03/10 02:47:54 $
-// $Author: mtibuild $
-// $Source: /isms/cmplrs.src/osprey1.0/be/opt/RCS/opt_tail.cxx,v $
+// $Revision: 1.1.1.1 $
+// $Date: 2005/10/21 19:00:00 $
+// $Author: marcel $
+// $Source: /proj/osprey/CVS/open64/osprey1.0/be/opt/opt_tail.cxx,v $
 //
 // Revision history:
 //  14-MAR-96 - Original Version
@@ -88,7 +88,7 @@
 
 #ifdef _KEEP_RCS_ID
 #define opt_tail_CXX	"opt_tail.cxx"
-static char *rcs_id = 	opt_tail_CXX"$Revision: 1.23 $";
+static char *rcs_id = 	opt_tail_CXX"$Revision: 1.1.1.1 $";
 #endif /* _KEEP_RCS_ID */
 
 #include "opt_tail.h"

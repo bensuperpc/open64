@@ -609,17 +609,17 @@
 //		parents back to and including 'wn' are also OPR_MAX nodes.  
 //
 
-/** $Revision: 1.88 $
-*** $Date: 2001/03/10 02:19:34 $
-*** $Author: mtibuild $
-*** $Source: /isms/cmplrs.src/osprey1.0/be/lno/RCS/access_vector.h,v $
+/** $Revision: 1.1.1.1 $
+*** $Date: 2005/10/21 19:00:00 $
+*** $Author: marcel $
+*** $Source: /proj/osprey/CVS/open64/osprey1.0/be/lno/access_vector.h,v $
 **/
 
 #ifndef access_vector_INCLUDED
 #define access_vector_INCLUDED "access_vector.h"
 
 #ifdef _KEEP_RCS_ID
-static char *access_vector_rcs_id = access_vector_INCLUDED "$Revision: 1.88 $";
+static char *access_vector_rcs_id = access_vector_INCLUDED "$Revision: 1.1.1.1 $";
 #endif /* _KEEP_RCS_ID */
 
 #ifndef wn_INCLUDED
@@ -639,6 +639,13 @@ static char *access_vector_rcs_id = access_vector_INCLUDED "$Revision: 1.88 $";
 #endif
 
 #include "symtab_compatible.h"
+
+#ifndef __GNUC__
+#define ATTR_WEAK
+#pragma weak Print__12ACCESS_ARRAYCGP8__file_si
+#else
+#define ATTR_WEAK __attribute__((weak))
+#endif
 
 #define MAX_TLOG_CHARS 3000
 
@@ -1060,7 +1067,7 @@ public:
 
   ACCESS_ARRAY(UINT16 num_vec,UINT16 nest_depth,MEM_POOL *mem_pool); 
   ACCESS_ARRAY(UINT16 num_vec,ACCESS_VECTOR* dim[],MEM_POOL *mem_pool); 
-  void Print(FILE *fp, BOOL is_bound=FALSE) const;
+  void Print(FILE *fp, BOOL is_bound=FALSE) const ATTR_WEAK;
   ACCESS_ARRAY() { Too_Messy = TRUE; _dim = NULL; _num_vec=0;}
   ACCESS_ARRAY(const ACCESS_ARRAY *a, MEM_POOL *pool); 
   mUINT16 Non_Const_Loops() const;

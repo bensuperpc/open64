@@ -37,10 +37,10 @@
 //
 /**
 *** Module: graph_template.h
-*** $Revision: 1.14 $
-*** $Date: 2001/03/10 02:11:26 $
-*** $Author: mtibuild $
-*** $Source: /isms/cmplrs.src/osprey1.0/be/com/RCS/graph_template.h,v $
+*** $Revision: 1.1.1.1 $
+*** $Date: 2005/10/21 19:00:00 $
+*** $Author: marcel $
+*** $Source: /proj/osprey/CVS/open64/osprey1.0/be/com/graph_template.h,v $
 *** 
 *** Revision history:
 ***
@@ -214,7 +214,7 @@
 #define graph_template_INCLUDED "graph_template.h"
 
 #ifdef _KEEP_RCS_ID
-static char *graph_template_rcs_id = graph_template_INCLUDED "$Revision: 1.14 $";
+static char *graph_template_rcs_id = graph_template_INCLUDED "$Revision: 1.1.1.1 $";
 #endif /* _KEEP_RCS_ID */
 
 #ifndef defs_INCLUDED
@@ -347,6 +347,8 @@ DIRECTED_GRAPH16( const VINDEX16 vsize, const EINDEX16 esize) {
   _efree = 0;
 
 }
+
+extern VINDEX16 GRAPH16_CAPACITY;
 
 template <class EDGE_TYPE, class VERTEX_TYPE>
 VINDEX16

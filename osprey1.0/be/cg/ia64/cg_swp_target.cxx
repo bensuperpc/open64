@@ -37,16 +37,16 @@
  * =======================================================================
  *
  *  Module: cg_swp_target.cxx
- *  $Revision: 1.3 $
- *  $Date: 2002/09/20 01:21:01 $
- *  $Author: lzl $
- *  $Source: /u/merge/src/osprey1.0/be/cg/ia64/cg_swp_target.cxx,v $
+ *  $Revision: 1.1.1.1 $
+ *  $Date: 2005/10/21 19:00:00 $
+ *  $Author: marcel $
+ *  $Source: /proj/osprey/CVS/open64/osprey1.0/be/cg/ia64/cg_swp_target.cxx,v $
  *
  * =======================================================================
  * ======================================================================= */
 
 #define USE_STANDARD_TYPES
-#include <map.h>
+#include <map>
 #include "defs.h"
 #include "mempool.h"
 #include "tn.h"
@@ -67,6 +67,7 @@
 #include "cg_loop.h"
 #include "calls.h"
 #include "tag.h"
+#include "targ_issue_port.h" // To get PROCESSOR_Version
 
 /* ====================================================================
  *
@@ -89,7 +90,16 @@ void Gen_SWP_Branch(CG_LOOP &cl, bool is_doloop)
 
     // Generate br.ctop for doloop
 
-    Build_OP (TOP_br_ctop, 
+    if(PROCESSOR_Version == 2)
+      Build_OP (TOP_br_ctop, 
+	      ar_ec, LC_TN,
+	      Gen_Enum_TN(ECV_bwh_sptk),
+	      Gen_Enum_TN(ECV_ph_few),
+	      Gen_Enum_TN(ECV_dh),
+	      label_tn, 
+	      ar_ec, LC_TN, &ops);
+    else
+      Build_OP (TOP_br_ctop, 
 	      ar_ec, LC_TN,
 	      Gen_Enum_TN(ECV_bwh_dptk),
 	      Gen_Enum_TN(ECV_ph_few),
@@ -172,13 +182,23 @@ void Undo_SWP_Branch(CG_LOOP &cl, bool is_doloop)
 
     // Generate br.ctop for doloop
 
-    Build_OP (TOP_br_cloop, 
+    if(PROCESSOR_Version == 2)
+      Build_OP (TOP_br_cloop, 
+	      LC_TN,
+	      Gen_Enum_TN(ECV_bwh_sptk),
+	      Gen_Enum_TN(ECV_ph_few),
+	      Gen_Enum_TN(ECV_dh),
+	      label_tn, 
+	      LC_TN, &ops);
+    else
+      Build_OP (TOP_br_cloop, 
 	      LC_TN,
 	      Gen_Enum_TN(ECV_bwh_dptk),
 	      Gen_Enum_TN(ECV_ph_few),
 	      Gen_Enum_TN(ECV_dh),
 	      label_tn, 
 	      LC_TN, &ops);
+      
 
     Is_True(OP_code(br_op) == TOP_br_ctop,
 	    ("Undo_SWP_Branch: SWP doloop must use TOP_br_ctop."));
@@ -330,7 +350,7 @@ void Remove_Invariant_Predicates(CG_LOOP& cl, bool trace)
   // transform each invariant predicate into a new variant predicate
   //  initialized in the prolog.
   //
-  map<TN*, TN*> tn_map;
+  std::map<TN*, TN*> tn_map;
   OPS prolog_ops = OPS_EMPTY;
   OPS body_ops = OPS_EMPTY;
   FOR_ALL_BB_OPs(body, op) {
@@ -423,7 +443,7 @@ void Hoist_MOVL(CG_LOOP& cl, bool trace)
   BB *body = cl.Loop_header();
   // collect all predicate definitions
   //
-  vector<OP*> movl_ops;
+  std::vector<OP*> movl_ops;
 
   OP *op;
   FOR_ALL_BB_OPs(body, op) {
@@ -454,8 +474,8 @@ void Hoist_MOVL(CG_LOOP& cl, bool trace)
 // 
 struct TN_DU {
   typedef OP_VECTOR::index_type index_type;
-  vector<index_type> defs;
-  vector<index_type> uses;
+  std::vector<index_type> defs;
+  std::vector<index_type> uses;
 
   bool TN_is_invariant() const {
     return defs.size() == 0;
@@ -506,8 +526,8 @@ struct TN_DU {
 //
 struct TN_DU_MAP {
 
-  typedef map<TN *, TN_DU>::iterator iterator;
-  map<TN *, TN_DU> TN_DU_map;
+  typedef std::map<TN *, TN_DU>::iterator iterator;
+  std::map<TN *, TN_DU> TN_DU_map;
 
   iterator begin() {
     return TN_DU_map.begin();
@@ -1632,7 +1652,7 @@ void Gen_Implicit_Prefetches(CG_LOOP& cl, bool trace)
   BB *body = cl.Loop_header();
   OP *next_op;
 
-  vector<OP*> prune_pref;
+  std::vector<OP*> prune_pref;
 
   // Now regenerate the prefetch by updating the prefetch hints
   for (OP *op = BB_first_op(body); op != NULL; op = next_op) {

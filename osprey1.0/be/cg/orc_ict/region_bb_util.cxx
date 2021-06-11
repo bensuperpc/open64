@@ -29,16 +29,16 @@
 //=============================================================================
 //
 // Module: region_bb_util.cxx
-// $Revision: 1.8 $
-// $Date: 2003/01/21 12:56:59 $
-// $Author: sxyang $ 
-// $Source: /u/merge/src/osprey1.0/be/cg/orc_ict/region_bb_util.cxx,v $
+// $Revision: 1.1.1.1 $
+// $Date: 2005/10/21 19:00:00 $
+// $Author: marcel $ 
+// $Source: /proj/osprey/CVS/open64/osprey1.0/be/cg/orc_ict/region_bb_util.cxx,v $
 //
 //=============================================================================
 #include "bb.h"
-#include "stack.h"
-#include "vector.h"
-#include "list.h"
+#include <stack>
+#include <vector>
+#include <list>
 #include "defs.h"
 #include "cxx_memory.h"
 #include "gtn_universe.h"
@@ -91,11 +91,11 @@ REGIONAL_CFG_NODE *Regional_Cfg_Node(REGIONAL_CFG_NODE *node, REGION *rgn){
 //
 //=============================================================================
 REGION *Home_Region(BB *bb){
+    if(!bb_node_map) return NULL;
     REGIONAL_CFG_NODE *node = (REGIONAL_CFG_NODE *)BB_MAP_Get(bb_node_map,bb);
     if(node)
         return node->Home_Region();
     else 
-        Is_True(false, ("BB_id:%d has no corresponding regional_cfg_node",BB_id(bb)));
         return NULL;
 }
 
@@ -194,7 +194,7 @@ BB *RGN_Gen_And_Insert_BB(BB *pred_bb, BB *succ_bb,
 //  See interface description in region_bb_util.h.
 //
 //=============================================================================
-BB *RGN_Gen_And_Insert_BB_After(BB *point, REGIONAL_CFG *regional_cfg=NULL){
+BB *RGN_Gen_And_Insert_BB_After(BB *point, REGIONAL_CFG *regional_cfg){
     if (Get_Trace(TP_A_REGION, TT_RGN_SUMMERY))
         fprintf(TFile, "*** beginning of RGN_Gen_And_Insert_BB_After(bb_id:%d *** \n",
                 BB_id(point));
@@ -390,7 +390,9 @@ void RGN_Add_Regional_Cfg_Edge(BB *pred,
         }
         REGIONAL_CFG_NODE *pred_node = Regional_Cfg_Node(pred);
         REGION *pred_rgn = pred_node->Home_Region();
-        Add_Regional_Cfg_Edge(pred_node, succ_node, pred_rgn);
+        if (!succ_node->Is_Entry()) { 
+           Add_Regional_Cfg_Edge(pred_node, succ_node, pred_rgn);
+        }
     }       
     else{
         REGION *com_par = pred_rgn->Find_Common_Parent(succ_rgn);
@@ -454,8 +456,9 @@ void RGN_Add_Regional_Cfg_Edge(BB *pred,
             succ_node = succ_rgn->Regional_Cfg_Node();
             succ_rgn = succ_node->Home_Region();
         };
-
-        Add_Regional_Cfg_Edge(pred_node, succ_node, com_par);
+        if (!succ_node->Is_Entry()) {   
+            Add_Regional_Cfg_Edge(pred_node, succ_node, com_par);
+        }
     }
 }
 
@@ -675,8 +678,8 @@ void RGN_Del_Regional_Cfg_Edge(BB *pred,
             if (Get_Trace(TP_A_REGION, TT_RGN_DETAILED))
                 pred_node->Print(TFile);
             Is_True(pred_node->Is_Exit(),
-                ("RGN_Del_Regional_Cfg_Edge(pred_bb_id:%d, succ_bb_id:%d)::
-                  pred_node Id:%d should be a exit node of region %d", 
+                ("RGN_Del_Regional_Cfg_Edge(pred_bb_id:%d, succ_bb_id:%d)::"
+                  "pred_node Id:%d should be a exit node of region %d", 
                   BB_id(pred), BB_id(succ), pred_node->Id(), pred_rgn->Id()));
 
             BB_VECTOR exits(&(regional_cfg->_m));
@@ -757,7 +760,7 @@ void RGN_Del_Regional_Cfg_Edge(BB *pred,
 //  See interface description in region_bb_util.h.
 //
 //=============================================================================
-void RGN_Unlink_Pred_Succ(BB *pred, BB *succ, REGIONAL_CFG *regional_cfg=NULL){
+void RGN_Unlink_Pred_Succ(BB *pred, BB *succ, REGIONAL_CFG *regional_cfg){
     if (Get_Trace(TP_A_REGION, TT_RGN_UTIL_DEBUG))
         fprintf(TFile, "*** beginning of RGN_Unlink_Pred_Succ(pred_bb_id:%d, succ_bb_id:%d) *** \n",
                 BB_id(pred), BB_id(succ));
@@ -834,7 +837,6 @@ BB *RGN_Divide_BB(BB *bb, OP *point)
     }
     
     RGN_Link_Pred_Succ_With_Prob(bb, bottom_bb, 1.0);
-
     return bottom_bb;
 }
 

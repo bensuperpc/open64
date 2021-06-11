@@ -27,7 +27,7 @@
 
 */
 
-/* $Header: /isms/cmplrs.src/osprey1.0/libU77/RCS/exit_.c,v 8.7 2001/02/20 23:39:42 mtibuild Exp $ */
+/* $Header: /proj/osprey/CVS/open64/osprey1.0/libU77/exit_.c,v 1.1.1.1 2005/10/21 19:00:00 marcel Exp $ */
 /*
  *
  * terminate the program, close all files, and return to the OS

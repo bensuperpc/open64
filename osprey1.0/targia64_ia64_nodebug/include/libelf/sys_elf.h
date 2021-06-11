@@ -1,1 +1,0 @@
-../../../gnu_common/libelf/lib/sys_elf.h

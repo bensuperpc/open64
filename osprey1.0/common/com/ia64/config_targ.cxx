@@ -37,10 +37,10 @@
  * ====================================================================
  *
  * Module: config_targ.c
- * $Revision: 1.2 $
- * $Date: 2002/11/27 09:49:39 $
- * $Author: llx $
- * $Source: /u/merge/src/osprey1.0/common/com/ia64/config_targ.cxx,v $
+ * $Revision: 1.1.1.1 $
+ * $Date: 2005/10/21 19:00:00 $
+ * $Author: marcel $
+ * $Source: /proj/osprey/CVS/open64/osprey1.0/common/com/ia64/config_targ.cxx,v $
  *
  *
  * Description:
@@ -48,12 +48,12 @@
  * Configuration specific to the target machine/system.
  *
  * NOTE:  There is an approximate distinction between -TARG option
- * group flags and their configuration (in config_TARG.c), and more
+ * group flags and their configuration (in config_targ_opt.cxx), and more
  * generic target configuration (in this file).  Note that the related
  * header file config_targ.h is included in config.h, and hence in most
- * source files, whereas config_TARG.h is only included directly, so
- * putting new -TARG option-related variables in config_TARG.c is to
- * be preferred to putting them here.
+ * source files, whereas config_targ_opt.h is only included directly, so
+ * putting new -TARG option-related variables in config_targ_opt.cxx is
+ * to be preferred to putting them here.
  *
  * ====================================================================
  * ====================================================================
@@ -63,7 +63,7 @@
 #include "config.h"
 #include "config_asm.h"
 #include "config_debug.h"
-#include "config_TARG.h"
+#include "config_targ_opt.h"
 #include "config_opt.h"
 #include "erglob.h"
 #include "tracing.h"
@@ -365,11 +365,11 @@ Prepare_Target ( void )
     if ( strcmp ( ABI_Name, "i32" ) == 0 ) {
       Target_ABI = ABI_I32;
       isa_default = TARGET_ISA_I1;
-      targ_default = TARGET_ITANIUM;
+      targ_default = TARGET_ITANIUM2;
     } else if ( strcmp ( ABI_Name, "i64" ) == 0 ) {
       Target_ABI = ABI_I64;
       isa_default = TARGET_ISA_I1;
-      targ_default = TARGET_ITANIUM;
+      targ_default = TARGET_ITANIUM2;
     } else {
       ErrMsg ( EC_Inv_TARG, "abi", ABI_Name );
     }
@@ -381,7 +381,7 @@ Prepare_Target ( void )
 
     if ( strcasecmp ( ISA_Name, "intel1" ) == 0 ) {
       isa = TARGET_ISA_I1;
-      targ_default = TARGET_ITANIUM;
+      targ_default = TARGET_ITANIUM2;
     } else
     {
       ErrMsg ( EC_Inv_TARG, "isa", ISA_Name );
@@ -445,7 +445,7 @@ Prepare_Target ( void )
 	/* Default everything: */
 	Target_ABI = ABI_I64;
 	Target_ISA = TARGET_ISA_I1;
-	Target = TARGET_ITANIUM;
+	Target = TARGET_ITANIUM2;
       }
       break;
   }

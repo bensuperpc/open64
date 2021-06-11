@@ -37,10 +37,10 @@
  * ====================================================================
  *
  * Module: tracing.c
- * $Revision: 1.5 $
- * $Date: 2002/04/30 06:54:51 $
- * $Author: llx $
- * $Source: /u/merge/src/osprey1.0/common/util/tracing.c,v $
+ * $Revision: 1.1.1.1 $
+ * $Date: 2005/10/21 19:00:00 $
+ * $Author: marcel $
+ * $Source: /proj/osprey/CVS/open64/osprey1.0/common/util/tracing.c,v $
  *
  * Revision history:
  *  08-Sep-89 - Original Version
@@ -56,7 +56,9 @@
  */
 
 static char *source_file = __FILE__;
-static char *rcs_id = "$Source: /u/merge/src/osprey1.0/common/util/tracing.c,v $ $Revision: 1.5 $";
+static char *rcs_id = "$Source: /proj/osprey/CVS/open64/osprey1.0/common/util/tracing.c,v $ $Revision: 1.1.1.1 $";
+
+#include <errno.h>
 
 #include "defs.h"
 #include "tracing.h"
@@ -220,6 +222,7 @@ static PDESC Phases[] = {
   { TP_A_PRDB,           "APR",  "Ipfec predicate relatioin database" },
   { TP_A_RBG,           "ABG",  "Ipfec recovery block generation" },
   { TP_A_MLBR,          "AMB",  "Ipfec post multi branch" },
+  { TP_A_CANA,          "ACA",  "Ipfec cache analysis and opt" },
 
   /* Cycle Counting related phases  cbq*/
   { TP_CYCLE_COUNT,     "TCC",  "Cycle Counting related Phases" },

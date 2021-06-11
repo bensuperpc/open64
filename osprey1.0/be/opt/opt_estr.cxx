@@ -3,10 +3,10 @@
 // ====================================================================
 //
 // Module: opt_estr.cxx
-// $Revision: 1.2 $
-// $Date: 2003/01/13 03:46:12 $
-// $Author: cwu $
-// $Source: /u/merge/src/osprey1.0/be/opt/opt_estr.cxx,v $
+// $Revision: 1.1.1.1 $
+// $Date: 2005/10/21 19:00:00 $
+// $Author: marcel $
+// $Source: /proj/osprey/CVS/open64/osprey1.0/be/opt/opt_estr.cxx,v $
 //
 // ====================================================================
 //
@@ -52,7 +52,7 @@
 
 #define opt_estr_CXX	"opt_estr.cxx"
 #ifdef _KEEP_RCS_ID
-static char *rcs_id = opt_estr_CXX"$Revision: 1.2 $";
+static char *rcs_id = opt_estr_CXX"$Revision: 1.1.1.1 $";
 #endif /* _KEEP_RCS_ID */
 
 #include "defs.h"

@@ -845,4 +845,4 @@ AR_convert_int_to_host_sint64(AR_HOST_SINT64 *i64val,
 
 
 static char USMID [] = "\n%Z%%M%	%I%	%G% %U%\n";
-static char rcsid [] = "$Id: strcvt.c,v 2.16 1997/05/01 15:25:23 gbt Exp $";
+static char rcsid [] = "$Id: strcvt.c,v 1.1.1.1 2005/10/21 19:00:00 marcel Exp $";

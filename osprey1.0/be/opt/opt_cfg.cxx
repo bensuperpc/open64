@@ -3,10 +3,10 @@
 // ====================================================================
 //
 // Module: opt_cfg.cxx
-// $Revision: 1.2 $
-// $Date: 2002/05/21 07:21:00 $
-// $Author: lfei $
-// $Source: /u/merge/src/osprey1.0/be/opt/opt_cfg.cxx,v $
+// $Revision: 1.1.1.1 $
+// $Date: 2005/10/21 19:00:00 $
+// $Author: marcel $
+// $Source: /proj/osprey/CVS/open64/osprey1.0/be/opt/opt_cfg.cxx,v $
 //
 // ====================================================================
 //
@@ -52,7 +52,7 @@
 
 #ifdef _KEEP_RCS_ID
 #define opt_cfg_CXX	"opt_cfg.cxx"
-static char *rcs_id = 	opt_cfg_CXX"$Revision: 1.2 $";
+static char *rcs_id = 	opt_cfg_CXX"$Revision: 1.1.1.1 $";
 #endif /* _KEEP_RCS_ID */
 
 #include "defs.h"
@@ -4054,7 +4054,7 @@ Compute_loop_depth_rec(BB_LOOP *loop, INT depth)
     BB_LOOP *child;
     FOR_ALL_NODE(child, loop_iter, Init()) {
       INT child_depth = Compute_loop_depth_rec(child, depth+1);
-      max_depth = max(max_depth, child_depth);
+      max_depth = MAX(max_depth, child_depth);
     }
   }
   loop->Set_depth(depth);

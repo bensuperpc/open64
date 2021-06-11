@@ -3,10 +3,10 @@
 // ====================================================================
 //
 // Module: opt_fold.h
-// $Revision: 1.33 $
-// $Date: 2001/03/10 02:43:12 $
-// $Author: mtibuild $
-// $Source: /isms/cmplrs.src/osprey1.0/be/opt/RCS/opt_fold.h,v $
+// $Revision: 1.1.1.1 $
+// $Date: 2005/10/21 19:00:00 $
+// $Author: marcel $
+// $Source: /proj/osprey/CVS/open64/osprey1.0/be/opt/opt_fold.h,v $
 //
 // Revision history:
 //  31-MAY-95 dahl - Original Version
@@ -56,7 +56,7 @@
 #ifndef opt_fold_INCLUDED
 #define opt_fold_INCLUDED	"opt_fold.h"
 #ifdef _KEEP_RCS_ID
-static char *opt_foldrcs_id = opt_fold_INCLUDED"$Revision: 1.33 $";
+static char *opt_foldrcs_id = opt_fold_INCLUDED"$Revision: 1.1.1.1 $";
 #endif /* _KEEP_RCS_ID */
 
 #ifndef opt_htable_INCLUDED

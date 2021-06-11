@@ -29,10 +29,10 @@
 //=============================================================================
 //
 // Module: region_update.h
-// $Revision: 1.6 $
-// $Date: 2003/01/21 12:57:06 $
-// $Author: sxyang $ 
-// $Source: /u/merge/src/osprey1.0/be/cg/orc_ict/region_update.h,v $
+// $Revision: 1.1.1.1 $
+// $Date: 2005/10/21 19:00:00 $
+// $Author: marcel $ 
+// $Source: /proj/osprey/CVS/open64/osprey1.0/be/cg/orc_ict/region_update.h,v $
 //
 //=============================================================================
 
@@ -87,7 +87,7 @@ protected:
 class REGION_LOOP_UPDATE :public REGION_LOOP_UPDATE_MEM {
 
     typedef mempool_allocator<BB *>     BB_ALLOC;
-    typedef vector<BB *, BB_ALLOC>      BB_CONTAINER;
+    typedef std::vector<BB *, BB_ALLOC>      BB_CONTAINER;
     typedef BB_CONTAINER::iterator      BB_ITER;
 
 private:

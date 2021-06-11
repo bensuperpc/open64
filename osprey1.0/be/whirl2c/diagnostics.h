@@ -39,10 +39,10 @@
  * ====================================================================
  *
  * Module: diagnostics.h
- * $Revision: 1.36 $
- * $Date: 2001/03/10 02:55:15 $
- * $Author: mtibuild $
- * $Source: /isms/cmplrs.src/osprey1.0/be/whirl2c/RCS/diagnostics.h,v $
+ * $Revision: 1.1.1.1 $
+ * $Date: 2005/10/21 19:00:00 $
+ * $Author: marcel $
+ * $Source: /proj/osprey/CVS/open64/osprey1.0/be/whirl2c/diagnostics.h,v $
  *
  * Revision history:
  *    13-Apr-95 - Original Version
@@ -312,28 +312,28 @@ typedef enum Diag_Code
    ((a_truth) ? \
     (void) 1 :  \
     (Diag_Set_Srcpos(WN_Get_Linenum(wn)), \
-     diag_handler ## diag_args))
+     diag_handler diag_args))
   
 #define DIAG_ASSERT_LOC(a_truth, diag_handler, diag_args) \
    ((a_truth) ? \
     (void) 1 :  \
-    (Diag_Set_Location(__FILE__, __LINE__), diag_handler ## diag_args))
+    (Diag_Set_Location(__FILE__, __LINE__), diag_handler diag_args))
 
 #define DIAG_ASSERT_LOC_SRCPOS(a_truth, diag_handler, diag_args, wn) \
    ((a_truth) ? \
     (void) 1 :  \
     (Diag_Set_Location(__FILE__, __LINE__), \
      Diag_Set_Srcpos(WN_Get_Linenum(wn)), \
-     diag_handler ## diag_args))
+     diag_handler diag_args))
 
 #define DIAG_ASSERT_NOLOC(a_truth, diag_handler, diag_args) \
-   ((a_truth) ? (void) 1 : diag_handler ## diag_args)
+   ((a_truth) ? (void) 1 : diag_handler diag_args)
 
 #define DIAG_ASSERT_NOLOC_SRCPOS(a_truth, diag_handler, diag_args, wn) \
    ((a_truth) ? \
     (void) 1 : \
     (Diag_Set_Srcpos(WN_Get_Linenum(wn)), \
-     diag_handler ## diag_args))
+     diag_handler diag_args))
 
 extern void Diag_Set_Location(const char *file_name, INT line_number);
 extern void Diag_Set_Srcpos(SRCPOS srcpos);

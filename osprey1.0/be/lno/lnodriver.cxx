@@ -37,10 +37,10 @@
  * ====================================================================
  *
  * Module: lnodriver.c
- * $Revision: 1.22 $
- * $Date: 2001/03/10 02:28:14 $
- * $Author: mtibuild $
- * $Source: /isms/cmplrs.src/osprey1.0/be/lno/RCS/lnodriver.cxx,v $
+ * $Revision: 1.1.1.1 $
+ * $Date: 2005/10/21 19:00:00 $
+ * $Author: marcel $
+ * $Source: /proj/osprey/CVS/open64/osprey1.0/be/lno/lnodriver.cxx,v $
  *
  * Revision history:
  *  08-Sep-94 - Original Version
@@ -61,6 +61,7 @@
 
 #include <sys/elf_whirl.h>	    /* for WHIRL_REVISION */
 #include <sys/types.h>	 
+#include <errno.h>	 
 #include "pu_info.h" 
 #include "defs.h"
 #include "config.h"

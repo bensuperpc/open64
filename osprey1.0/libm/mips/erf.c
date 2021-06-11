@@ -38,10 +38,10 @@
  * ====================================================================
  *
  * Module: erf.c
- * $Revision: 1.22 $
- * $Date: 2001/03/10 08:55:01 $
- * $Author: mtibuild $
- * $Source: /isms/cmplrs.src/osprey1.0/libm/mips/RCS/erf.c,v $
+ * $Revision: 1.1.1.1 $
+ * $Date: 2005/10/21 19:00:00 $
+ * $Author: marcel $
+ * $Source: /proj/osprey/CVS/open64/osprey1.0/libm/mips/erf.c,v $
  *
  * Revision history:
  *  28-May-93 - Original Version
@@ -52,7 +52,7 @@
  * ====================================================================
  */
 
-/* $Header: /isms/cmplrs.src/osprey1.0/libm/mips/RCS/erf.c,v 1.22 2001/03/10 08:55:01 mtibuild Exp $ */
+/* $Header: /proj/osprey/CVS/open64/osprey1.0/libm/mips/erf.c,v 1.1.1.1 2005/10/21 19:00:00 marcel Exp $ */
 
 /*
 	C program for floating point error function

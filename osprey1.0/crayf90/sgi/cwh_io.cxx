@@ -37,10 +37,10 @@
  * ====================================================================
  *
  * Module: cwh_io.c
- * $Revision: 1.107 $
- * $Date: 2001/03/10 03:45:30 $
- * $Author: mtibuild $
- * $Source: /isms/cmplrs.src/osprey1.0/crayf90/sgi/RCS/cwh_io.cxx,v $
+ * $Revision: 1.1.1.1 $
+ * $Date: 2005/10/21 19:00:00 $
+ * $Author: marcel $
+ * $Source: /proj/osprey/CVS/open64/osprey1.0/crayf90/sgi/cwh_io.cxx,v $
  *
  * Revision history:
  *  dd-mmm-95 - Original Version
@@ -57,7 +57,7 @@
 static char *source_file = __FILE__;
 
 #ifdef _KEEP_RCS_ID
-  static char *rcs_id = " $Id: cwh_io.cxx,v 1.107 2001/03/10 03:45:30 mtibuild Exp $ ";
+  static char *rcs_id = " $Id: cwh_io.cxx,v 1.1.1.1 2005/10/21 19:00:00 marcel Exp $ ";
 #endif /* _KEEP_RCS_ID */
 
 /* sgi includes */

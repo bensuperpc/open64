@@ -35,7 +35,7 @@
 
 
 
-/* $Header: /isms/cmplrs.src/osprey1.0/libI77/RCS/due.c,v 9.13 2001/03/10 04:49:28 mtibuild Exp $ */
+/* $Header: /proj/osprey/CVS/open64/osprey1.0/libI77/due.c,v 1.1.1.1 2005/10/21 19:00:00 marcel Exp $ */
 /*	3.0 SID #	1.2	*/
 
 #include <cmplrs/fio.h>

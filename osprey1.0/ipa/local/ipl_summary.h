@@ -38,7 +38,7 @@
  * ====================================================================
  *
  * Module: ipl_summary.h
- * $Source: /u/merge/src/osprey1.0/ipa/local/ipl_summary.h,v $
+ * $Source: /proj/osprey/CVS/open64/osprey1.0/ipa/local/ipl_summary.h,v $
  *
  * Description:
  *    Describe data structures of the summary information.  We only define

@@ -3,10 +3,10 @@
 // ====================================================================
 //
 // Module: opt_sym.h
-// $Revision: 1.2 $
-// $Date: 2002/05/21 07:23:24 $
-// $Author: lfei $
-// $Source: /u/merge/src/osprey1.0/be/opt/opt_sym.h,v $
+// $Revision: 1.1.1.1 $
+// $Date: 2005/10/21 19:00:00 $
+// $Author: marcel $
+// $Source: /proj/osprey/CVS/open64/osprey1.0/be/opt/opt_sym.h,v $
 //
 // Revision history:
 //  28-SEP-94 shin - Original Version

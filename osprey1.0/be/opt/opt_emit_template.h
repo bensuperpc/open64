@@ -3,10 +3,10 @@
 // ====================================================================
 //
 // Module: opt_emit_template.h
-// $Revision: 1.3 $
-// $Date: 2002/06/24 09:32:26 $
-// $Author: lyz $
-// $Source: /u/merge/src/osprey1.0/be/opt/opt_emit_template.h,v $
+// $Revision: 1.1.1.1 $
+// $Date: 2005/10/21 19:00:00 $
+// $Author: marcel $
+// $Source: /proj/osprey/CVS/open64/osprey1.0/be/opt/opt_emit_template.h,v $
 //
 // Revision history:
 //  03-OCT-96 shin - Original Version
@@ -649,7 +649,7 @@ Gen_stmt_wn(STMTREP *srep, STMT_CONTAINER *stmt_container, EMITTER *emitter)
 
       WN *clobber_block = WN_CreateBlock();
 
-      vector<CLOBBER_PRAGMA_INFO,
+      std::vector<CLOBBER_PRAGMA_INFO,
              mempool_allocator<CLOBBER_PRAGMA_INFO> >::const_iterator p;
       for (p = srep->Asm_pragma()->clobber_info.begin();
 	   p != srep->Asm_pragma()->clobber_info.end();
@@ -677,7 +677,7 @@ Gen_stmt_wn(STMTREP *srep, STMT_CONTAINER *stmt_container, EMITTER *emitter)
 
       WN *output_constraint_block = WN_CreateBlock();
 
-      vector<CONSTRAINT_PRAGMA_INFO,
+      std::vector<CONSTRAINT_PRAGMA_INFO,
              mempool_allocator<CONSTRAINT_PRAGMA_INFO> >::const_iterator q;
       for (q = srep->Asm_pragma()->constraint_info.begin();
 	   q != srep->Asm_pragma()->constraint_info.end();

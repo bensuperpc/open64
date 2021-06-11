@@ -34,7 +34,7 @@
 */
 
 
-/*  $Header: /isms/cmplrs.src/osprey1.0/libF77/RCS/and_ll.c,v 1.4 2001/03/10 04:26:54 mtibuild Exp $ */
+/*  $Header: /proj/osprey/CVS/open64/osprey1.0/libF77/and_ll.c,v 1.1.1.1 2005/10/21 19:00:00 marcel Exp $ */
 
 /*	  All Rights Reserved  	*/
 

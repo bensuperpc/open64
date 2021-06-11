@@ -2448,4 +2448,4 @@ AR_subtract_ptr_ptr
 
 
 static char USMID [] = "\n%Z%%M%	%I%	%G% %U%\n";
-static char rcsid [] = "$Id: math.c,v 2.8 1997/04/25 02:56:17 gbt Exp $";
+static char rcsid [] = "$Id: math.c,v 1.1.1.1 2005/10/21 19:00:00 marcel Exp $";

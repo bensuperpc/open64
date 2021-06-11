@@ -32,9 +32,9 @@
   * ======================================================================
   *
   * Module: sched_cflow.h
-  * $Revision: 1.19 $
-  * $Date: 2003/01/15 08:05:43 $
-  * $Author: sxyang $
+  * $Revision: 1.1.1.1 $
+  * $Date: 2005/10/21 19:00:00 $
+  * $Author: marcel $
   *
   * Revision comments:
   *
@@ -46,10 +46,10 @@
 
     /* Using STL template 
      */
-#include <slist.h> 
-#include <list.h>
-#include <vector.h> 
-#include <map.h>
+#include <ext/slist> 
+#include <list>
+#include <vector> 
+#include <map>
 
     /* memory management 
      */
@@ -118,6 +118,7 @@ public:
 class SCHEDULER : public SCHED_MEM {
 
 friend void Global_Insn_Sched (REGION_TREE* rgn_tree, BOOL prepass) ;
+friend class SCHED_SPEC_HANDSHAKE;
 
 private:
 
@@ -206,8 +207,6 @@ private:
     OP*   Gen_Compensation_Code 
                 (CANDIDATE& model_cand, BB* org_home, 
                  BOOKEEPING* bk, BOOL append=TRUE);
-
-    BOOL Transform_Load_to_be_Spec (CANDIDATE* cand, INT32 cs_size) ;
 
     void Cycle_Advance   (void);
     BOOL Commit_Schedule (CANDIDATE& cand);

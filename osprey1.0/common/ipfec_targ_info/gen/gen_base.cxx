@@ -30,9 +30,9 @@
 //*********************************************************************
 //
 // Module: gen_base.cxx
-// $Date: 2003/01/15 08:06:29 $
-// $Author: sxyang $
-// $Source: /u/merge/src/osprey1.0/common/ipfec_targ_info/gen/gen_base.cxx,v $
+// $Date: 2005/10/21 19:00:00 $
+// $Author: marcel $
+// $Source: /proj/osprey/CVS/open64/osprey1.0/common/ipfec_targ_info/gen/gen_base.cxx,v $
 //
 // Description:
 //   Public utilities on generation of machine description files.

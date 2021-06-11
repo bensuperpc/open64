@@ -42,7 +42,7 @@ extern "C" {
 
 
 #ifdef _KEEP_RCS_ID
-static char *eraux_desc_rcs_id = "$Source: /isms/cmplrs.src/osprey1.0/be/com/RCS/erauxdesc.h,v $ $Revision: 3.6 $";
+static char *eraux_desc_rcs_id = "$Source: /proj/osprey/CVS/open64/osprey1.0/be/com/erauxdesc.h,v $ $Revision: 1.1.1.1 $";
 #endif /* _KEEP_RCS_ID */
 
 #include "erbe.desc"		/* Compiler code gen error codes */

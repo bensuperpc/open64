@@ -3,10 +3,10 @@
 // ====================================================================
 //
 // Module: opt_vn_expr.cxx
-// $Revision: 1.35 $
-// $Date: 2001/03/10 02:48:59 $
-// $Author: mtibuild $
-// $Source: /isms/cmplrs.src/osprey1.0/be/opt/RCS/opt_vn_expr.cxx,v $
+// $Revision: 1.1.1.1 $
+// $Date: 2005/10/21 19:00:00 $
+// $Author: marcel $
+// $Source: /proj/osprey/CVS/open64/osprey1.0/be/opt/opt_vn_expr.cxx,v $
 //
 // ====================================================================
 //
@@ -77,11 +77,7 @@
 #include "opt_vn_expr_taxonomy.h"
 #include "opt_vn.h"
 
-#ifdef __STL_USE_NAMESPACES
-using std::pair;
-#endif
-
-typedef pair<VN_VALNUM,VN_VALNUM> VN_VALNUM_PAIR;
+typedef std::pair<VN_VALNUM,VN_VALNUM> VN_VALNUM_PAIR;
 
 
 void 

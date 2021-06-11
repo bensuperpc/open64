@@ -45,10 +45,10 @@
 //
 ////////////////////////////////////
 
-//  $Revision: 1.4 $
-//  $Date: 2001/03/10 03:22:50 $
-//  $Author: mtibuild $
-//  $Source: /isms/cmplrs.src/osprey1.0/common/targ_info/generate/RCS/gen_util_gen.h,v $
+//  $Revision: 1.1.1.1 $
+//  $Date: 2005/10/21 19:00:00 $
+//  $Author: marcel $
+//  $Source: /proj/osprey/CVS/open64/osprey1.0/common/targ_info/generate/gen_util_gen.h,v $
 
 #ifndef gen_util_gen_INCLUDED
 #define gen_util_gen_INCLUDED

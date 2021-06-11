@@ -39,8 +39,8 @@
 //
 //  Module :  msched_util.cxx
 //  $Date  : $
-//  $Author: sxyang $
-//  $Source: /u/merge/src/osprey1.0/be/cg/orc_intel/msched_util.cxx,v $
+//  $Author: marcel $
+//  $Source: /proj/osprey/CVS/open64/osprey1.0/be/cg/orc_intel/msched_util.cxx,v $
 //
 //  Description:
 //  ============

@@ -34,7 +34,7 @@
 */
 
 
-/* $Header: /isms/cmplrs.src/osprey1.0/libI77/RCS/sfe.c,v 9.16 2001/03/10 04:54:00 mtibuild Exp $ */
+/* $Header: /proj/osprey/CVS/open64/osprey1.0/libI77/sfe.c,v 1.1.1.1 2005/10/21 19:00:00 marcel Exp $ */
 /*	3.0 SID #	1.2	*/
 /* sequential formatted external common routines*/
 #ifdef _BSD

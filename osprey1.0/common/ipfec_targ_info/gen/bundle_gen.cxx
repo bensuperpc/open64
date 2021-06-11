@@ -30,9 +30,9 @@
 //*********************************************************************
 //
 // Module: bundle_gen.cxx
-// $Date: 2003/01/15 08:06:18 $
-// $Author: sxyang $
-// $Source: /u/merge/src/osprey1.0/common/ipfec_targ_info/gen/bundle_gen.cxx,v $
+// $Date: 2005/10/21 19:00:00 $
+// $Author: marcel $
+// $Source: /proj/osprey/CVS/open64/osprey1.0/common/ipfec_targ_info/gen/bundle_gen.cxx,v $
 //
 // Description:
 //   Generate the definition of opcode and opcode name.
@@ -426,6 +426,7 @@ void Bundle_Generator(void *pknobs, GEN_MODE mode)
     else 
     	fprintf(c_file, " FALSE");
     fprintf(c_file, "\n  },\n");
+    free(slots);;
   }
   fprintf(c_file, "  {\n\
     \"template_MAX\", \"\", -1,\n\
@@ -553,6 +554,7 @@ void Bundle_Generator(void *pknobs, GEN_MODE mode)
     fprintf(c_file, "   %d, /* ISA_BUNDLE_PACK_%s */\n",
             positions[index], comp_name);
   }
+  free(positions);
   fprintf(c_file, "};\n");
   // End emit declaration and init of bundle pack info
 

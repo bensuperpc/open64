@@ -34,10 +34,10 @@
 
 // LUNIT implemetation
 
-//  $Revision: 1.4 $
-//  $Date: 2002/03/20 00:53:20 $
-//  $Author: yliu $
-//  $Source: /u/merge/src/osprey1.0/be/cg/gra_mon/gra_lunit.cxx,v $
+//  $Revision: 1.1.1.1 $
+//  $Date: 2005/10/21 19:00:00 $
+//  $Author: marcel $
+//  $Source: /proj/osprey/CVS/open64/osprey1.0/be/cg/gra_mon/gra_lunit.cxx,v $
 
 #ifdef USE_PCH
 #include "cg_pch.h"
@@ -45,7 +45,7 @@
 #pragma hdrstop
 
 #ifdef _KEEP_RCS_ID
-static char *rcs_id = "$Source: /u/merge/src/osprey1.0/be/cg/gra_mon/gra_lunit.cxx,v $ $Revision: 1.4 $";
+static char *rcs_id = "$Source: /proj/osprey/CVS/open64/osprey1.0/be/cg/gra_mon/gra_lunit.cxx,v $ $Revision: 1.1.1.1 $";
 #endif
 
 #include "defs.h"

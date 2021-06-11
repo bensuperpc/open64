@@ -29,9 +29,9 @@
 //*********************************************************************
 //
 // Module: instru_lib.cxx
-// $Date: 2003/01/20 11:45:30 $
-// $Author: cwu $
-// $Source: /u/merge/src/osprey1.0/instrumentation/libcginstr/cg_instru_lib.cxx,v $
+// $Date: 2005/10/21 19:00:00 $
+// $Author: marcel $
+// $Source: /proj/osprey/CVS/open64/osprey1.0/instrumentation/libcginstr/cg_instru_lib.cxx,v $
 //
 // Description:
 //

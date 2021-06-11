@@ -305,10 +305,10 @@
  * ====================================================================
  *
  * Module: model.cxx
- * $Revision: 1.168 $
- * $Date: 2001/03/10 02:30:38 $
- * $Author: mtibuild $
- * $Source: /isms/cmplrs.src/osprey1.0/be/lno/RCS/model.cxx,v $
+ * $Revision: 1.1.1.1 $
+ * $Date: 2005/10/21 19:00:00 $
+ * $Author: marcel $
+ * $Source: /proj/osprey/CVS/open64/osprey1.0/be/lno/model.cxx,v $
  *
  * Revision history:
  *  dd-mmm-94 - Original Version
@@ -325,7 +325,7 @@
 #pragma hdrstop
 
 static char *source_file = __FILE__;
-static char *rcs_id = "$Source: /isms/cmplrs.src/osprey1.0/be/lno/RCS/model.cxx,v $ $Revision: 1.168 $";
+static char *rcs_id = "$Source: /proj/osprey/CVS/open64/osprey1.0/be/lno/model.cxx,v $ $Revision: 1.1.1.1 $";
 
 #include <sys/types.h>
 #include <alloca.h>
@@ -341,7 +341,7 @@ static char *rcs_id = "$Source: /isms/cmplrs.src/osprey1.0/be/lno/RCS/model.cxx,
 #include "cache_model.h"
 #include "reduc.h"
 #include "config.h"
-#include "config_TARG.h"
+#include "config_targ_opt.h"
 #include "config_cache.h"
 #include "config_lno.h"
 #include "config_opt.h"

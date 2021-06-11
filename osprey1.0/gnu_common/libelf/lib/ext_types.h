@@ -17,7 +17,7 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */
 
-/* @(#) $Id: ext_types.h,v 1.1 2000/03/08 22:26:16 mpm Exp $ */
+/* @(#) $Id: ext_types.h,v 1.1.1.1 2005/10/21 19:00:00 marcel Exp $ */
 
 #ifndef _EXT_TYPES_H
 #define _EXT_TYPES_H

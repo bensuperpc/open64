@@ -30,9 +30,9 @@
 //*********************************************************************
 //
 // Module: bb_verifier.h
-// $Date: 2003/01/21 12:56:35 $
-// $Author: sxyang $
-// $Source: /u/merge/src/osprey1.0/be/cg/orc_ict/bb_verifier.h,v $
+// $Date: 2005/10/21 19:00:00 $
+// $Author: marcel $
+// $Source: /proj/osprey/CVS/open64/osprey1.0/be/cg/orc_ict/bb_verifier.h,v $
 //
 // Description:
 //

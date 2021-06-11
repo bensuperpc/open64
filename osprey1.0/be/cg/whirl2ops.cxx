@@ -37,10 +37,10 @@
  * ====================================================================
  *
  * Module: whirl2ops.cxx
- * $Revision: 1.5 $
- * $Date: 2002/11/13 07:46:32 $
- * $Author: gange $
- * $Source: /u/merge/src/osprey1.0/be/cg/whirl2ops.cxx,v $
+ * $Revision: 1.1.1.1 $
+ * $Date: 2005/10/21 19:00:00 $
+ * $Author: marcel $
+ * $Source: /proj/osprey/CVS/open64/osprey1.0/be/cg/whirl2ops.cxx,v $
  *
  * Description:
  *
@@ -65,7 +65,7 @@
 #include "erglob.h"
 #include "tracing.h"
 #include "config.h"
-#include "config_TARG.h"
+#include "config_targ_opt.h"
 #include "topcode.h"
 #include "targ_isa_lits.h"
 #include "intrn_info.h"

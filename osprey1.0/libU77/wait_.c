@@ -30,8 +30,8 @@
 /* --------------------------------------------------- */
 /* | All Rights Reserved.                            | */
 /* --------------------------------------------------- */
-/* $Header: /isms/cmplrs.src/osprey1.0/libU77/RCS/wait_.c,v 8.4 2001/02/20 23:40:12 mtibuild Exp $ */
-/* $Header: /isms/cmplrs.src/osprey1.0/libU77/RCS/wait_.c,v 8.4 2001/02/20 23:40:12 mtibuild Exp $ */
+/* $Header: /proj/osprey/CVS/open64/osprey1.0/libU77/wait_.c,v 1.1.1.1 2005/10/21 19:00:00 marcel Exp $ */
+/* $Header: /proj/osprey/CVS/open64/osprey1.0/libU77/wait_.c,v 1.1.1.1 2005/10/21 19:00:00 marcel Exp $ */
 /*
  *
  * wait for a child to die

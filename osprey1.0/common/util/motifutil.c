@@ -35,7 +35,7 @@
 
 
 static char *source_file = __FILE__;
-static char *rcs_id = "$Source: /isms/cmplrs.src/osprey1.0/common/util/RCS/motifutil.c,v $ $Revision: 1.4 $";
+static char *rcs_id = "$Source: /proj/osprey/CVS/open64/osprey1.0/common/util/motifutil.c,v $ $Revision: 1.1.1.1 $";
 /* #include "defs.h" */
 
 #include <Xm/Xm.h>	   

@@ -30,9 +30,9 @@
 //*********************************************************************
 //
 // Module: itanium_gen.cxx
-// $Date: 2003/01/15 08:06:38 $
-// $Author: sxyang $
-// $Source: /u/merge/src/osprey1.0/common/ipfec_targ_info/gen/itanium_gen.cxx,v $
+// $Date: 2005/10/21 19:00:00 $
+// $Author: marcel $
+// $Source: /proj/osprey/CVS/open64/osprey1.0/common/ipfec_targ_info/gen/itanium_gen.cxx,v $
 //
 // Description:
 //   Generate the definition of itanium machine information and schedule infor.

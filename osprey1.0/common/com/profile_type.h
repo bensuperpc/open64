@@ -38,10 +38,10 @@
 // ====================================================================
 //
 // Module: profile_type.h
-// $Revision: 1.1 $
-// $Date: 2002/12/09 06:25:20 $
-// $Author: sxyang $ 
-// $Source: /u/merge/src/osprey1.0/common/com/profile_type.h,v $
+// $Revision: 1.1.1.1 $
+// $Date: 2005/10/21 19:00:00 $
+// $Author: marcel $ 
+// $Source: /proj/osprey/CVS/open64/osprey1.0/common/com/profile_type.h,v $
 //
 // Revision history:
 //  1-Nov-2002 - Original Version (by s.x.yang)

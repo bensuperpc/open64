@@ -37,10 +37,10 @@
  * ====================================================================
  *
  * Module: calls.cxx
- * $Revision: 1.25 $
- * $Date: 2002/04/11 10:57:09 $
- * $Author: bcheng $
- * $Source: /u/merge/src/osprey1.0/be/cg/calls.cxx,v $
+ * $Revision: 1.1.1.1 $
+ * $Date: 2005/10/21 19:00:00 $
+ * $Author: marcel $
+ * $Source: /proj/osprey/CVS/open64/osprey1.0/be/cg/calls.cxx,v $
  *
  * Revision history:
  *  04-Oct-91 - Original Version
@@ -94,7 +94,6 @@
 #include "entry_exit_targ.h"
 #include "targ_abi_properties.h"
 #include "targ_isa_registers.h"
-#include "scheduler.h"
 
 INT64 Frame_Len;
 extern BOOL IPFEC_Enable_Edge_Profile;

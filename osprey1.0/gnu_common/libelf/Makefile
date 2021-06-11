@@ -16,7 +16,7 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
-# @(#) $Id: Makefile,v 1.3 2000/04/18 23:08:48 mtibuild Exp $
+# @(#) $Id: Makefile,v 1.1.1.1 2005/10/21 19:00:00 marcel Exp $
 
 MV = mv -f
 RM = rm -f

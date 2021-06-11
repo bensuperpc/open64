@@ -37,10 +37,10 @@
  * ====================================================================
  *
  * Module: config_vho.c
- * $Revision: 1.3 $
- * $Date: 2002/12/29 09:44:49 $
- * $Author: qzhao2 $
- * $Source: /u/merge/src/osprey1.0/common/com/config_vho.cxx,v $
+ * $Revision: 1.1.1.1 $
+ * $Date: 2005/10/21 19:00:00 $
+ * $Author: marcel $
+ * $Source: /proj/osprey/CVS/open64/osprey1.0/common/com/config_vho.cxx,v $
  *
  * Revision history:
  *
@@ -71,7 +71,8 @@ BOOL    VHO_Recycle_Pregs               = FALSE;
 INT32   VHO_Switch_Density              = 12;
 INT32   VHO_Switch_If_Else_Limit        = 6;
 INT32   VHO_Switch_Compgoto_Limit       = 3;
-BOOL    VHO_Switch_Opt                  = FALSE;
+BOOL    VHO_Switch_Opt                  = TRUE;
+INT32   VHO_Switch_Opt_Threshold        = 25;
 BOOL    VHO_Cselect_Opt                 = FALSE;
 BOOL    VHO_Iload_Opt                   = TRUE;
 BOOL    VHO_Istore_Opt                  = TRUE;
@@ -106,6 +107,8 @@ static OPTION_DESC Options_VHO[] = {
     12, 1, INT32_MAX,    &VHO_Switch_Density,   NULL },
   { OVK_INT32,	OV_INTERNAL,	FALSE, "switch_compgoto",     "switch_compgoto",
     3, 1, INT32_MAX,    &VHO_Switch_Compgoto_Limit,   NULL },
+  { OVK_INT32,  OV_INTERNAL,    FALSE, "switch_opt_threshold", "switch_opt_threshold",
+    10, 1, INT32_MAX,    &VHO_Switch_Opt_Threshold,   NULL },
   { OVK_BOOL,	OV_INTERNAL,	FALSE, "switch_opt",         "switch",
     TRUE, 0, 0,  &VHO_Switch_Opt,      NULL },
   { OVK_BOOL,	OV_INTERNAL,	FALSE, "cselect_opt",        "cselect",

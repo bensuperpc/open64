@@ -38,10 +38,10 @@
 // ====================================================================
 //
 // Module: instr_reader.h
-// $Revision: 1.5 $
-// $Date: 2002/12/29 09:44:49 $
-// $Author: qzhao2 $
-// $Source: /u/merge/src/osprey1.0/common/com/instr_reader.h,v $
+// $Revision: 1.1.1.1 $
+// $Date: 2005/10/21 19:00:00 $
+// $Author: marcel $
+// $Source: /proj/osprey/CVS/open64/osprey1.0/common/com/instr_reader.h,v $
 //
 // Revision history:
 //  10-Aug-98 - Original Version
@@ -90,15 +90,15 @@
 
 // we can't use the definitions in fb_info.h because we don't have mempool
 // in the standalone version
-typedef vector<FB_Info_Invoke>	FB_Invoke_Vector;
-typedef vector<FB_Info_Branch>	FB_Branch_Vector;
-typedef vector<FB_Info_Loop>	FB_Loop_Vector;
-typedef vector<FB_Info_Circuit> FB_Circuit_Vector;
-typedef vector<FB_Info_Call>	FB_Call_Vector;
-typedef vector<FB_Info_Icall>	FB_Icall_Vector;
-typedef vector<FB_Info_Switch>	FB_Switch_Vector;
-typedef vector<FB_Info_Edge>    FB_Edge_Vector;
-typedef vector<FB_Info_Value>   FB_Value_Vector;
+typedef std::vector<FB_Info_Invoke>	FB_Invoke_Vector;
+typedef std::vector<FB_Info_Branch>	FB_Branch_Vector;
+typedef std::vector<FB_Info_Loop>	FB_Loop_Vector;
+typedef std::vector<FB_Info_Circuit> FB_Circuit_Vector;
+typedef std::vector<FB_Info_Call>	FB_Call_Vector;
+typedef std::vector<FB_Info_Icall>	FB_Icall_Vector;
+typedef std::vector<FB_Info_Switch>	FB_Switch_Vector;
+typedef std::vector<FB_Info_Edge>    FB_Edge_Vector;
+typedef std::vector<FB_Info_Value>   FB_Value_Vector;
 #endif
 
 struct PU_Profile_Handle
@@ -281,7 +281,7 @@ struct Fb_File_Info {
 };
 
 extern BOOL Feedback_Enabled[PROFILE_PHASE_LAST];
-typedef vector<Fb_File_Info*> Fb_File_Info_Vector;
+typedef std::vector<Fb_File_Info*> Fb_File_Info_Vector;
 typedef Fb_File_Info_Vector::iterator File_Info_Iterator;
 extern Fb_File_Info_Vector Feedback_File_Info[PROFILE_PHASE_LAST];
 
@@ -291,7 +291,7 @@ extern void Process_Feedback_File(char *fb_name);
 
 extern void Close_Feedback_Files();
 
-typedef vector<PU_PROFILE_HANDLE, mempool_allocator<PU_PROFILE_HANDLE> >
+typedef std::vector<PU_PROFILE_HANDLE, mempool_allocator<PU_PROFILE_HANDLE> >
 	PU_PROFILE_HANDLES;
 typedef PU_PROFILE_HANDLES::iterator PU_PROFILE_ITERATOR;
 

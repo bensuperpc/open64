@@ -37,10 +37,10 @@
  * ====================================================================
  *
  * Module: printsrc.c
- * $Revision: 3.12 $
- * $Date: 2001/03/10 02:15:04 $
- * $Author: mtibuild $
- * $Source: /isms/cmplrs.src/osprey1.0/be/com/RCS/printsrc.cxx,v $
+ * $Revision: 1.1.1.1 $
+ * $Date: 2005/10/21 19:00:00 $
+ * $Author: marcel $
+ * $Source: /proj/osprey/CVS/open64/osprey1.0/be/com/printsrc.cxx,v $
  *
  * Revision history:
  *  10-june-93 - Original Version
@@ -53,7 +53,7 @@
 
 #ifdef _KEEP_RCS_ID
 static const char source_file[] = __FILE__;
-static const char rcs_id[] = "$Source: /isms/cmplrs.src/osprey1.0/be/com/RCS/printsrc.cxx,v $ $Revision: 3.12 $";
+static const char rcs_id[] = "$Source: /proj/osprey/CVS/open64/osprey1.0/be/com/printsrc.cxx,v $ $Revision: 1.1.1.1 $";
 #endif /* _KEEP_RCS_ID */
 
 #include <stdio.h>

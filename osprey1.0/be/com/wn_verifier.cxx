@@ -38,10 +38,10 @@
 // ====================================================================
 //
 // Module: wn_verifier.cxx
-// $Revision: 1.36 $
-// $Date: 2001/03/10 02:18:59 $
-// $Author: mtibuild $
-// $Source: /isms/cmplrs.src/osprey1.0/be/com/RCS/wn_verifier.cxx,v $
+// $Revision: 1.1.1.1 $
+// $Date: 2005/10/21 19:00:00 $
+// $Author: marcel $
+// $Source: /proj/osprey/CVS/open64/osprey1.0/be/com/wn_verifier.cxx,v $
 //
 // Revision history:
 //  8-20-97 naftulin - Original Version
@@ -88,10 +88,10 @@
 #endif /* USE_PCH */
 #pragma hdrstop
 #define USE_STANDARD_TYPES
-#include <algo.h>  // STL
+#include <algorithm>
 #include <stdlib.h>
-#include <vector.h>
-#include <stack.h>
+#include <vector>
+#include <stack>
 
 #include "defs.h"
 #include "stab.h"
@@ -185,7 +185,7 @@ class WN_Verifier{
     WN_MAP   _map;
     BOOL     _is_tree_OK;
     WN      *_func;
-    stack< pragma_stack_type > _pragma_stack; 
+    std::stack< pragma_stack_type > _pragma_stack; 
    
     /*--------------------------------------------------------
      * Private function section

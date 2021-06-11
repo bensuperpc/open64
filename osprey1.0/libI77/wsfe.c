@@ -35,7 +35,7 @@
 
 
 
-/* $Header: /isms/cmplrs.src/osprey1.0/libI77/RCS/wsfe.c,v 9.26 2001/03/10 04:55:25 mtibuild Exp $ */
+/* $Header: /proj/osprey/CVS/open64/osprey1.0/libI77/wsfe.c,v 1.1.1.1 2005/10/21 19:00:00 marcel Exp $ */
 /*	3.0 SID #	1.2	*/
 /*write sequential formatted external*/
 

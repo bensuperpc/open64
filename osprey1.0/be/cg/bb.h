@@ -37,10 +37,10 @@
  * ====================================================================
  *
  * Module: bb.h
- * $Revision: 1.12 $
- * $Date: 2002/09/13 04:08:27 $
- * $Author: flv $
- * $Source: /u/merge/src/osprey1.0/be/cg/bb.h,v $
+ * $Revision: 1.1.1.1 $
+ * $Date: 2005/10/21 19:00:00 $
+ * $Author: marcel $
+ * $Source: /proj/osprey/CVS/open64/osprey1.0/be/cg/bb.h,v $
  *
  * Description:
  *
@@ -261,6 +261,9 @@
  *     If <bb> has a unique successor/predecessor/source, and it IS NOT <bb>,
  *     return it.  Otherwise return NULL.
  *
+ *   void Remove_Explicit_Branch (BB *bb);
+ *     Remove useless explicit branch to BB_next(bb).
+ *
  *   BB *BB_Fall_Thru_Successor( BB *bb );
  *   BB *BB_Fall_Thru_Predecessor( BB *bb );
  *     Return the fall through control flow successor/predecessor of <bb>, 
@@ -427,7 +430,7 @@
 #ifndef	bb_INCLUDED
 #define	bb_INCLUDED
 
-#include <vector.h>             /* to get STL vector */
+#include <vector>		/* to get STL vector */
 #include "mempool_allocator.h"  /* to get mempool allocator */
 
 #include "region_util.h" 	/* to get the definition of RID. */
@@ -872,7 +875,7 @@ extern BB **BB_Vec;		/* mapping from bb idx to BB in each PU */
 
 struct BB_REGION {
   typedef mempool_allocator<BB*> allocator_type;
-  typedef vector<BB*, allocator_type> bb_vector;
+  typedef std::vector<BB*, allocator_type> bb_vector;
   allocator_type data_allocator;
   bb_vector entries;   
   bb_vector exits;  
@@ -901,7 +904,7 @@ struct BB_REGION {
 
 extern BB_SET *BB_REGION_to_BB_SET(BB_SET *bbs, const BB_REGION& r,
 				   MEM_POOL *pool);
-extern void BB_REGION_to_Vector (vector<BB*>& c, const BB_REGION& r);
+extern void BB_REGION_to_Vector (std::vector<BB*>& c, const BB_REGION& r);
 
 /* =======================================================================
  *
@@ -1038,6 +1041,7 @@ extern BB *BB_Unique_Successor_Not_In_Set( BB *bb, BB_MAP map );
 extern BB *BB_Unique_Successor( BB *bb );
 extern BB *BB_Unique_Predecessor( BB *bb );
 extern BB *BB_Unique_Source( BB *bb );
+extern void Remove_Explicit_Branch (BB *bb);
 extern BB *BB_Fall_Thru_Successor( BB *bb );
 extern BB *BB_Fall_Thru_Predecessor( BB *bb );
 extern BOOL BB_Retarget_Branch(BB *bb, BB *from, BB *to);

@@ -42,10 +42,10 @@
  * ====================================================================
  *
  * Module: fis_gthr.cxx
- * $Revision: 1.80 $
- * $Date: 2001/03/10 02:24:04 $
- * $Author: mtibuild $
- * $Source: /isms/cmplrs.src/osprey1.0/be/lno/RCS/fis_gthr.cxx,v $
+ * $Revision: 1.1.1.1 $
+ * $Date: 2005/10/21 19:00:00 $
+ * $Author: marcel $
+ * $Source: /proj/osprey/CVS/open64/osprey1.0/be/lno/fis_gthr.cxx,v $
  *
  * Revision history:
  *  dd-mmm-95 - Original Version
@@ -63,7 +63,7 @@
 
 #ifdef _KEEP_RCS_ID
 /*REFERENCED*/
-static char *rcs_id = "$Source: /isms/cmplrs.src/osprey1.0/be/lno/RCS/fis_gthr.cxx,v $ $Revision: 1.80 $";
+static char *rcs_id = "$Source: /proj/osprey/CVS/open64/osprey1.0/be/lno/fis_gthr.cxx,v $ $Revision: 1.1.1.1 $";
 #endif /* _KEEP_RCS_ID */
 
 #include <sys/types.h>
@@ -89,7 +89,7 @@ static char *rcs_id = "$Source: /isms/cmplrs.src/osprey1.0/be/lno/RCS/fis_gthr.c
 #include "inner_fission.h"
 
 #include "targ_sim.h"
-#include "config_TARG.h"
+#include "config_targ_opt.h"
 #include "config_targ.h"
 #include "cxx_template.h"
 #include "cxx_hash.h"

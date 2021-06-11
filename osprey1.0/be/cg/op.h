@@ -37,10 +37,10 @@
  * ====================================================================
  *
  * Module: op.h
- * $Revision: 1.20 $
- * $Date: 2002/12/12 09:41:31 $
- * $Author: jczhang $
- * $Source: /u/merge/src/osprey1.0/be/cg/op.h,v $
+ * $Revision: 1.1.1.1 $
+ * $Date: 2005/10/21 19:00:00 $
+ * $Author: marcel $
+ * $Source: /proj/osprey/CVS/open64/osprey1.0/be/cg/op.h,v $
  *
  * CGIR operation structure (OP) and utility routines.
  *

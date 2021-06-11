@@ -39,7 +39,7 @@
 
 /*
    xlate_pro_add_reg_info.c
-   $Revision: 1.4 $
+   $Revision: 1.1.1.1 $
 
 
 */

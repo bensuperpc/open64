@@ -29,10 +29,10 @@
 /* ====================================================================
  *
  * Module: track_cycle.cxx
- * $Revision: 1.7 $
- * $Date: 2003/01/15 08:05:47 $
- * $Author: sxyang $
- * $Source: /u/merge/src/osprey1.0/be/cg/orc_intel/track_cycle.cxx,v $
+ * $Revision: 1.1.1.1 $
+ * $Date: 2005/10/21 19:00:00 $
+ * $Author: marcel $
+ * $Source: /proj/osprey/CVS/open64/osprey1.0/be/cg/orc_intel/track_cycle.cxx,v $
  *
  * Description:
  *
@@ -47,6 +47,8 @@
  * ====================================================================
  */
 
+#include <vector>
+
 #include "defs.h"
 #include "errors.h"
 #include "tn.h"
@@ -54,7 +56,6 @@
 #include "op_map.h"
 #include "cg_dep_graph.h"
 #include "cgtarget.h"
-#include "vector.h"
 
 #include "ipfec_options.h"
 #include "cggrp_ptn.h"
@@ -82,7 +83,7 @@
 class TRACK_CYCLE {
     INT             _cur_bundle;
     PATTERN_TYPE    _ptn;
-    vector <mBOOL>  _occupied;
+    std::vector <mBOOL>  _occupied;
     INT             _split;
     const DISPERSAL_TARG  *_ports;
 

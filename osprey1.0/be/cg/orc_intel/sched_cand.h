@@ -36,10 +36,10 @@
   * 
   *  Module sched_cand.h
   *
-  *  $Revision: 1.8 $
-  *  $Date: 2003/01/15 08:05:18 $
-  *  $Author: sxyang $
-  *  $Source: /u/merge/src/osprey1.0/be/cg/orc_intel/sched_cand.h,v $
+  *  $Revision: 1.1.1.1 $
+  *  $Date: 2005/10/21 19:00:00 $
+  *  $Author: marcel $
+  *  $Source: /proj/osprey/CVS/open64/osprey1.0/be/cg/orc_intel/sched_cand.h,v $
   *
   *  Description:
   *  ============
@@ -225,7 +225,7 @@ public:
     UNRESOLVED_DEP* First_Item (void) const { return _header ; }
     UNRESOLVED_DEP* Last_Item (void)  const { return _tail;    }
 
-    UNRESOLVED_DEP* Delete_Item (UNRESOLVED_DEP* dep);
+    void Delete_Item (UNRESOLVED_DEP* dep);
 
     void Prepend (UNRESOLVED_DEP* item); 
     void Append  (UNRESOLVED_DEP* item);
@@ -321,7 +321,7 @@ public:
     BOOKEEPING* First_Item (void) const { return _header; }
     BOOKEEPING* Last_Item  (void) const { return _tail;  }
 
-    BOOKEEPING* Delete_Item (BOOKEEPING* item);
+    void Delete_Item (BOOKEEPING* item);
 
     BOOKEEPING* Retrieve (BB* place) {
                     for (BOOKEEPING* bk = _header ; bk; bk = bk->_next) {
@@ -432,12 +432,11 @@ public :
 
     OP* Op (void) const { return _op ; }
     void Set_OP (OP *op) { _op = op ; 
-                if (OP_load(op) && Ld_Need_Not_Transform (op)) {
+                if (OP_load(op) && Load_Has_Valid_Vaddr(op)) {
                     _flags |= CAND_SAFE_LOAD;
-                } else { 
+                } else {
                     _flags &= ~CAND_SAFE_LOAD;
                 }
-
                 _mandatory_ip = TSI_Issue_Ports (OP_code(op));
             }
     
@@ -457,15 +456,6 @@ public :
 
     BOOKEEPING_LST* Bookeeping_Lst (void) { return &_bookeepings; }
     void Free_Bookeeping_Lst (void) { _bookeepings.Free_Whole_Lst (); }
-
-    BOOL Load_Need_Not_Transform (void) {
-                Is_True (OP_load(_op), 
-                    ("OP:%d (of BB:%d) is not a load!",
-                     OP_map_idx(_op), BB_id(OP_bb(_op)))) ;
-
-                return (_spec_type == SPEC_NONE) || Is_Safe_Load ();
-            }
-
 
     BOOL Shadowed_By_P_Ready_Bookeeping 
             (BB* bb, RGN_CFLOW_MGR* cflow_info);
@@ -889,7 +879,7 @@ class SRC_BB_MGR {
 private :
 
     typedef mempool_allocator<SRC_BB_INFO * > SRC_BB_INFO_ALLOC;
-    typedef vector<SRC_BB_INFO *, SRC_BB_INFO_ALLOC>  SRC_BB_INFO_VECT; 
+    typedef std::vector<SRC_BB_INFO *, SRC_BB_INFO_ALLOC>  SRC_BB_INFO_VECT; 
     typedef SRC_BB_INFO_VECT::iterator       SRC_BB_INFO_ITER;
 
     MEM_POOL*  _mp;           /* underlying MEM_POOL */

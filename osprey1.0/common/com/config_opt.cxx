@@ -37,10 +37,10 @@
  * ====================================================================
  *
  * Module: config_opt.cxx
- * $Revision: 1.16 $
- * $Date: 2003/01/10 03:09:30 $
- * $Author: lhb $
- * $Source: /u/merge/src/osprey1.0/common/com/config_opt.cxx,v $
+ * $Revision: 1.1.1.1 $
+ * $Date: 2005/10/21 19:00:00 $
+ * $Author: marcel $
+ * $Source: /proj/osprey/CVS/open64/osprey1.0/common/com/config_opt.cxx,v $
  *
  * Revision history:
  *  08-Sep-94 - Original Version (wodriver.c)
@@ -57,7 +57,7 @@
 
 #ifdef _KEEP_RCS_ID
 /*REFERENCED*/
-static char *config_opt_rcs_id = "$Source: /u/merge/src/osprey1.0/common/com/config_opt.cxx,v $ $Revision: 1.16 $";
+static char *config_opt_rcs_id = "$Source: /proj/osprey/CVS/open64/osprey1.0/common/com/config_opt.cxx,v $ $Revision: 1.1.1.1 $";
 #endif /* _KEEP_RCS_ID */
 
 /* This file is included in config.c, so it doesn't need its own set of

@@ -34,7 +34,7 @@
 */
 
 
-/* $Header: /isms/cmplrs.src/osprey1.0/libF77/RCS/hl_ge.c,v 8.7 2001/03/10 04:35:59 mtibuild Exp $ */
+/* $Header: /proj/osprey/CVS/open64/osprey1.0/libF77/hl_ge.c,v 1.1.1.1 2005/10/21 19:00:00 marcel Exp $ */
 
 #include <cmplrs/host.h>
 #include "s_cmp.h"
