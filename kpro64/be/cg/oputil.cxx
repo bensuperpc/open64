@@ -185,9 +185,9 @@ Copy_Asm_OP_Annot(OP* new_op, OP* op)
  */
 
 static OP *
-New_OP ( INT results, INT opnds )
+New_OP ( INT results, INT opnds, INT hidden_opnds)
 {
-  OP *op = OP_Alloc ( OP_sizeof(results, opnds) );
+  OP *op = OP_Alloc (OP_sizeof (results, opnds+hidden_opnds));
   PU_OP_Cnt++;
   Set_OP_opnds(op, opnds);
   Set_OP_results(op, results);
@@ -209,7 +209,8 @@ Dup_OP ( OP *op )
 {
   INT results = OP_results(op);
   INT opnds = OP_opnds(op);
-  OP *new_op = New_OP ( results, opnds );
+  INT hidden_opnds = CGTARG_Max_Number_of_Hidden_Opnd (OP_code(op)); 
+  OP *new_op = New_OP (results, opnds, hidden_opnds);
 
   memcpy(new_op, op, OP_sizeof(results, opnds));
   new_op->next = new_op->prev = NULL;
@@ -805,7 +806,7 @@ Mk_OP(TOP opr, ...)
   INT i;
   INT results = TOP_fixed_results(opr);
   INT opnds = TOP_fixed_opnds(opr);
-  OP *op = New_OP(results, opnds);
+  OP *op = New_OP(results, opnds, CGTARG_Max_Number_of_Hidden_Opnd(opr));
 
   FmtAssert(!TOP_is_var_opnds(opr), ("Mk_OP not allowed with variable operands"));
 
@@ -844,7 +845,7 @@ Mk_VarOP(TOP opr, INT results, INT opnds, TN **res_tn, TN **opnd_tn)
   }
 
   INT i;
-  OP *op = New_OP(results, opnds);
+  OP *op = New_OP(results, opnds, CGTARG_Max_Number_of_Hidden_Opnd(opr));
 
   Set_OP_code(op, opr);
 
@@ -874,9 +875,7 @@ void Print_OP_No_SrcLine(const OP *op)
   INT16 i;
   WN *wn;
   BOOL cg_loop_op = Is_CG_LOOP_Op(op);
-  //#ifdef Ipfec
   if (OP_start_bundle(op)) fprintf( TFile, " }\n{\n");
-  //#endif Ipfec
   fprintf (TFile, "[%3d] ", OP_map_idx(op));
   if (OP_has_tag(op)) {
 	LABEL_IDX tag = Get_OP_Tag(op);
@@ -1312,3 +1311,74 @@ BOOL OP_use_return_value (OP* op) {
     }         
     return FALSE;
 }
+
+/* Add hidden operands to given op. All hidden operands should be added at one time.
+ */
+void
+Add_Hidden_Operands (OP* op, const vector<TN*>& hopnds) {
+    if (hopnds.size () == 0) return;
+
+    INT t = CGTARG_Max_Number_of_Hidden_Opnd (OP_code(op));
+    Is_True (t > 0,  ("Op does not have hidden openrands"));
+    Is_True (hopnds.size() <= t, ("Expected at most %d hidden operands"));
+    Is_True (OP_hidden_opnds(op) == 0, ("Hidden operands are added once"));
+
+    // leave room for hidden operands   
+    if (OP_results(op) != 0) {
+       INT32 from_idx = op->opnds+op->results - 1;
+       INT32 to_idx = from_idx + hopnds.size();
+       for (INT32 count = OP_results(op); count > 0; count--) {
+         op->res_opnd[to_idx--] = op->res_opnd[from_idx--];
+       } 
+    }
+
+    // now interpose the hidden operands between operands and results.
+    for (INT32 i = 0; i < hopnds.size (); ++i) {
+       op->res_opnd[op->opnds+i] = hopnds[i]; 
+    }
+
+    op->hidden_opnds = hopnds.size();
+    op->opnds += hopnds.size ();
+}
+
+
+/* Is <op> a copy from a callee-saves register into its save-TN?
+ */
+BOOL
+OP_Is_Copy_To_Save_TN(const OP* op)
+{
+  INT i;
+
+  for ( i = OP_results(op) - 1; i >= 0; --i ) {
+    TN* tn = OP_result(op,i);
+    if ( TN_is_save_reg(tn)) return TRUE;
+  }
+
+  return FALSE;
+}
+
+/*  Is <op> a copy to a callee-saves register from its save-TN?
+ */
+BOOL
+OP_Is_Copy_From_Save_TN( const OP* op )
+{
+  INT i;
+
+  // You'd think there'd be a better way than groveling through the operands,
+  // but short of marking these when we make them, this seems to be the most
+  // bullet-proof
+
+  for ( i = OP_results(op) - 1; i >= 0; --i ) {
+    if ( TN_is_dedicated(OP_result(op,i)) ) break;
+  }
+  if ( i < 0 ) return FALSE;
+
+  for ( i = OP_opnds(op) - 1; i >= 0; --i ) {
+    TN* tn = OP_opnd(op,i);
+    if ( TN_Is_Allocatable(tn) && TN_is_save_reg(tn))
+      return TRUE;
+  }
+
+  return FALSE;
+}
+

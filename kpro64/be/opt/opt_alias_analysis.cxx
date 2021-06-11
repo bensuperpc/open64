@@ -433,6 +433,48 @@ void OPT_STAB::Simplify_Pointer_Arith(WN *wn_expr, POINTS_TO *ai)
   }
 }
 
+// Return true iff the PREG if given version is the return
+// value of malloc-like function. This is helper function 
+// of OPT_STAB::Simplify_Pointer_Ver().
+//
+BOOL OPT_STAB::Its_ret_val_of_malloc (VER_ID ver_id) {
+
+  VER_STAB_ENTRY* ver = Ver_stab_entry (ver_id);
+  if (ver->Type () != CHI_STMT) { return FALSE; }
+
+  // check to see whether the corresponing variable is dedicated PREG.
+  AUX_STAB_ENTRY* aux = Aux_stab_entry(ver->Aux_id());
+  if (!aux->Is_dedicated_preg ()) { return FALSE; }
+  
+  // check to see whehter the definition is a call
+  WN* call = ver->Chi_wn();
+  if (WN_operator (call) != OPR_CALL) { return FALSE; }
+
+  // check to see whether it is malloc-like func
+  ST* call_st = WN_st(call);
+  if (!PU_has_attr_malloc(Pu_Table[ST_pu(call_st)])) {
+    return FALSE;
+  }
+
+  // setup return preg. Later we will need to enter this into chi list
+  if (WHIRL_Return_Info_On) {
+    RETURN_INFO return_info = 
+      Get_Return_Info (MTYPE_To_TY(WN_rtype(call)), 
+                       Allow_sim_type() ? Use_Simulated : 
+                       Complex_Not_Simulated
+                       #ifdef TARG_X8664
+                       ,call_st ? PU_ff2c_abi(Pu_Table[ST_pu(call_st)]) : FALSE 
+                       #endif
+                       );      
+
+      if (RETURN_INFO_count(return_info) == 1 &&
+          RETURN_INFO_preg (return_info, 0) == aux->St_ofst()) {
+         return TRUE; 
+      }
+    }
+    
+    return FALSE;
+}
 
 
 //  Follow the DU Chain to expand the pointer expresssion.
@@ -481,9 +523,9 @@ void OPT_STAB::Simplify_Pointer_Ver(VER_ID ver, POINTS_TO *ai)
 	ai->Set_base((ST*)(INTPTR)ver);
 	if (st) {
  	  if (ST_class(st) != CLASS_PREG){
-	    ai->Set_pointer (st, FALSE);
+	    ai->Set_pointer (st);
 	  } else {
-	    ai->Set_pointer ((ST*)(INTPTR)aux_id, TRUE);
+	    ai->Set_pointer_as_aux_id (aux_id);
 	  }
 	  ai->Set_pointer_ver (ver);
 	  ai->Set_iofst_kind (OFST_IS_FIXED);
@@ -599,9 +641,9 @@ void OPT_STAB::Simplify_Pointer_Ver(VER_ID ver, POINTS_TO *ai)
         summary_pt.Set_base((ST *)phi);
         if (st) {
           if (ST_class(st) != CLASS_PREG){
-	          summary_pt.Set_pointer (st, FALSE);
+	          summary_pt.Set_pointer (st);
           } else {
-            summary_pt.Set_pointer ((ST*)(INTPTR)aux_id, TRUE);
+            summary_pt.Set_pointer_as_aux_id (aux_id);
           }
         }
         summary_pt.Set_pointer_ver (ver);
@@ -650,9 +692,13 @@ void OPT_STAB::Simplify_Pointer_Ver(VER_ID ver, POINTS_TO *ai)
       ai->Set_base( (ST *) chi );
       if (st) {
         if (ST_class(st) != CLASS_PREG){
-          ai->Set_pointer (st, FALSE);
+          ai->Set_pointer (st);
         } else {
-          ai->Set_pointer ((ST*)(INTPTR)aux_id, TRUE);
+          ai->Set_pointer_as_aux_id (aux_id);
+          if (Its_ret_val_of_malloc (ver)) {
+           VER_STAB_ENTRY* verent = Ver_stab_entry(ver);
+           ai->Set_malloc_id (WN_linenum(verent->Chi_wn()));
+          }
         }
         ai->Set_pointer_ver (ver);
         ai->Set_iofst_kind (OFST_IS_FIXED);
@@ -808,6 +854,11 @@ void OPT_STAB::Analyze_Base_Flow_Free(POINTS_TO *pt, WN *wn)
   pt->Shift_ofst(WN_offset(wn));
   pt->Lower_to_base(wn);
   pt->Set_ty(WN_object_ty(wn));
+  TY_IDX hl_ty = 0; 
+  UINT32 fld_id = 0;
+  WN_hl_object_ty (wn, hl_ty, fld_id); 
+  pt->Set_hl_ty (hl_ty);
+  pt->Set_field_id (fld_id);
   Collect_f90_pointer_info(pt, wn);
   Update_From_Restricted_Map(wn, pt);
 }
@@ -842,13 +893,15 @@ void OPT_STAB::Analyze_Base_Flow_Sensitive(POINTS_TO *pt, WN *wn)
 	pt->Set_attr(ai.Attr());
 	pt->Shift_ofst(WN_offset(wn));
 	pt->Lower_to_base(wn);
-	pt->Set_pointer (ai.Pointer (), ai.Pointer_is_aux_id());
-	pt->Set_pointer_ver (ai.Pointer_ver ());
+        pt->Copy_pointer_info (&ai);
       } else if (ai.Restricted()) {
 	pt->Set_expr_kind(EXPR_IS_ADDR);
 	pt->Set_restricted();
 	pt->Set_based_sym(ai.Based_sym());
       } 
+      if (ai.Malloc_id()) {
+        pt->Set_malloc_id (ai.Malloc_id());
+      }
     }
     break;
   case OPR_ISTORE:
@@ -867,13 +920,15 @@ void OPT_STAB::Analyze_Base_Flow_Sensitive(POINTS_TO *pt, WN *wn)
 	pt->Set_attr(ai.Attr());
 	pt->Shift_ofst(WN_offset(wn));
 	pt->Lower_to_base(wn);
-	pt->Set_pointer (ai.Pointer(), ai.Pointer_is_aux_id());
-	pt->Set_pointer_ver (ai.Pointer_ver ());
+        pt->Copy_pointer_info (&ai);
       } else  if (ai.Restricted()) {
 	pt->Set_expr_kind(EXPR_IS_ADDR);
 	pt->Set_restricted();
 	pt->Set_based_sym(ai.Based_sym());
       } 
+      if (ai.Malloc_id()) {
+        pt->Set_malloc_id (ai.Malloc_id());
+      }
     }
     break;
   case OPR_ILOADX:
@@ -3101,11 +3156,15 @@ void OPT_STAB::Compute_FFA(RID *const rid)
 #endif // NOT_73_BETA
   
   // Disable ANSI rule for virtual variables
-  if (Default_vsym() != 0) 
+  if (Default_vsym() != 0) {
     Aux_stab_entry(Default_vsym())->Points_to()->Set_ty(0);
+    Aux_stab_entry(Default_vsym())->Points_to()->Set_hl_ty(0);
+  }
 
-  if (Return_vsym() != 0) 
+  if (Return_vsym() != 0) {
     Aux_stab_entry(Return_vsym())->Points_to()->Set_ty(0);
+    Aux_stab_entry(Return_vsym())->Points_to()->Set_hl_ty(0);
+  }
 
   // update the precomputed alias sets
   Update_alias_set_with_virtual_var();

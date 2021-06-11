@@ -1084,7 +1084,8 @@ Finalize_BB(BB *bp)
   
   switch (BBINFO_kind(bp)) {
   case BBKIND_LOGIF:
-    {
+  case BBKIND_CHK: // bug fix for OSP_104, OSP_105, OSP_192
+  {
       INT tfirst;
       INT tcount;
       LABEL_IDX lab;
@@ -1096,7 +1097,10 @@ Finalize_BB(BB *bp)
       INT64 fall_through_offset;
       INT64 target_offset;
       OP *br = BB_branch_op(bp);
-
+      if ((br == NULL) || OP_noop(br))// bug fix for OSP_104, OSP_105, OSP_192
+      {
+         br = BB_Last_chk_op(bp);
+	}
       /* Get the fall through and the target BBs.
        */
       fall_through = BBINFO_succ_bb(bp, 1);
@@ -1616,6 +1620,7 @@ Initialize_BB_Info(void)
       continue;
 
     case BBKIND_LOGIF:
+    case BBKIND_CHK: // bug fix for OSP_104, OSP_105, OSP_192
       {
 	INT tfirst;
 	INT tcount;
@@ -1624,6 +1629,10 @@ Initialize_BB_Info(void)
 	BBLIST *target_edge;
 	BBLIST *fall_through_edge;
 	OP *br = BB_branch_op(bb);
+	if ((br == NULL) || OP_noop(br))// bug fix for OSP_104, OSP_105, OSP_192
+       {
+          br = BB_Last_chk_op(bb);  
+       }
 
 	/* Get the targets. Note that target[0] is always the "true" target.
 	 */
@@ -3321,6 +3330,7 @@ Merge_With_Pred ( BB *b, BB *pred )
   case BBKIND_LOGIF:
   case BBKIND_VARGOTO:
   case BBKIND_INDGOTO:
+  case BBKIND_CHK:// bug fix for OSP_104, OSP_105, OSP_192
     if (CFLOW_Trace_Merge) {
       #pragma mips_frequency_hint NEVER
       fprintf(TFile, "Merge_With_Pred rejecting merge of BB:%d into BB:%d (unsupported kind: %s)\n",
@@ -7064,6 +7074,7 @@ Initialize_BB_Info_For_Delete(void)
       continue;
 
     case BBKIND_LOGIF:
+    case BBKIND_CHK:// bug fix for OSP_104, OSP_105, OSP_192
       {
 	INT tfirst;
 	INT tcount;
@@ -7144,18 +7155,47 @@ CFLOW_Delete_Empty_BB(void)
   for (bp = REGION_First_BB ; bp!=NULL ; bp= next_bb) {
       next_bb =BB_next(bp) ;
       if ( BBINFO_kind(bp) == BBKIND_GOTO && !BB_length(bp) ) {
-	 // BB with EH Range labels can not be removed, even
-	 // though its length is 0 and it has no succ,
-	 // coz these labels are required by LSDA construction.
-	 if (BB_Has_Exc_Label(bp)) continue;
-         Is_True(( BBINFO_nsuccs(bp)&& BBINFO_succ_bb(bp, 0) != bp), 
-                 ("GOTO BB: %d has no succ bb or it is a loop !", BB_id(bp)));
          BBLIST *prev_bbs, *next_bbs;
          BB *prev_bb;
          BOOL can_do ;
          LABEL_IDX old_label, tgt_lable;
 
-         old_label = Gen_Label_For_BB(bp);
+	 // BB with EH Range labels can not be removed, even
+	 // though its length is 0 and it has no succ,
+	 // coz these labels are required by LSDA construction.
+         if (BB_Has_Exc_Label(bp))
+	   continue;
+
+	 // Be caution to the empty GOTO BB bp, if BB_next(bp) == NULL;
+	 // In this situation, we can remove it only when none of it's
+	 // predecessors is GOTO or LOGIF.
+	 // bug fix for OSP_208
+	 //
+	 if (BBINFO_nsuccs(bp) == 0 && next_bb == NULL) {
+	   BOOL is_removeable = TRUE;
+	   for ( prev_bbs = BB_preds(bp); prev_bbs != NULL; prev_bbs = next_bbs) {
+	     next_bbs = BBLIST_next(prev_bbs);
+	     BB *prev_bb = BBLIST_item(prev_bbs);
+	     switch BBINFO_kind(prev_bb) {
+	     	case BBKIND_GOTO :
+	     	case BBKIND_LOGIF:
+			is_removeable = FALSE;
+			break;
+
+		default:
+			continue;
+	     } 
+	   }
+	   if (is_removeable) {
+	     Delete_BB(bp, CFLOW_Trace_Empty_BB_Elim);
+	   }
+	   continue;
+	 }
+
+	 Is_True (BBINFO_nsuccs(bp), ("GOTO BB: %d has no succ bb", BB_id(bp)));
+	 Is_True (BBINFO_succ_bb(bp, 0) != bp, ("GOTO BB: %d is a loop~!", BB_id(bp)));
+	 
+	 old_label = Gen_Label_For_BB(bp);
          tgt_succ = BBINFO_succ_bb(bp, 0);
          /* if the tgt bb has no label , 
           * the previous bb must fall though to it. 
@@ -7215,12 +7255,7 @@ CFLOW_Delete_Empty_BB(void)
          /* if bp has annotation , cp all to the tgt_succ 
           * if bp has no annotation, delete it directly
           */
-         ANNOTATION  *annotations = BB_annotations(bp);
-         if (annotations ) {
-            BOOL copy_succeed =BB_Copy_Annotations(tgt_succ, bp, ANNOT_kind(annotations)) ;
-            Is_True(copy_succeed,
-                   ("no annotations for BB:%d", BB_id(bp)));
-         }
+	 BB_Copy_All_Annotations (tgt_succ, bp);
          Delete_BB(bp, CFLOW_Trace_Empty_BB_Elim);
       }
   } 

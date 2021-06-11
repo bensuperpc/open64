@@ -1,6 +1,6 @@
-        Open64 Compiler Version 3.0 Release Notes (Beta)
+        Open64 Compiler Version 3.1 Release Notes 
 
-                November 20, 2006
+                April 12, 2007
 
 1. Overview
 2. The Packages of the Compiler Suite
@@ -40,11 +40,10 @@
 
  We have successfully built all programs in SPEC2K, both integer and
  floating point, at O2 and O3 optimization levels. The performance of
- SPEC2Kfp and SPEC2006fp is 55% and about 77% better than that of
- GCC4.1. On other C++ high performance applications, we have measured
- about 24% (geometric mean) speed up against GCC4.1. The comparison
- with GCC are approximation since we are not able to build all the
- SPEC2006 programs with GCC4.1 when we do the comparison.
+ SPEC2Kfp and SPEC2006fp is 75% and about 53% better than that of
+ GCC4.3 (with flag -O3 -funroll-loops -fgcse-las -fgcse-sm).  The 
+ comparison with GCC are approximation since we are not able to build 
+ all the SPEC2006 programs with GCC4.3 when we do the comparison.
 
  We will aggressively continue to update the GCC/G++ front end to the
  latest version after this release. Another important focus after this
@@ -66,11 +65,11 @@
 
  This compiler is available in both in binary and source-code form.
 
- o: open64-3.0-bin.tar.gz
+ o: open64-3.1-bin.tar.gz
    This package contains all compiler components as well as pre-built
    archives.
 
- o. open64-3.0-src.tar.gz
+ o. open64-3.1-src.tar.gz
    This package contains all the source code for the compiler, as well as
    pre-built archives.
 
@@ -90,8 +89,8 @@
  After that, run 'source $HOME/.bash_profile' to make the change effective
 
  Now, to complete the installation:
- o. expand open64-3.0-bin.tar.gz with the command:
-    tar zxvf open64-3.0-bin.tar.gz
+ o. expand open64-3.1-bin.tar.gz with the command:
+    tar zxvf open64-3.1-bin.tar.gz
  o. Run script 'INSTALL.sh'
 
  The C, C++, Fortran compilers are now available in folder
@@ -131,7 +130,7 @@ http://www3.intel.com/cd/software/products/asmo-na/eng/download/download/index.h
 
  Step 1. Expand the source tarball
    After that, the whole source hierarchy will be in directory rooted at
-   open64-3.0/. Change working directory to open64-3.0/.
+   open64-3.1/. Change working directory to open64-3.1/.
 
  Step 2. Build the compiler components by simply invoking command:
      make -f Make.native.
@@ -240,7 +239,7 @@ http://www3.intel.com/cd/software/products/asmo-na/eng/download/download/index.h
  Technology at the Chinese Academy of Science, CAPSL research
  laboratory at the University of Delaware, and Hewlett-Packard, Inc.
 
- We'd also like to acknowledge the contributions of QLogic Inc,
- (formerly PathScale Inc.)
+ We'd also like to acknowledge the contributions of QLogic Inc
+ (formerly PathScale Inc.) and Sun Chan at SimpLight Nanoelectronics.
 
 

@@ -90,6 +90,7 @@ UINT32 WOPT_Enable_Autoaggstr_Reduction_Threshold = 11;
 BOOL  WOPT_Enable_Alias_ANSI = TRUE;
 BOOL  WOPT_Enable_Alias_Classification = TRUE;
 BOOL  WOPT_Enable_Aggressive_Alias_Classification = TRUE;
+BOOL  WOPT_Enable_Disambiguate_Heap_Obj = TRUE;
 BOOL  WOPT_Enable_Alias_Class_Fortran_Rule = TRUE;
 BOOL  WOPT_Enable_Alias_Qualifer = TRUE;
 BOOL  WOPT_Enable_Alias_Ragnarok_Unnamed = TRUE;
@@ -280,7 +281,9 @@ BOOL  WOPT_Enable_Spre_Before_Ivr = FALSE; // For running spre early
 BOOL  WOPT_Enable_Bdce_Before_Ivr = FALSE; // For running bdce early
 BOOL  WOPT_Enable_New_Phase_Ordering = TRUE; // Enables some phases before ivr
 BOOL  WOPT_Enable_Pt_Keep_Track_Ptr = TRUE;  // POINTS_TO keeps track of pointer
-                                             // of iload/istore
+  // POINTS_TO keeps track of complex address of iload/istore. 
+BOOL  WOPT_Enable_Aggr_Pt_Keep_Track_Ptr = TRUE; 
+
 #ifdef KEY
 BOOL  WOPT_Enable_Preserve_Mem_Opnds = FALSE; // if TRUE, suppress EPRE on 
 				// iloads that are operands of FP operations
@@ -335,6 +338,8 @@ static OPTION_DESC Options_WOPT[] = {
     0, 0, 0,    &WOPT_Enable_Alias_Classification, NULL },
   { OVK_BOOL,   OV_VISIBLE,	TRUE, "agg_alias_classification", "agg_alias_class",
     0, 0, 0,    &WOPT_Enable_Aggressive_Alias_Classification, NULL },
+  { OVK_BOOL,   OV_VISIBLE,	TRUE, "disa_heap_obj", "disa_heap",
+    0, 0, 0,    &WOPT_Enable_Disambiguate_Heap_Obj, NULL },
   { OVK_BOOL,   OV_VISIBLE,	TRUE, "ac_fortran", "",
     0, 0, 0,    &WOPT_Enable_Alias_Class_Fortran_Rule, NULL },
   { OVK_BOOL,	OV_VISIBLE,	TRUE, "avoid_rehash",		"",
@@ -682,5 +687,7 @@ static OPTION_DESC Options_WOPT[] = {
     0, 0, 0,	&WOPT_Enable_WOVP, NULL },
   { OVK_BOOL,  OV_INTERNAL,    TRUE, "trk_ptr",   NULL, 
     0, 0, 0,   &WOPT_Enable_Pt_Keep_Track_Ptr, NULL },
+  { OVK_BOOL,  OV_INTERNAL,    TRUE, "aggr_trk_ptr",   NULL, 
+    0, 0, 0,   &WOPT_Enable_Aggr_Pt_Keep_Track_Ptr, NULL },
   { OVK_COUNT }		/* List terminator -- must be last */
 };

@@ -335,6 +335,8 @@ static OPTION_DESC Options_CG[] = {
     0, 0, 0,	&CG_warn_bad_freqs, NULL },
   { OVK_BOOL,	OV_INTERNAL, TRUE, "loop_opt", "loop_opt",
     0, 0, 0,	&CG_enable_loop_optimizations, NULL },
+  { OVK_BOOL,	OV_INTERNAL, TRUE, "tune_do_loop", "tune_do_loop",
+    0, 0, 0,    &CG_tune_do_loop, NULL },
   { OVK_INT32,	OV_INTERNAL, TRUE, "skip_before", "skip_b",
     0, 0, INT32_MAX, &CG_skip_before, NULL }, 
   { OVK_INT32,	OV_INTERNAL, TRUE, "skip_after", "skip_a",
@@ -823,7 +825,8 @@ static OPTION_DESC Options_CG[] = {
     0, 0, 0, &CG_cond_defs_allowed, NULL },
 
   { OVK_BOOL,	OV_INTERNAL, TRUE,"rename", "",
-    0, 0, 0, &CG_enable_rename, NULL }
+    0, 0, 0, &CG_enable_rename, NULL },
+
 };
 
 /* Ipfec related options: */
@@ -1473,8 +1476,6 @@ Configure_CG_Options(void)
     EBO_Opt_Level = (CG_opt_level > 0) ? EBO_Opt_Level_Default : 0;
   }
   Enable_CG_Peephole = (CG_opt_level > 0) ? TRUE : FALSE;
-  if (CG_opt_level <= 0) 
-      Enable_EBO_Post_Proc_Rgn = FALSE ;
 
   if ( IPFEC_Profitability ) {
       // region formation

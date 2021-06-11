@@ -403,10 +403,13 @@ WFE_Add_Case_Node (tree low, tree high, tree label)
 #endif
   FmtAssert (label->decl.sgi_u1.label_idx == (LABEL_IDX) 0,
              ("WFE_Add_Case_Node: label already defined"));
-  New_LABEL (CURRENT_SYMTAB, case_label_idx);
 #ifdef KEY
   }
 #endif
+  // bug fix for OSP_96
+  //
+  New_LABEL (CURRENT_SYMTAB, case_label_idx);
+  
   label->decl.sgi_u1.label_idx = case_label_idx;
   label->decl.label_defined = TRUE;
   case_info_stack [case_info_i].case_label_idx = case_label_idx;
@@ -762,7 +765,16 @@ WFE_Expand_Return (tree retval)
           TY_align (ret_ty_idx) < MTYPE_align_best(Spill_Int_Mtype)) {
         ST *st = WN_st (rhs_wn);
         TY_IDX ty_idx = ST_type (st);
-        if (ty_idx == ret_ty_idx) {
+	
+	// bug fix for OSP_224 
+	// fix for unaligned memory access in 458.sjeng in spec2k6
+	// If one symbol is required to A bytes alignment, it must 
+	// allocated with B bytes alignment, where B >= A.
+	// As to this bug, SCLASS_EXTERN st is defined at another file with A bytes alignment,
+	// we should NOT expand it with B bytes alignment, where B > A,
+	// otherwise, compile will generate ld/st B to access this st, where B > A.
+	//
+        if (ty_idx == ret_ty_idx && ST_sclass(st) != SCLASS_EXTERN) {
           Set_TY_align (ty_idx, MTYPE_align_best(Spill_Int_Mtype));
           Set_ST_type (st, ty_idx);
         }

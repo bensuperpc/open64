@@ -99,7 +99,6 @@ static BOOL gbb_needs_rename;   // Some local renaming required for a GBB
                                 // due to a cgprep failure.  DevWarn and
                                // rename for robustness.
 BOOL fat_self_recursive = FALSE;
-//BOOL gra_self_recursive = FALSE; 
 extern BOOL gra_self_recursive;
 extern char *Cur_PU_Name;
 BOOL OP_maybe_unc_cmp(OP* op)
@@ -636,6 +635,72 @@ Scan_Region_BB_For_Referenced_TNs( GRA_BB* gbb )
 
 /////////////////////////////////////
 static void
+Create_Global_Dedicated_TN_LRANGEs(void)
+/////////////////////////////////////
+// 
+//  GRA assumes live range of dedicated TN is local one. This assumption
+//  is not always true. The definitions of dedicated TN and their uses may 
+//  be live across multiple blocks. It may be expensive to build global live 
+//  ranges of dedicated TN and construct interference graph for them. On the 
+//  other hand, the change to make that happen may be huge. This solution 
+//  solve the problem: We divide the live range of dedicated TN <t> into 
+//  two parts:
+//     1) the set of basic blocks in which <t> has real occurrrences.
+//     2) the set of basic blocks in which <t> does not have real occurrence.
+//  
+//  As mentioned above, the live-range snippet in part-1) is currently handled 
+//  as local wired live range. The coloring of live range snippet in part-1) is 
+//  correct. 
+//  
+//  What we concerned about is that register bound to <t> will be used to 
+//  color <t>'s neighbors in part-2).  Therefore, we should remove the register 
+//  associated with <t> from the available register set of blocks in part-2) to
+//  prevent that from happening. This function serves this purpose. 
+// 
+//  The net result of this function is equivalent to construting a global live 
+//  range for dedicated TN and let him join the coloring process, hence the name.
+//  
+/////////////////////////////////////////////
+{
+
+  MEM_POOL_Popper mp(&MEM_local_nz_pool);
+
+  GTN_SET* ded_gtns = GTN_SET_Create_Empty (Last_Dedicated_TN, mp.Pool());
+
+  // loop over all dedicated TNs 
+  for (TN_NUM i = Last_Dedicated_TN; i > 0; i--) {
+    TN* tn = TNvec(i);   
+    // ignore local dedicated TN
+    if (!TN_is_global_reg(tn)) continue;
+    
+    // ignore TN bound to unallocatable register 
+    REGISTER_SET alloc = REGISTER_CLASS_allocatable(TN_register_class (tn));
+    if (!REGISTER_SET_MemberP(alloc, TN_register(tn))) continue;
+    
+    ded_gtns = GTN_SET_Union1D (ded_gtns, tn, mp.Pool());
+  }
+
+  for (BB* bb = REGION_First_BB; bb != NULL; bb = BB_next(bb)) {
+    GRA_BB* gbb = NULL;
+    GTN_SET* live_use = BB_live_use(bb);
+    GTN_SET* def_reach_in = BB_defreach_in(bb);
+
+    for (TN* tn = GTN_SET_Intersection_Choose(ded_gtns, BB_live_in(bb));
+         tn != GTN_SET_CHOOSE_FAILURE;
+         tn = GTN_SET_Intersection_Choose_Next(ded_gtns, BB_live_in(bb), tn)) {
+      if (GTN_SET_MemberP (def_reach_in, tn) &&
+          !GTN_SET_MemberP (live_use, tn)) {
+        // dedicated TN has no occurrence in this block but it is live 
+        // through this block.
+        gbb = gbb ? gbb : gbb_mgr.Get(bb);
+        gbb->Make_Register_Used(TN_register_class(tn), TN_register(tn));
+      }
+    }
+  }/* end of outer for-loop */
+}
+
+/////////////////////////////////////
+static void
 Create_LRANGEs(void)
 /////////////////////////////////////
 //
@@ -703,6 +768,7 @@ Create_LRANGEs(void)
     if ( TN_Is_Allocatable(tn) && ! lrange_mgr.Get(tn) && TN_is_global_reg(tn))
       lrange_mgr.Create_Complement(tn);
   }
+  Create_Global_Dedicated_TN_LRANGEs();
   GRA_Trace_Memory("After Create_LRANGEs()");
 }
 
@@ -1277,6 +1343,7 @@ Scan_Complement_BB_For_Referenced_TNs( GRA_BB* gbb )
   Initialize_Wired_LRANGEs();
   OP_OF_ONLY_DEF Op_Of_Only_Def(&MEM_local_nz_pool);
   Op_Of_Only_Def.Set_OPS_OF_ONLY_DEF(gbb);
+
   for (iter.Init(gbb), op_count=1; ! iter.Done(); iter.Step(), op_count++ ) {
     OP*  xop = iter.Current();
     for ( i = OP_opnds(xop) - 1; i >= 0; --i ) {
@@ -1314,8 +1381,8 @@ Scan_Complement_BB_For_Referenced_TNs( GRA_BB* gbb )
 	hTN_MAP_Set(live_data, res_tn, gpl);
       }
 
-      if (OP_cond_def(xop)) { // there is a hidden use
-         if (!Op_Of_Only_Def.FIND_OP(xop)) {  
+      if (OP_cond_def(xop) && !Op_Of_Only_Def.FIND_OP(xop)) {
+           // there is a hidden use
            if (Complement_TN_Reference(xop, res_tn, gbb, &lunit, wired_locals)) {
                lunit->Has_Use_Set();
                if (!lunit->Has_Def()) {
@@ -1325,7 +1392,6 @@ Scan_Complement_BB_For_Referenced_TNs( GRA_BB* gbb )
            } else if (!gpl->Num_Defs()) {
 	  gpl->Exposed_Use_Set(TRUE);
           }
-       } 
       }
 
       gpl->Num_Defs_Set(gpl->Num_Defs() + 1);
@@ -1425,6 +1491,7 @@ Scan_Complement_BB_For_Referenced_TNs( GRA_BB* gbb )
   MEM_POOL_Pop(&MEM_local_nz_pool);
 }
 
+
 /////////////////////////////////////
 static void
 Create_LUNITs(void)
@@ -1435,17 +1502,18 @@ Create_LUNITs(void)
 /////////////////////////////////////
 {
   GRA_REGION_GBB_ITER gbb_iter;
-
+  int i;
   GRA_Init_Trace_Memory();
 
   MEM_POOL_Push(&MEM_local_nz_pool);
   Initialize_Wired_LRANGEs();
-
+  
   for (gbb_iter.Init(gra_region_mgr.Complement_Region()); ! gbb_iter.Done();
        gbb_iter.Step() ) {
     GRA_BB* gbb = gbb_iter.Current();
     Scan_Complement_BB_For_Referenced_TNs(gbb);
   }
+
   MEM_POOL_Pop(&MEM_local_nz_pool);
   GRA_Trace_Memory("After Create_LUNITs()");
 }

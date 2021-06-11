@@ -517,6 +517,7 @@
  *        The TN is the load-result of the OP, so use of TN has the
  *        latency of a load
  *
+ *  
  * ====================================================================
  * ====================================================================
  */
@@ -598,7 +599,6 @@ extern BOOL CGTARG_Is_OP_Speculative_Load( OP* memop );
 extern BOOL CGTARG_Is_OP_Advanced_Load( OP* memop );
 extern BOOL CGTARG_Is_Form_For_Advanced_Load (ISA_ENUM_CLASS_VALUE ldform); 
 extern BOOL CGTARG_Is_OP_Check_Load( OP* memop );
-
 extern BOOL CGTARG_OP_Defs_TN( OP* op, TN* tn );
 extern BOOL CGTARG_OP_Refs_TN( OP* op, TN* tn );
 extern BOOL CGTARG_Interference_Required(void);
@@ -825,11 +825,23 @@ inline BOOL CGTARG_Use_Load_Latency(OP *pred_op, TN *tn)
 #endif
 }
 
+/* return TRUE iff op is load with UNAT bit (IA64)*/
+extern BOOL CGTARG_Load_with_UNAT (OP* op); 
+
+/* return TRUE iff op is store with UNAT bit (IA64) */
+extern BOOL CGTARG_Store_With_UNAT (OP* op);
+
 /* Returns TRUE if OP is a suitable candidate for HBF. */
 extern BOOL CGTARG_Check_OP_For_HB_Suitability(OP *op);
 
 /* Return TRUE if OP is def use stack register; */
 extern BOOL OP_def_use_stack_regs(OP* op);
+
+/* return the max number of hidden operands given <op> may have */
+extern INT32 CGTARG_Max_Number_of_Hidden_Opnd (mTOP top);
+
+/* Go through all OP in the current PU and and hidden their hidden operands */ 
+extern void CGTARG_Add_Implict_Operands (void);
 
 typedef mempool_allocator<SCHED_INFO_CLASS>  SIC_MEM_ALLOC;
 typedef	std::vector<SCHED_INFO_CLASS, SIC_MEM_ALLOC>  TOP_SET;

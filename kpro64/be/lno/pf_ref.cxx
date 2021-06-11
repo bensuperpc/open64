@@ -199,9 +199,15 @@ inline mINT16  PF_LG::Get_Stride_One_Size () {
   return _myugs->Get_Stride_One_Size ();
 }
 
-inline mINT16  PF_LG::Get_Stride_In_Enclosing_Loop () {
+inline mINT32  PF_LG::Get_Stride_In_Enclosing_Loop () {
   return _myugs->Get_Stride_In_Enclosing_Loop ();
 }
+
+#ifdef OSP_OPT
+inline BOOL  PF_LG::Get_Stride_Accurate() {
+  return _myugs->Get_Stride_Accurate();
+}
+#endif
 
 inline PF_LOOPNODE* PF_UGS::Get_Loop ()  {
   return _myba->Get_Loop ();
@@ -1872,6 +1878,33 @@ WN* PF_LG::Get_Ref_Version (WN* ref, INT bitpos) {
   return ref;
 }
 
+#ifdef OSP_OPT
+BOOL Contain_Induction_Variable (WN* wn, ST_IDX idx)
+{
+  if (WN_st_idx(wn) == idx) return TRUE;
+  for (INT kid = 0; kid < WN_kid_count(wn); kid ++)
+    if (Contain_Induction_Variable(WN_kid(wn, kid), idx))
+      return TRUE;
+  return FALSE;
+}
+
+void Update_Array_Index (WN* wn, WN* wn_incr, ST_IDX idx)
+{
+  for (INT kid = 0; kid < WN_kid_count(wn); kid ++) {
+    WN* wn_kid = WN_kid(wn, kid);
+    if (WN_st_idx(wn_kid) == idx) {
+      TYPE_ID desc = Promote_Type(WN_rtype(wn_kid));
+      WN* wn_ahead = LWN_Make_Icon(desc, LNO_Prefetch_Iters_Ahead);
+      wn_ahead = LWN_CreateExp2(OPCODE_make_op(OPR_MPY, desc, MTYPE_V), 
+                                                  WN_CopyNode(wn_incr), wn_ahead);      
+      WN_kid(wn, kid) = LWN_CreateExp2(OPCODE_make_op(OPR_ADD, desc, MTYPE_V), wn_kid, wn_ahead);
+      LWN_Set_Parent(WN_kid(wn, kid), wn);
+    } else {
+      Update_Array_Index(wn_kid, wn_incr, idx);
+    }
+  }
+}
+#endif
 
 /***********************************************************************
  *
@@ -2139,6 +2172,111 @@ void PF_LG::Gen_Pref_Node (PF_SORTED_REFS* srefs, mINT16 start, mINT16 stop,
       break;
     }
 
+#ifdef OSP_OPT
+    {
+      // Go some cache lines ahead
+      if ( LNO_Prefetch_Ahead || LNO_Prefetch_Iters_Ahead) {
+        INT increment;
+        if ((level == level_1) || (level == level_1and2))
+          increment =  LNO_Prefetch_Ahead *Cache.LineSize(1);
+        else increment =  LNO_Prefetch_Ahead *Cache.LineSize(2);
+
+        if(Stride_Forward())
+          increment = Stride_Forward()*increment;
+        else
+          increment = (Get_Stride_In_Enclosing_Loop()>0) ? increment : (-increment) ;
+
+        // what is the size in bytes that the reference is jumping?
+        INT stride_size = ABS(Get_Stride_In_Enclosing_Loop());
+
+        if ((((level == level_1) || (level == level_1and2)) &&
+             (stride_size >= Cache.LineSize(1))) ||
+            ((level == level_2) && stride_size >= Cache.LineSize(2))) {
+          if( Stride_Forward() && Get_Stride_Accurate() ) {
+            // we're exceeding a cache line in each iteration,
+            // so prefetch some ITERATIONS ahead instead.
+            increment = Get_Stride_In_Enclosing_Loop() * LNO_Prefetch_Iters_Ahead;
+          }
+          else {
+            //OSP_233 & OSP_240
+            //  DO I = 1, N
+            //    DO J = 1, N
+            //      SUM = SUM + A(J, I)*B(I, J)
+            //    END DO
+            //  END DO
+            //
+            //For this situation, we can not figure out to prefetch how  
+            //many cache lines ahead for B(I,J). Instead, we should generate 
+            //prefetch for B(I, J + LNO_Prefetch_Iters_Ahead).
+
+            //We don't use offset to prefetch some element ahead
+            increment = 0;
+
+            ACCESS_ARRAY *aa = (ACCESS_ARRAY*) WN_MAP_Get (LNO_Info_Map, ref);
+            ACCESS_VECTOR *av;
+
+            // find the first array dimension (going from stride-one outwards)
+            // that uses the index of the loop immediately enclosing the reference. 
+            // (Ignore coupled subscripts)
+            INT i, curr_depth=Get_Depth();
+            for (i=aa->Num_Vec()-1; i>=0; i--) {
+              av = aa->Dim(i);
+              if (av->Loop_Coeff(curr_depth)) break;
+            }
+
+            if(i<0) {
+              WN* wn_loop = Get_Loop()->Get_Code();        
+              WN* wn_induction = WN_index(wn_loop);
+              WN* wn_step = WN_step(wn_loop);
+              WN* wn_incr = WN_kid(wn_step, 0);
+              Is_True(WN_operator(wn_step) == OPR_STID && 
+                           WN_operator(wn_incr) == OPR_ADD, ("Incorrect loop index"));
+
+              for (i = 0; i < WN_kid_count(wn_incr); ++i) {
+                if( WN_st_idx(WN_kid(wn_incr, i)) != WN_st_idx(wn_induction) ) {
+                  wn_incr = WN_kid(wn_incr, i);
+                  break;
+                }
+              }              
+
+              for(i=0; i<WN_num_dim(arraynode); ++i) {
+                Update_Array_Index(WN_array_index(arraynode, i), wn_incr, WN_st_idx(wn_induction));
+              }
+
+            } else {
+              //In some cases, i could be larger than the maxmium array dimension
+              //e.g. U(2*I+J), the array is one-dimension, but Num_Vec()==2.
+              //So we just use the innermost dim to perform address computation.
+              if(i >= WN_num_dim(arraynode))
+                i = WN_num_dim(arraynode) - 1;
+
+              DO_LOOP_INFO* dli = Get_Loop()->Get_LoopInfo();
+              INT step;
+              if (dli->Step->Is_Const()) {
+                step = LNO_Prefetch_Iters_Ahead * av->Loop_Coeff(curr_depth) * dli->Step->Const_Offset;
+              }
+              else {
+                // assume step is 1
+                step = LNO_Prefetch_Iters_Ahead * av->Loop_Coeff(curr_depth);
+              }
+  
+              //Update array index
+              WN* wn_index = WN_array_index(arraynode, i);
+              TYPE_ID desc = Promote_Type(WN_rtype(wn_index));
+              OPCODE addop = OPCODE_make_op(OPR_ADD, desc, MTYPE_V);
+              WN* wn_ahead = LWN_Make_Icon(desc, step);
+              WN_array_index(arraynode, i) = LWN_CreateExp2(addop, wn_index, wn_ahead); 
+              LWN_Set_Parent(WN_array_index(arraynode, i), arraynode);
+            }
+          }
+
+        }
+
+        offset += increment;
+      }
+    }
+
+#else
     {
       // Go some cache lines ahead
 
@@ -2166,6 +2304,7 @@ void PF_LG::Gen_Pref_Node (PF_SORTED_REFS* srefs, mINT16 start, mINT16 stop,
         offset += increment;
       }
     }
+#endif
 
     WN* pfnode = LWN_CreatePrefetch (offset, flag, arraynode);
     WN_linenum(pfnode) = LWN_Get_Linenum(ref);
@@ -2795,6 +2934,10 @@ PF_UGS::PF_UGS (WN* wn_array, PF_BASE_ARRAY* myba) : _refs (PF_mpool) {
   // get stride in enclosing loop
   {
     _stride_in_enclosing_loop = 0;
+#ifdef OSP_OPT
+    _stride_accurate = TRUE;
+#endif
+
     ACCESS_ARRAY *aa = (ACCESS_ARRAY*) WN_MAP_Get (LNO_Info_Map, wn_array);
 
     // find the first array dimension (going from stride-one outwards)
@@ -2807,7 +2950,7 @@ PF_UGS::PF_UGS (WN* wn_array, PF_BASE_ARRAY* myba) : _refs (PF_mpool) {
 
     if (i >= 0) {
       // add up the stride in the dimensions inner to "i"
-      _stride_in_enclosing_loop = (mINT16) ABS(WN_element_size(wn_array)); // default
+      _stride_in_enclosing_loop = ABS(WN_element_size(wn_array)); // default
       for (INT j=aa->Num_Vec()-1; j>i; j--) {
         WN* dim_wn = NULL;
         if (j < WN_num_dim(wn_array)) dim_wn = WN_array_dim(wn_array, j);
@@ -2816,6 +2959,21 @@ PF_UGS::PF_UGS (WN* wn_array, PF_BASE_ARRAY* myba) : _refs (PF_mpool) {
           _stride_in_enclosing_loop *= WN_const_val(dim_wn);
         }
         else {
+#ifdef OSP_OPT
+          //OSP_233 & OSP_240 
+          //
+          //  DO I = 1, N
+          //    DO J = 1, N
+          //      SUM = SUM + A(J, I)*B(I, J)
+          //    END DO
+          //  END DO
+          //
+          // Fortran's evil. If bound of a dimension, e.g. N, is not a constant,  
+          // we can not compute how many bytes B(I,J) will go through in a J iteration. 
+          // Assuming 100 as array dimension size will lead to inaccurate prefetch.
+          // 
+          _stride_accurate = FALSE;
+#endif
           // randomly assume arraydimension size is 100
           _stride_in_enclosing_loop *= 100;
         }
@@ -2833,6 +2991,33 @@ PF_UGS::PF_UGS (WN* wn_array, PF_BASE_ARRAY* myba) : _refs (PF_mpool) {
       }
     }
     else {
+#ifdef OSP_OPT
+      BOOL messy=FALSE;
+    
+      for (i=aa->Num_Vec()-1; i>=0; i--) {
+        ACCESS_VECTOR *av = aa->Dim(i);
+        if (av->Too_Messy || av->Contains_Non_Lin_Symb()) {
+          messy = TRUE;
+          break;
+        }    
+      }
+
+      WN* wn_loop = LWN_Get_Parent(wn_array);
+      while (wn_loop && WN_opcode(wn_loop) != OPC_DO_LOOP)
+        wn_loop = LWN_Get_Parent(wn_loop);
+
+      WN* wn_induction = WN_index(wn_loop);
+      if(messy) {
+        for(i=0; i<WN_num_dim(wn_array); ++i) {
+          if( Contain_Induction_Variable(WN_array_index(wn_array, i), WN_st_idx(wn_induction)) ) {
+            _stride_in_enclosing_loop = 100*ABS(WN_element_size(wn_array));
+            _stride_accurate = FALSE;
+            break;
+          }
+        }
+      }
+#endif
+
       // innermost loop doesn't appear at all, so probably temporal locality
       // do nothing
     }
@@ -3021,6 +3206,11 @@ BOOL PF_UGS::Add_Ref (WN* ref) {
  *
  ***********************************************************************/
 void PF_UGS::ComputePFVec (PF_LEVEL level, PF_LOCLOOP locloop) {
+#ifdef OSP_OPT
+  if (!Get_Stride_Accurate())
+    return;
+#endif
+
   INT depth = Get_Depth ();
   INT linesize;
   mINT16 loopdepth;

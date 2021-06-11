@@ -571,7 +571,14 @@ void WFE_Expand_Decl(tree decl)
   switch (TREE_CODE(decl)) { 
 
     case CONST_DECL:
-      DevWarn("WFE_Expand_Decl:  don't know what to do with CONST_DECL");
+      {
+      // there are too much such warnings, it is really nuisance!
+      static BOOL once_is_enough=FALSE;
+      if (!once_is_enough) {
+        DevWarn("WFE_Expand_Decl:  don't know what to do with CONST_DECL");
+        once_is_enough = TRUE;
+      }
+      }
       break;
 
     case FUNCTION_DECL:
@@ -2097,8 +2104,15 @@ Gen_Assign_Of_Init_Val (ST *st, tree init, UINT offset, UINT array_elem_offset,
       return;
     }
 #endif
-
+    
     WN *init_wn = WFE_Expand_Expr (init);
+    // bug fix for OSP_229
+    //
+    if (!init_wn) {
+      Is_True(TREE_CODE(init) == COND_EXPR, 
+	      ("Must be COND_EXPR when init_wn equlas to NULL."));
+      return;
+    }
 
     if (TREE_CODE(init) == STRING_CST && TY_kind(ty) == KIND_ARRAY)
     {
@@ -3624,10 +3638,11 @@ WFE_Expand_Top_Level_Decl (tree top_level_decl)
 
   {
     // Set the type for fields whose type we want to set last.
-    std::vector<std::pair<tree, FLD_HANDLE> >::iterator it;
-    for (it = defer_fields.begin(); it != defer_fields.end(); ++it) {
-      tree field = (*it).first;
-      FLD_HANDLE fld = (*it).second;
+    // OSP_228
+    // The defer_fields is changed during iteration, so can not use the iterator
+    for(int i=0; i<defer_fields.size(); i++) {
+      tree field = defer_fields[i].first;
+      FLD_HANDLE fld = defer_fields[i].second;
       Is_True(TREE_CODE(field) == FIELD_DECL,
 	      ("WFE_Expand_Top_Level_Decl: FIELD_DECL not found"));
       // Currently we defer only pointer types.

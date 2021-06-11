@@ -119,6 +119,47 @@ BOOL POINTS_TO::Same_base(const POINTS_TO *pt) const
   return FALSE;
 }
 
+BOOL POINTS_TO::Same_pointer (const POINTS_TO* pt) const
+{
+  if (Pointer_is_named_symbol ()) {
+     ST* ptr = Pointer ();
+     if (!ptr || ptr != pt->Pointer()) {
+       return FALSE;
+     }
+
+     if (ST_is_constant(ptr)) {
+       // version if pointer is not set before Compute_FSA(). However, we 
+       // can ignore version if the <ptr> is a constant pointer. 
+       // A typical example is that <ptr> is a C++ this-pointer. 
+       return TRUE; 
+     }
+
+     return Pointer_ver () && Pointer_ver () == pt->Pointer_ver();
+  } else if (Pointer_is_aux_id()) {
+    return Pointer_aux_id() && Pointer_aux_id() == pt->Pointer_aux_id() &&
+            Pointer_ver () && Pointer_ver () == pt->Pointer_ver();
+  } else if (Pointer_is_coderep_id ()) {
+    return Pointer_coderep_id () &&
+            Pointer_coderep_id () == pt->Pointer_coderep_id ();
+  }
+
+  return FALSE;
+}
+
+BOOL POINTS_TO::Pointer_info_does_help (void) const 
+{
+  if (Pointer_is_named_symbol()) {
+    return Pointer() && 
+           (ST_is_constant(Pointer()) || Pointer_ver()) && 
+           Iofst_kind () == OFST_IS_FIXED ;
+  } else if (Pointer_is_aux_id()) {
+    return Pointer_ver() && Iofst_kind () == OFST_IS_FIXED ;
+  } else if (Pointer_is_coderep_id ()) {
+    return TRUE;
+  }
+ 
+  return FALSE;
+}
 
 //  TRUE:  base are different
 //  FALSE: don't know
@@ -319,6 +360,11 @@ void POINTS_TO::Meet(const POINTS_TO *pt, ST *definition)
   if (pt->Weak_base())         Set_weak_base();
   
   if (pt->Ty() != Ty())        Set_ty((TY_IDX) 0);
+  if (pt->Highlevel_Ty () != Highlevel_Ty ()) {
+    Set_hl_ty ((TY_IDX)0);
+    Set_field_id (0);
+  }
+  if (pt->Field_id () != Field_id ()) Set_field_id (0); 
 
   if (pt->Known_f90_pointer() && Known_not_f90_pointer()) {
     DevWarn("Alias analysis: f90 pointer meets non-f90 pointer");
@@ -673,7 +719,7 @@ void POINTS_TO::Analyze_ST_as_base(ST *st, INT64 ofst, TY_IDX ty)
     Set_byte_size(0); 
 
     if (Based_sym () == NULL && WOPT_Enable_Pt_Keep_Track_Ptr) {
-      Set_pointer (st, FALSE);
+      Set_pointer (st);
       Set_pointer_ver ((VER_ID)0);
       Set_iofst_kind (OFST_IS_FIXED);
     }
@@ -694,7 +740,7 @@ void POINTS_TO::Analyze_ST_as_base(ST *st, INT64 ofst, TY_IDX ty)
     Set_byte_ofst(0);
     Set_byte_size(0); 
 
-    Set_pointer ((ST*)NULL, FALSE);
+    Set_pointer ((ST*)NULL);
     Set_pointer_ver ((VER_ID)0);
     Set_iofst_kind (OFST_IS_INVALID);
   }
@@ -936,7 +982,8 @@ void POINTS_TO::Print(FILE *fp) const
   }
   fprintf(fp, "per-PU class %d, ", Alias_class());
   fprintf(fp, "global class %d, ", Ip_alias_class());
-  
+  fprintf(fp, "ty=%d, hlty=%d, ", Ty(), Highlevel_Ty ());
+
   // print attributes
   fprintf(fp, "attr=");
   char *pr_separator = "";
@@ -1033,13 +1080,18 @@ void POINTS_TO::Print(FILE *fp) const
   else
     fprintf(fp, ", based_sym=null");
 
-  if (Pointer () != NULL) {
-    if (!Pointer_is_aux_id ()) {
-       fprintf (fp, ", ptr=%s ver=%d ", ST_name(Pointer()), (INT)Pointer_ver());
+  if (Pointer_is_named_symbol () || Pointer_is_aux_id () || 
+      Pointer_is_coderep_id ()) {
+
+    if (Pointer_is_named_symbol ()) {
+       fprintf (fp, ", ptr=%s ver=%d ", 
+                Pointer() ? ST_name(Pointer()) : NULL, (INT)Pointer_ver());
+    } else if (Pointer_is_aux_id ()) {
+       fprintf (fp, ", ptr=auxid-%d ver=%d ", Pointer_aux_id(), (INT)Pointer_ver());
     } else {
-       fprintf (fp, ", ptr=auxid-%d ver=%d ", 
-                       (INT)(INTPTR)Pointer(), (INT)Pointer_ver());
+       fprintf (fp, ", ptr=cdrepid-%d ", Pointer_coderep_id ());
     }
+
     if (Iofst_kind () == OFST_IS_FIXED) {
       fprintf(fp, "byte ofst %lld, ", Byte_Ofst());
       if (Bit_Size() != 0)

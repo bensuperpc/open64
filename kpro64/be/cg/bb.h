@@ -408,6 +408,10 @@
  *	(ANNOT_info); not its contents. The return value is the
  *	count of the annotations copied.
  *
+ *   INT BB_Copy_All_Annotations (BB* to_bb, BB* from_bb)
+ *      This function does what its name suggests. The return value is 
+ *      the count of the annotations copied.
+ * 
  *   BOOL BB_Is_Cold(BB *bb)
  *	Return a boolean to indicate if a BB is part of a cold region
  *	or not.
@@ -561,6 +565,7 @@ inline void Set_BB_loop_head_bb(BB *bb, BB *head) {
 #define BBM_CHK_SPLIT_HEAD      0x10000000 /* BB splitted from another because of chk insertion */
 #define BBM_PARTIAL_BUNDLE      0x20000000 /* BB partial bundle for across boundary*/
 #define BBM_EDGE_SPLITTING      0X40000000 /* BB is used to split critical edge */
+#define BBM_CHK_SPLIT_TAIL      0x80000000 /* BB is splited tail *///bug fix for OSP_212
 
 #define	BB_entry(x)		(BB_flag(x) & BBM_ENTRY)
 #define BB_handler(bb)		(BB_flag(bb) & BBM_HANDLER)
@@ -594,7 +599,7 @@ inline void Set_BB_loop_head_bb(BB *bb, BB *head) {
 #define BB_profile_added(x)    (BB_flag(x) & BBM_PROFILE_ADDED)
 #define BB_partial_bundle(x)	(BB_flag(x) & BBM_PARTIAL_BUNDLE)
 #define BB_edge_splitting(x)    (BB_flag(x) & BBM_EDGE_SPLITTING)      
-
+#define BB_chk_split_tail(x)    (BB_flag(x) & BBM_CHK_SPLIT_TAIL)//bug fix for OSP_212
 /* #endif */
 
 
@@ -630,6 +635,7 @@ inline void Set_BB_loop_head_bb(BB *bb, BB *head) {
 #define Set_BB_profile_added(x)    (BB_flag(x) |= BBM_PROFILE_ADDED)
 #define Set_BB_partial_bundle(x)    (BB_flag(x) |= BBM_PARTIAL_BUNDLE)
 #define Set_BB_edge_splitting(x)    (BB_flag(x) |= BBM_EDGE_SPLITTING)
+#define Set_BB_chk_split_tail(x)    (BB_flag(x) |= BBM_CHK_SPLIT_TAIL)//bug fix for OSP_212
 /* #endif */
 
 
@@ -665,7 +671,7 @@ inline void Set_BB_loop_head_bb(BB *bb, BB *head) {
 #define Resset_BB_profile_added(x)    (BB_flag(x) &= ~BBM_PROFILE_ADDED)
 #define Reset_BB_partial_bundle(x)    (BB_flag(x) &= ~BBM_PARTIAL_BUNDLE)
 #define Reset_BB_edge_splitting(x)    (BB_flag(x) &= ~BBM_EDGE_SPLITTING)
-
+#define Reset_BB_chk_split_tail(x)    (BB_flag(x) &= ~BBM_CHK_SPLIT_TAIL)//bug fix for OSP_212
 /* #endif */
 
 #define BB_tail_call(bb)	(   (BB_flag(bb) & (BBM_CALL | BBM_EXIT)) \
@@ -1010,6 +1016,7 @@ extern void Change_Succ_Prob(BB *pred, BB *succ, float prob);
 /* Add/copy an annotation to a BB */
 extern void BB_Add_Annotation(BB *bb, ANNOTATION_KIND kind, void *info);
 extern INT BB_Copy_Annotations(BB *to_bb, BB *from_bb, ANNOTATION_KIND kind);
+extern INT BB_Copy_All_Annotations(BB *to_bb, BB *from_bb);
 
 /* Free the memory associated with the live BBs and clear pointers: */
 extern	void  Free_BB_Memory ( void );

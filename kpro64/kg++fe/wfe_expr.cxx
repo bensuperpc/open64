@@ -1036,7 +1036,16 @@ WFE_Lhs_Of_Modify_Expr(tree_code assign_code,
     return wn;
   }
 
-  if (code == PARM_DECL || code == VAR_DECL || code == RESULT_DECL) {
+  // bug fix for OSP_150
+  // 
+  if (code == PARM_DECL || code == VAR_DECL || code == RESULT_DECL || code == TARGET_EXPR) {
+    if(code == TARGET_EXPR) {
+      WN *wn = WFE_Expand_Expr(lhs);
+      Is_True(WN_operator(wn) == OPR_LDID,
+	      ("WFE_Lhs_Of_Modify_Expr: wrong operator from TARGET_EXPR"));
+      st = WN_st(wn);
+    }
+
     TY_IDX hi_ty_idx = Get_TY(TREE_TYPE(lhs)); // type associated with field_id
     if (TREE_THIS_VOLATILE(lhs)) {
       Set_TY_is_volatile(hi_ty_idx);
@@ -1049,7 +1058,12 @@ WFE_Lhs_Of_Modify_Expr(tree_code assign_code,
       Clear_TY_is_volatile(desc_ty_idx);
       volt = TRUE;
     }
-    st = Get_ST (lhs);
+    
+    // bug fix for OSP_150
+    // 
+    if (code != TARGET_EXPR)
+       st = Get_ST (lhs);
+
     if (ST_assigned_to_dedicated_preg (st)) {
       Set_TY_is_volatile(hi_ty_idx);
       volt = TRUE;
@@ -3164,7 +3178,7 @@ WFE_Expand_Expr (tree exp,
 	    WN_set_desc(wn, desc);
 	    WN_offset(wn) = WN_offset(wn)+ofst+component_offset;
 	    WN_set_ty(wn, ty_idx);
-	    // bug fix for OSP_157 
+	    // bug fix for OSP_158 
 	    // if (TY_kind(ty_idx) == KIND_SCALAR)
 	    if (TY_kind(ty_idx) != KIND_STRUCT)
 	      WN_set_field_id (wn, 0);
@@ -3669,6 +3683,9 @@ WFE_Expand_Expr (tree exp,
 	wn0 = WFE_Expand_Expr_With_Sequence_Point (TREE_OPERAND (exp, 0),
 						   Boolean_type);
 #endif
+	// Due to a bug of handling ternary operators(i.e, COND_EXPR) in the GCC 3.3 front end,
+	// WFE_Expand_Expr convert the ternary operator to an if/else statement.
+	// 
 	if (TY_mtype (ty_idx)  == MTYPE_V ||
             TY_mtype (ty_idx1) == MTYPE_V ||
             TY_mtype (ty_idx2) == MTYPE_V) {
@@ -3742,6 +3759,15 @@ WFE_Expand_Expr (tree exp,
 			   MTYPE_V, wn0, wn1, wn2);
 	  Set_PU_has_very_high_whirl (Get_Current_PU ());
         }
+
+        // bug fix for OSP_229
+	// 
+	FmtAssert ((wn != 0 || 
+		   TY_mtype(ty_idx) == MTYPE_V ||
+                   TY_mtype(ty_idx1) == MTYPE_V || 
+		   TY_mtype(ty_idx2) == MTYPE_V),
+		  ("WFE_Expand_Expr: NULL WHIRL tree for %s", 
+		   Operator_From_Tree [code].name));
       }
       break;
 
@@ -4367,9 +4393,13 @@ WFE_Expand_Expr (tree exp,
             case BUILT_IN_FLOORL:
               arg_wn = WFE_Expand_Expr (TREE_VALUE (TREE_OPERAND (exp, 1)));
 	      if (MTYPE_is_integral(ret_mtype))
-                wn = WN_CreateExp1 (OPR_FLOOR, ret_mtype, MTYPE_F8, arg_wn);
+                // bug fix for OSP_201
+		// 
+		wn = WN_CreateExp1 (OPR_FLOOR, ret_mtype, MTYPE_F10, arg_wn);
 	      else{
-		wn0 = WN_CreateExp1 (OPR_FLOOR, MTYPE_I8, MTYPE_F8, arg_wn);
+		// bug fix for OSP_201
+		//
+		wn0 = WN_CreateExp1 (OPR_FLOOR, MTYPE_I8, MTYPE_F10, arg_wn);
 		wn = WN_Cvt(WN_rtype(wn0), ret_mtype, wn0);
 	      }
               whirl_generated = TRUE;
@@ -4801,6 +4831,18 @@ WFE_Expand_Expr (tree exp,
           tree func = TREE_OPERAND (arg0, 0);
           if (DECL_INLINE (func)) {
             wfe_invoke_inliner = TRUE;
+          }
+          // check to see whehter it is non-placement new operator 
+          if (num_args == 1 && 
+              (DECL_NAME(func) == ansi_opname(NEW_EXPR) ||
+               DECL_NAME(func) == ansi_opname(VEC_NEW_EXPR))) {
+            Set_PU_has_attr_malloc (Pu_Table[ST_pu(st)]);
+          } else if (DECL_IS_MALLOC (func)) {
+            Set_PU_has_attr_malloc (Pu_Table[ST_pu(st)]);
+          } else if (DECL_IS_PURE(func)) {
+            Set_PU_has_attr_pure (Pu_Table[ST_pu(st)]);
+          } else if (TREE_READONLY(func)) {
+            Set_PU_is_pure (Pu_Table[ST_pu(st)]);
           }
         }
 
@@ -5289,7 +5331,7 @@ WFE_Expand_Expr (tree exp,
 #endif /* WFE_DEBUG */
 
   if (need_result)
-    FmtAssert (wn != 0 || code == CALL_EXPR || code == BIND_EXPR ||
+    FmtAssert ((wn != 0 || code == CALL_EXPR || code == BIND_EXPR ||
                code == COMPOUND_STMT ||
                code == STMT_EXPR     ||
                code == EXPR_STMT     ||	// KEY
@@ -5301,8 +5343,7 @@ WFE_Expand_Expr (tree exp,
                code == THROW_EXPR    ||
 	       code == MUST_NOT_THROW_EXPR ||
 	       code == EXPR_WITH_FILE_LOCATION	||	// KEY
-	       ((code == COND_EXPR) &&  
-		((TY_mtype (ty_idx) == MTYPE_V) || (TY_mtype (ty_idx) == MTYPE_M))),
+	       code == COND_EXPR),
 	       ("WFE_Expand_Expr: NULL WHIRL tree for %s",
 		Operator_From_Tree [code].name));
 

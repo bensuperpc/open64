@@ -3284,9 +3284,22 @@ WFE_Expand_Expr (tree exp,
     case FIX_TRUNC_EXPR:
       {
         wn0 = WFE_Expand_Expr (TREE_OPERAND (exp, 0));
-	ty_idx = Get_TY (TREE_TYPE(exp));
-	TYPE_ID mtyp = Widen_Mtype(TY_mtype(ty_idx));
-	wn = WN_Trunc(WN_rtype(wn0), mtyp, wn0);
+         ty_idx = Get_TY (TREE_TYPE(exp));
+         TYPE_ID mtype = Widen_Mtype(TY_mtype(ty_idx));
+         if(WN_operator(wn0) == OPR_CVT &&
+            MTYPE_is_integral(WN_desc(wn0)) &&
+            MTYPE_is_float(WN_rtype(wn0))){
+           wn1 = WN_kid0(wn0);
+           TYPE_ID kid_type = WN_rtype(wn1);
+           if(mtype == kid_type){
+             wn = wn1;
+           }
+           else{
+             wn = WN_Cvt(WN_rtype(wn1), mtype, wn1);
+           }
+         }
+         else
+           wn = WN_Trunc(WN_rtype(wn0), mtype, wn0);
       }
       break;
       
@@ -3524,13 +3537,24 @@ WFE_Expand_Expr (tree exp,
 	else break;
 	}
 #endif // KEY
-	WN_set_rtype(wn, rtype);
-	// bug fix for OSP_157
-	//WN_set_desc (wn, desc);
-        // begin - bug fix for OSP_178
-        if ( WN_desc(wn) != MTYPE_V )
+
+	// bug fix for OSP_157 && OSP_178 && OSP_225 
+	// Besides, solve the unaligned memory access triggered in:
+	// 400.perlbench in spec2k6 and 253.perlbmk in spec2k,
+	// one of the concrete example: "U4U1ILOAD 2 sym" into "U4U4ILOAD 2 sym".
+	// If one symbol is allocated with A bytes alignment, compiler must access
+	// it with load/store B, where B <= A. 
+	// Please NOTE that MTYPE_bit_size(MTYPE_M) == 0.
+	// Moreover, we should NOT modify it if desc equals to MTYPE_V,
+	// like CVTL, it's descriptor type must be set MTYPE_V,
+	//
+	if (!MTYPE_is_void (WN_desc(wn)) &&
+	    (!MTYPE_is_integral (WN_desc(wn)) || MTYPE_bit_size (WN_desc(wn)) >= bsiz)) 
+	{
 	  WN_set_desc (wn, desc);
-        // end - bug fix for OSP_178
+	}
+	WN_set_rtype(wn, rtype);
+	
 	if ((bsiz & 7) == 0 &&	// field size multiple of bytes
 	    MTYPE_size_min(desc) % bsiz == 0 && // accessed loc multiple of bsiz
 	    bofst % bsiz == 0) {		// bofst multiple of bsiz
@@ -3924,28 +3948,39 @@ WFE_Expand_Expr (tree exp,
 		}
                 break;
 
-#if 0 /* turn off for the timing being due to bug */
-	    case BUILT_IN_FLOOR:
-	      arg_wn = WFE_Expand_Expr (TREE_VALUE (TREE_OPERAND (exp, 1)));
-	      wn = WN_CreateExp1 (OPR_FLOOR, ret_mtype, MTYPE_F8, arg_wn);
-	      whirl_generated = TRUE;
-	      break;
+#ifdef KEY
+            case BUILT_IN_FLOOR:
+              arg_wn = WFE_Expand_Expr (TREE_VALUE (TREE_OPERAND (exp, 1)));
+              if (MTYPE_is_integral(ret_mtype))
+                wn0 = WN_CreateExp1 (OPR_FLOOR, ret_mtype , MTYPE_F8, arg_wn);
+              else{
+                wn0 = WN_CreateExp1 (OPR_FLOOR, MTYPE_I8  , MTYPE_F8, arg_wn);
+                wn = WN_Cvt(WN_rtype(wn0), ret_mtype, wn0);
+              }
+              whirl_generated = TRUE;
+              break;
 
-	    case BUILT_IN_FLOORF:
-	      arg_wn = WFE_Expand_Expr (TREE_VALUE (TREE_OPERAND (exp, 1)));
-	      wn = WN_CreateExp1 (OPR_FLOOR, ret_mtype, MTYPE_F4, arg_wn);
-	      whirl_generated = TRUE;
-	      break;
+            case BUILT_IN_FLOORF:
+              arg_wn = WFE_Expand_Expr (TREE_VALUE (TREE_OPERAND (exp, 1)));
+              if (MTYPE_is_integral(ret_mtype))
+                wn = WN_CreateExp1 (OPR_FLOOR, ret_mtype, MTYPE_F4, arg_wn);
+              else{
+                wn0 = WN_CreateExp1 (OPR_FLOOR, MTYPE_I8  , MTYPE_F4, arg_wn);
+                wn = WN_Cvt(WN_rtype(wn0), ret_mtype, wn0);
+              }
+              whirl_generated = TRUE;
+              break;
 
-	    case BUILT_IN_FLOORL:
-	      arg_wn = WFE_Expand_Expr (TREE_VALUE (TREE_OPERAND (exp, 1)));
-#ifdef TARG_IA64
-	      wn = WN_CreateExp1 (OPR_FLOOR, ret_mtype, MTYPE_F10, arg_wn);
-#else
-	      wn = WN_CreateExp1 (OPR_FLOOR, ret_mtype, MTYPE_FQ, arg_wn);
-#endif
-	      whirl_generated = TRUE;
-	      break;
+            case BUILT_IN_FLOORL:
+              arg_wn = WFE_Expand_Expr (TREE_VALUE (TREE_OPERAND (exp, 1)));
+              if (MTYPE_is_integral(ret_mtype))
+                wn = WN_CreateExp1 (OPR_FLOOR, ret_mtype, MTYPE_F10, arg_wn);
+              else{
+                wn0 = WN_CreateExp1 (OPR_FLOOR, MTYPE_I8, MTYPE_F10, arg_wn);
+                wn = WN_Cvt(WN_rtype(wn0), ret_mtype, wn0);
+              }
+              whirl_generated = TRUE;
+              break;
 #endif
 
 #ifdef KEY
@@ -4282,6 +4317,21 @@ WFE_Expand_Expr (tree exp,
                   ret_mtype = MTYPE_I4;
 		break;
 
+	      case BUILT_IN_CTYPE_B_LOC: 
+	        iopc = INTRN_CTYPE_B_LOC; 
+		intrinsic_op = TRUE; 
+		break;
+
+	      case BUILT_IN_CTYPE_TOUPPER_LOC: 
+	        iopc = INTRN_CTYPE_TOUPPER_LOC; 
+		intrinsic_op = TRUE; 
+		break;
+
+	      case BUILT_IN_CTYPE_TOLOWER_LOC: 
+	        iopc = INTRN_CTYPE_TOLOWER_LOC; 
+		intrinsic_op = TRUE; 
+		break;
+
 #ifdef KEY
 	      case BUILT_IN_EXTEND_POINTER:
 	        wn = WFE_Expand_Expr (TREE_VALUE (TREE_OPERAND (exp, 1)));
@@ -4479,6 +4529,13 @@ WFE_Expand_Expr (tree exp,
           tree func = TREE_OPERAND (arg0, 0);
           if (DECL_INLINE (func)) {
             wfe_invoke_inliner = TRUE;
+          }
+          if (DECL_IS_MALLOC (func)) {
+            Set_PU_has_attr_malloc (Pu_Table[ST_pu(st)]);
+          } else if (DECL_IS_PURE(func)) {
+            Set_PU_has_attr_pure (Pu_Table[ST_pu(st)]);
+          } else if (TREE_READONLY(func)) {
+            Set_PU_is_pure (Pu_Table[ST_pu(st)]);
           }
         }
 

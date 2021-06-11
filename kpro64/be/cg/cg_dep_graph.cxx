@@ -2413,7 +2413,7 @@ BOOL get_mem_dep(OP *pred_op, OP *succ_op, BOOL *definite, UINT8 *omega)
 			    info_src);
 	}
       }
-    }
+    } 
 
     if (pred_wn == succ_wn) {
 
@@ -2451,7 +2451,9 @@ BOOL get_mem_dep(OP *pred_op, OP *succ_op, BOOL *definite, UINT8 *omega)
 	  }
 	}
 	else {
-	  switch (Aliased(Alias_Manager, pred_wn, succ_wn)) {
+	  BOOL ignore_loop_carried = 
+	      (omega == NULL && OP_unrolling(pred_op)==OP_unrolling(succ_op));
+	  switch (Aliased(Alias_Manager, pred_wn, succ_wn, ignore_loop_carried)) {
 	  case SAME_LOCATION:
 	    *definite = TRUE;
 	    break;
@@ -2464,6 +2466,16 @@ BOOL get_mem_dep(OP *pred_op, OP *succ_op, BOOL *definite, UINT8 *omega)
 			      cg_result, info_src);
 	  default:
 	    Is_True(FALSE, ("bad return value from Aliased"));
+	  }
+	  if (omega && 
+	      OP_unrolling(pred_op)==OP_unrolling(succ_op) &&
+	      min_omega <= 0 &&
+	      Aliased(Alias_Manager, pred_wn, succ_wn, TRUE) == NOT_ALIASED) {
+	       /* there is no loop-independent dependence between them. If there
+	        * is loop carried dependence between them, the distance should 
+	        * be at least one.
+	        */
+	    min_omega = 1;
 	  }
 	}
       } else {
@@ -3232,13 +3244,13 @@ void add_mem_arcs_from(UINT16 op_idx)
       /* Build a mem dep arc from <op> to <succ> */
       arc = new_arc_with_latency(kind, op, succ, latency, omega, 0, definite);
 
-      /* if MEMIN dependence is not a definite dependence and 
-	 !include_memin_arcs is SET, not already a check-load, then
-	 set the ARC as a dotted edge. */
-
-      if (!CGTARG_Is_OP_Check_Load(succ) && 
-	  kind == CG_DEP_MEMIN && !definite && !include_memin_arcs)
-	Set_ARC_is_dotted(arc, TRUE);
+      /* Set the dependence is violable on some circumstance */ 
+      if (kind == CG_DEP_MEMIN && !definite && 
+          !CGTARG_Is_OP_Check_Load(succ) && 
+          !OP_volatile (op) && !OP_volatile(succ) && 
+          !OP_asm(op) && !OP_asm(succ)) {
+        Set_ARC_is_dotted (arc, TRUE);
+      }
 
       found_definite_memread_succ |= (kind == CG_DEP_MEMREAD && definite);
 
@@ -3953,12 +3965,37 @@ Add_CHK_Arcs(BB *bb)
     if(is_recovery) {
       barrier = BB_first_op(bb);
     }
+    
+    OP* sp_adj = NULL;
+    if (BB_exit(bb)) {
+       sp_adj = BB_exit_sp_adj_op (bb);
+    }
+
     for(OP* op = BB_first_op(bb); op; op = OP_next(op)){
         if(barrier == op) continue;
         if(barrier){
             if(OP_chk(barrier)){
-                new_arc_with_latency(CG_DEP_POSTCHK, barrier, op, 0, 0, 0, FALSE);
-            }else if(OP_xfer(barrier) || OP_call(barrier)){
+               INT32 latency = 0;
+               if (sp_adj == op) {
+                  /* We change the latency to be 1 so that the 
+                   * sp-adj and chk will not in the same 
+                   * instruction group. If they are in same 
+                   * instruction group, e.g  
+                   *    chk.a.clr 
+                   *    add sp=96,sp ;;
+                   *    ...
+                   * that the block that contain check will be 
+                   * splitted at the chk-cycle boundaries, and hence 
+                   * the sp-adjust will reside in an non-exit block.  
+                   * However, sp-adj is assumed to be in exit-block 
+                   * almost anywhere in the CG.
+                   */      
+                   latency = 1;
+                   break;
+                }
+                new_arc_with_latency (latency == 0 ? CG_DEP_POSTCHK : CG_DEP_MISC, 
+                                      barrier, op, latency, 0, 0, FALSE);
+            } else if(OP_xfer(barrier) || OP_call(barrier)){
                 new_arc_with_latency(CG_DEP_POSTBR, barrier, op, 0, 0, 0, FALSE);
             }else{
                 new_arc_with_latency(CG_DEP_MISC, barrier, op, 0, 0, 0, FALSE);

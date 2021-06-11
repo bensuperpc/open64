@@ -889,6 +889,11 @@ private:
   WN_MAP                    _wn_box_refs;	// black box references
   WN_MAP                    _wn_box_defs;	// black box definitions
 
+  // this data structure is used to map from alias-class to its corresponding
+  // unique-vsym.
+  typedef mempool_allocator< std::pair<IDTYPE, AUX_ID> > AC_VSYM_ALLOC;
+  ID_MAP<IDTYPE, AUX_ID>  _ac_2_vsym_map;
+
   // ------------------------------------------------------------------
   // _rgn_level  context for alias analysis
   // _alias_classification  a handle on the mappings from:
@@ -953,6 +958,9 @@ private:
   BOOL	   REGION_merge_aux_id_points_to(POINTS_TO_SET **pset, AUX_ID aux_id);
   void	   REGION_add_to_bound(RID *rid, AUX_ID aux_id, BOOL empty);
   BOOL	   REGION_verify_bound(RID *rid, AUX_ID aux_id);
+
+  // Misc 
+  BOOL     Its_ret_val_of_malloc (VER_ID ver);
 
   // ------------------------------------------------------------------
 

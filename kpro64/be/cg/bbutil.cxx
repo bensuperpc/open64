@@ -734,6 +734,7 @@ static const char * const BBKIND_names[] = {
   /* 6 */	"CALL",
   /* 7 */	"REGION_EXIT",
   /* 8 */	"TAIL_CALL",
+  /* 9 */	"CHK",
 };
 /* WARNING: the order of this array must match #defines in bb.h. */
 
@@ -776,6 +777,10 @@ BB_kind(BB *bb)
    */
   if (BB_call(bb)) return BBKIND_CALL;
 
+  /* A chk bb end with a chk op
+   */
+  if (BB_Last_chk_op(bb)) return BBKIND_CHK;// bug fix for OSP_104, OSP_105, OSP_192
+   
   /* Get the branch OP and the number of successors.
    */
   br = BB_branch_op(bb);
@@ -947,6 +952,8 @@ Print_BB_Header ( BB *bp, BOOL flow_info_only, BOOL print_tn_info )
   } else if (BB_call(bp)) fprintf ( TFile, "  Call block\n" );
   if (BB_chk_split(bp)) 	fprintf ( TFile, "  Check split block\n" );
   if (BB_chk_split_head(bp)) 	fprintf ( TFile, "  Check split head block\n" );
+  //bug fix for OSP_212
+  if (BB_chk_split_tail(bp)) 	fprintf ( TFile, "  Check split tail block\n" );
   if (BB_recovery(bp)) 	fprintf ( TFile, "  Recovery block\n" );
   if (BB_scheduled(bp)) 	fprintf ( TFile, "  Scheduled BB\n" );
 
@@ -1530,6 +1537,21 @@ INT BB_Copy_Annotations(BB *to_bb, BB *from_bb, ANNOTATION_KIND kind)
   return count;
 }
 
+/* Copy all annotations from <from_bb> to <to_bb>, and returns 
+ * the number of annotations copied */
+INT BB_Copy_All_Annotations (BB *to_bb, BB *from_bb) {
+   INT32 cnt = 0;
+   ANNOTATION *ant = BB_annotations(from_bb);
+   while (ant) {
+      cnt ++; 
+      BB_Add_Annotation(to_bb, ANNOT_kind(ant), ANNOT_info(ant));
+      if(ANNOT_kind(ant) == ANNOT_LABEL) {
+        Set_Label_BB( ANNOT_label(ant), to_bb );
+      }
+      ant = ANNOT_next(ant); 
+   }
+   return cnt;
+}
 
 OP *
 BB_entry_sp_adj_op (BB *bb)
