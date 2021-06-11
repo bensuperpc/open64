@@ -37,10 +37,10 @@
  * ====================================================================
  *
  * Module: mempool.h
- * $Revision: 1.39 $
- * $Date: 2001/03/10 03:28:52 $
- * $Author: mtibuild $
- * $Source: /isms/cmplrs.src/osprey1.0/common/util/RCS/mempool.h,v $
+ * $Revision: 1.1.1.1 $
+ * $Date: 2001/09/10 17:48:26 $
+ * $Author: morrone $
+ * $Source: /cvsroot/open64/open64/osprey1.0/common/util/mempool.h,v $
  *
  * Revision history:
  *  19-Sep-89 - Original Version

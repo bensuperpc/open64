@@ -34,7 +34,7 @@
 */
 
 
-/* $Header: /isms/cmplrs.src/osprey1.0/libF77/RCS/ef1cmc_.c,v 8.6 2001/03/10 04:34:40 mtibuild Exp $ */
+/* $Header: /cvsroot/open64/open64/osprey1.0/libF77/ef1cmc_.c,v 1.1.1.1 2001/09/10 17:50:03 morrone Exp $ */
 /* EFL support routine to compare two character strings */
 
 #include <cmplrs/host.h>

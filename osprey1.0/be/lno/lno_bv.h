@@ -37,10 +37,10 @@
 //
 /**
 *** Module: lno_bv.h
-*** $Revision: 1.9 $
-*** $Date: 2001/03/10 02:27:44 $
-*** $Author: mtibuild $
-*** $Source: /isms/cmplrs.src/osprey1.0/be/lno/RCS/lno_bv.h,v $
+*** $Revision: 1.1.1.1 $
+*** $Date: 2001/09/10 17:47:45 $
+*** $Author: morrone $
+*** $Source: /cvsroot/open64/open64/osprey1.0/be/lno/lno_bv.h,v $
 *** 
 *** Revision history:
 ***
@@ -125,7 +125,7 @@
 #ifndef lno_bv_RCS_ID
 #define lno_bv_RCS_ID
 #ifdef _KEEP_RCS_ID
-static char *lno_bv_rcs_id = "$Source: /isms/cmplrs.src/osprey1.0/be/lno/RCS/lno_bv.h,v $ $Revision: 1.9 $";
+static char *lno_bv_rcs_id = "$Source: /cvsroot/open64/open64/osprey1.0/be/lno/lno_bv.h,v $ $Revision: 1.1.1.1 $";
 #endif /* _KEEP_RCS_ID */
 #endif
 

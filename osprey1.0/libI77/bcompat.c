@@ -34,7 +34,7 @@
 */
 
 
-/* $Header: /isms/cmplrs.src/osprey1.0/libI77/RCS/bcompat.c,v 7.8 2001/03/10 04:48:55 mtibuild Exp $ */
+/* $Header: /cvsroot/open64/open64/osprey1.0/libI77/bcompat.c,v 1.1.1.1 2001/09/10 17:50:05 morrone Exp $ */
 
 /*  
 **  Provide backward compatibility with object files compiled with old 

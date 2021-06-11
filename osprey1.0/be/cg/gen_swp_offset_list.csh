@@ -36,10 +36,10 @@
 ### ====================================================================
 ### ====================================================================
 ### Module: gen_swp_offset_list.csh
-### $Revision: 1.4 $
-### $Date: 2001/03/10 01:59:42 $
-### $Author: mtibuild $
-### $Source: /isms/cmplrs.src/osprey1.0/be/cg/RCS/gen_swp_offset_list.csh,v $
+### $Revision: 1.1.1.1 $
+### $Date: 2001/09/10 17:47:23 $
+### $Author: morrone $
+### $Source: /cvsroot/open64/open64/osprey1.0/be/cg/gen_swp_offset_list.csh,v $
 ### Revision history:
 ###   dd-mm-yy
 ###

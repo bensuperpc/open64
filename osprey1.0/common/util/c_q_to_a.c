@@ -37,10 +37,10 @@
  * ====================================================================
  *
  * Module: c_q_to_a
- * $Revision: 1.6 $
- * $Date: 2001/03/10 03:27:02 $
- * $Author: mtibuild $
- * $Source: /isms/cmplrs.src/osprey1.0/common/util/RCS/c_q_to_a.c,v $
+ * $Revision: 1.1.1.1 $
+ * $Date: 2001/09/10 17:48:24 $
+ * $Author: morrone $
+ * $Source: /cvsroot/open64/open64/osprey1.0/common/util/c_q_to_a.c,v $
  *
  * Revision history:
  *  26-jul-93 - Original Version

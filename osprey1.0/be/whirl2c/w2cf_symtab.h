@@ -39,10 +39,10 @@
  * ====================================================================
  *
  * Module: w2cf_symtab.h
- * $Revision: 1.10 $
- * $Date: 2001/03/10 02:56:59 $
- * $Author: mtibuild $
- * $Source: /isms/cmplrs.src/osprey1.0/be/whirl2c/RCS/w2cf_symtab.h,v $
+ * $Revision: 1.1.1.1 $
+ * $Date: 2001/09/10 17:48:08 $
+ * $Author: morrone $
+ * $Source: /cvsroot/open64/open64/osprey1.0/be/whirl2c/w2cf_symtab.h,v $
  *
  * Revision history:
  *  07-Oct-95 - Original Version

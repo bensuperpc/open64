@@ -42,10 +42,10 @@
  * ====================================================================
  *
  * Module: doacross.h
- * $Revision: 1.13 $
- * $Date: 2001/03/10 02:23:29 $
- * $Author: mtibuild $
- * $Source: /isms/cmplrs.src/osprey1.0/be/lno/RCS/doacross.h,v $
+ * $Revision: 1.1.1.1 $
+ * $Date: 2001/09/10 17:47:40 $
+ * $Author: morrone $
+ * $Source: /cvsroot/open64/open64/osprey1.0/be/lno/doacross.h,v $
  *
  * Revision history:
  *  dd-mmm-95 - Original Version

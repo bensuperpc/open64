@@ -37,10 +37,10 @@
  * ====================================================================
  *
  * Module: config_elf_targ.cxx
- * $Revision: 1.11 $
- * $Date: 2001/03/10 01:13:54 $
- * $Author: mtibuild $
- * $Source: /osprey.src/osprey1.0/common/com/ia64/RCS/config_elf_targ.cxx,v $
+ * $Revision: 1.1.1.1 $
+ * $Date: 2001/09/10 17:48:21 $
+ * $Author: morrone $
+ * $Source: /cvsroot/open64/open64/osprey1.0/common/com/ia64/config_elf_targ.cxx,v $
  *
  * Description:
  *

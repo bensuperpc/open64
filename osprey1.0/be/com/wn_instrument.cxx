@@ -3,10 +3,10 @@
 // ====================================================================
 //
 // Module: wn_instrument.cxx
-// $Revision: 1.38 $
-// $Date: 2001/03/10 02:17:44 $
-// $Author: mtibuild $
-// $Source: /isms/cmplrs.src/osprey1.0/be/com/RCS/wn_instrument.cxx,v $
+// $Revision: 1.2 $
+// $Date: 2002/02/18 20:45:31 $
+// $Author: douillet $
+// $Source: /cvsroot/open64/open64/osprey1.0/be/com/wn_instrument.cxx,v $
 //
 // ====================================================================
 //
@@ -119,16 +119,6 @@
 // Invokes instrumentation:
 //   be/be/driver.cxx (through WN_Instrument and wiw_wopt.Tree_Walk)
 
-
-// ====================================================================
-//
-// Instrumentation_File_Name is the prefix for the names of the
-// feedback data files.
-//
-// ====================================================================
-
-
-static char * Instrumentation_File_Name = "";
 
 
 // ====================================================================

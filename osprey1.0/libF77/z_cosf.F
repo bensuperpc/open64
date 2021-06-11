@@ -33,7 +33,7 @@ C  http://oss.sgi.com/projects/GenInfo/NoticeExplan
 C
 C
 
-C $Header: /isms/cmplrs.src/osprey1.0/libF77/RCS/z_cosf.F,v 8.3 2001/03/10 04:47:25 mtibuild Exp $ 
+C $Header: /cvsroot/open64/open64/osprey1.0/libF77/z_cosf.F,v 1.1.1.1 2001/09/10 17:50:04 morrone Exp $ 
 
 	double complex function z_cos(z)
 	double precision z(2), r, i

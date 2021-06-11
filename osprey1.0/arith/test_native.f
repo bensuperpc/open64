@@ -1178,4 +1178,4 @@ C
 
 
 c USMID = "\n%Z%%M%	%I%	%G% %U%\n";
-c rcsid = "$Id: test_native.f,v 2.4 1996/08/30 19:40:14 gbt Exp $";
+c rcsid = "$Id: test_native.f,v 1.1.1.1 2001/09/10 17:47:14 morrone Exp $";

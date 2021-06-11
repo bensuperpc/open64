@@ -35,7 +35,7 @@
 
 
 
-#ident "$Revision: 1.31 $"
+#ident "$Revision: 1.1.1.1 $"
 
 #include <sys/types.h>
 #include <sys/syssgi.h>

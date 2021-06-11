@@ -37,10 +37,10 @@
  * =======================================================================
  *
  *  Module: cgprep.h
- *  $Revision: 1.42 $
- *  $Date: 2001/03/10 01:57:15 $
- *  $Author: mtibuild $
- *  $Source: /isms/cmplrs.src/osprey1.0/be/cg/RCS/cgprep.h,v $
+ *  $Revision: 1.1.1.1 $
+ *  $Date: 2001/09/10 17:47:21 $
+ *  $Author: morrone $
+ *  $Source: /cvsroot/open64/open64/osprey1.0/be/cg/cgprep.h,v $
  *
  *  Revision comments:
  *

@@ -1,6 +1,6 @@
 /*
 
-  Copyright (C) 2000, 2001 Silicon Graphics, Inc.  All Rights Reserved.
+  Copyright (C) 2000 Silicon Graphics, Inc.  All Rights Reserved.
 
   This program is free software; you can redistribute it and/or modify it
   under the terms of version 2 of the GNU General Public License as
@@ -62,17 +62,17 @@
 /////////////////////////////////////
 
 
-//  $Revision: 1.18 $
-//  $Date: 2001/03/10 01:48:34 $
-//  $Author: mtibuild $
-//  $Source: /isms/cmplrs.src/osprey1.0/be/cg/gra_mon/RCS/gra.h,v $
+//  $Revision: 1.2 $
+//  $Date: 2002/02/18 20:45:30 $
+//  $Author: douillet $
+//  $Source: /cvsroot/open64/open64/osprey1.0/be/cg/gra_mon/gra.h,v $
 
 #ifndef GRA_INCLUDED
 #define GRA_INCLUDED
 #ifndef GRA_RCS_ID
 #define GRA_RCS_ID
 #ifdef _KEEP_RCS_ID
-static char *gra_rcs_id = "$Source: /isms/cmplrs.src/osprey1.0/be/cg/gra_mon/RCS/gra.h,v $ $Revision: 1.18 $";
+static char *gra_rcs_id = "$Source: /cvsroot/open64/open64/osprey1.0/be/cg/gra_mon/gra.h,v $ $Revision: 1.2 $";
 #endif
 #endif
 
@@ -80,6 +80,8 @@ static char *gra_rcs_id = "$Source: /isms/cmplrs.src/osprey1.0/be/cg/gra_mon/RCS
 #include "register.h"
 #include "bb.h"
 
+extern void GRA_Fat_Point_Estimate(void);
+extern BOOL Check_Self_Recursive(void);
 extern void GRA_Allocate_Global_Registers( BOOL is_region );
 extern void GRA_Initialize(void);
 extern BOOL GRA_Spill_Around_Save_TN_Copies(void);

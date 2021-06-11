@@ -38,10 +38,10 @@
 ///////////////////////////////////////
 
 
-//  $Revision: 1.22 $
-//  $Date: 2001/03/10 01:15:59 $
-//  $Author: mtibuild $
-//  $Source: /osprey.src/osprey1.0/common/targ_info/abi/ia64/RCS/abi_properties.cxx,v $
+//  $Revision: 1.1.1.1 $
+//  $Date: 2001/09/10 17:48:23 $
+//  $Author: morrone $
+//  $Source: /cvsroot/open64/open64/osprey1.0/common/targ_info/abi/ia64/abi_properties.cxx,v $
 
 #include <stddef.h>
 #include "abi_properties_gen.h"

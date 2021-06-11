@@ -35,10 +35,10 @@
 ### ====================================================================
 ### ====================================================================
 ### Module: gen_op_list.csh
-### $Revision: 3.4 $
-### $Date: 2001/03/10 01:59:32 $
-### $Author: mtibuild $
-### $Source: /isms/cmplrs.src/osprey1.0/be/cg/RCS/gen_op_list.csh,v $
+### $Revision: 1.1.1.1 $
+### $Date: 2001/09/10 17:47:23 $
+### $Author: morrone $
+### $Source: /cvsroot/open64/open64/osprey1.0/be/cg/gen_op_list.csh,v $
 ### Revision history:
 ###   27-Feb-92 - Original version
 ###

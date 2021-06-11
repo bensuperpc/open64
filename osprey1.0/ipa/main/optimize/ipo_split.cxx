@@ -38,10 +38,10 @@
 // ====================================================================
 //
 // Module: 
-// $Revision: 1.14 $
-// $Date: 2001/03/10 04:17:14 $
-// $Author: mtibuild $
-// $Source: /isms/cmplrs.src/osprey1.0/ipa/main/optimize/RCS/ipo_split.cxx,v $
+// $Revision: 1.1.1.1 $
+// $Date: 2001/09/10 17:50:03 $
+// $Author: morrone $
+// $Source: /cvsroot/open64/open64/osprey1.0/ipa/main/optimize/ipo_split.cxx,v $
 //
 // Revision history:
 //  20-May-98 - Original Version

@@ -37,10 +37,10 @@
  * ====================================================================
  *
  * Module: config.c
- * $Revision: 2.380 $
- * $Date: 2001/03/10 03:05:16 $
- * $Author: mtibuild $
- * $Source: /isms/cmplrs.src/osprey1.0/common/com/RCS/config.cxx,v $
+ * $Revision: 1.2 $
+ * $Date: 2002/02/18 20:45:32 $
+ * $Author: douillet $
+ * $Source: /cvsroot/open64/open64/osprey1.0/common/com/config.cxx,v $
  *
  * Revision history:
  *  06-Jun-90 -	Original Version (moved	from cdriver.c)
@@ -61,7 +61,7 @@
 
 #ifdef _KEEP_RCS_ID
 /*REFERENCED*/
-static char *rcs_id = "$Source: /isms/cmplrs.src/osprey1.0/common/com/RCS/config.cxx,v $ $Revision: 2.380 $";
+static char *rcs_id = "$Source: /cvsroot/open64/open64/osprey1.0/common/com/config.cxx,v $ $Revision: 1.2 $";
 #endif /* _KEEP_RCS_ID */
 
 #ifdef FRONT_END	/* For setting fullwarn, woff in front end */
@@ -747,6 +747,7 @@ BOOL Isolate_Lines = FALSE;	/* Don't overlap source	lines */
 BOOL Fill_Delay_Slots = FALSE;  /* Attempt to fill branch delay slots */
 BOOL Enable_GDSE = FALSE;       /* Allow global dead store elimination */
 BOOL Enable_CG_Peephole =FALSE;	/* Enable peephole optimization in cgprep */
+BOOL Enable_EBO_Post_Proc_Rgn = TRUE ;
 
 #ifdef BACK_END
 /* back end phases options */

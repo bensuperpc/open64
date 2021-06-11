@@ -27,7 +27,7 @@
 
 */
 
-/* $Header: /isms/cmplrs.src/osprey1.0/libU77/RCS/hostnm_.c,v 8.5 2001/02/20 23:39:55 mtibuild Exp $ */
+/* $Header: /cvsroot/open64/open64/osprey1.0/libU77/hostnm_.c,v 1.1.1.1 2001/09/10 17:50:04 morrone Exp $ */
 /*
  * hostnm - return this machines hostname
  *	@(#)hostnm_.c	1.1

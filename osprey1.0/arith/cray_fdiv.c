@@ -489,4 +489,4 @@ ar_c1frecip (AR_CRAY_64 *x, const AR_CRAY_64 *b) {
 
 
 static char USMID [] = "\n%Z%%M%	%I%	%G% %U%\n";
-static char rcsid [] = "$Id: cray_fdiv.c,v 2.3 1997/04/25 02:55:58 gbt Exp $";
+static char rcsid [] = "$Id: cray_fdiv.c,v 1.1.1.1 2001/09/10 17:47:13 morrone Exp $";

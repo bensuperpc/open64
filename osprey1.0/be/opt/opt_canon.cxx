@@ -2,10 +2,10 @@
 // ====================================================================
 //
 // Module: opt_canon.cxx
-// $Revision: 1.43 $
-// $Date: 2001/03/10 02:39:05 $
-// $Author: mtibuild $
-// $Source: /isms/cmplrs.src/osprey1.0/be/opt/RCS/opt_canon.cxx,v $
+// $Revision: 1.1.1.1 $
+// $Date: 2001/09/10 17:47:53 $
+// $Author: morrone $
+// $Source: /cvsroot/open64/open64/osprey1.0/be/opt/opt_canon.cxx,v $
 //
 // Revision history:
 //  3-MAY-95 dahl - Original Version
@@ -59,7 +59,7 @@
 
 #ifdef _KEEP_RCS_ID
 #define opt_canon_CXX	"opt_canon.cxx"
-static char *rcs_id = 	opt_canon_CXX"$Revision: 1.43 $";
+static char *rcs_id = 	opt_canon_CXX"$Revision: 1.1.1.1 $";
 #endif /* _KEEP_RCS_ID */
 
 #include "defs.h"

@@ -37,10 +37,10 @@
  * ====================================================================
  *
  * Module: config_platform.c
- * $Revision: 1.5 $
- * $Date: 2001/03/10 01:14:26 $
- * $Author: mtibuild $
- * $Source: /osprey.src/osprey1.0/common/com/ia64/RCS/config_platform.c,v $
+ * $Revision: 1.1.1.1 $
+ * $Date: 2001/09/10 17:48:21 $
+ * $Author: morrone $
+ * $Source: /cvsroot/open64/open64/osprey1.0/common/com/ia64/config_platform.c,v $
  *
  * Revision history:
  *  11-May-96 - Original Version
@@ -65,7 +65,7 @@
 static char *source_file = __FILE__;
 
 #ifdef _KEEP_RCS_ID
-static char *rcs_id = "$Source: /osprey.src/osprey1.0/common/com/ia64/RCS/config_platform.c,v $ $Revision: 1.5 $";
+static char *rcs_id = "$Source: /cvsroot/open64/open64/osprey1.0/common/com/ia64/config_platform.c,v $ $Revision: 1.1.1.1 $";
 #endif /* _KEEP_RCS_ID */
 
 #include <string.h>

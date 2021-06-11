@@ -33,7 +33,7 @@ C  http://oss.sgi.com/projects/GenInfo/NoticeExplan
 C
 C
 
-C $Header: /isms/cmplrs.src/osprey1.0/libF77/RCS/d_cnjgf.F,v 7.3 2001/03/10 04:32:11 mtibuild Exp $ 
+C $Header: /cvsroot/open64/open64/osprey1.0/libF77/d_cnjgf.F,v 1.1.1.1 2001/09/10 17:50:03 morrone Exp $ 
 
 C	bug#1316	return value not set AGC 7/27/87
 

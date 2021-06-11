@@ -44,10 +44,10 @@
 // as shown in the ISA manual
 /////////////////////////////////////
 //
-//  $Revision: 1.25 $
-//  $Date: 2001/03/10 01:17:24 $
-//  $Author: mtibuild $
-//  $Source: /osprey.src/osprey1.0/common/targ_info/isa/ia64/RCS/isa_subset.cxx,v $
+//  $Revision: 1.1.1.1 $
+//  $Date: 2001/09/10 17:48:24 $
+//  $Author: morrone $
+//  $Source: /cvsroot/open64/open64/osprey1.0/common/targ_info/isa/ia64/isa_subset.cxx,v $
 
 #include <stddef.h>
 #include "topcode.h"

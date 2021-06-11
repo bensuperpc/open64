@@ -37,7 +37,7 @@
  * ====================================================================
  *
  * Module: ipc_weak.h
- * $Source: /isms/cmplrs.src/osprey1.0/ipa/common/RCS/ipc_weak.h,v $
+ * $Source: /cvsroot/open64/open64/osprey1.0/ipa/common/ipc_weak.h,v $
  *
  * Revision history:
  *  14-Jun-95 - Original Version

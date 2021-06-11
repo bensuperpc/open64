@@ -34,7 +34,7 @@
 */
 
 
-/* $Header: /isms/cmplrs.src/osprey1.0/libF77/RCS/r_asind.c,v 8.7 2001/03/10 04:41:55 mtibuild Exp $ */
+/* $Header: /cvsroot/open64/open64/osprey1.0/libF77/r_asind.c,v 1.1.1.1 2001/09/10 17:50:04 morrone Exp $ */
 /*   VMS Compatibility Version  @(#)r_asind.c	1.1    9/28/87 */
 #include "cmplrs/host.h"
 #include <math.h>

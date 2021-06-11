@@ -442,4 +442,4 @@ int				rsize;
 
 
 static char USMID [] = "\n%Z%%M%	%I%	%G% %U%\n";
-static char rcsid [] = "$Id: test_ar_intrin.c,v 2.6 1996/08/30 19:40:08 gbt Exp $";
+static char rcsid [] = "$Id: test_ar_intrin.c,v 1.1.1.1 2001/09/10 17:47:14 morrone Exp $";

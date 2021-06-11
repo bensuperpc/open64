@@ -37,10 +37,10 @@
  * =======================================================================
  *
  *  Module: ebo_util.h
- *  $Revision: 1.29 $
- *  $Date: 2001/03/10 01:58:21 $
- *  $Author: mtibuild $
- *  $Source: /isms/cmplrs.src/osprey1.0/be/cg/RCS/ebo_util.h,v $
+ *  $Revision: 1.1.1.1 $
+ *  $Date: 2001/09/10 17:47:22 $
+ *  $Author: morrone $
+ *  $Source: /cvsroot/open64/open64/osprey1.0/be/cg/ebo_util.h,v $
  *
  *  Revision comments:
  *

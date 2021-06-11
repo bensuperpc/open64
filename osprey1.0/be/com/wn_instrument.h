@@ -3,10 +3,10 @@
 // ====================================================================
 //
 // Module: wn_instrument.h
-// $Revision: 1.24 $
-// $Date: 2001/03/10 02:18:29 $
-// $Author: mtibuild $
-// $Source: /isms/cmplrs.src/osprey1.0/be/com/RCS/wn_instrument.h,v $
+// $Revision: 1.1.1.1 $
+// $Date: 2001/09/10 17:47:35 $
+// $Author: morrone $
+// $Source: /cvsroot/open64/open64/osprey1.0/be/com/wn_instrument.h,v $
 //
 // ====================================================================
 //

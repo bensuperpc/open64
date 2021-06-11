@@ -200,16 +200,16 @@
 //  and U = L_0 * H_s 
 // 						-- Comments by RJC   
 
-/** $Revision: 1.11 $
-*** $Date: 2001/03/10 02:29:00 $
-*** $Author: mtibuild $
-*** $Source: /isms/cmplrs.src/osprey1.0/be/lno/RCS/lu_mat.h,v $
+/** $Revision: 1.1.1.1 $
+*** $Date: 2001/09/10 17:47:46 $
+*** $Author: morrone $
+*** $Source: /cvsroot/open64/open64/osprey1.0/be/lno/lu_mat.h,v $
 **/
 
 #ifndef lu_mat_INCLUDED
 #define lu_mat_INCLUDED "lu_mat.h"
 
-static char *lu_mat_rcs_id = lu_mat_INCLUDED "$Revision: 1.11 $";
+static char *lu_mat_rcs_id = lu_mat_INCLUDED "$Revision: 1.1.1.1 $";
 
 // system  headers
 

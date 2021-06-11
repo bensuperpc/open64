@@ -83,17 +83,17 @@
 ***			Print an INT32_INFIN
 ***/
 
-/** $Revision: 1.11 $
-*** $Date: 2001/03/10 02:25:24 $
-*** $Author: mtibuild $
-*** $Source: /isms/cmplrs.src/osprey1.0/be/lno/RCS/infin.h,v $
+/** $Revision: 1.1.1.1 $
+*** $Date: 2001/09/10 17:47:42 $
+*** $Author: morrone $
+*** $Source: /cvsroot/open64/open64/osprey1.0/be/lno/infin.h,v $
 **/
 
 #ifndef infin_INCLUDED
 #define infin_INCLUDED "infin.h"
 
 #ifdef _KEEP_RCS_ID
-static char *infin_rcs_id = infin_INCLUDED "$Revision: 1.11 $";
+static char *infin_rcs_id = infin_INCLUDED "$Revision: 1.1.1.1 $";
 #endif /* _KEEP_RCS_ID */
 
 #ifndef defs_INCLUDED

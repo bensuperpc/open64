@@ -37,10 +37,10 @@
  * ====================================================================
  *
  * Module: stab_attr.c
- * $Revision: 1.57 $
- * $Date: 2001/03/10 02:55:49 $
- * $Author: mtibuild $
- * $Source: /isms/cmplrs.src/osprey1.0/be/whirl2c/RCS/stab_attr.cxx,v $
+ * $Revision: 1.1.1.1 $
+ * $Date: 2001/09/10 17:48:08 $
+ * $Author: morrone $
+ * $Source: /cvsroot/open64/open64/osprey1.0/be/whirl2c/stab_attr.cxx,v $
  *
  * Revision history:
  *  07-Mar-95 - Original Version
@@ -55,7 +55,7 @@
  */
 
 #ifdef _KEEP_RCS_ID
-static char *rcs_id = "$Source: /isms/cmplrs.src/osprey1.0/be/whirl2c/RCS/stab_attr.cxx,v $ $Revision: 1.57 $";
+static char *rcs_id = "$Source: /cvsroot/open64/open64/osprey1.0/be/whirl2c/stab_attr.cxx,v $ $Revision: 1.1.1.1 $";
 #endif /* _KEEP_RCS_ID */
 
 

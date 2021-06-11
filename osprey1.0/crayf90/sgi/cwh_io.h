@@ -37,10 +37,10 @@
  * ====================================================================
  *
  * Module: cwh_io.h
- * $Revision: 1.6 $
- * $Date: 2001/03/10 03:45:35 $
- * $Author: mtibuild $
- * $Source: /isms/cmplrs.src/osprey1.0/crayf90/sgi/RCS/cwh_io.h,v $
+ * $Revision: 1.1.1.1 $
+ * $Date: 2001/09/10 17:48:52 $
+ * $Author: morrone $
+ * $Source: /cvsroot/open64/open64/osprey1.0/crayf90/sgi/cwh_io.h,v $
  *
  * Revision history:
  *  dd-mmm-95 - Original Version
@@ -54,7 +54,7 @@
 #ifndef CWH_IO_INCLUDED
 #define CWH_IO_INCLUDED
 #ifdef _KEEP_RCS_ID
-  static char *rcs_id = " $Id: cwh_io.h,v 1.6 2001/03/10 03:45:35 mtibuild Exp $ ";
+  static char *rcs_id = " $Id: cwh_io.h,v 1.1.1.1 2001/09/10 17:48:52 morrone Exp $ ";
 #endif /* _KEEP_RCS_ID */
 
 extern INT cwh_io_in_ioblock; /* are we processing an I/O statement? */

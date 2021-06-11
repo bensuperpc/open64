@@ -37,8 +37,8 @@
  * ====================================================================
  *
  * Module: wn_map.c
- * $Author: mtibuild $
- * $Source: /isms/cmplrs.src/osprey1.0/common/com/RCS/wn_map.cxx,v $
+ * $Author: morrone $
+ * $Source: /cvsroot/open64/open64/osprey1.0/common/com/wn_map.cxx,v $
  *
  * Revision history:
  *  09-Dec-94 - Original Version (derived from old wn_map.cxx file)

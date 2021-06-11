@@ -37,10 +37,10 @@
  * ====================================================================
  *
  * Module: ir_walker.c
- * $Revision: 1.6 $
- * $Date: 2001/03/10 04:19:08 $
- * $Author: mtibuild $
- * $Source: /isms/cmplrs.src/osprey1.0/ir_tools/RCS/ir_walker.c,v $
+ * $Revision: 1.1.1.1 $
+ * $Date: 2001/09/10 17:50:03 $
+ * $Author: morrone $
+ * $Source: /cvsroot/open64/open64/osprey1.0/ir_tools/ir_walker.c,v $
  *
  * Revision history:
  *  22-Apr-97 - Original Version

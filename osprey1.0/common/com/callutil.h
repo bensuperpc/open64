@@ -44,10 +44,10 @@ extern "C" {
  * ====================================================================
  *
  * Module: callutil.h
- * $Revision: 2.26 $
- * $Date: 2001/03/10 03:04:37 $
- * $Author: mtibuild $
- * $Source: /isms/cmplrs.src/osprey1.0/common/com/RCS/callutil.h,v $
+ * $Revision: 1.1.1.1 $
+ * $Date: 2001/09/10 17:48:11 $
+ * $Author: morrone $
+ * $Source: /cvsroot/open64/open64/osprey1.0/common/com/callutil.h,v $
  *
  * Revision history:
  *  07-Jun-92 - Original Version (extracted from stab.h)
@@ -63,7 +63,7 @@ extern "C" {
  */
 
 #ifdef _KEEP_RCS_ID
-static char *callutil_rcs_id = "$Source: /isms/cmplrs.src/osprey1.0/common/com/RCS/callutil.h,v $ $Revision: 2.26 $";
+static char *callutil_rcs_id = "$Source: /cvsroot/open64/open64/osprey1.0/common/com/callutil.h,v $ $Revision: 1.1.1.1 $";
 #endif /* _KEEP_RCS_ID */
 
 /* Incomplete types to keep ANSI happy: */

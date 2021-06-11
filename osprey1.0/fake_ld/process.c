@@ -36,10 +36,10 @@
  * ====================================================================
  *
  * Module: process.c
- * $Revision: 1.3 $
- * $Date: 2001/03/10 03:52:19 $
- * $Author: mtibuild $
- * $Source: /isms/cmplrs.src/osprey1.0/fake_ld/RCS/process.c,v $
+ * $Revision: 1.1.1.1 $
+ * $Date: 2001/09/10 17:48:53 $
+ * $Author: morrone $
+ * $Source: /cvsroot/open64/open64/osprey1.0/fake_ld/process.c,v $
  *
  * Revision history:
  *  23-Jan-96 - Use fixed name for IPA kept temporary directory.

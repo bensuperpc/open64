@@ -37,10 +37,10 @@
  * ====================================================================
  *
  * Module: wn2c_pragma.c
- * $Revision: 1.39 $
- * $Date: 2001/03/10 02:57:37 $
- * $Author: mtibuild $
- * $Source: /isms/cmplrs.src/osprey1.0/be/whirl2c/RCS/wn2c_pragma.cxx,v $
+ * $Revision: 1.1.1.1 $
+ * $Date: 2001/09/10 17:48:08 $
+ * $Author: morrone $
+ * $Source: /cvsroot/open64/open64/osprey1.0/be/whirl2c/wn2c_pragma.cxx,v $
  *
  * Revision history:
  *  12-Aug-96 - Original Version
@@ -56,7 +56,7 @@
 
 #ifdef _KEEP_RCS_ID
 /*REFERENCED*/
-static char *rcs_id = "$Source: /isms/cmplrs.src/osprey1.0/be/whirl2c/RCS/wn2c_pragma.cxx,v $ $Revision: 1.39 $";
+static char *rcs_id = "$Source: /cvsroot/open64/open64/osprey1.0/be/whirl2c/wn2c_pragma.cxx,v $ $Revision: 1.1.1.1 $";
 #endif /* _KEEP_RCS_ID */
 
 #include "alloca.h"

@@ -38,10 +38,10 @@
  * ====================================================================
  *
  * Module: libm.h
- * $Revision: 1.42 $
- * $Date: 2001/03/10 08:59:07 $
- * $Author: mtibuild $
- * $Source: /isms/cmplrs.src/osprey1.0/libm/RCS/libm.h,v $
+ * $Revision: 1.1.1.1 $
+ * $Date: 2001/09/10 17:50:21 $
+ * $Author: morrone $
+ * $Source: /cvsroot/open64/open64/osprey1.0/libm/libm.h,v $
  *
  * Revision history:
  *  09-Jun-93 - Original Version

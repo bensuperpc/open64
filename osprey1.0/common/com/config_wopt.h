@@ -37,10 +37,10 @@
  * ====================================================================
  *
  * Module: config_wopt.h
- * $Revision: 1.95 $
- * $Date: 2001/03/10 03:08:26 $
- * $Author: mtibuild $
- * $Source: /isms/cmplrs.src/osprey1.0/common/com/RCS/config_wopt.h,v $
+ * $Revision: 1.1.1.1 $
+ * $Date: 2001/09/10 17:48:12 $
+ * $Author: morrone $
+ * $Source: /cvsroot/open64/open64/osprey1.0/common/com/config_wopt.h,v $
  *
  * Revision history:
  *  05-May-96 - Extracted from be/opt/opt_config.h.

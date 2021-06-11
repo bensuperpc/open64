@@ -37,10 +37,10 @@
  * ====================================================================
  *
  *  Module: cg_loop_scc.h
- *  $Revision: 1.11 $
- *  $Date: 2001/03/10 01:54:14 $
- *  $Author: mtibuild $
- *  $Source: /isms/cmplrs.src/osprey1.0/be/cg/RCS/cg_loop_scc.h,v $
+ *  $Revision: 1.1.1.1 $
+ *  $Date: 2001/09/10 17:47:18 $
+ *  $Author: morrone $
+ *  $Source: /cvsroot/open64/open64/osprey1.0/be/cg/cg_loop_scc.h,v $
  *
  *  Revision history:
  *   16-Oct-91 - Original Version

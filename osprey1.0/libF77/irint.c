@@ -34,7 +34,7 @@
 */
 
 
-/* $Header: /isms/cmplrs.src/osprey1.0/libF77/RCS/irint.c,v 1.6 2001/03/10 04:37:23 mtibuild Exp $ */
+/* $Header: /cvsroot/open64/open64/osprey1.0/libF77/irint.c,v 1.1.1.1 2001/09/10 17:50:04 morrone Exp $ */
 
 #include <math.h>
 #include "moremath.h"

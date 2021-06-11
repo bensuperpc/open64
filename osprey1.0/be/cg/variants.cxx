@@ -37,10 +37,10 @@
  * ====================================================================
  *
  * Module: variants.cxx
- * $Revision: 1.9 $
- * $Date: 2001/03/10 02:05:54 $
- * $Author: mtibuild $
- * $Source: /isms/cmplrs.src/osprey1.0/be/cg/RCS/variants.cxx,v $
+ * $Revision: 1.1.1.1 $
+ * $Date: 2001/09/10 17:47:27 $
+ * $Author: morrone $
+ * $Source: /cvsroot/open64/open64/osprey1.0/be/cg/variants.cxx,v $
  *
  * Description:
  *
@@ -51,7 +51,7 @@
  */
 
 #ifdef _KEEP_RCS_ID
-static const char rcs_id[] = "$Source: /isms/cmplrs.src/osprey1.0/be/cg/RCS/variants.cxx,v $ $Revision: 1.9 $";
+static const char rcs_id[] = "$Source: /cvsroot/open64/open64/osprey1.0/be/cg/variants.cxx,v $ $Revision: 1.1.1.1 $";
 #endif /* _KEEP_RCS_ID */
 
 #include "defs.h"

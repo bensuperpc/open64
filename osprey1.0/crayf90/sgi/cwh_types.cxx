@@ -37,10 +37,10 @@
  * ====================================================================
  *
  * Module: cwh_types.c
- * $Revision: 1.190 $
- * $Date: 2001/03/10 03:47:17 $
- * $Author: mtibuild $
- * $Source: /isms/cmplrs.src/osprey1.0/crayf90/sgi/RCS/cwh_types.cxx,v $
+ * $Revision: 1.1.1.1 $
+ * $Date: 2001/09/10 17:48:52 $
+ * $Author: morrone $
+ * $Source: /cvsroot/open64/open64/osprey1.0/crayf90/sgi/cwh_types.cxx,v $
  *
  * Revision history:
  *  dd-mmm-95 - Original Version
@@ -67,7 +67,7 @@
 static char *source_file = __FILE__;
 
 #ifdef _KEEP_RCS_ID
-static char *rcs_id = "$Source: /isms/cmplrs.src/osprey1.0/crayf90/sgi/RCS/cwh_types.cxx,v $ $Revision: 1.190 $";
+static char *rcs_id = "$Source: /cvsroot/open64/open64/osprey1.0/crayf90/sgi/cwh_types.cxx,v $ $Revision: 1.1.1.1 $";
 #endif /* _KEEP_RCS_ID */
 
 /* sgi includes */

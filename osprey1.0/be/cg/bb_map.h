@@ -37,10 +37,10 @@
  * =======================================================================
  *
  *  Module: bb_map.h
- *  $Revision: 1.13 $
- *  $Date: 2001/03/10 01:51:56 $
- *  $Author: mtibuild $
- *  $Source: /isms/cmplrs.src/osprey1.0/be/cg/RCS/bb_map.h,v $
+ *  $Revision: 1.1.1.1 $
+ *  $Date: 2001/09/10 17:47:16 $
+ *  $Author: morrone $
+ *  $Source: /cvsroot/open64/open64/osprey1.0/be/cg/bb_map.h,v $
  *
  *  Revision comments:
  *

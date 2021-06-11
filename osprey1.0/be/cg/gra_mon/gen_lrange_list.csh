@@ -38,10 +38,10 @@
 ### ======================================================================
 ###
 ### Module: gen_tn_list.csh
-### $Revision: 1.6 $
-### $Date: 2001/03/10 01:48:40 $
-### $Author: mtibuild $
-### $Source: /isms/cmplrs.src/osprey1.0/be/cg/gra_mon/RCS/gen_lrange_list.csh,v $
+### $Revision: 1.1.1.1 $
+### $Date: 2001/09/10 17:47:28 $
+### $Author: morrone $
+### $Source: /cvsroot/open64/open64/osprey1.0/be/cg/gra_mon/gen_lrange_list.csh,v $
 ### Revision history:
 ###   27-Feb-92 - Original version
 ###

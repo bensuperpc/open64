@@ -38,10 +38,10 @@
  * ====================================================================
  *
  * Module: dcis.c
- * $Revision: 1.18 $
- * $Date: 2001/03/10 08:54:55 $
- * $Author: mtibuild $
- * $Source: /isms/cmplrs.src/osprey1.0/libm/mips/RCS/dcis.c,v $
+ * $Revision: 1.1.1.1 $
+ * $Date: 2001/09/10 17:50:21 $
+ * $Author: morrone $
+ * $Source: /cvsroot/open64/open64/osprey1.0/libm/mips/dcis.c,v $
  *
  * Revision history:
  *  05-Sep-96 - Original Version

@@ -3,10 +3,10 @@
 // ====================================================================
 //
 // Module: opt_emit_template.h
-// $Revision: 1.62 $
-// $Date: 2001/03/10 02:41:46 $
-// $Author: mtibuild $
-// $Source: /isms/cmplrs.src/osprey1.0/be/opt/RCS/opt_emit_template.h,v $
+// $Revision: 1.1.1.1 $
+// $Date: 2001/09/10 17:47:58 $
+// $Author: morrone $
+// $Source: /cvsroot/open64/open64/osprey1.0/be/opt/opt_emit_template.h,v $
 //
 // Revision history:
 //  03-OCT-96 shin - Original Version

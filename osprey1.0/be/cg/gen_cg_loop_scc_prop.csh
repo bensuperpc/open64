@@ -37,10 +37,10 @@
 ### ====================================================================
 ### ====================================================================
 ### Module: gen_cg_loop_scc_prop.csh
-### $Revision: 1.5 $
-### $Date: 2001/03/10 01:55:19 $
-### $Author: mtibuild $
-### $Source: /isms/cmplrs.src/osprey1.0/be/cg/RCS/gen_cg_loop_scc_prop.csh,v $
+### $Revision: 1.1.1.1 $
+### $Date: 2001/09/10 17:47:19 $
+### $Author: morrone $
+### $Source: /cvsroot/open64/open64/osprey1.0/be/cg/gen_cg_loop_scc_prop.csh,v $
 ### Revision history:
 ###   11-Aug-92
 ###

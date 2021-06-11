@@ -2,10 +2,10 @@
 //=====================================================================
 //
 // Module: opt_array.h
-// $Revision: 1.15 $
-// $Date: 2001/03/10 02:38:22 $
-// $Author: mtibuild $
-// $Source: /isms/cmplrs.src/osprey1.0/be/opt/RCS/opt_array.h,v $
+// $Revision: 1.1.1.1 $
+// $Date: 2001/09/10 17:47:53 $
+// $Author: morrone $
+// $Source: /cvsroot/open64/open64/osprey1.0/be/opt/opt_array.h,v $
 //
 // Revision history:
 //  01-MAR-95 dahl - Original Version
@@ -54,7 +54,7 @@
 #ifndef opt_array_INCLUDED
 #define opt_array_INCLUDED "opt_array.h"
 #ifdef _KEEP_RCS_ID
-static char *opt_arrayrcs_id = opt_array_INCLUDED"$ $Revision: 1.15 $";
+static char *opt_arrayrcs_id = opt_array_INCLUDED"$ $Revision: 1.1.1.1 $";
 #endif /* _KEEP_RCS_ID */
 
 

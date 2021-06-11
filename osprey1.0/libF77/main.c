@@ -34,7 +34,7 @@
 */
 
 
-/* $Header: /isms/cmplrs.src/osprey1.0/libF77/RCS/main.c,v 8.13 2001/03/10 04:38:53 mtibuild Exp $ */
+/* $Header: /cvsroot/open64/open64/osprey1.0/libF77/main.c,v 1.1.1.1 2001/09/10 17:50:04 morrone Exp $ */
 /*	3.0 SID #	1.2	*/
 /* STARTUP PROCEDURE FOR UNIX FORTRAN PROGRAMS */
 

@@ -3,10 +3,10 @@
 // ====================================================================
 //
 // Module: opt_ssa.cxx
-// $Revision: 1.251 $
-// $Date: 2001/03/10 02:47:04 $
-// $Author: mtibuild $
-// $Source: /isms/cmplrs.src/osprey1.0/be/opt/RCS/opt_ssa.cxx,v $
+// $Revision: 1.1.1.1 $
+// $Date: 2001/09/10 17:48:03 $
+// $Author: morrone $
+// $Source: /cvsroot/open64/open64/osprey1.0/be/opt/opt_ssa.cxx,v $
 //
 // Revision history:
 //  3-OCT-94 lo - Initial Version
@@ -65,7 +65,7 @@
 
 #ifdef _KEEP_RCS_ID
 #define opt_ssa_CXX    "opt_ssa.cxx"
-static char *rcs_id = 	opt_ssa_CXX"$Revision: 1.251 $";
+static char *rcs_id = 	opt_ssa_CXX"$Revision: 1.1.1.1 $";
 #endif /* _KEEP_RCS_ID */
 
 #include "defs.h"

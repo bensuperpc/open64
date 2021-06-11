@@ -36,7 +36,7 @@
 /* ====================================================================
  * ====================================================================
  *
- * $Source: /isms/cmplrs.src/osprey1.0/common/com/RCS/config_clist.cxx,v $
+ * $Source: /cvsroot/open64/open64/osprey1.0/common/com/config_clist.cxx,v $
  *
  * Revision history:
  *  25-Mar-97 - Original Version

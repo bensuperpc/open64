@@ -1,6 +1,6 @@
 /*
 
-  Copyright (C) 2000, 2001 Silicon Graphics, Inc.  All Rights Reserved.
+  Copyright (C) 2000 Silicon Graphics, Inc.  All Rights Reserved.
 
   This program is free software; you can redistribute it and/or modify it
   under the terms of version 2 of the GNU General Public License as
@@ -38,10 +38,10 @@
  * =======================================================================
  *
  *  Module: tn_map.h
- *  $Revision: 1.12 $
- *  $Date: 2001/03/10 02:05:44 $
- *  $Author: mtibuild $
- *  $Source: /isms/cmplrs.src/osprey1.0/be/cg/RCS/tn_map.h,v $
+ *  $Revision: 1.2 $
+ *  $Date: 2002/02/18 20:45:30 $
+ *  $Author: douillet $
+ *  $Source: /cvsroot/open64/open64/osprey1.0/be/cg/tn_map.h,v $
  *
  *  Description:
  *  ============
@@ -169,5 +169,11 @@ extern INT64 hTN_MAP64_Get (hTN_MAP64 map, TN *tn);
 extern void *hTN_MAP_Get_And_Set   (hTN_MAP   map, TN *tn, void *value);
 extern INT32 hTN_MAP32_Get_And_Set (hTN_MAP32 map, TN *tn, INT32 value);
 extern INT64 hTN_MAP64_Get_And_Set (hTN_MAP64 map, TN *tn, INT64 value);
+
+//define float hTN_MAP
+typedef struct htn_mapf *hTN_MAPf;
+extern hTN_MAPf   hTN_MAPf_Create   (MEM_POOL *pool);
+extern void hTN_MAPf_Set   (hTN_MAPf   map, TN *tn, float value);
+extern float hTN_MAPf_Get   (hTN_MAPf   map, TN *tn);
 
 #endif /* TN_MAP_INCLUDED */

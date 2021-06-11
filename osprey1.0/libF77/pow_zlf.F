@@ -33,7 +33,7 @@ C  http://oss.sgi.com/projects/GenInfo/NoticeExplan
 C
 C
 
-C $Header: /isms/cmplrs.src/osprey1.0/libF77/RCS/pow_zlf.F,v 1.3 2001/03/10 04:41:17 mtibuild Exp $ 
+C $Header: /cvsroot/open64/open64/osprey1.0/libF77/pow_zlf.F,v 1.1.1.1 2001/09/10 17:50:04 morrone Exp $ 
 
 	double complex function pow_zlf( a, b) 	
 	double complex a, p

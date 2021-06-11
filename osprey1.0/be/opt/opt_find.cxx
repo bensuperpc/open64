@@ -3,10 +3,10 @@
 // ====================================================================
 //
 // Module: opt_find.cxx
-// $Revision: 1.38 $
-// $Date: 2001/03/10 02:43:01 $
-// $Author: mtibuild $
-// $Source: /isms/cmplrs.src/osprey1.0/be/opt/RCS/opt_find.cxx,v $
+// $Revision: 1.2 $
+// $Date: 2002/02/18 20:45:32 $
+// $Author: douillet $
+// $Source: /cvsroot/open64/open64/osprey1.0/be/opt/opt_find.cxx,v $
 //
 // Revision history:
 //  08-APR-95 dahl - Original Version
@@ -64,7 +64,7 @@
 
 #ifdef _KEEP_RCS_ID
 #define opt_find_CXX	"opt_find.cxx"
-static char *rcs_id = 	opt_find_CXX"$Revision: 1.38 $";
+static char *rcs_id = 	opt_find_CXX"$Revision: 1.2 $";
 #endif /* _KEEP_RCS_ID */
 
 #include "defs.h"
@@ -783,6 +783,11 @@ CODEMAP::Fix_zero_version(PHI_NODE *phi, INT opnd_idx, bool allow_real_or_no_def
 
     if (phi_res->Is_flag_set(CF_MADEUP_TYPE))
       retval->Set_flag(CF_MADEUP_TYPE);
+
+      // Fix 815093: Set volatile flag
+     if ( Opt_stab()->Is_volatile( phi_res->Aux_id() ) ) {
+       retval->Set_is_volatile();
+     }
     
     // TODO: Probably need to set a bunch of *retval's fields
     // here. See opt_ivr.cxx for examples.
@@ -848,6 +853,11 @@ CODEMAP::Fix_zero_version(CHI_NODE *chi, STMTREP *stmt)
 		     chi_opnd->Lod_ty(),
 		     chi_opnd->Field_id(),
 		     TRUE);
+
+     // Fix 815093: Set volatile flag
+     if ( Opt_stab()->Is_volatile( chi_opnd->Aux_id() ) ) {
+       retval->Set_is_volatile();
+     }
 
     // TODO: Probably need to set a bunch of *retval's fields
     // here. See opt_ivr.cxx for examples.

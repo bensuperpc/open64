@@ -34,7 +34,7 @@
 */
 
 
-/* $Header: /isms/cmplrs.src/osprey1.0/libI77/RCS/f_back.c,v 6.4 2001/03/10 04:50:14 mtibuild Exp $ */
+/* $Header: /cvsroot/open64/open64/osprey1.0/libI77/f_back.c,v 1.1.1.1 2001/09/10 17:50:05 morrone Exp $ */
 /* This wrapper is used for backward compatibility with object files
 compiled with pre-4D1-4.0.1 releases only */
 

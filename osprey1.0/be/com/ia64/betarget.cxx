@@ -37,10 +37,10 @@
  * ====================================================================
  *
  * Module: betarget.cxx
- * $Revision: 1.21 $
- * $Date: 2001/03/10 01:13:22 $
- * $Author: mtibuild $
- * $Source: /osprey.src/osprey1.0/be/com/ia64/RCS/betarget.cxx,v $
+ * $Revision: 1.1.1.1 $
+ * $Date: 2001/09/10 17:47:36 $
+ * $Author: morrone $
+ * $Source: /cvsroot/open64/open64/osprey1.0/be/com/ia64/betarget.cxx,v $
  *
  * Description:
  *

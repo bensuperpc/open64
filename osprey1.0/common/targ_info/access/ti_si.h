@@ -326,9 +326,9 @@
  */
 
 /*  $REVISION: $
- *  $Date: 2001/03/10 03:22:19 $
- *  $Author: mtibuild $
- *  $Source: /isms/cmplrs.src/osprey1.0/common/targ_info/access/RCS/ti_si.h,v $
+ *  $Date: 2001/09/10 17:48:23 $
+ *  $Author: morrone $
+ *  $Source: /cvsroot/open64/open64/osprey1.0/common/targ_info/access/ti_si.h,v $
  */
 
 #ifndef SI_INCLUDED
@@ -339,7 +339,7 @@ extern "C" {
 #ifndef SI_RCS_ID
 #define SI_RCS_ID
 #ifdef _KEEP_RCS_ID
-static const char SI_rcs_id[] = "$Source: /isms/cmplrs.src/osprey1.0/common/targ_info/access/RCS/ti_si.h,v $ $Revision: 1.16 $";
+static const char SI_rcs_id[] = "$Source: /cvsroot/open64/open64/osprey1.0/common/targ_info/access/ti_si.h,v $ $Revision: 1.1.1.1 $";
 #endif
 #endif
 

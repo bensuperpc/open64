@@ -37,10 +37,10 @@
  * =======================================================================
  *
  *  Module: comment.h
- *  $Revision: 1.5 $
- *  $Date: 2001/03/10 01:57:45 $
- *  $Author: mtibuild $
- *  $Source: /isms/cmplrs.src/osprey1.0/be/cg/RCS/comment.h,v $
+ *  $Revision: 1.1.1.1 $
+ *  $Date: 2001/09/10 17:47:21 $
+ *  $Author: morrone $
+ *  $Source: /cvsroot/open64/open64/osprey1.0/be/cg/comment.h,v $
  *
  *  Revision comments:
  *
@@ -68,7 +68,7 @@
 #ifndef COMMENT_INCLUDED
 
 #ifdef _KEEP_RCS_ID
-static const char swp_note_rcs_id[] = "$Source: /isms/cmplrs.src/osprey1.0/be/cg/RCS/comment.h,v $ $Revision: 1.5 $";
+static const char swp_note_rcs_id[] = "$Source: /cvsroot/open64/open64/osprey1.0/be/cg/comment.h,v $ $Revision: 1.1.1.1 $";
 #endif /* _KEEP_RCS_ID */
 
 extern void COMMENT_Add(BB *bb, STR_IDX text);

@@ -42,10 +42,10 @@ extern "C" {
  * ====================================================================
  *
  * Module: glob.h
- * $Revision: 1.3 $
- * $Date: 2001/03/10 10:26:05 $
- * $Author: mtibuild $
- * $Source: /isms/cmplrs.src/osprey1.0/linux/mfef90_includes/RCS/glob.h,v $
+ * $Revision: 1.1.1.1 $
+ * $Date: 2001/09/10 17:50:45 $
+ * $Author: morrone $
+ * $Source: /cvsroot/open64/open64/osprey1.0/linux/mfef90_includes/glob.h,v $
  *
  * Revision history:
  *  15-Sep-89 - Original Version

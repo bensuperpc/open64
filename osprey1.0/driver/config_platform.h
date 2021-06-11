@@ -37,10 +37,10 @@
  * ====================================================================
  *
  * Module: config_platform.h
- * $Revision: 1.9 $
- * $Date: 2001/03/10 03:48:48 $
- * $Author: mtibuild $
- * $Source: /isms/cmplrs.src/osprey1.0/driver/RCS/config_platform.h,v $
+ * $Revision: 1.1.1.1 $
+ * $Date: 2001/09/10 17:48:53 $
+ * $Author: morrone $
+ * $Source: /cvsroot/open64/open64/osprey1.0/driver/config_platform.h,v $
  *
  * Revision history:
  *  11-May-96 - Original Version
@@ -69,7 +69,7 @@
 #define config_platform_INCLUDED
 
 #ifdef _KEEP_RCS_ID
-static char *config_platform_rcs_id = "$Source: /isms/cmplrs.src/osprey1.0/driver/RCS/config_platform.h,v $ $Revision: 1.9 $";
+static char *config_platform_rcs_id = "$Source: /cvsroot/open64/open64/osprey1.0/driver/config_platform.h,v $ $Revision: 1.1.1.1 $";
 #endif /* _KEEP_RCS_ID */
 
 #ifdef __cplusplus

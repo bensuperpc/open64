@@ -3,10 +3,10 @@
 // ====================================================================
 //
 // Module: opt_ivr.h
-// $Revision: 1.38 $
-// $Date: 2001/03/10 02:43:39 $
-// $Author: mtibuild $
-// $Source: /isms/cmplrs.src/osprey1.0/be/opt/RCS/opt_ivr.h,v $
+// $Revision: 1.1.1.1 $
+// $Date: 2001/09/10 17:48:01 $
+// $Author: morrone $
+// $Source: /cvsroot/open64/open64/osprey1.0/be/opt/opt_ivr.h,v $
 //
 // Revision history:
 //  27-JAN-95 shin - Original Version
@@ -109,7 +109,7 @@
 #ifndef opt_ivr_INCLUDED
 #define opt_ivr_INCLUDED	"opt_ivr.h"
 #ifdef _KEEP_RCS_ID
-static char *opt_ivrrcs_id = 	opt_ivr_INCLUDED"$Revision: 1.38 $";
+static char *opt_ivrrcs_id = 	opt_ivr_INCLUDED"$Revision: 1.1.1.1 $";
 #endif /* _KEEP_RCS_ID */
 
 #define USE_STANDARD_TYPES

@@ -37,10 +37,10 @@
  * ====================================================================
  *
  * Module: wfe_dst.h
- * $Revision: 1.6 $
- * $Date: 2001/03/10 03:53:35 $
- * $Author: mtibuild $
- * $Source: /isms/cmplrs.src/osprey1.0/g++fe/RCS/wfe_dst.h,v $
+ * $Revision: 1.1.1.1 $
+ * $Date: 2001/09/10 17:48:54 $
+ * $Author: morrone $
+ * $Source: /cvsroot/open64/open64/osprey1.0/g++fe/wfe_dst.h,v $
  *
  * Revision history:
  *  11-May-93 - Original Version
@@ -94,7 +94,7 @@
 #define wfe_dst_INCLUDED
 
 #ifdef _KEEP_RCS_ID
-static char *wfe_dst_rcs_id = "$Source: /isms/cmplrs.src/osprey1.0/g++fe/RCS/wfe_dst.h,v $ $Revision: 1.6 $";
+static char *wfe_dst_rcs_id = "$Source: /cvsroot/open64/open64/osprey1.0/g++fe/wfe_dst.h,v $ $Revision: 1.1.1.1 $";
 #endif /* _KEEP_RCS_ID */
 
 #ifdef __cplusplus

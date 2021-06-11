@@ -37,10 +37,10 @@
  * ====================================================================
  *
  *  Module: cg_loop_recur.h
- *  $Revision: 1.16 $
- *  $Date: 2001/03/10 01:54:04 $
- *  $Author: mtibuild $
- *  $Source: /isms/cmplrs.src/osprey1.0/be/cg/RCS/cg_loop_recur.h,v $
+ *  $Revision: 1.1.1.1 $
+ *  $Date: 2001/09/10 17:47:18 $
+ *  $Author: morrone $
+ *  $Source: /cvsroot/open64/open64/osprey1.0/be/cg/cg_loop_recur.h,v $
  *
  *  Revision history:
  *   03-Mar-94 - Original Version
@@ -83,7 +83,7 @@
 #define cg_loop_recur_INCLUDED
 
 #ifdef _KEEP_RCS_ID
-static const char cg_loop_recur_rcs_id[] = "$Source: /isms/cmplrs.src/osprey1.0/be/cg/RCS/cg_loop_recur.h,v $ $Revision: 1.16 $";
+static const char cg_loop_recur_rcs_id[] = "$Source: /cvsroot/open64/open64/osprey1.0/be/cg/cg_loop_recur.h,v $ $Revision: 1.1.1.1 $";
 #endif /* _KEEP_RCS_ID */
 
 class CG_LOOP;

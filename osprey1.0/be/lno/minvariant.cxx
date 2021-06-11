@@ -198,10 +198,10 @@
 **/
 
 /* ====================================================================
- * $Revision: 1.69 $
- * $Date: 2001/03/10 02:30:27 $
- * $Author: mtibuild $
- * $Source: /isms/cmplrs.src/osprey1.0/be/lno/RCS/minvariant.cxx,v $
+ * $Revision: 1.1.1.1 $
+ * $Date: 2001/09/10 17:47:47 $
+ * $Author: morrone $
+ * $Source: /cvsroot/open64/open64/osprey1.0/be/lno/minvariant.cxx,v $
  * ====================================================================
  */
 
@@ -211,7 +211,7 @@
 #pragma hdrstop
 
 #ifdef _KEEP_RCS_ID
-static char *rcs_id = "$Source: /isms/cmplrs.src/osprey1.0/be/lno/RCS/minvariant.cxx,v $ $Revision: 1.69 $";
+static char *rcs_id = "$Source: /cvsroot/open64/open64/osprey1.0/be/lno/minvariant.cxx,v $ $Revision: 1.1.1.1 $";
 #endif
 
 #include <sys/types.h>

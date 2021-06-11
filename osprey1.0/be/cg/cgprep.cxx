@@ -1,6 +1,6 @@
 /*
 
-  Copyright (C) 2000, 2001 Silicon Graphics, Inc.  All Rights Reserved.
+  Copyright (C) 2000 Silicon Graphics, Inc.  All Rights Reserved.
 
   This program is free software; you can redistribute it and/or modify it
   under the terms of version 2 of the GNU General Public License as
@@ -37,10 +37,10 @@
  * =======================================================================
  *
  *  Module: cgprep.cxx
- *  $Revision: 1.342 $
- *  $Date: 2001/03/10 01:57:10 $
- *  $Author: mtibuild $
- *  $Source: /isms/cmplrs.src/osprey1.0/be/cg/RCS/cgprep.cxx,v $
+ *  $Revision: 1.2 $
+ *  $Date: 2002/02/18 20:45:30 $
+ *  $Author: douillet $
+ *  $Source: /cvsroot/open64/open64/osprey1.0/be/cg/cgprep.cxx,v $
  *
  *  Revision comments:
  *
@@ -248,4 +248,5 @@ void CGPREP_Copy_TN_Into_BB(TN *dest, TN *src, BB *bb, OP *point, UINT8 omega,
 
   BB_Insert_Ops(bb, point, &ops, before);
 }
+
 

@@ -37,10 +37,10 @@
  * =======================================================================
  *
  *  Module: gtn_tn_set.h
- *  $Revision: 1.8 $
- *  $Date: 2001/03/10 02:00:46 $
- *  $Author: mtibuild $
- *  $Source: /isms/cmplrs.src/osprey1.0/be/cg/RCS/gtn_tn_set.h,v $
+ *  $Revision: 1.1.1.1 $
+ *  $Date: 2001/09/10 17:47:24 $
+ *  $Author: morrone $
+ *  $Source: /cvsroot/open64/open64/osprey1.0/be/cg/gtn_tn_set.h,v $
  *
  *  Description:
  *  ============

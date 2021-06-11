@@ -35,7 +35,7 @@
 
 
 #pragma ident "@(#) libfi/matrix/f90_mmult_error.c	92.2	07/09/99 15:18:08"
-/*  $Header: /isms/cmplrs.src/osprey1.0/libfi/matrix/RCS/f90_mmult_error.c,v 1.6 2001/03/10 06:16:52 mtibuild Exp $ */
+/*  $Header: /cvsroot/open64/open64/osprey1.0/libfi/matrix/f90_mmult_error.c,v 1.1.1.1 2001/09/10 17:50:18 morrone Exp $ */
 
 /* This is just a wrapper to indicate conformance errors in Matrix multiply */
 

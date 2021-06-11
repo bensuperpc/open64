@@ -3,10 +3,10 @@
 // ====================================================================
 //
 // Module: opt_prop.h
-// $Revision: 1.19 $
-// $Date: 2001/03/10 02:45:33 $
-// $Author: mtibuild $
-// $Source: /isms/cmplrs.src/osprey1.0/be/opt/RCS/opt_prop.h,v $
+// $Revision: 1.1.1.1 $
+// $Date: 2001/09/10 17:48:02 $
+// $Author: morrone $
+// $Source: /cvsroot/open64/open64/osprey1.0/be/opt/opt_prop.h,v $
 //
 // ====================================================================
 //
@@ -48,7 +48,7 @@
 #define opt_prop_INCLUDED	"opt_prop.h"
 
 #ifdef _KEEP_RCS_ID
-static char *opt_proprcs_id = 	opt_prop_INCLUDED"$Revision: 1.19 $";
+static char *opt_proprcs_id = 	opt_prop_INCLUDED"$Revision: 1.1.1.1 $";
 #endif /* _KEEP_RCS_ID */
 
 // forward declaration

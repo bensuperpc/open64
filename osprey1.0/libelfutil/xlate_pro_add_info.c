@@ -38,7 +38,7 @@
 
 /*
    xlate_pro_add_info.c
-   $Revision: 1.5 $
+   $Revision: 1.1.1.1 $
 
 
 */

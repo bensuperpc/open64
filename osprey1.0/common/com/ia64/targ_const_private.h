@@ -37,10 +37,10 @@
  * ====================================================================
  *
  * Module: targ_const_private.h
- * $Revision: 1.4 $
- * $Date: 2001/03/10 01:15:00 $
- * $Author: mtibuild $
- * $Source: /osprey.src/osprey1.0/common/com/ia64/RCS/targ_const_private.h,v $
+ * $Revision: 1.1.1.1 $
+ * $Date: 2001/09/10 17:48:22 $
+ * $Author: morrone $
+ * $Source: /cvsroot/open64/open64/osprey1.0/common/com/ia64/targ_const_private.h,v $
  *
  * Revision history:
  *  10-Feb-95 - Original Version

@@ -37,10 +37,10 @@
  * ====================================================================
  *
  * Module: freq.h
- * $Revision: 1.23 $
- * $Date: 2001/03/10 01:59:06 $
- * $Author: mtibuild $
- * $Source: /isms/cmplrs.src/osprey1.0/be/cg/RCS/freq.h,v $
+ * $Revision: 1.1.1.1 $
+ * $Date: 2001/09/10 17:47:23 $
+ * $Author: morrone $
+ * $Source: /cvsroot/open64/open64/osprey1.0/be/cg/freq.h,v $
  *
  * Description:
  *

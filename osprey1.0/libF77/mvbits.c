@@ -34,7 +34,7 @@
 */
 
 
-/* $Header: /isms/cmplrs.src/osprey1.0/libF77/RCS/mvbits.c,v 8.13 2001/03/10 04:39:17 mtibuild Exp $ */
+/* $Header: /cvsroot/open64/open64/osprey1.0/libF77/mvbits.c,v 1.1.1.1 2001/09/10 17:50:04 morrone Exp $ */
 
 /*	  All Rights Reserved  	*/
 

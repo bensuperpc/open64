@@ -1,7 +1,7 @@
 # Local additions to Autoconf macros.
 # Copyright (C) 1995 - 1998 Michael Riepe <michael@stud.uni-hannover.de>
 
-# @(#) $Id: aclocal.m4,v 1.1 2000/03/08 22:26:41 mpm Exp $
+# @(#) $Id: aclocal.m4,v 1.1.1.1 2001/09/10 17:49:56 morrone Exp $
 
 AC_PREREQ(2.12)
 

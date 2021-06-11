@@ -37,10 +37,10 @@
  * =======================================================================
  *
  *  Module: gtn_universe.h
- *  $Revision: 1.13 $
- *  $Date: 2001/03/10 02:00:57 $
- *  $Author: mtibuild $
- *  $Source: /isms/cmplrs.src/osprey1.0/be/cg/RCS/gtn_universe.h,v $
+ *  $Revision: 1.1.1.1 $
+ *  $Date: 2001/09/10 17:47:24 $
+ *  $Author: morrone $
+ *  $Source: /cvsroot/open64/open64/osprey1.0/be/cg/gtn_universe.h,v $
  *
  *  Revision comments:
  *

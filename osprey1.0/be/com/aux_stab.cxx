@@ -37,10 +37,10 @@
  * ====================================================================
  *
  * Module: aux_stab.cxx
- * $Revision: 3.26 $
- * $Date: 2001/03/10 02:06:38 $
- * $Author: mtibuild $
- * $Source: /isms/cmplrs.src/osprey1.0/be/com/RCS/aux_stab.cxx,v $
+ * $Revision: 1.1.1.1 $
+ * $Date: 2001/09/10 17:47:31 $
+ * $Author: morrone $
+ * $Source: /cvsroot/open64/open64/osprey1.0/be/com/aux_stab.cxx,v $
  *
  * Description:
  *

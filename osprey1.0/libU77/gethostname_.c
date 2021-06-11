@@ -30,7 +30,7 @@
 /* --------------------------------------------------- */
 /* | All Rights Reserved.                            | */
 /* --------------------------------------------------- */
-/* $Header: /isms/cmplrs.src/osprey1.0/libU77/RCS/gethostname_.c,v 8.5 2001/02/20 23:39:48 mtibuild Exp $ */
+/* $Header: /cvsroot/open64/open64/osprey1.0/libU77/gethostname_.c,v 1.1.1.1 2001/09/10 17:50:04 morrone Exp $ */
 /*
  * gethostname - return this machines hostname
  *	@(#)gethostname_.c	1.1

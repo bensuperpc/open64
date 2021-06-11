@@ -37,10 +37,10 @@
  * ====================================================================
  *
  * Module: ty2c.c
- * $Revision: 1.49 $
- * $Date: 2001/03/10 02:56:21 $
- * $Author: mtibuild $
- * $Source: /isms/cmplrs.src/osprey1.0/be/whirl2c/RCS/ty2c.cxx,v $
+ * $Revision: 1.1.1.1 $
+ * $Date: 2001/09/10 17:48:08 $
+ * $Author: morrone $
+ * $Source: /cvsroot/open64/open64/osprey1.0/be/whirl2c/ty2c.cxx,v $
  *
  * Revision history:
  *  07-Oct-94 - Original Version
@@ -54,7 +54,7 @@
  * ====================================================================
  */
 #ifdef _KEEP_RCS_ID
-static char *rcs_id = "$Source: /isms/cmplrs.src/osprey1.0/be/whirl2c/RCS/ty2c.cxx,v $ $Revision: 1.49 $";
+static char *rcs_id = "$Source: /cvsroot/open64/open64/osprey1.0/be/whirl2c/ty2c.cxx,v $ $Revision: 1.1.1.1 $";
 #endif /* _KEEP_RCS_ID */
 
 #include "whirl2c_common.h"

@@ -37,10 +37,10 @@
  * ====================================================================
  *
  *  Module: ti_res_count.h
- *  $Revision: 1.10 $
- *  $Date: 2001/03/10 03:22:03 $
- *  $Author: mtibuild $
- *  $Source: /isms/cmplrs.src/osprey1.0/common/targ_info/access/RCS/ti_res_count.h,v $
+ *  $Revision: 1.1.1.1 $
+ *  $Date: 2001/09/10 17:48:23 $
+ *  $Author: morrone $
+ *  $Source: /cvsroot/open64/open64/osprey1.0/common/targ_info/access/ti_res_count.h,v $
  *
  *  Revision history:
  *   16-Oct-91 - Original Version
@@ -170,7 +170,7 @@ extern "C" {
 #endif
 
 #ifdef _KEEP_RCS_ID
-static const char ti_res_count_rcs_id[] = "$Source: /isms/cmplrs.src/osprey1.0/common/targ_info/access/RCS/ti_res_count.h,v $ $Revision: 1.10 $";
+static const char ti_res_count_rcs_id[] = "$Source: /cvsroot/open64/open64/osprey1.0/common/targ_info/access/ti_res_count.h,v $ $Revision: 1.1.1.1 $";
 #endif /* _KEEP_RCS_ID */
 
 typedef struct ti_res_count TI_RES_COUNT;

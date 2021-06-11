@@ -33,7 +33,7 @@ C  http://oss.sgi.com/projects/GenInfo/NoticeExplan
 C
 C
 
-C $Header: /isms/cmplrs.src/osprey1.0/libF77/RCS/r_cnjgf.F,v 7.3 2001/03/10 04:42:35 mtibuild Exp $ 
+C $Header: /cvsroot/open64/open64/osprey1.0/libF77/r_cnjgf.F,v 1.1.1.1 2001/09/10 17:50:04 morrone Exp $ 
 
 	complex function r_cnjg(z)
 	real  z(2), r(2)

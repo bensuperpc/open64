@@ -35,10 +35,10 @@
 
 /* ====================================================================
  * Module: omp_lower.cxx
- * $Revision: 1.78 $
- * $Date: 2001/03/10 01:47:33 $
- * $Author: mtibuild $
- * $Source: /isms/cmplrs.src/osprey1.0/be/be/RCS/omp_lower.cxx,v $
+ * $Revision: 1.1.1.1 $
+ * $Date: 2001/09/10 17:47:16 $
+ * $Author: morrone $
+ * $Source: /cvsroot/open64/open64/osprey1.0/be/be/omp_lower.cxx,v $
  *
  * Revision history:
  *  26-Jun-97 : First created by Dave Kohr

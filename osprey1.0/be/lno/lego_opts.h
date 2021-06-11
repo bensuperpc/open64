@@ -39,10 +39,10 @@
 // ====================================================================
 //
 // Module: lego_opts.h
-// $Revision: 1.26 $
-// $Date: 2001/03/10 02:27:04 $
-// $Author: mtibuild $
-// $Source: /isms/cmplrs.src/osprey1.0/be/lno/RCS/lego_opts.h,v $
+// $Revision: 1.1.1.1 $
+// $Date: 2001/09/10 17:47:45 $
+// $Author: morrone $
+// $Source: /cvsroot/open64/open64/osprey1.0/be/lno/lego_opts.h,v $
 //
 // Revision history:
 //  dd-mmm-95 - Original Version
@@ -97,7 +97,7 @@
 #define lego_opts_INCLUDED "lego_opts.h"
 
 #ifdef _KEEP_RCS_ID
-static char *lego_opts_rcs_id = access_vector_INCLUDED "$Source: /isms/cmplrs.src/osprey1.0/be/lno/RCS/lego_opts.h,v $ $Revision: 1.26 $";
+static char *lego_opts_rcs_id = access_vector_INCLUDED "$Source: /cvsroot/open64/open64/osprey1.0/be/lno/lego_opts.h,v $ $Revision: 1.1.1.1 $";
 #endif /* _KEEP_RCS_ID */
 
 #include "access_vector.h"

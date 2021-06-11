@@ -37,10 +37,10 @@
  * ====================================================================
  *
  * Module: config_opt.h
- * $Revision: 1.23 $
- * $Date: 2001/03/10 03:07:33 $
- * $Author: mtibuild $
- * $Source: /isms/cmplrs.src/osprey1.0/common/com/RCS/config_opt.h,v $
+ * $Revision: 1.2 $
+ * $Date: 2002/02/18 20:45:32 $
+ * $Author: douillet $
+ * $Source: /cvsroot/open64/open64/osprey1.0/common/com/config_opt.h,v $
  *
  * Revision history:
  *  05-May-96 - Extracted from be/opt/opt_config.h.
@@ -148,6 +148,8 @@ extern UINT32 Instrumentation_Actions;
 extern BOOL Instrumentation_Unique_Output;
 extern INT32 Feedback_Phase_Num;
 extern OPTION_LIST* Feedback_Option;
+extern UINT32 Phase_Num;
+extern UINT32 Profile_Type;
 #ifdef __cplusplus
 }
 #endif

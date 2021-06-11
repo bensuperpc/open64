@@ -235,4 +235,4 @@
 #define WORD_SWAP(x) 
 #endif
 
-/* $Id: int64.h,v 2.3 1997/04/25 02:56:12 gbt Exp $ */
+/* $Id: int64.h,v 1.1.1.1 2001/09/10 17:47:14 morrone Exp $ */

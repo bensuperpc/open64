@@ -2632,4 +2632,4 @@ main (int argc, char **argv) {
 
 
 static char USMID [] = "\n%Z%%M%	%I%	%G% %U%\n";
-static char rcsid [] = "$Id: confidence.c,v 2.6 1997/04/25 02:55:50 gbt Exp $";
+static char rcsid [] = "$Id: confidence.c,v 1.1.1.1 2001/09/10 17:47:12 morrone Exp $";

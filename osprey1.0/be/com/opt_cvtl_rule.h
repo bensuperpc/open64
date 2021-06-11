@@ -38,10 +38,10 @@
  * ====================================================================
  *
  * Module: opt_wn.h
- * $Revision: 1.5 $
- * $Date: 2001/03/10 02:14:10 $
- * $Author: mtibuild $
- * $Source: /isms/cmplrs.src/osprey1.0/be/com/RCS/opt_cvtl_rule.h,v $
+ * $Revision: 1.1.1.1 $
+ * $Date: 2001/09/10 17:47:33 $
+ * $Author: morrone $
+ * $Source: /cvsroot/open64/open64/osprey1.0/be/com/opt_cvtl_rule.h,v $
  *
  * Description:  interface for CVTL rules
  *

@@ -37,10 +37,10 @@
  * =======================================================================
  *
  *  Module: comment.cxx
- *  $Revision: 1.9 $
- *  $Date: 2001/03/10 01:57:40 $
- *  $Author: mtibuild $
- *  $Source: /isms/cmplrs.src/osprey1.0/be/cg/RCS/comment.cxx,v $
+ *  $Revision: 1.1.1.1 $
+ *  $Date: 2001/09/10 17:47:21 $
+ *  $Author: morrone $
+ *  $Source: /cvsroot/open64/open64/osprey1.0/be/cg/comment.cxx,v $
  *
  *  Revision comments:
  *

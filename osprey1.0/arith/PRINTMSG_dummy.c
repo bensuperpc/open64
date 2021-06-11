@@ -53,4 +53,4 @@ void PRINTMSG(int pseudo_line_num, int msg_number,
    if(msg_severity==Internal || msg_severity==Error) exit(1);
 }
 
-static char rcsid [] = "$Id: PRINTMSG_dummy.c,v 2.3 1995/08/16 22:08:55 jk Exp $";
+static char rcsid [] = "$Id: PRINTMSG_dummy.c,v 1.1.1.1 2001/09/10 17:47:12 morrone Exp $";

@@ -421,16 +421,16 @@
 //
 
 
-/** $Revision: 1.63 $
-*** $Date: 2001/03/10 02:30:43 $
-*** $Author: mtibuild $
-*** $Source: /isms/cmplrs.src/osprey1.0/be/lno/RCS/model.h,v $
+/** $Revision: 1.1.1.1 $
+*** $Date: 2001/09/10 17:47:47 $
+*** $Author: morrone $
+*** $Source: /cvsroot/open64/open64/osprey1.0/be/lno/model.h,v $
 **/
 
 #ifndef MD_RCS_ID
 #define MD_RCS_ID
 #ifdef _KEEP_RCS_ID
-static char *model_rcs_id = "$Source: /isms/cmplrs.src/osprey1.0/be/lno/RCS/model.h,v $ $Revision: 1.63 $";
+static char *model_rcs_id = "$Source: /cvsroot/open64/open64/osprey1.0/be/lno/model.h,v $ $Revision: 1.1.1.1 $";
 #endif /* _KEEP_RCS_ID */
 #endif
 

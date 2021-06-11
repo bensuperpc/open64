@@ -3,10 +3,10 @@
 // ====================================================================
 //
 // Module: opt_config.h
-// $Revision: 1.111 $
-// $Date: 2001/03/10 02:39:51 $
-// $Author: mtibuild $
-// $Source: /isms/cmplrs.src/osprey1.0/be/opt/RCS/opt_config.h,v $
+// $Revision: 1.1.1.1 $
+// $Date: 2001/09/10 17:47:55 $
+// $Author: morrone $
+// $Source: /cvsroot/open64/open64/osprey1.0/be/opt/opt_config.h,v $
 //
 // ====================================================================
 //
@@ -47,7 +47,7 @@
 #ifndef opt_config_INCLUDED
 #define opt_config_INCLUDED             "opt_config.h"
 #ifdef _KEEP_RCS_ID
-static char *opt_configrcs_id = 	opt_config_INCLUDED"$Revision: 1.111 $";
+static char *opt_configrcs_id = 	opt_config_INCLUDED"$Revision: 1.1.1.1 $";
 #endif /* _KEEP_RCS_ID */
 
 /* The -WOPT: group option flag variables are now in common/com: */

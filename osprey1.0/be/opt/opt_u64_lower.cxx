@@ -3,10 +3,10 @@
 // ====================================================================
 //
 // Module: opt_u64_lower.cxx
-// $Revision: 1.15 $
-// $Date: 2001/03/10 02:48:10 $
-// $Author: mtibuild $
-// $Source: /isms/cmplrs.src/osprey1.0/be/opt/RCS/opt_u64_lower.cxx,v $
+// $Revision: 1.1.1.1 $
+// $Date: 2001/09/10 17:48:04 $
+// $Author: morrone $
+// $Source: /cvsroot/open64/open64/osprey1.0/be/opt/opt_u64_lower.cxx,v $
 //
 // ====================================================================
 //

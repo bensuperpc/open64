@@ -338,10 +338,10 @@
 ***          get increased.
 **/
 
-/** $Revision: 1.41 $
-*** $Date: 2001/03/10 02:33:39 $
-*** $Author: mtibuild $
-*** $Source: /isms/cmplrs.src/osprey1.0/be/lno/RCS/scalar_expand.h,v $
+/** $Revision: 1.1.1.1 $
+*** $Date: 2001/09/10 17:47:49 $
+*** $Author: morrone $
+*** $Source: /cvsroot/open64/open64/osprey1.0/be/lno/scalar_expand.h,v $
 **/
 
 #include <sys/types.h>
@@ -355,7 +355,7 @@
 #define scalar_expand_INCLUDED "scalar_expand.h"
 
 #ifdef _KEEP_RCS_ID
-static char *scalar_expand_rcs_id = scalar_expand_INCLUDED "$Revision: 1.41 $";
+static char *scalar_expand_rcs_id = scalar_expand_INCLUDED "$Revision: 1.1.1.1 $";
 #endif /* _KEEP_RCS_ID */
 
 #ifndef mat_INCLUDED

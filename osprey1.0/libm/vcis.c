@@ -38,10 +38,10 @@
  * ====================================================================
  *
  * Module: vcis.c
- * $Revision: 1.11 $
- * $Date: 2001/03/10 09:00:07 $
- * $Author: mtibuild $
- * $Source: /isms/cmplrs.src/osprey1.0/libm/RCS/vcis.c,v $
+ * $Revision: 1.1.1.1 $
+ * $Date: 2001/09/10 17:50:21 $
+ * $Author: morrone $
+ * $Source: /cvsroot/open64/open64/osprey1.0/libm/vcis.c,v $
  *
  * Revision history:
  *  03-Mar-98 - Original Version

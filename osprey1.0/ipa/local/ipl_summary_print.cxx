@@ -37,7 +37,7 @@
 /* ====================================================================
  *
  * Module: ipl_summary_print.cxx
- * $Source: /isms/cmplrs.src/osprey1.0/ipa/local/RCS/ipl_summary_print.cxx,v $
+ * $Source: /cvsroot/open64/open64/osprey1.0/ipa/local/ipl_summary_print.cxx,v $
  *
  * Description:
  *	all the print functions for summary info.

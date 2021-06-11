@@ -34,10 +34,10 @@
 #
 #
 
-### $Revision: 1.80 $
-### $Date: 2001/03/10 03:14:43 $
-### $Author: mtibuild $
-### $Source: /isms/cmplrs.src/osprey1.0/common/com/RCS/opcode_gen,v $
+### $Revision: 1.1.1.1 $
+### $Date: 2001/09/10 17:48:18 $
+### $Author: morrone $
+### $Source: /cvsroot/open64/open64/osprey1.0/common/com/opcode_gen,v $
 
 ###########################################################################
 ###

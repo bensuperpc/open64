@@ -1685,4 +1685,4 @@ c
         end
 
 c USMID = "\n%Z%%M%	%I%	%G% %U%\n";
-c rcsid = "$Id: sim_mpp_gen.f,v 2.5 1995/09/26 20:40:33 jk Exp $";
+c rcsid = "$Id: sim_mpp_gen.f,v 1.1.1.1 2001/09/10 17:47:14 morrone Exp $";

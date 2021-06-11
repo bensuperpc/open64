@@ -43,10 +43,10 @@ extern "C" {
  * ====================================================================
  *
  * Module: erglob.h
- * $Revision: 2.57 $
- * $Date: 2001/03/10 03:10:39 $
- * $Author: mtibuild $
- * $Source: /isms/cmplrs.src/osprey1.0/common/com/RCS/erglob.h,v $
+ * $Revision: 1.1.1.1 $
+ * $Date: 2001/09/10 17:48:16 $
+ * $Author: morrone $
+ * $Source: /cvsroot/open64/open64/osprey1.0/common/com/erglob.h,v $
  *
  * Revision history:
  *  07-Sep-89 - Original Version
@@ -67,7 +67,7 @@ extern "C" {
 
 
 #ifdef _KEEP_RCS_ID
-static char *erglob_rcs_id = "$Source: /isms/cmplrs.src/osprey1.0/common/com/RCS/erglob.h,v $ $Revision: 2.57 $";
+static char *erglob_rcs_id = "$Source: /cvsroot/open64/open64/osprey1.0/common/com/erglob.h,v $ $Revision: 1.1.1.1 $";
 #endif /* _KEEP_RCS_ID */
 
 #include "errors.h"	/* Always needed */

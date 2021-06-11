@@ -35,10 +35,10 @@
 
 // -*-C++-*-
 
-/** $Revision: 1.5 $
-*** $Date: 2001/03/10 02:29:06 $
-*** $Author: mtibuild $
-*** $Source: /isms/cmplrs.src/osprey1.0/be/lno/RCS/lu_mat_textra.cxx,v $
+/** $Revision: 1.1.1.1 $
+*** $Date: 2001/09/10 17:47:46 $
+*** $Author: morrone $
+*** $Source: /cvsroot/open64/open64/osprey1.0/be/lno/lu_mat_textra.cxx,v $
 **/
 
 #ifdef USE_PCH
@@ -47,7 +47,7 @@
 #pragma hdrstop
 
 #define lu_mat_textra_CXX      "lu_mat_textra.cxx"
-static char *rcs_id =   lu_mat_textra_CXX "$Revision: 1.5 $";
+static char *rcs_id =   lu_mat_textra_CXX "$Revision: 1.1.1.1 $";
 
 
 #include "mat.h"

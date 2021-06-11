@@ -35,7 +35,7 @@
 
 */
 
-#ident "$Id: standards.h,v 1.3 2001/03/10 10:26:19 mtibuild Exp $"
+#ident "$Id: standards.h,v 1.1.1.1 2001/09/10 17:50:45 morrone Exp $"
 
 /*
  * We define short forms for the predicates required by various

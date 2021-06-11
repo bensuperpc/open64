@@ -27,7 +27,7 @@
 
 */
 
-/* $Header: /isms/cmplrs.src/osprey1.0/libU77/RCS/malloc_.c,v 8.5 2001/02/20 23:39:59 mtibuild Exp $ */
+/* $Header: /cvsroot/open64/open64/osprey1.0/libU77/malloc_.c,v 1.1.1.1 2001/09/10 17:50:04 morrone Exp $ */
 
 #include <sys/types.h>
 #include <malloc.h>

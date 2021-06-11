@@ -38,7 +38,7 @@
 #define cgemit_INCLUDED
 
 #ifdef _KEEP_RCS_ID
-static char *cgemit_rcs_id = "$Source: /isms/cmplrs.src/osprey1.0/be/cg/RCS/cgemit.h,v $ $Revision: 3.25 $";
+static char *cgemit_rcs_id = "$Source: /cvsroot/open64/open64/osprey1.0/be/cg/cgemit.h,v $ $Revision: 1.1.1.1 $";
 #endif /* _KEEP_RCS_ID */
 
 #include "dwarf_DST_mem.h"

@@ -37,10 +37,10 @@
  * =======================================================================
  *
  *  Module: reg_live.h
- *  $Revision: 1.12 $
- *  $Date: 2001/03/10 02:05:02 $
- *  $Author: mtibuild $
- *  $Source: /isms/cmplrs.src/osprey1.0/be/cg/RCS/reg_live.h,v $
+ *  $Revision: 1.1.1.1 $
+ *  $Date: 2001/09/10 17:47:27 $
+ *  $Author: morrone $
+ *  $Source: /cvsroot/open64/open64/osprey1.0/be/cg/reg_live.h,v $
  *
  *  Description:
  *  ============

@@ -34,7 +34,7 @@
 */
 
 
-/* $Header: /isms/cmplrs.src/osprey1.0/libF77/RCS/i_len.c,v 8.8 2001/03/10 04:36:49 mtibuild Exp $ */
+/* $Header: /cvsroot/open64/open64/osprey1.0/libF77/i_len.c,v 1.1.1.1 2001/09/10 17:50:04 morrone Exp $ */
 
 #include <cmplrs/host.h>
 #include <string.h>

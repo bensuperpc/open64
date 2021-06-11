@@ -38,10 +38,10 @@
  * ====================================================================
  *
  * Module: tlog.h
- * $Revision: 1.5 $
- * $Date: 2001/03/10 03:30:20 $
- * $Author: mtibuild $
- * $Source: /isms/cmplrs.src/osprey1.0/common/util/RCS/tlog.h,v $
+ * $Revision: 1.1.1.1 $
+ * $Date: 2001/09/10 17:48:27 $
+ * $Author: morrone $
+ * $Source: /cvsroot/open64/open64/osprey1.0/common/util/tlog.h,v $
  *
  * Revision history:
  *  14-Sep-95 - Original Version
@@ -60,7 +60,7 @@ extern "C" {
 #endif
 
 #ifdef _KEEP_RCS_ID
-static char *tlog_rcs_id = "$Source: /isms/cmplrs.src/osprey1.0/common/util/RCS/tlog.h,v $ $Revision: 1.5 $";
+static char *tlog_rcs_id = "$Source: /cvsroot/open64/open64/osprey1.0/common/util/tlog.h,v $ $Revision: 1.1.1.1 $";
 #endif /* _KEEP_RCS_ID */
 
 #include <sys/types.h>

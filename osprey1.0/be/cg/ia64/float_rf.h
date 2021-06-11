@@ -36,10 +36,10 @@
  * ====================================================================
  *
  * Module: float_rf.h
- * $Revision: 1.2 $
- * $Date: 2001/03/10 01:12:07 $
- * $Author: mtibuild $
- * $Source: /osprey.src/osprey1.0/be/cg/ia64/RCS/float_rf.h,v $
+ * $Revision: 1.1.1.1 $
+ * $Date: 2001/09/10 17:47:30 $
+ * $Author: morrone $
+ * $Source: /cvsroot/open64/open64/osprey1.0/be/cg/ia64/float_rf.h,v $
  *
  * 82-bit register format floating point utilities interface.
  *

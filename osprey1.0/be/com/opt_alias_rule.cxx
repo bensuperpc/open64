@@ -38,10 +38,10 @@
 * ====================================================================
 *
 * Module: opt_alias_rule.cxx
-* $Revision: 1.57 $
-* $Date: 2001/03/10 02:13:53 $
-* $Author: mtibuild $
-* $Source: /isms/cmplrs.src/osprey1.0/be/com/RCS/opt_alias_rule.cxx,v $
+* $Revision: 1.1.1.1 $
+* $Date: 2001/09/10 17:47:33 $
+* $Author: morrone $
+* $Source: /cvsroot/open64/open64/osprey1.0/be/com/opt_alias_rule.cxx,v $
 *
 * Revision history:
 *  04-APR-95 lo - Split from opt_alias_rule.cxx
@@ -58,7 +58,7 @@
 #pragma hdrstop
 #ifdef _KEEP_RCS_ID
 #define opt_alias_rule_CXX	"opt_alias_rule.cxx"
-static char *rcs_id = 	opt_alias_rule_CXX"$Revision: 1.57 $";
+static char *rcs_id = 	opt_alias_rule_CXX"$Revision: 1.1.1.1 $";
 #endif /* _KEEP_RCS_ID */
 
 #include "defs.h"

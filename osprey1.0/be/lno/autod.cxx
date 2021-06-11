@@ -78,10 +78,10 @@
  * ====================================================================
  *
  * Module: autod.cxx
- * $Revision: 1.25 $
- * $Date: 2001/03/10 02:21:13 $
- * $Author: mtibuild $
- * $Source: /isms/cmplrs.src/osprey1.0/be/lno/RCS/autod.cxx,v $
+ * $Revision: 1.1.1.1 $
+ * $Date: 2001/09/10 17:47:38 $
+ * $Author: morrone $
+ * $Source: /cvsroot/open64/open64/osprey1.0/be/lno/autod.cxx,v $
  *
  * Revision history:
  *  21-2-97 - Original Version
@@ -97,7 +97,7 @@
 #pragma hdrstop
 
 static char *source_file = __FILE__;
-static char *rcs_id = "$Source: /isms/cmplrs.src/osprey1.0/be/lno/RCS/autod.cxx,v $ $Revision: 1.25 $";
+static char *rcs_id = "$Source: /cvsroot/open64/open64/osprey1.0/be/lno/autod.cxx,v $ $Revision: 1.1.1.1 $";
 
 #include <sys/types.h>
 #include <ctype.h>

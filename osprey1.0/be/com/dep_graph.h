@@ -340,17 +340,17 @@
 //
 //
 
-/** $Revision: 1.51 $
-*** $Date: 2001/03/10 02:09:55 $
-*** $Author: mtibuild $
-*** $Source: /isms/cmplrs.src/osprey1.0/be/com/RCS/dep_graph.h,v $
+/** $Revision: 1.1.1.1 $
+*** $Date: 2001/09/10 17:47:32 $
+*** $Author: morrone $
+*** $Source: /cvsroot/open64/open64/osprey1.0/be/com/dep_graph.h,v $
 **/
 
 #ifndef dep_graph_INCLUDED
 #define dep_graph_INCLUDED "dep_graph.h"
 
 #ifdef _KEEP_RCS_ID
-static char *dep_graph_rcs_id = dep_graph_INCLUDED "$Revision: 1.51 $";
+static char *dep_graph_rcs_id = dep_graph_INCLUDED "$Revision: 1.1.1.1 $";
 #endif /* _KEEP_RCS_ID */
 
 #ifndef cxx_graph_INCLUDED

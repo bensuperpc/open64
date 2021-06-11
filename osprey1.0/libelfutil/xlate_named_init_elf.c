@@ -42,8 +42,8 @@ This one really does the work  of intializing.
 
 xlate_named_init_elf.c
 
-$Revision: 1.5 $
-$Date: 2001/03/10 05:13:20 $
+$Revision: 1.1.1.1 $
+$Date: 2001/09/10 17:50:12 $
 
 */
 #include "xlateincl.h"

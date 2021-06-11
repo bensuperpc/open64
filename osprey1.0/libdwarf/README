@@ -59,6 +59,6 @@ there is no way to regenerate this).
 To use dwarf or libdwarf, you may want to install dwarf.h and
 libdwarf.h somewhere convenient.
 
-$Source: /isms/cmplrs.src/osprey1.0/libdwarf/RCS/README,v $
-$Revision: 1.7 $
-$Date: 1999/06/22 16:33:22 $
+$Source: /cvsroot/open64/open64/osprey1.0/libdwarf/README,v $
+$Revision: 1.1.1.1 $
+$Date: 2001/09/10 17:50:07 $

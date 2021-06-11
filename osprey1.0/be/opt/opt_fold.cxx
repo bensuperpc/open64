@@ -3,10 +3,10 @@
 // ====================================================================
 //
 // Module: opt_fold.cxx
-// $Revision: 1.64 $
-// $Date: 2001/03/10 02:43:06 $
-// $Author: mtibuild $
-// $Source: /isms/cmplrs.src/osprey1.0/be/opt/RCS/opt_fold.cxx,v $
+// $Revision: 1.1.1.1 $
+// $Date: 2001/09/10 17:48:00 $
+// $Author: morrone $
+// $Source: /cvsroot/open64/open64/osprey1.0/be/opt/opt_fold.cxx,v $
 //
 // Revision history:
 //  31-MAY-95 dahl - Original Version
@@ -63,7 +63,7 @@
 
 #ifdef _KEEP_RCS_ID
 #define opt_fold_CXX "opt_fold.cxx"
-static char *rcs_id = opt_fold_CXX"$Revision: 1.64 $";
+static char *rcs_id = opt_fold_CXX"$Revision: 1.1.1.1 $";
 #endif /* _KEEP_RCS_ID */
 
 #include "defs.h"

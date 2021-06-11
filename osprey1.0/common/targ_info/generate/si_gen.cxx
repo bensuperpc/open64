@@ -44,10 +44,10 @@
 //
 /////////////////////////////////////
 
-//  $Revision: 1.30 $
-//  $Date: 2001/03/10 03:25:25 $
-//  $Author: mtibuild $
-//  $Source: /isms/cmplrs.src/osprey1.0/common/targ_info/generate/RCS/si_gen.cxx,v $
+//  $Revision: 1.1.1.1 $
+//  $Date: 2001/09/10 17:48:23 $
+//  $Author: morrone $
+//  $Source: /cvsroot/open64/open64/osprey1.0/common/targ_info/generate/si_gen.cxx,v $
 
 
 #include <assert.h>

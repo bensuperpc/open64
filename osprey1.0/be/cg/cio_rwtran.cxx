@@ -38,10 +38,10 @@
 // =======================================================================
 //
 //  Module: cio_rwtran.cxx
-//  $Revision: 1.129 $
-//  $Date: 2001/03/10 01:57:30 $
-//  $Author: mtibuild $
-//  $Source: /isms/cmplrs.src/osprey1.0/be/cg/RCS/cio_rwtran.cxx,v $
+//  $Revision: 1.2 $
+//  $Date: 2002/02/18 20:45:30 $
+//  $Author: douillet $
+//  $Source: /cvsroot/open64/open64/osprey1.0/be/cg/cio_rwtran.cxx,v $
 //
 //  Description:
 //  ============
@@ -2524,7 +2524,8 @@ CIO_RWTRAN::CICSE_Transform( BB *body )
       // If source TN occurs later as a result, then new TN is required
       // NOT ALWAYS NECESSARY!  IMPROVE THIS!
       INT tn_index = hTN_MAP32_Get( tn_last_op, change.new_tns[0] );
-      if ( OP_Precedes( change.source, cicse_table[tn_index].op ) )
+      if ( tn_index == 0 ||
+            OP_Precedes( change.source, cicse_table[tn_index].op ) )
 	change.new_tns[0] = Build_TN_Like( change.new_tns[0] );
 
     } else {

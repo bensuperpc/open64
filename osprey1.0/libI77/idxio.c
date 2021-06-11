@@ -35,7 +35,7 @@
 
 
 
-/* $Header: /isms/cmplrs.src/osprey1.0/libI77/RCS/idxio.c,v 9.17 2001/03/10 04:50:58 mtibuild Exp $ */
+/* $Header: /cvsroot/open64/open64/osprey1.0/libI77/idxio.c,v 1.1.1.1 2001/09/10 17:50:05 morrone Exp $ */
 
 #include <isam.h>
 #include <mutex.h>

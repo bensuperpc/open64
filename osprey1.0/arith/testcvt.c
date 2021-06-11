@@ -3536,4 +3536,4 @@ test_8_S()
 #endif   /* _CRAY */
 
 static char USMID [] = "\n%Z%%M%	%I%	%G% %U%\n";
-static char rcsid [] = "$Id: testcvt.c,v 2.2 1995/08/16 22:10:07 jk Exp $";
+static char rcsid [] = "$Id: testcvt.c,v 1.1.1.1 2001/09/10 17:47:14 morrone Exp $";

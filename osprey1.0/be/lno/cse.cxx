@@ -90,10 +90,10 @@
  * ====================================================================
  *
  * Module: cse.cxx
- * $Revision: 1.29 $
- * $Date: 2001/03/10 02:22:24 $
- * $Author: mtibuild $
- * $Source: /isms/cmplrs.src/osprey1.0/be/lno/RCS/cse.cxx,v $
+ * $Revision: 1.1.1.1 $
+ * $Date: 2001/09/10 17:47:40 $
+ * $Author: morrone $
+ * $Source: /cvsroot/open64/open64/osprey1.0/be/lno/cse.cxx,v $
  *
  * Revision history:
  *  dd-mmm-94 - Original Version
@@ -109,7 +109,7 @@
 #pragma hdrstop
 
 static char *source_file = __FILE__;
-static char *rcs_id = "$Source: /isms/cmplrs.src/osprey1.0/be/lno/RCS/cse.cxx,v $ $Revision: 1.29 $";
+static char *rcs_id = "$Source: /cvsroot/open64/open64/osprey1.0/be/lno/cse.cxx,v $ $Revision: 1.1.1.1 $";
 
 #include <sys/types.h>
 #include "lnopt_main.h"

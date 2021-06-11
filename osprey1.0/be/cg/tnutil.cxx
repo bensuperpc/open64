@@ -37,10 +37,10 @@
  * ====================================================================
  *
  * Module: tnutil.c
- * $Revision: 2.165 $
- * $Date: 2001/03/10 02:05:49 $
- * $Author: mtibuild $
- * $Source: /isms/cmplrs.src/osprey1.0/be/cg/RCS/tnutil.cxx,v $
+ * $Revision: 1.2 $
+ * $Date: 2002/02/18 20:45:30 $
+ * $Author: douillet $
+ * $Source: /cvsroot/open64/open64/osprey1.0/be/cg/tnutil.cxx,v $
  *
  * Description:
  *
@@ -648,7 +648,7 @@ Gen_Adjusted_TN ( TN *tn, INT64 adjust )
  * ====================================================================
  */
 
-static char *
+char *
 sPrint_TN ( TN *tn, BOOL verbose, char *buf )
 {
   char *result = buf;
@@ -952,7 +952,7 @@ Find_TN_with_Matching_Register( TN *tn0, TN_LIST *list )
 }
 
 //TODO: probably want to move this generic routine elsewhere.
-static inline BOOL
+BOOL
 Is_OP_Cond(OP *op)
 {
   // Conditional moves or predicated instructions have this property.
@@ -1072,7 +1072,7 @@ TN_Reaching_Value_At_Op(
 	}
 	bb = (val_cnt > 1) ? NULL : val_bb;
 
-	if (bb == NULL || BB_call(bb)) break;
+	if (bb == NULL || BB_call(bb) || BB_rotating_kernel(bb)) break;
 
 	value_op = (reaching_def) ? BB_last_op(bb) : BB_first_op(bb);
       }

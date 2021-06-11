@@ -287,4 +287,4 @@ ar_cfmul128 (AR_CRAY_128 *x,
 
 
 static char USMID [] = "\n%Z%%M%	%I%	%G% %U%\n";
-static char rcsid [] = "$Id: cray_fmul.c,v 2.3 1997/04/25 02:56:00 gbt Exp $";
+static char rcsid [] = "$Id: cray_fmul.c,v 1.1.1.1 2001/09/10 17:47:13 morrone Exp $";

@@ -41,7 +41,7 @@
 #pragma hdrstop
 
 #define snl_utils_CXX      "snl_utils.cxx"
-static char *rcs_id =   snl_utils_CXX "$Revision: 1.48 $";
+static char *rcs_id =   snl_utils_CXX "$Revision: 1.1.1.1 $";
 
 #include <sys/types.h>
 #include "snl.h"

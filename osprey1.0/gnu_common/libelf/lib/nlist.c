@@ -22,7 +22,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #include <fcntl.h>
 
 #ifndef lint
-static const char rcsid[] = "@(#) $Id: nlist.c,v 1.1 2000/03/08 22:26:21 mpm Exp $";
+static const char rcsid[] = "@(#) $Id: nlist.c,v 1.1.1.1 2001/09/10 17:49:56 morrone Exp $";
 #endif /* lint */
 
 #define PRIME	217

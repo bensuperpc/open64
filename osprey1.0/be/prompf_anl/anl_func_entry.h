@@ -41,10 +41,10 @@
 // ==============================================================
 //
 // Module: anl_func_entry.h
-// $Revision: 1.10 $
-// $Date: 2001/03/10 02:51:15 $
-// $Author: mtibuild $
-// $Source: /isms/cmplrs.src/osprey1.0/be/prompf_anl/RCS/anl_func_entry.h,v $
+// $Revision: 1.1.1.1 $
+// $Date: 2001/09/10 17:48:06 $
+// $Author: morrone $
+// $Source: /cvsroot/open64/open64/osprey1.0/be/prompf_anl/anl_func_entry.h,v $
 //
 // Description:
 //

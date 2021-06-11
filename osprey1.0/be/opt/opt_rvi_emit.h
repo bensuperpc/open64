@@ -3,10 +3,10 @@
 // ====================================================================
 //
 // Module: opt_rvi_emit.h
-// $Revision: 1.9 $
-// $Date: 2001/03/10 02:46:16 $
-// $Author: mtibuild $
-// $Source: /isms/cmplrs.src/osprey1.0/be/opt/RCS/opt_rvi_emit.h,v $
+// $Revision: 1.1.1.1 $
+// $Date: 2001/09/10 17:48:03 $
+// $Author: morrone $
+// $Source: /cvsroot/open64/open64/osprey1.0/be/opt/opt_rvi_emit.h,v $
 //
 // ====================================================================
 //
@@ -53,7 +53,7 @@
 #ifndef opt_rvi_emit_INCLUDED
 #define opt_rvi_emit_INCLUDED "opt_rvi_emit.h"
 #ifdef _KEEP_RCS_ID
-static char *opt_rvi_emitrcs_id = opt_rvi_emit_INCLUDED"$ $Revision: 1.9 $";
+static char *opt_rvi_emitrcs_id = opt_rvi_emit_INCLUDED"$ $Revision: 1.1.1.1 $";
 #endif /* _KEEP_RCS_ID */
 
 // forward declarations

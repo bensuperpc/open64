@@ -38,10 +38,10 @@
 // ====================================================================
 //
 // Module: opt_cvtl_rule.cxx
-// $Revision: 1.13 $
-// $Date: 2001/03/10 02:14:05 $
-// $Author: mtibuild $
-// $Source: /isms/cmplrs.src/osprey1.0/be/com/RCS/opt_cvtl_rule.cxx,v $
+// $Revision: 1.1.1.1 $
+// $Date: 2001/09/10 17:47:33 $
+// $Author: morrone $
+// $Source: /cvsroot/open64/open64/osprey1.0/be/com/opt_cvtl_rule.cxx,v $
 //
 // Description: Conversion rules
 //

@@ -1,6 +1,6 @@
 /*
 
-  Copyright (C) 2000, 2001 Silicon Graphics, Inc.  All Rights Reserved.
+  Copyright (C) 2000 Silicon Graphics, Inc.  All Rights Reserved.
 
   This program is free software; you can redistribute it and/or modify it
   under the terms of version 2 of the GNU General Public License as
@@ -38,10 +38,10 @@
  * =======================================================================
  *
  *  Module: gcm.cxx
- *  $Revision: 1.220 $
- *  $Date: 2001/03/10 01:59:11 $
- *  $Author: mtibuild $
- *  $Source: /isms/cmplrs.src/osprey1.0/be/cg/RCS/gcm.cxx,v $
+ *  $Revision: 1.2 $
+ *  $Date: 2002/02/18 20:45:30 $
+ *  $Author: douillet $
+ *  $Source: /cvsroot/open64/open64/osprey1.0/be/cg/gcm.cxx,v $
  *
  *  Description:
  *  ============
@@ -3127,6 +3127,7 @@ GCM_For_Loop (LOOP_DESCR *loop, BB_SET *processed_bbs, HBS_TYPE hb_type)
   if (Sched) {
 	CXX_DELETE(Sched, &MEM_local_pool);
   }
+
   L_Free();
 
   return num_moves;

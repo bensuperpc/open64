@@ -37,10 +37,10 @@
  * =======================================================================
  *
  *  Module: c_q_sqrt.c
- *  $Revision: 1.11 $
- *  $Date: 2001/03/10 03:26:52 $
- *  $Author: mtibuild $
- *  $Source: /isms/cmplrs.src/osprey1.0/common/util/RCS/c_q_sqrt.c,v $
+ *  $Revision: 1.1.1.1 $
+ *  $Date: 2001/09/10 17:48:24 $
+ *  $Author: morrone $
+ *  $Source: /cvsroot/open64/open64/osprey1.0/common/util/c_q_sqrt.c,v $
  *
  * =======================================================================
  * =======================================================================

@@ -3,10 +3,10 @@
 // ====================================================================
 //
 // Module: opt_min_essa.cxx
-// $Revision: 1.14 $
-// $Date: 2001/03/10 02:44:38 $
-// $Author: mtibuild $
-// $Source: /isms/cmplrs.src/osprey1.0/be/opt/RCS/opt_min_essa.cxx,v $
+// $Revision: 1.1.1.1 $
+// $Date: 2001/09/10 17:48:02 $
+// $Author: morrone $
+// $Source: /cvsroot/open64/open64/osprey1.0/be/opt/opt_min_essa.cxx,v $
 //
 // ====================================================================
 //

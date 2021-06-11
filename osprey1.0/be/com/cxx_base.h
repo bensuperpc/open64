@@ -38,10 +38,10 @@
  * ====================================================================
  *
  * Module: cxx_base.h
- * $Revision: 1.52 $
- * $Date: 2001/03/10 02:08:53 $
- * $Author: mtibuild $
- * $Source: /isms/cmplrs.src/osprey1.0/be/com/RCS/cxx_base.h,v $
+ * $Revision: 1.1.1.1 $
+ * $Date: 2001/09/10 17:47:31 $
+ * $Author: morrone $
+ * $Source: /cvsroot/open64/open64/osprey1.0/be/com/cxx_base.h,v $
  *
  * Revision history:
  *  18-SEP-94 shin - Original Version
@@ -59,7 +59,7 @@
 #include "errors.h"
 
 #ifdef _KEEP_RCS_ID
-static char *cxx_basercs_id = "$Source: /isms/cmplrs.src/osprey1.0/be/com/RCS/cxx_base.h,v $ $Revision: 1.52 $";
+static char *cxx_basercs_id = "$Source: /cvsroot/open64/open64/osprey1.0/be/com/cxx_base.h,v $ $Revision: 1.1.1.1 $";
 #endif /* _KEEP_RCS_ID */
 
 // NOTE:  FOLLOW THESE CODING CONVENTIONS:

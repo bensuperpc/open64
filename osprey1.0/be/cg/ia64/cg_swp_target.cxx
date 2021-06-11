@@ -37,10 +37,10 @@
  * =======================================================================
  *
  *  Module: cg_swp_target.cxx
- *  $Revision: 1.58 $
- *  $Date: 2001/03/10 01:10:27 $
- *  $Author: mtibuild $
- *  $Source: /osprey.src/osprey1.0/be/cg/ia64/RCS/cg_swp_target.cxx,v $
+ *  $Revision: 1.1.1.1 $
+ *  $Date: 2001/09/10 17:47:29 $
+ *  $Author: morrone $
+ *  $Source: /cvsroot/open64/open64/osprey1.0/be/cg/ia64/cg_swp_target.cxx,v $
  *
  * =======================================================================
  * ======================================================================= */

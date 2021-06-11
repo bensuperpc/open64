@@ -38,10 +38,10 @@
 // =======================================================================
 //
 //  Module: matrix.h
-//  $Revision: 1.6 $
-//  $Date: 2001/03/10 03:20:30 $
-//  $Author: mtibuild $
-//  $Source: /isms/cmplrs.src/osprey1.0/common/stl/RCS/matrix.h,v $
+//  $Revision: 1.1.1.1 $
+//  $Date: 2001/09/10 17:48:23 $
+//  $Author: morrone $
+//  $Source: /cvsroot/open64/open64/osprey1.0/common/stl/matrix.h,v $
 //
 //  Revision comments:
 //

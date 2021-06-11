@@ -3,10 +3,10 @@
 // ====================================================================
 //
 // Module: opt_dom.cxx
-// $Revision: 1.43 $
-// $Date: 2001/03/10 02:40:46 $
-// $Author: mtibuild $
-// $Source: /isms/cmplrs.src/osprey1.0/be/opt/RCS/opt_dom.cxx,v $
+// $Revision: 1.1.1.1 $
+// $Date: 2001/09/10 17:47:57 $
+// $Author: morrone $
+// $Source: /cvsroot/open64/open64/osprey1.0/be/opt/opt_dom.cxx,v $
 //
 // Revision history:
 //  20-SEP-94 - Original Version
@@ -70,7 +70,7 @@
 
 #ifdef _KEEP_RCS_ID
 #define opt_dom_CXX	"opt_dom.cxx"
-static char *rcs_id = 	opt_dom_CXX"$Revision: 1.43 $";
+static char *rcs_id = 	opt_dom_CXX"$Revision: 1.1.1.1 $";
 #endif /* _KEEP_RCS_ID */
 
 #include "defs.h"

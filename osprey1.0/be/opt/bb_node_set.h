@@ -3,10 +3,10 @@
 // ====================================================================
 //
 // Module: bb_node_set.h
-// $Revision: 1.22 $
-// $Date: 2001/03/10 02:37:56 $
-// $Author: mtibuild $
-// $Source: /isms/cmplrs.src/osprey1.0/be/opt/RCS/bb_node_set.h,v $
+// $Revision: 1.1.1.1 $
+// $Date: 2001/09/10 17:47:52 $
+// $Author: morrone $
+// $Source: /cvsroot/open64/open64/osprey1.0/be/opt/bb_node_set.h,v $
 //
 // ====================================================================
 //
@@ -432,7 +432,7 @@
 #ifndef bb_node_set_INCLUDED
 #define bb_node_set_INCLUDED         "bb_node_set.h"
 #ifdef _KEEP_RCS_ID
-static char *bb_node_set_rcs_id =    bb_node_set_INCLUDED"$Revision: 1.22 $";
+static char *bb_node_set_rcs_id =    bb_node_set_INCLUDED"$Revision: 1.1.1.1 $";
 #endif /* _KEEP_RCS_ID */
 
 #include "mempool.h"	// our clients should probably include this

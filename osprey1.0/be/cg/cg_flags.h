@@ -37,10 +37,10 @@
  * =======================================================================
  *
  *  Module: cg_flags.h
- *  $Revision: 1.129 $
- *  $Date: 2001/03/10 01:53:34 $
- *  $Author: mtibuild $
- *  $Source: /isms/cmplrs.src/osprey1.0/be/cg/RCS/cg_flags.h,v $
+ *  $Revision: 1.2 $
+ *  $Date: 2002/02/18 20:45:30 $
+ *  $Author: douillet $
+ *  $Source: /cvsroot/open64/open64/osprey1.0/be/cg/cg_flags.h,v $
  *
  *  Description:
  *  ============
@@ -629,6 +629,11 @@ extern BOOL CG_LOOP_reassociate;
 extern BOOL CG_LOOP_reassociate_specified;
 extern INT32 CG_LOOP_recurrence_min_omega;
 
+// Cycle Count Flags
+extern BOOL CG_Enable_Cycle_Count;
+extern BOOL Cycle_PU_Enable;    
+extern BOOL Cycle_BB_Enable;    
+extern const char *Cycle_String;
 // temporary flags for controlling algorithm selection for fdiv, sqrt, etc
 extern const char *CGEXP_fdiv_algorithm;
 extern const char *CGEXP_sqrt_algorithm;

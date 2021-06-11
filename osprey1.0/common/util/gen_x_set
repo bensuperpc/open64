@@ -38,10 +38,10 @@
 ### ====================================================================
 ###
 ### Module: gen_x_prop.csh
-### $Revision: 1.8 $
-### $Date: 2001/03/10 03:28:21 $
-### $Author: mtibuild $
-### $Source: /isms/cmplrs.src/osprey1.0/common/util/RCS/gen_x_set,v $
+### $Revision: 1.1.1.1 $
+### $Date: 2001/09/10 17:48:25 $
+### $Author: morrone $
+### $Source: /cvsroot/open64/open64/osprey1.0/common/util/gen_x_set,v $
 ###
 ### Usage: gen_x_set [-f] file_name base_type set_type
 ###                       elt_num num_elt [include_file...]
@@ -144,7 +144,7 @@ $uset_type =~ tr/a-z/A-Z/;
 $lset_type = $set_type;
 $lset_type =~ tr/A-Z/a-z/;
 
-$rev = '$Revision: 1.8 $ ';
+$rev = '$Revision: 1.1.1.1 $ ';
 
 # Write the .cxx file.
 #

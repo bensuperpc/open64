@@ -3,10 +3,10 @@
 // ====================================================================
 //
 // Module: opt_htable.h
-// $Revision: 1.382 $
-// $Date: 2001/03/10 02:43:23 $
-// $Author: mtibuild $
-// $Source: /isms/cmplrs.src/osprey1.0/be/opt/RCS/opt_htable.h,v $
+// $Revision: 1.1.1.1 $
+// $Date: 2001/09/10 17:48:01 $
+// $Author: morrone $
+// $Source: /cvsroot/open64/open64/osprey1.0/be/opt/opt_htable.h,v $
 //
 // Revision history:
 //  27-SEP-94 shin - Original Version

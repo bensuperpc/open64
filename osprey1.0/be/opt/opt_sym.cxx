@@ -3,10 +3,10 @@
 // ====================================================================
 //
 // Module: opt_sym.cxx
-// $Revision: 1.398 $
-// $Date: 2001/03/10 02:47:36 $
-// $Author: mtibuild $
-// $Source: /isms/cmplrs.src/osprey1.0/be/opt/RCS/opt_sym.cxx,v $
+// $Revision: 1.1.1.1 $
+// $Date: 2001/09/10 17:48:04 $
+// $Author: morrone $
+// $Source: /cvsroot/open64/open64/osprey1.0/be/opt/opt_sym.cxx,v $
 //
 // ====================================================================
 //

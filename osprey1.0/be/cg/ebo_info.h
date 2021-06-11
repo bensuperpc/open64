@@ -1,6 +1,6 @@
 /*
 
-  Copyright (C) 2000, 2001 Silicon Graphics, Inc.  All Rights Reserved.
+  Copyright (C) 2000 Silicon Graphics, Inc.  All Rights Reserved.
 
   This program is free software; you can redistribute it and/or modify it
   under the terms of version 2 of the GNU General Public License as
@@ -37,10 +37,10 @@
  * =======================================================================
  *
  *  Module: ebo_info.h
- *  $Revision: 1.26 $
- *  $Date: 2001/03/10 01:58:11 $
- *  $Author: mtibuild $
- *  $Source: /isms/cmplrs.src/osprey1.0/be/cg/RCS/ebo_info.h,v $
+ *  $Revision: 1.2 $
+ *  $Date: 2002/02/18 20:45:30 $
+ *  $Author: douillet $
+ *  $Source: /cvsroot/open64/open64/osprey1.0/be/cg/ebo_info.h,v $
  *
  *  Revision comments:
  *
@@ -392,10 +392,10 @@ EBO_predicate_complements (TN *pred1, EBO_TN_INFO *info1,
       (info1->in_op == NULL) || (info2->in_op == NULL)) {
     return FALSE;
   }
-  if ((pred1 != pred2) && (info1->in_op == info2->in_op)) {
+  //if ((pred1 != pred2) && (info1->in_op == info2->in_op)) {
    /* If defined by the same instruction but not equal, they must be complements. */
-    return TRUE;
-  }
+    //return TRUE;
+  //}
  /* Until we can resolve subsets, assume a problem. */
   return FALSE;
 }
@@ -418,7 +418,7 @@ tn_info_def (BB *current_bb, OP *current_op, TN *local_tn,
   if ((tninfo_prev != NULL)  &&
       (tninfo_prev->in_bb == current_bb) &&
       ((predicate_tn == NULL) ||
-       (EBO_predicate_dominates(predicate_tn,
+       (!OP_cond_def(current_op) && EBO_predicate_dominates(predicate_tn,
                                 predicate_info,
                                 (tninfo_prev->predicate_tninfo != NULL)?
                                         tninfo_prev->predicate_tninfo->local_tn:True_TN,
@@ -450,7 +450,7 @@ tn_info_use (BB *current_bb, OP *current_op, TN *local_tn,
       if (predicate_tn != NULL) {
        /* Then, if the predicates have the right relationship, we have
           found the matching input to this use. */
-        if (EBO_predicate_dominates((tninfo->predicate_tninfo != NULL)?
+        if ( EBO_predicate_dominates((tninfo->predicate_tninfo != NULL)?
                                              tninfo->predicate_tninfo->local_tn:True_TN,
                                     tninfo->predicate_tninfo,
                                     predicate_tn,

@@ -38,7 +38,7 @@
 #define __INQUIRE_H__
 
 
-#ident "$Revision: 9.11 $"
+#ident "$Revision: 1.1.1.1 $"
 
 #include <stdio.h>
 #include <cmplrs/fio.h>

@@ -37,7 +37,7 @@
 // ====================================================================
 //
 // Module: ipa_cprop.cxx
-// $Source: /isms/cmplrs.src/osprey1.0/ipa/main/analyze/RCS/ipa_cprop.cxx,v $
+// $Source: /cvsroot/open64/open64/osprey1.0/ipa/main/analyze/ipa_cprop.cxx,v $
 //
 // Revision history:
 //  28-Jun-95 - Original Version

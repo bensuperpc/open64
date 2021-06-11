@@ -37,10 +37,10 @@
  * ====================================================================
  *
  * Module: config_opt.cxx
- * $Revision: 1.50 $
- * $Date: 2001/03/10 03:07:26 $
- * $Author: mtibuild $
- * $Source: /isms/cmplrs.src/osprey1.0/common/com/RCS/config_opt.cxx,v $
+ * $Revision: 1.2 $
+ * $Date: 2002/02/18 20:45:32 $
+ * $Author: douillet $
+ * $Source: /cvsroot/open64/open64/osprey1.0/common/com/config_opt.cxx,v $
  *
  * Revision history:
  *  08-Sep-94 - Original Version (wodriver.c)
@@ -57,7 +57,7 @@
 
 #ifdef _KEEP_RCS_ID
 /*REFERENCED*/
-static char *config_opt_rcs_id = "$Source: /isms/cmplrs.src/osprey1.0/common/com/RCS/config_opt.cxx,v $ $Revision: 1.50 $";
+static char *config_opt_rcs_id = "$Source: /cvsroot/open64/open64/osprey1.0/common/com/config_opt.cxx,v $ $Revision: 1.2 $";
 #endif /* _KEEP_RCS_ID */
 
 /* This file is included in config.c, so it doesn't need its own set of
@@ -201,6 +201,8 @@ BOOL Enable_WFE_DFE = FALSE;
 
 /***** Instrummentation Related Options *****/
 INT32 Instrumentation_Phase_Num = 0;
+UINT32 Phase_Num = 0;
+UINT32 Profile_Type = 0;
 BOOL Instrumentation_Enabled = FALSE;
 UINT32 Instrumentation_Actions = 0;
 BOOL Instrumentation_Unique_Output = FALSE; // always create unique output
@@ -510,9 +512,17 @@ static OPTION_DESC Options_OPT[] = {
     0, 0, 0,	&OPT_recompute_addr_flags, NULL,
     "Recompute address flags in the backend (for debugging)"},
 
-  { OVK_INT32,  OV_VISIBLE,	TRUE, "instrument",		"instr",
-    0, 0, 3,	&Instrumentation_Phase_Num, &Instrumentation_Enabled,
+  { OVK_BOOL,  OV_VISIBLE,	TRUE, "instrumentation",	"instr",
+    0, 0, 0,	&Instrumentation_Enabled,NULL,
     "Phases in the compiler where instrumentation needs to be done" },
+
+  { OVK_INT32,  OV_VISIBLE,     TRUE, "phase",       "",
+    0, 0, 5,    &Phase_Num, NULL,
+    "Phases in the compiler where instrumentation or feedback  needs to be done" },
+
+   { OVK_INT32,  OV_VISIBLE,     TRUE, "type",       "",
+    0, 0, 6,    &Profile_Type, NULL,
+    "Profile type in the compiler" },
 
   { OVK_UINT32,  OV_INTERNAL,	TRUE, "instrument_action",		"",
     0, 0, UINT32_MAX,	&Instrumentation_Actions, &Instrumentation_Enabled,

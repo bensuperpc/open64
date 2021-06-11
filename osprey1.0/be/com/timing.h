@@ -43,10 +43,10 @@ extern "C" {
  * ====================================================================
  *
  * Module: timing.h
- * $Revision: 3.35 $
- * $Date: 2001/03/10 02:16:24 $
- * $Author: mtibuild $
- * $Source: /isms/cmplrs.src/osprey1.0/be/com/RCS/timing.h,v $
+ * $Revision: 1.2 $
+ * $Date: 2002/02/18 20:45:31 $
+ * $Author: douillet $
+ * $Source: /cvsroot/open64/open64/osprey1.0/be/com/timing.h,v $
  *
  * Revision history:
  *  06-Feb-90 - Original Version
@@ -64,7 +64,7 @@ extern "C" {
 
 
 #ifdef _KEEP_RCS_ID
-static char *timing_rcs_id = "$Source: /isms/cmplrs.src/osprey1.0/be/com/RCS/timing.h,v $ $Revision: 3.35 $";
+static char *timing_rcs_id = "$Source: /cvsroot/open64/open64/osprey1.0/be/com/timing.h,v $ $Revision: 1.2 $";
 #endif /* _KEEP_RCS_ID */
 
 /* Provide identifiers for the various time accumulators supplied: */
@@ -139,6 +139,24 @@ typedef enum {
 	T_CalcDom_CU,		/* Calculate_Dominators 
 				 * (this time is included in callers time) */
 	T_CalcDom_Comp,
+	
+	T_Ipfec_Profiling_CU,	/* Ipfec Profiling */
+	T_Ipfec_Profiling_Comp,
+	T_Ipfec_Region_CU,	/* Ipfec Region Formation */
+	T_Ipfec_Region_Comp,
+	T_Ipfec_If_Conv_CU,	/* Ipfec If-Conversion */
+	T_Ipfec_If_Conv_Comp,
+	T_Ipfec_PRDB_CU,	/* Ipfec PRDB */
+	T_Ipfec_PRDB_Comp,
+	T_Ipfec_GLOS_CU,	/* Ipfec global scheduling */
+  T_Ipfec_GLOS_MISC1_CU,
+  T_Ipfec_GLOS_MISC2_CU,
+	T_Ipfec_GLOS_Comp,
+	T_Ipfec_LOCS_CU,	/* Ipfec local scheduling */
+	T_Ipfec_LOCS_Comp,
+	T_Ipfec_Speculation_CU,	/* Ipfec Speculation */
+	T_Ipfec_Speculation_Comp,
+	
 	T_LAST			/* Last index defined */
 } TIMER_ID;
 

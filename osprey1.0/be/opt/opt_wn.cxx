@@ -3,10 +3,10 @@
 // ====================================================================
 //
 // Module: opt_wn.cxx
-// $Revision: 1.193 $
-// $Date: 2001/03/10 02:49:42 $
-// $Author: mtibuild $
-// $Source: /isms/cmplrs.src/osprey1.0/be/opt/RCS/opt_wn.cxx,v $
+// $Revision: 1.1.1.1 $
+// $Date: 2001/09/10 17:48:05 $
+// $Author: morrone $
+// $Source: /cvsroot/open64/open64/osprey1.0/be/opt/opt_wn.cxx,v $
 //
 // Revision history:
 //  12-SEP-94 shin - Original Version
@@ -59,7 +59,7 @@
 
 #ifdef _KEEP_RCS_ID
 #define opt_wn_CXX	"opt_wn.cxx"
-static char *rcs_id = 	opt_wn_CXX"$Revision: 1.193 $";
+static char *rcs_id = 	opt_wn_CXX"$Revision: 1.1.1.1 $";
 #endif /* _KEEP_RCS_ID */
 
 #include <sys/types.h>

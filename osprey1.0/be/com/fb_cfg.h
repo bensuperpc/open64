@@ -38,10 +38,10 @@
 // ====================================================================
 //
 // Module: fb_cfg.h
-// $Revision: 1.24 $
-// $Date: 2001/03/10 02:10:54 $
-// $Author: mtibuild $
-// $Source: /isms/cmplrs.src/osprey1.0/be/com/RCS/fb_cfg.h,v $
+// $Revision: 1.1.1.1 $
+// $Date: 2001/09/10 17:47:32 $
+// $Author: morrone $
+// $Source: /cvsroot/open64/open64/osprey1.0/be/com/fb_cfg.h,v $
 //
 // Description:
 //

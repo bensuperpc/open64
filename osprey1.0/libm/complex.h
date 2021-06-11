@@ -38,10 +38,10 @@
  * ====================================================================
  *
  * Module: complex.h
- * $Revision: 1.6 $
- * $Date: 2001/03/10 08:58:38 $
- * $Author: mtibuild $
- * $Source: /isms/cmplrs.src/osprey1.0/libm/RCS/complex.h,v $
+ * $Revision: 1.1.1.1 $
+ * $Date: 2001/09/10 17:50:21 $
+ * $Author: morrone $
+ * $Source: /cvsroot/open64/open64/osprey1.0/libm/complex.h,v $
  *
  * Revision history:
  *  18-Feb-97 - Original Version
@@ -52,7 +52,7 @@
  * ====================================================================
  */
 
-/*  $Header: /isms/cmplrs.src/osprey1.0/libm/RCS/complex.h,v 1.6 2001/03/10 08:58:38 mtibuild Exp $ */
+/*  $Header: /cvsroot/open64/open64/osprey1.0/libm/complex.h,v 1.1.1.1 2001/09/10 17:50:21 morrone Exp $ */
 
 typedef struct { float real, imag; } complex;
 typedef struct { double dreal, dimag; } dcomplex;

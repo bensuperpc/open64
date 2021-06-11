@@ -34,7 +34,7 @@
 */
 
 
-/* $Header: /isms/cmplrs.src/osprey1.0/libF77/RCS/c_div.c,v 8.10 2001/03/10 04:29:38 mtibuild Exp $ */
+/* $Header: /cvsroot/open64/open64/osprey1.0/libF77/c_div.c,v 1.1.1.1 2001/09/10 17:50:03 morrone Exp $ */
 #include <stdlib.h>
 #include "cmplx.h"
 

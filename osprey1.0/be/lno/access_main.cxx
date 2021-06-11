@@ -49,10 +49,10 @@
  * ====================================================================
  *
  * Module: access_main.cxx
- * $Revision: 1.27 $
- * $Date: 2001/03/10 02:19:09 $
- * $Author: mtibuild $
- * $Source: /isms/cmplrs.src/osprey1.0/be/lno/RCS/access_main.cxx,v $
+ * $Revision: 1.1.1.1 $
+ * $Date: 2001/09/10 17:47:36 $
+ * $Author: morrone $
+ * $Source: /cvsroot/open64/open64/osprey1.0/be/lno/access_main.cxx,v $
  *
  * Revision history:
  *  11-6-96 - Original Version

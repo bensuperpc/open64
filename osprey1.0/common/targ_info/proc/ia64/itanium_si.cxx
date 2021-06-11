@@ -44,10 +44,10 @@
 /////////////////////////////////////
 
 
-//  $Revision: 1.35 $
-//  $Date: 2001/03/10 01:17:30 $
-//  $Author: mtibuild $
-//  $Source: /osprey.src/osprey1.0/common/targ_info/proc/ia64/RCS/itanium_si.cxx,v $
+//  $Revision: 1.1.1.1 $
+//  $Date: 2001/09/10 17:48:24 $
+//  $Author: morrone $
+//  $Source: /cvsroot/open64/open64/osprey1.0/common/targ_info/proc/ia64/itanium_si.cxx,v $
 
 
 #include "si_gen.h"

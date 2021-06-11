@@ -37,10 +37,10 @@
  * ====================================================================
  *
  * Module: iter.c
- * $Revision: 1.8 $
- * $Date: 2001/03/10 01:47:13 $
- * $Author: mtibuild $
- * $Source: /isms/cmplrs.src/osprey1.0/be/be/RCS/iter.cxx,v $
+ * $Revision: 1.1.1.1 $
+ * $Date: 2001/09/10 17:47:15 $
+ * $Author: morrone $
+ * $Source: /cvsroot/open64/open64/osprey1.0/be/be/iter.cxx,v $
  *
  * Revision history:
  *  3-MAR-96 dahl - Original Version
@@ -54,7 +54,7 @@
 
 #define rbi_CXX	"iter.c"
 #ifdef _KEEP_RCS_ID
-static char *rcs_id = iter_C"$Revision: 1.8 $";
+static char *rcs_id = iter_C"$Revision: 1.1.1.1 $";
 #endif /* _KEEP_RCS_ID */
 
 #include <elf.h>	/* for Elf64_Word */

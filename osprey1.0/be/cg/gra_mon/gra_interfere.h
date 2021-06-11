@@ -61,10 +61,10 @@
 //      inteferences in random order, but already know that we will represent
 //      the result as a bitset instead of a vector.)
 
-//  $Revision: 1.8 $
-//  $Date: 2001/03/10 01:49:45 $
-//  $Author: mtibuild $
-//  $Source: /isms/cmplrs.src/osprey1.0/be/cg/gra_mon/RCS/gra_interfere.h,v $
+//  $Revision: 1.1.1.1 $
+//  $Date: 2001/09/10 17:47:28 $
+//  $Author: morrone $
+//  $Source: /cvsroot/open64/open64/osprey1.0/be/cg/gra_mon/gra_interfere.h,v $
 
 
 #ifndef GRA_INTERFERE_INCLUDED
@@ -73,7 +73,7 @@
 #ifndef GRA_INTERFERE_RCS_ID
 #define GRA_INTERFERE_RCS_ID
 #ifdef _KEEP_RCS_ID
-static char *gra_interfere_rcs_id = "$Source: /isms/cmplrs.src/osprey1.0/be/cg/gra_mon/RCS/gra_interfere.h,v $ $Revision: 1.8 $";
+static char *gra_interfere_rcs_id = "$Source: /cvsroot/open64/open64/osprey1.0/be/cg/gra_mon/gra_interfere.h,v $ $Revision: 1.1.1.1 $";
 #endif
 #endif
 

@@ -257,10 +257,10 @@
 **/
 
 
-/** $Revision: 1.8 $
-*** $Date: 2001/03/10 03:29:35 $
-*** $Author: mtibuild $
-*** $Source: /isms/cmplrs.src/osprey1.0/common/util/RCS/priority_queue.h,v $
+/** $Revision: 1.1.1.1 $
+*** $Date: 2001/09/10 17:48:27 $
+*** $Author: morrone $
+*** $Source: /cvsroot/open64/open64/osprey1.0/common/util/priority_queue.h,v $
 **/
 
 #ifndef prq_INCLUDED
@@ -272,7 +272,7 @@ extern "C" {
 #ifdef _KEEP_RCS_ID
 #ifndef PRQ_RCS_ID
 #define PRQ_RCS_ID
-static const char prq_rcs_id[] = "$Source: /isms/cmplrs.src/osprey1.0/common/util/RCS/priority_queue.h,v $ $Revision: 1.8 $";
+static const char prq_rcs_id[] = "$Source: /cvsroot/open64/open64/osprey1.0/common/util/priority_queue.h,v $ $Revision: 1.1.1.1 $";
 #endif
 #endif
 

@@ -40,10 +40,10 @@
 //
 /////////////////////////////////////
 //
-//  $Revision: 1.24 $
-//  $Date: 2001/03/10 03:24:59 $
-//  $Author: mtibuild $
-//  $Source: /isms/cmplrs.src/osprey1.0/common/targ_info/generate/RCS/isa_subset_gen.cxx,v $
+//  $Revision: 1.1.1.1 $
+//  $Date: 2001/09/10 17:48:23 $
+//  $Author: morrone $
+//  $Source: /cvsroot/open64/open64/osprey1.0/common/targ_info/generate/isa_subset_gen.cxx,v $
 
 
 #include <stddef.h>

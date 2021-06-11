@@ -37,10 +37,10 @@
  * ====================================================================
  *
  * Module: ipa_option.c
- * $Revision: 1.17 $
- * $Date: 2001/03/10 04:12:46 $
- * $Author: mtibuild $
- * $Source: /isms/cmplrs.src/osprey1.0/ipa/main/analyze/RCS/ipa_option.cxx,v $
+ * $Revision: 1.1.1.1 $
+ * $Date: 2001/09/10 17:50:01 $
+ * $Author: morrone $
+ * $Source: /cvsroot/open64/open64/osprey1.0/ipa/main/analyze/ipa_option.cxx,v $
  *
  * Revision history:
  *  24-Jan-96 - Original Version
@@ -54,7 +54,7 @@
  */
 
 #ifdef _KEEP_RCS_ID
-static char *rcs_id = "$Source: /isms/cmplrs.src/osprey1.0/ipa/main/analyze/RCS/ipa_option.cxx,v $ $Revision: 1.17 $";
+static char *rcs_id = "$Source: /cvsroot/open64/open64/osprey1.0/ipa/main/analyze/ipa_option.cxx,v $ $Revision: 1.1.1.1 $";
 #endif /* _KEEP_RCS_ID */
 
 #include "linker.h"

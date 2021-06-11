@@ -37,10 +37,10 @@
  * =======================================================================
  *
  *  Module: hb_hazards.h
- *  $Revision: 1.6 $
- *  $Date: 2001/03/10 02:01:36 $
- *  $Author: mtibuild $
- *  $Source: /isms/cmplrs.src/osprey1.0/be/cg/RCS/hb_hazards.h,v $
+ *  $Revision: 1.1.1.1 $
+ *  $Date: 2001/09/10 17:47:24 $
+ *  $Author: morrone $
+ *  $Source: /cvsroot/open64/open64/osprey1.0/be/cg/hb_hazards.h,v $
  *
  *  Description:
  *  ============

@@ -3,10 +3,10 @@
 // ====================================================================
 //
 // Module: opt_dce.cxx
-// $Revision: 1.230 $
-// $Date: 2001/03/10 02:40:24 $
-// $Author: mtibuild $
-// $Source: /isms/cmplrs.src/osprey1.0/be/opt/RCS/opt_dce.cxx,v $
+// $Revision: 1.1.1.1 $
+// $Date: 2001/09/10 17:47:56 $
+// $Author: morrone $
+// $Source: /cvsroot/open64/open64/osprey1.0/be/opt/opt_dce.cxx,v $
 //
 // ====================================================================
 //

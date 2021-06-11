@@ -35,7 +35,7 @@
 
 
 
-/* $Header: /isms/cmplrs.src/osprey1.0/libI77/RCS/nio.c,v 9.16 2001/03/10 04:52:46 mtibuild Exp $ */
+/* $Header: /cvsroot/open64/open64/osprey1.0/libI77/nio.c,v 1.1.1.1 2001/09/10 17:50:05 morrone Exp $ */
 
 #include <stdio.h>
 #include <mutex.h>

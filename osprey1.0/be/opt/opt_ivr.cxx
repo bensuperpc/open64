@@ -3,10 +3,10 @@
 // ====================================================================
 //
 // Module: opt_ivr.cxx
-// $Revision: 1.205 $
-// $Date: 2001/03/10 02:43:34 $
-// $Author: mtibuild $
-// $Source: /isms/cmplrs.src/osprey1.0/be/opt/RCS/opt_ivr.cxx,v $
+// $Revision: 1.2 $
+// $Date: 2002/02/18 20:45:32 $
+// $Author: douillet $
+// $Source: /cvsroot/open64/open64/osprey1.0/be/opt/opt_ivr.cxx,v $
 //
 // Revision history:
 //  28-JAN-95 shin - Original Version
@@ -87,7 +87,7 @@
 
 #ifdef _KEEP_RCS_ID
 #define opt_ivr_CXX	"opt_ivr.cxx"
-static char *rcs_id = 	opt_ivr_CXX"$Revision: 1.205 $";
+static char *rcs_id = 	opt_ivr_CXX"$Revision: 1.2 $";
 #endif /* _KEEP_RCS_ID */
 
 #define USE_STANDARD_TYPES
@@ -1032,7 +1032,7 @@ IVR::Ident_all_iv_cands(const BB_LOOP *loop, const BB_NODE *bb)
       // the type of the IV is the type of increment expr.
       MTYPE dtype;
       if (incr->Defstmt()) 
-	dtype = incr->Defstmt()->Rhs()->Dsctyp();
+        dtype = incr->Defstmt()->Rhs()->Dtyp();
       else
 	dtype = incr->Defphi()->OPND(0)->Defstmt()->Rhs()->Dtyp();
       

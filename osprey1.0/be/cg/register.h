@@ -40,10 +40,10 @@
  * ====================================================================
  *
  *  Module: register.h
- *  $Revision: 3.67 $
- *  $Date: 2001/03/10 02:05:16 $
- *  $Author: mtibuild $
- *  $Source: /isms/cmplrs.src/osprey1.0/be/cg/RCS/register.h,v $
+ *  $Revision: 1.1.1.1 $
+ *  $Date: 2001/09/10 17:47:27 $
+ *  $Author: morrone $
+ *  $Source: /cvsroot/open64/open64/osprey1.0/be/cg/register.h,v $
  *
  *  Revision history:
  *   07-May-93 - Original Version
@@ -585,7 +585,7 @@
 
 
 #ifdef _KEEP_RCS_ID
-static const char register_rcs_id[] = "$Source: /isms/cmplrs.src/osprey1.0/be/cg/RCS/register.h,v $ $Revision: 3.67 $";
+static const char register_rcs_id[] = "$Source: /cvsroot/open64/open64/osprey1.0/be/cg/register.h,v $ $Revision: 1.1.1.1 $";
 #endif /* _KEEP_RCS_ID */
 
 #include "mtypes.h"

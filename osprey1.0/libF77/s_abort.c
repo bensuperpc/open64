@@ -34,7 +34,7 @@
 */
 
 
-/* $Header: /isms/cmplrs.src/osprey1.0/libF77/RCS/s_abort.c,v 8.6 2001/03/10 04:44:42 mtibuild Exp $ */
+/* $Header: /cvsroot/open64/open64/osprey1.0/libF77/s_abort.c,v 1.1.1.1 2001/09/10 17:50:04 morrone Exp $ */
 
 /* called when a fatal error wishes to terminate execution */
 

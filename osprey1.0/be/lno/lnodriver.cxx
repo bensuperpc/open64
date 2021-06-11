@@ -37,10 +37,10 @@
  * ====================================================================
  *
  * Module: lnodriver.c
- * $Revision: 1.22 $
- * $Date: 2001/03/10 02:28:14 $
- * $Author: mtibuild $
- * $Source: /isms/cmplrs.src/osprey1.0/be/lno/RCS/lnodriver.cxx,v $
+ * $Revision: 1.1.1.1 $
+ * $Date: 2001/09/10 17:47:46 $
+ * $Author: morrone $
+ * $Source: /cvsroot/open64/open64/osprey1.0/be/lno/lnodriver.cxx,v $
  *
  * Revision history:
  *  08-Sep-94 - Original Version

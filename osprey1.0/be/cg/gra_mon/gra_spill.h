@@ -1,6 +1,6 @@
 /*
 
-  Copyright (C) 2000, 2001 Silicon Graphics, Inc.  All Rights Reserved.
+  Copyright (C) 2000 Silicon Graphics, Inc.  All Rights Reserved.
 
   This program is free software; you can redistribute it and/or modify it
   under the terms of version 2 of the GNU General Public License as
@@ -34,10 +34,10 @@
 
 //  Spill functions for GRA
 
-//  $Revision: 1.8 $
-//  $Date: 2001/03/10 01:51:00 $
-//  $Author: mtibuild $
-//  $Source: /isms/cmplrs.src/osprey1.0/be/cg/gra_mon/RCS/gra_spill.h,v $
+//  $Revision: 1.2 $
+//  $Date: 2002/02/18 20:45:30 $
+//  $Author: douillet $
+//  $Source: /cvsroot/open64/open64/osprey1.0/be/cg/gra_mon/gra_spill.h,v $
 
 
 #ifndef GRA_SPILL_INCLUDED
@@ -46,7 +46,7 @@
 #ifndef GRA_SPILL_RCS_ID
 #define GRA_SPILL_RCS_ID
 #ifdef _KEEP_RCS_ID
-static char *gra_spill_rcs_id = "$Source: /isms/cmplrs.src/osprey1.0/be/cg/gra_mon/RCS/gra_spill.h,v $ $Revision: 1.8 $";
+static char *gra_spill_rcs_id = "$Source: /cvsroot/open64/open64/osprey1.0/be/cg/gra_mon/gra_spill.h,v $ $Revision: 1.2 $";
 #endif
 #endif
 
@@ -57,7 +57,7 @@ extern void GRA_Note_Spill( LRANGE* lrange );
 extern void GRA_Spill(void);
 
 extern void GRA_Remove_Predicates_Save_Restore(void);
-
+extern void Gen_UNAT_Spills_Entry_And_Exit_BB(void);
 extern float priority_count;
 
 #endif

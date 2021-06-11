@@ -33,7 +33,7 @@
 */
 
 
-/* $Header: /isms/cmplrs.src/osprey1.0/fake_ld/common/RCS/ld_elf.h,v 1.5 2001/03/10 03:51:40 mtibuild Exp $ */
+/* $Header: /cvsroot/open64/open64/osprey1.0/fake_ld/common/ld_elf.h,v 1.1.1.1 2001/09/10 17:48:53 morrone Exp $ */
 
 #ifndef __LD_ELF_H__
 #define __LD_ELF_H__

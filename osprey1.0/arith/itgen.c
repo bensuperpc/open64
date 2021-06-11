@@ -588,4 +588,4 @@ main () {
 
 
 static char USMID [] = "\n%Z%%M%	%I%	%G% %U%\n";
-static char rcsid [] = "$Id: itgen.c,v 2.1 1994/10/18 19:49:21 jk Exp $";
+static char rcsid [] = "$Id: itgen.c,v 1.1.1.1 2001/09/10 17:47:14 morrone Exp $";

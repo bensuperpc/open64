@@ -1,6 +1,6 @@
 /*
 
-  Copyright (C) 2000, 2001 Silicon Graphics, Inc.  All Rights Reserved.
+  Copyright (C) 2000 Silicon Graphics, Inc.  All Rights Reserved.
 
   This program is free software; you can redistribute it and/or modify it
   under the terms of version 2 of the GNU General Public License as
@@ -36,10 +36,10 @@
 /* ====================================================================
  *
  * Module: freq.cxx
- * $Revision: 3.119 $
- * $Date: 2001/03/10 01:59:01 $
- * $Author: mtibuild $
- * $Source: /isms/cmplrs.src/osprey1.0/be/cg/RCS/freq.cxx,v $
+ * $Revision: 1.2 $
+ * $Date: 2002/02/18 20:45:30 $
+ * $Author: douillet $
+ * $Source: /cvsroot/open64/open64/osprey1.0/be/cg/freq.cxx,v $
  *
  * Description:
  *
@@ -81,6 +81,8 @@
 #include "fb_whirl.h"
 #include "DaVinci.h"
 #include "freq.h"
+#include "cg_flags.h"
+#include "ipfec_options.h"
 
 /* ====================================================================
  * ====================================================================
@@ -1702,9 +1704,22 @@ Compute_Branch_Probabilities(void)
       if (Trip_Loop_Exit_Prob(bb, succ1, succ2, loops, &prob_succ1)) {
 	prob_succ2 = 1.0 - prob_succ1;
       } else {
-	prob_succ1 = 0.5;
-	prob_succ2 = 0.5;
-
+	 // prob_succ1 = 0.5;
+	 // prob_succ2 = 0.5;
+	
+	if (IPFEC_Enable_Random_Prob)
+	{
+	  double freq_succ1 = (double)(random() + 1);
+	  double freq_succ2 = (double)(random() + 1);
+	  prob_succ1 = freq_succ1 / (freq_succ1 + freq_succ2);
+          prob_succ2 = freq_succ2 / (freq_succ1 + freq_succ2);
+        }else
+        {
+          prob_succ1 = 0.5;
+          prob_succ2 = 0.5;
+        }
+  
+	
 	/* Using "Dempster-Shafer" combine probabilities for each
 	 * heuristic that applies to this branch.
 	 */

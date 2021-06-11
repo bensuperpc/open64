@@ -36,7 +36,7 @@
 
 /*
 
-$Revision: 1.5 $
+$Revision: 1.1.1.1 $
 
 	syn.h
 is the 'traditional' name of the header file containing

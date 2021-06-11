@@ -35,7 +35,7 @@
 
 
 
-/* $Header: /isms/cmplrs.src/osprey1.0/libI77/RCS/tools.c,v 9.10 2001/03/10 04:54:25 mtibuild Exp $ */
+/* $Header: /cvsroot/open64/open64/osprey1.0/libI77/tools.c,v 1.1.1.1 2001/09/10 17:50:06 morrone Exp $ */
 
 #include <cmplrs/fio.h>
 #include "fio_direct_io.h"

@@ -37,10 +37,10 @@
  * =======================================================================
  *
  *  Module: quadsim.c
- *  $Revision: 1.17 $
- *  $Date: 2001/03/10 03:29:46 $
- *  $Author: mtibuild $
- *  $Source: /isms/cmplrs.src/osprey1.0/common/util/RCS/quadsim.c,v $
+ *  $Revision: 1.1.1.1 $
+ *  $Date: 2001/09/10 17:48:27 $
+ *  $Author: morrone $
+ *  $Source: /cvsroot/open64/open64/osprey1.0/common/util/quadsim.c,v $
  *
  * =======================================================================
  * =======================================================================

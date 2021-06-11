@@ -36,7 +36,7 @@
 /* ====================================================================
  * ====================================================================
  *
- * $Source: /isms/cmplrs.src/osprey1.0/common/com/RCS/config_ipa.cxx,v $
+ * $Source: /cvsroot/open64/open64/osprey1.0/common/com/config_ipa.cxx,v $
  *
  * Revision history:
  *  11-Apr-96 - Original Version, extracted from ipa_option.c.

@@ -62,10 +62,10 @@
  * ====================================================================
  *
  * Module: sclrze.cxx
- * $Revision: 1.34 $
- * $Date: 2001/03/10 02:33:44 $
- * $Author: mtibuild $
- * $Source: /isms/cmplrs.src/osprey1.0/be/lno/RCS/sclrze.cxx,v $
+ * $Revision: 1.1.1.1 $
+ * $Date: 2001/09/10 17:47:49 $
+ * $Author: morrone $
+ * $Source: /cvsroot/open64/open64/osprey1.0/be/lno/sclrze.cxx,v $
  *
  * Revision history:
  *  dd-mmm-94 - Original Version
@@ -82,7 +82,7 @@
 #pragma hdrstop
 
 static char *source_file = __FILE__;
-static char *rcs_id = "$Source: /isms/cmplrs.src/osprey1.0/be/lno/RCS/sclrze.cxx,v $ $Revision: 1.34 $";
+static char *rcs_id = "$Source: /cvsroot/open64/open64/osprey1.0/be/lno/sclrze.cxx,v $ $Revision: 1.1.1.1 $";
 
 #include <sys/types.h>
 #include "lnopt_main.h"

@@ -37,10 +37,10 @@
  * ====================================================================
  *
  * Module: aux_stab.h
- * $Revision: 1.5 $
- * $Date: 2001/03/10 03:43:04 $
- * $Author: mtibuild $
- * $Source: /isms/cmplrs.src/osprey1.0/crayf90/sgi/RCS/aux_stab.h,v $
+ * $Revision: 1.1.1.1 $
+ * $Date: 2001/09/10 17:48:50 $
+ * $Author: morrone $
+ * $Source: /cvsroot/open64/open64/osprey1.0/crayf90/sgi/aux_stab.h,v $
  *
  * Revision history:
  *  13-May-92 - Original Version (of header, anyway)
@@ -57,7 +57,7 @@
 #define aux_stab_INCLUDED
 
 #ifdef _KEEP_RCS_ID
-static char *aux_stab_rcs_id = "$Source: /isms/cmplrs.src/osprey1.0/crayf90/sgi/RCS/aux_stab.h,v $ $Revision: 1.5 $";
+static char *aux_stab_rcs_id = "$Source: /cvsroot/open64/open64/osprey1.0/crayf90/sgi/aux_stab.h,v $ $Revision: 1.1.1.1 $";
 #endif /* _KEEP_RCS_ID */
 
 

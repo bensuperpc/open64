@@ -42,10 +42,10 @@
  * ====================================================================
  *
  * Module: fis_gthr.cxx
- * $Revision: 1.80 $
- * $Date: 2001/03/10 02:24:04 $
- * $Author: mtibuild $
- * $Source: /isms/cmplrs.src/osprey1.0/be/lno/RCS/fis_gthr.cxx,v $
+ * $Revision: 1.1.1.1 $
+ * $Date: 2001/09/10 17:47:41 $
+ * $Author: morrone $
+ * $Source: /cvsroot/open64/open64/osprey1.0/be/lno/fis_gthr.cxx,v $
  *
  * Revision history:
  *  dd-mmm-95 - Original Version
@@ -63,7 +63,7 @@
 
 #ifdef _KEEP_RCS_ID
 /*REFERENCED*/
-static char *rcs_id = "$Source: /isms/cmplrs.src/osprey1.0/be/lno/RCS/fis_gthr.cxx,v $ $Revision: 1.80 $";
+static char *rcs_id = "$Source: /cvsroot/open64/open64/osprey1.0/be/lno/fis_gthr.cxx,v $ $Revision: 1.1.1.1 $";
 #endif /* _KEEP_RCS_ID */
 
 #include <sys/types.h>

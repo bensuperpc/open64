@@ -37,10 +37,10 @@
  * =======================================================================
  *
  *  Module: x_list.c
- *  $Revision: 1.10 $
- *  $Date: 2001/03/10 03:30:59 $
- *  $Author: mtibuild $
- *  $Source: /isms/cmplrs.src/osprey1.0/common/util/RCS/x_list.c,v $
+ *  $Revision: 1.1.1.1 $
+ *  $Date: 2001/09/10 17:48:27 $
+ *  $Author: morrone $
+ *  $Source: /cvsroot/open64/open64/osprey1.0/common/util/x_list.c,v $
  *
  *  Revision comments:
  *
@@ -57,7 +57,7 @@
  */
 
 static char *source_file = __FILE__;
-static char *rcs_id = "$Source: /isms/cmplrs.src/osprey1.0/common/util/RCS/x_list.c,v $ $Revision: 1.10 $";
+static char *rcs_id = "$Source: /cvsroot/open64/open64/osprey1.0/common/util/x_list.c,v $ $Revision: 1.1.1.1 $";
 
 #define _X_first_(x)    ((x)->first)
 #define _X_rest_(x)     ((x)->rest)

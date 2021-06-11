@@ -38,10 +38,10 @@
 // =======================================================================
 //
 //  Module: cg_swp_allocator_test.cxx
-//  $Revision: 1.7 $
-//  $Date: 2001/03/10 01:53:19 $
-//  $Author: mtibuild $
-//  $Source: /isms/cmplrs.src/osprey1.0/be/cg/RCS/cg_swp_allocator_test.cxx,v $
+//  $Revision: 1.1.1.1 $
+//  $Date: 2001/09/10 17:47:18 $
+//  $Author: morrone $
+//  $Source: /cvsroot/open64/open64/osprey1.0/be/cg/cg_swp_allocator_test.cxx,v $
 //
 //  Revision comments:
 //

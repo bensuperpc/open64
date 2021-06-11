@@ -45,7 +45,7 @@
 
 
 /**
-*** $Source: /isms/cmplrs.src/osprey1.0/be/lno/RCS/autod.h,v $
+*** $Source: /cvsroot/open64/open64/osprey1.0/be/lno/autod.h,v $
 **/
 
 

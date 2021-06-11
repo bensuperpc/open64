@@ -35,7 +35,7 @@
 
 
 static char *source_file = __FILE__;
-static char *rcs_id = "$Source: /isms/cmplrs.src/osprey1.0/crayf90/sgi/RCS/sgi_cmd_line.cxx,v $ $Revision: 1.85 $";
+static char *rcs_id = "$Source: /cvsroot/open64/open64/osprey1.0/crayf90/sgi/sgi_cmd_line.cxx,v $ $Revision: 1.1.1.1 $";
 
 /* SGI includes */
 #include "stamp.h"

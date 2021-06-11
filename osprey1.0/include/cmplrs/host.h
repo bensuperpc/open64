@@ -33,7 +33,7 @@
 */
 
 
-/* $Header: /isms/cmplrs.src/osprey1.0/include/cmplrs/RCS/host.h,v 1.13 2001/03/10 03:57:16 mtibuild Exp $ */
+/* $Header: /cvsroot/open64/open64/osprey1.0/include/cmplrs/host.h,v 1.1.1.1 2001/09/10 17:49:59 morrone Exp $ */
 
 #ifndef _HOST_H
 #define _HOST_H

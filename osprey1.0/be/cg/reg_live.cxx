@@ -1,6 +1,6 @@
 /*
 
-  Copyright (C) 2000, 2001 Silicon Graphics, Inc.  All Rights Reserved.
+  Copyright (C) 2000 Silicon Graphics, Inc.  All Rights Reserved.
 
   This program is free software; you can redistribute it and/or modify it
   under the terms of version 2 of the GNU General Public License as
@@ -37,10 +37,10 @@
  * =======================================================================
  *
  *  Module: reg_live.cxx
- *  $Revision: 1.50 $
- *  $Date: 2001/03/10 02:04:56 $
- *  $Author: mtibuild $
- *  $Source: /isms/cmplrs.src/osprey1.0/be/cg/RCS/reg_live.cxx,v $
+ *  $Revision: 1.2 $
+ *  $Date: 2002/02/18 20:45:30 $
+ *  $Author: douillet $
+ *  $Source: /cvsroot/open64/open64/osprey1.0/be/cg/reg_live.cxx,v $
  *
  *  Description:
  *  ============
@@ -78,6 +78,7 @@
 #include "reg_live.h"
 
 static BOOL Trace_Register_Liveness = FALSE;
+
 
 static REGSET Register_Livein;
 static REGSET Register_Kill;
@@ -623,8 +624,8 @@ REG_LIVE_Prolog_Temps(
 	 tn != GTN_SET_CHOOSE_FAILURE;
 	 tn = GTN_SET_Choose_Next(BB_live_out(bb), tn)
     ) {
-      FmtAssert(TN_is_global_reg(tn),("TN%d is not global",TN_number(tn)));
-      if (TN_register(tn) != REGISTER_UNDEFINED) {
+        FmtAssert(TN_is_global_reg(tn),("TN%d is not global",TN_number(tn)));
+        if (TN_register(tn) != REGISTER_UNDEFINED) {
 	cl = TN_register_class(tn);
 	live[cl] = REGISTER_SET_Union1(live[cl], TN_register(tn));
       }
@@ -761,7 +762,7 @@ BOOL REG_LIVE_Implicit_Use_Outof_BB (ISA_REGISTER_CLASS cl, REGISTER reg, BB *bb
 {
   // Always mark unallocatable registers as liveout. This includes
   // registers like sp, fp, gp and dedicated register variables.
-  if (!REGISTER_allocatable (cl, reg)) return TRUE;
+  if ((!REGISTER_allocatable (cl, reg))&&(!((cl==ISA_REGISTER_CLASS_branch)&&(reg==1)))) return TRUE;
 
   REGISTER_SET use[ISA_REGISTER_CLASS_MAX+1];
 
@@ -785,7 +786,7 @@ BOOL REG_LIVE_Implicit_Def_Into_BB (ISA_REGISTER_CLASS cl, REGISTER reg, BB *bb)
 {
   // Always mark unallocatable registers as an implicit def into all bbs. 
   // This includes registers like sp, fp, gp and dedicated register variables.
-  if (!REGISTER_allocatable (cl, reg)) return TRUE;
+  if ((!REGISTER_allocatable (cl, reg))&&(!((cl==ISA_REGISTER_CLASS_branch)&&(reg==1)))) return TRUE;
 
   REGISTER_SET def[ISA_REGISTER_CLASS_MAX+1];
   REGSET_CLEAR (def);

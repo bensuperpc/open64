@@ -38,10 +38,10 @@
  * ====================================================================
  *
  * Module: tanf.c
- * $Revision: 1.9 $
- * $Date: 2001/03/10 08:57:55 $
- * $Author: mtibuild $
- * $Source: /isms/cmplrs.src/osprey1.0/libm/mips/RCS/tanf.c,v $
+ * $Revision: 1.1.1.1 $
+ * $Date: 2001/09/10 17:50:21 $
+ * $Author: morrone $
+ * $Source: /cvsroot/open64/open64/osprey1.0/libm/mips/tanf.c,v $
  *
  * Revision history:
  *  09-Jun-93 - Original Version
@@ -52,7 +52,7 @@
  * ====================================================================
  */
 
-static char *rcs_id = "$Source: /isms/cmplrs.src/osprey1.0/libm/mips/RCS/tanf.c,v $ $Revision: 1.9 $";
+static char *rcs_id = "$Source: /cvsroot/open64/open64/osprey1.0/libm/mips/tanf.c,v $ $Revision: 1.1.1.1 $";
 
 #ifdef _CALL_MATHERR
 #include <stdio.h>

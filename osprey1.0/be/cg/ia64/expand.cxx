@@ -37,10 +37,10 @@
  * ====================================================================
  *
  * Module: expand.c
- * $Revision: 1.123 $
- * $Date: 2001/03/10 01:11:54 $
- * $Author: mtibuild $
- * $Source: /osprey.src/osprey1.0/be/cg/ia64/RCS/expand.cxx,v $
+ * $Revision: 1.2 $
+ * $Date: 2002/02/18 20:45:31 $
+ * $Author: douillet $
+ * $Source: /cvsroot/open64/open64/osprey1.0/be/cg/ia64/expand.cxx,v $
  *
  * Description:
  *
@@ -1845,7 +1845,18 @@ Expand_Select (
   if (TN_register_class(cond_tn) == ISA_REGISTER_CLASS_predicate) {
     TOP tmove, fmove;
     TN *p1 = cond_tn;
-    TN *p2 = Get_Complement_TN(cond_tn);
+
+    // Get_Complement_TN()  can't be used if p1 is not dedicated register.
+//    FmtAssert(ops->length!=0, ("The whole op sequence should be passed in."));
+    TN *p2;
+    if ((ops->length!=0) && (OP_result(OPS_last(ops), 0)==p1)) {
+      p2 = OP_result(OPS_last(ops), 1); // the predicate conversion of boolean exppression gurantees this.
+    }
+    else 
+    	{
+      p2 = Get_Complement_TN(cond_tn);
+    }
+
     if (is_float) {
       tmove = TOP_mov_f;
       fmove = TOP_mov_f;

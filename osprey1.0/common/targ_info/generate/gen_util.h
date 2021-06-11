@@ -56,10 +56,10 @@
 //
 ////////////////////////////////////
 
-//  $Revision: 1.6 $
-//  $Date: 2001/03/10 03:22:45 $
-//  $Author: mtibuild $
-//  $Source: /isms/cmplrs.src/osprey1.0/common/targ_info/generate/RCS/gen_util.h,v $
+//  $Revision: 1.1.1.1 $
+//  $Date: 2001/09/10 17:48:23 $
+//  $Author: morrone $
+//  $Source: /cvsroot/open64/open64/osprey1.0/common/targ_info/generate/gen_util.h,v $
 
 #ifndef gen_util_INCLUDED
 #define gen_util_INCLUDED

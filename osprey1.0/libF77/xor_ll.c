@@ -34,7 +34,7 @@
 */
 
 
-/* $Header: /isms/cmplrs.src/osprey1.0/libF77/RCS/xor_ll.c,v 1.4 2001/03/10 04:47:08 mtibuild Exp $ */
+/* $Header: /cvsroot/open64/open64/osprey1.0/libF77/xor_ll.c,v 1.1.1.1 2001/09/10 17:50:04 morrone Exp $ */
 /*	  All Rights Reserved  	*/
 
 /*	THIS IS UNPUBLISHED PROPRIETARY SOURCE CODE OF AT&T	*/

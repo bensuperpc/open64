@@ -39,10 +39,10 @@
 
 /**
 *** Module: ff_utils.h
-*** $Revision: 1.42 $
-*** $Date: 2001/03/10 02:23:59 $
-*** $Author: mtibuild $
-*** $Source: /isms/cmplrs.src/osprey1.0/be/lno/RCS/ff_utils.h,v $
+*** $Revision: 1.1.1.1 $
+*** $Date: 2001/09/10 17:47:41 $
+*** $Author: morrone $
+*** $Source: /cvsroot/open64/open64/osprey1.0/be/lno/ff_utils.h,v $
 *** 
 *** Description:
 *** 
@@ -52,7 +52,7 @@
 **/
 
 #ifdef _KEEP_RCS_ID
-static char *ff_utils_rcs_id = "$Source: /isms/cmplrs.src/osprey1.0/be/lno/RCS/ff_utils.h,v $ $Revision: 1.42 $";
+static char *ff_utils_rcs_id = "$Source: /cvsroot/open64/open64/osprey1.0/be/lno/ff_utils.h,v $ $Revision: 1.1.1.1 $";
 #endif /* _KEEP_RCS_ID */
 
 #include "wn_core.h"

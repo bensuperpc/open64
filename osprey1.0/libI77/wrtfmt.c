@@ -35,7 +35,7 @@
 
 
 
-/* $Header: /isms/cmplrs.src/osprey1.0/libI77/RCS/wrtfmt.c,v 9.29 2001/03/10 04:55:14 mtibuild Exp $ */
+/* $Header: /cvsroot/open64/open64/osprey1.0/libI77/wrtfmt.c,v 1.1.1.1 2001/09/10 17:50:06 morrone Exp $ */
 /*	3.0 SID #	1.2	*/
 /* who	ref.		date		description			*/
 /* sjc	#2113	4Dec87		coding error kills dp exponent		*/

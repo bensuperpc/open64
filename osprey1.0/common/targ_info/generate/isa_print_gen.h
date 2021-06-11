@@ -80,10 +80,10 @@
 /////////////////////////////////////
 
 
-//  $Revision: 1.12 $
-//  $Date: 2001/03/10 03:24:23 $
-//  $Author: mtibuild $
-//  $Source: /isms/cmplrs.src/osprey1.0/common/targ_info/generate/RCS/isa_print_gen.h,v $
+//  $Revision: 1.1.1.1 $
+//  $Date: 2001/09/10 17:48:23 $
+//  $Author: morrone $
+//  $Source: /cvsroot/open64/open64/osprey1.0/common/targ_info/generate/isa_print_gen.h,v $
 
 #ifndef isa_print_gen_INCLUDED
 #define isa_print_gen_INCLUDED
@@ -91,7 +91,7 @@
 #include "gen_util_gen.h"
 
 #ifdef _KEEP_RCS_ID
-static const char isa_operands_gen_rcs_id[] = "$Source: /isms/cmplrs.src/osprey1.0/common/targ_info/generate/RCS/isa_print_gen.h,v $ $Revision: 1.12 $";
+static const char isa_operands_gen_rcs_id[] = "$Source: /cvsroot/open64/open64/osprey1.0/common/targ_info/generate/isa_print_gen.h,v $ $Revision: 1.1.1.1 $";
 #endif /* _KEEP_RCS_ID */
 
 #ifdef __cplusplus

@@ -39,10 +39,10 @@
 ***
 ***-------------------------------------------------------------------*/
 
-/** $Revision: 1.41 $
-*** $Date: 2001/03/10 03:18:30 $
-*** $Author: mtibuild $
-*** $Source: /isms/cmplrs.src/osprey1.0/common/com/RCS/wn_util.cxx,v $
+/** $Revision: 1.1.1.1 $
+*** $Date: 2001/09/10 17:48:21 $
+*** $Author: morrone $
+*** $Source: /cvsroot/open64/open64/osprey1.0/common/com/wn_util.cxx,v $
 **/
 #ifdef USE_PCH
 #include "common_com_pch.h"

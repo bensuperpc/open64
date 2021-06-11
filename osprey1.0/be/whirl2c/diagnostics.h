@@ -39,10 +39,10 @@
  * ====================================================================
  *
  * Module: diagnostics.h
- * $Revision: 1.36 $
- * $Date: 2001/03/10 02:55:15 $
- * $Author: mtibuild $
- * $Source: /isms/cmplrs.src/osprey1.0/be/whirl2c/RCS/diagnostics.h,v $
+ * $Revision: 1.1.1.1 $
+ * $Date: 2001/09/10 17:48:07 $
+ * $Author: morrone $
+ * $Source: /cvsroot/open64/open64/osprey1.0/be/whirl2c/diagnostics.h,v $
  *
  * Revision history:
  *    13-Apr-95 - Original Version

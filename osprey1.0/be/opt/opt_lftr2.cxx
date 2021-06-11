@@ -2,10 +2,10 @@
 // ====================================================================
 //
 // Module: opt_lftr2.cxx
-// $Revision: 1.67 $
-// $Date: 2001/03/10 02:43:55 $
-// $Author: mtibuild $
-// $Source: /isms/cmplrs.src/osprey1.0/be/opt/RCS/opt_lftr2.cxx,v $
+// $Revision: 1.1.1.1 $
+// $Date: 2001/09/10 17:48:01 $
+// $Author: morrone $
+// $Source: /cvsroot/open64/open64/osprey1.0/be/opt/opt_lftr2.cxx,v $
 //
 // ====================================================================
 //
@@ -50,7 +50,7 @@
 
 #ifdef _KEEP_RCS_ID
 #define opt_lftr2_CXX   "opt_lftr2.cxx"
-static char *rcs_id =   opt_lftr2_CXX"$Revision: 1.67 $";
+static char *rcs_id =   opt_lftr2_CXX"$Revision: 1.1.1.1 $";
 #endif /* _KEEP_RCS_ID */
 
 #include "opt_lftr2.h"		// LFTR class

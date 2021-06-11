@@ -3,10 +3,10 @@
 // ====================================================================
 //
 // Module: opt_cfg.cxx
-// $Revision: 1.346 $
-// $Date: 2001/03/10 02:39:10 $
-// $Author: mtibuild $
-// $Source: /isms/cmplrs.src/osprey1.0/be/opt/RCS/opt_cfg.cxx,v $
+// $Revision: 1.1.1.1 $
+// $Date: 2001/09/10 17:47:54 $
+// $Author: morrone $
+// $Source: /cvsroot/open64/open64/osprey1.0/be/opt/opt_cfg.cxx,v $
 //
 // ====================================================================
 //
@@ -52,7 +52,7 @@
 
 #ifdef _KEEP_RCS_ID
 #define opt_cfg_CXX	"opt_cfg.cxx"
-static char *rcs_id = 	opt_cfg_CXX"$Revision: 1.346 $";
+static char *rcs_id = 	opt_cfg_CXX"$Revision: 1.1.1.1 $";
 #endif /* _KEEP_RCS_ID */
 
 #include "defs.h"

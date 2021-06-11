@@ -3,10 +3,10 @@
 // ====================================================================
 //
 // Module: opt_rvilr.cxx
-// $Revision: 1.29 $
-// $Date: 2001/03/10 02:46:21 $
-// $Author: mtibuild $
-// $Source: /isms/cmplrs.src/osprey1.0/be/opt/RCS/opt_rvilr.cxx,v $
+// $Revision: 1.1.1.1 $
+// $Date: 2001/09/10 17:48:03 $
+// $Author: morrone $
+// $Source: /cvsroot/open64/open64/osprey1.0/be/opt/opt_rvilr.cxx,v $
 //
 // ====================================================================
 //
@@ -58,7 +58,7 @@
 
 #ifdef _KEEP_RCS_ID
 #define opt_rvilr_CXX	"opt_rvilr.cxx"
-static char *rcs_id = 	opt_rvilr_CXX"$Revision: 1.29 $";
+static char *rcs_id = 	opt_rvilr_CXX"$Revision: 1.1.1.1 $";
 #endif /* _KEEP_RCS_ID */
 
 #include "defs.h"

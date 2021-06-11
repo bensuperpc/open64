@@ -36,10 +36,10 @@
 /* ====================================================================
  * ====================================================================
  * Module: cgdwarf.c
- * $Revision: 3.193 $
- * $Date: 2001/03/10 01:56:20 $
- * $Author: mtibuild $
- * $Source: /isms/cmplrs.src/osprey1.0/be/cg/RCS/cgdwarf.cxx,v $
+ * $Revision: 1.2 $
+ * $Date: 2002/02/18 20:45:30 $
+ * $Author: douillet $
+ * $Source: /cvsroot/open64/open64/osprey1.0/be/cg/cgdwarf.cxx,v $
  *
  * Description:
  *
@@ -708,6 +708,8 @@ put_location (
   if (ST_is_not_used(st)) return;
 
   Base_Symbol_And_Offset (st, &base_st, &base_ofst);
+
+  if (ST_is_not_used(base_st)) return;	/* For fixing undefined refernece bug, Added By: Mike Murphy, 22 Apr 2001 */
 
   deref = FALSE;
   if (DST_IS_deref(flag))  /* f90 formals, dope, etc */

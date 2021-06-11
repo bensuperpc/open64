@@ -40,10 +40,10 @@
  * =======================================================================
  *
  *  Module: note.h
- *  $Revision: 1.12 $
- *  $Date: 2001/03/10 02:04:05 $
- *  $Author: mtibuild $
- *  $Source: /isms/cmplrs.src/osprey1.0/be/cg/RCS/note.h,v $
+ *  $Revision: 1.1.1.1 $
+ *  $Date: 2001/09/10 17:47:26 $
+ *  $Author: morrone $
+ *  $Source: /cvsroot/open64/open64/osprey1.0/be/cg/note.h,v $
  *
  *  Revision comments:
  *
@@ -168,7 +168,7 @@
  * ======================================================================= */
 
 #ifdef _KEEP_RCS_ID
-static char *notes_rcs_id = "$Source: /isms/cmplrs.src/osprey1.0/be/cg/RCS/note.h,v $ $Revision: 1.12 $";
+static char *notes_rcs_id = "$Source: /cvsroot/open64/open64/osprey1.0/be/cg/note.h,v $ $Revision: 1.1.1.1 $";
 #endif /* _KEEP_RCS_ID */
 
 typedef enum {

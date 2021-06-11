@@ -37,7 +37,7 @@
 #ifndef __CLOSE_H__
 #define __CLOSE_H__
 
-/* $Header: /isms/cmplrs.src/osprey1.0/libI77/RCS/close.h,v 9.9 2001/03/10 04:49:11 mtibuild Exp $ */
+/* $Header: /cvsroot/open64/open64/osprey1.0/libI77/close.h,v 1.1.1.1 2001/09/10 17:50:05 morrone Exp $ */
 extern int f_clos (cllist *);
 extern int f_clos64 (cllist *);
 extern int f_clos64_mp (cllist *);

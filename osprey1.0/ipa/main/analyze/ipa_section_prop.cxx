@@ -37,10 +37,10 @@
 // ====================================================================
 //
 // Module: ipa_section_prop.cxx
-// $Revision: 1.75 $
-// $Date: 2001/03/10 04:13:48 $
-// $Author: mtibuild $
-// $Source: /isms/cmplrs.src/osprey1.0/ipa/main/analyze/RCS/ipa_section_prop.cxx,v $
+// $Revision: 1.1.1.1 $
+// $Date: 2001/09/10 17:50:01 $
+// $Author: morrone $
+// $Source: /cvsroot/open64/open64/osprey1.0/ipa/main/analyze/ipa_section_prop.cxx,v $
 //
 // Revision history:
 //  2-10-97 - Original Version

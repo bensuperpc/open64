@@ -37,10 +37,10 @@
  * =======================================================================
  *
  *  Module: lra.h
- *  $Revision: 1.15 $
- *  $Date: 2001/03/10 02:03:52 $
- *  $Author: mtibuild $
- *  $Source: /isms/cmplrs.src/osprey1.0/be/cg/RCS/lra.h,v $
+ *  $Revision: 1.1.1.1 $
+ *  $Date: 2001/09/10 17:47:26 $
+ *  $Author: morrone $
+ *  $Source: /cvsroot/open64/open64/osprey1.0/be/cg/lra.h,v $
  *
  *  Description:
  *  ============

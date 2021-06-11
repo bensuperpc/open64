@@ -38,10 +38,10 @@
  * ====================================================================
  *
  * Module: vexp.c
- * $Revision: 1.20 $
- * $Date: 2001/03/10 09:00:44 $
- * $Author: mtibuild $
- * $Source: /isms/cmplrs.src/osprey1.0/libm/RCS/vexp.c,v $
+ * $Revision: 1.1.1.1 $
+ * $Date: 2001/09/10 17:50:21 $
+ * $Author: morrone $
+ * $Source: /cvsroot/open64/open64/osprey1.0/libm/vexp.c,v $
  *
  * Revision history:
  *  01-Dec-94 - Original Version
@@ -52,7 +52,7 @@
  * ====================================================================
  */
 
-static char *rcs_id = "$Source: /isms/cmplrs.src/osprey1.0/libm/RCS/vexp.c,v $ $Revision: 1.20 $";
+static char *rcs_id = "$Source: /cvsroot/open64/open64/osprey1.0/libm/vexp.c,v $ $Revision: 1.1.1.1 $";
 
 #include "libm.h"
 

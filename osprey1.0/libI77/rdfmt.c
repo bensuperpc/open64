@@ -35,7 +35,7 @@
 
 
 
-/* $Header: /isms/cmplrs.src/osprey1.0/libI77/RCS/rdfmt.c,v 9.27 2001/03/10 04:53:28 mtibuild Exp $ */
+/* $Header: /cvsroot/open64/open64/osprey1.0/libI77/rdfmt.c,v 1.1.1.1 2001/09/10 17:50:06 morrone Exp $ */
 
 
 #include <cmplrs/fio.h>

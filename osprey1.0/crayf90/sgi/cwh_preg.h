@@ -37,10 +37,10 @@
  * ====================================================================
  *
  * Module: cwh_preg.h
- * $Revision: 1.8 $
- * $Date: 2001/03/10 03:46:12 $
- * $Author: mtibuild $
- * $Source: /isms/cmplrs.src/osprey1.0/crayf90/sgi/RCS/cwh_preg.h,v $
+ * $Revision: 1.1.1.1 $
+ * $Date: 2001/09/10 17:48:52 $
+ * $Author: morrone $
+ * $Source: /cvsroot/open64/open64/osprey1.0/crayf90/sgi/cwh_preg.h,v $
  *
  * Revision history:
  *  dd-mmm-95 - Original Version
@@ -55,7 +55,7 @@
 #define CIR_WH_PREG_INCLUDED
 
 #ifdef _KEEP_RCS_ID
-static char *rcs_id = "$Source: /isms/cmplrs.src/osprey1.0/crayf90/sgi/RCS/cwh_preg.h,v $ $Revision: 1.8 $";
+static char *rcs_id = "$Source: /cvsroot/open64/open64/osprey1.0/crayf90/sgi/cwh_preg.h,v $ $Revision: 1.1.1.1 $";
 #endif /* _KEEP_RCS_ID */
 
 

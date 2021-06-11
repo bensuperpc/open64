@@ -34,7 +34,7 @@
 */
 
 
-/* $Header: /isms/cmplrs.src/osprey1.0/libF77/RCS/ran_.c,v 8.6 2001/03/10 04:44:25 mtibuild Exp $ */
+/* $Header: /cvsroot/open64/open64/osprey1.0/libF77/ran_.c,v 1.1.1.1 2001/09/10 17:50:04 morrone Exp $ */
 /*
 Uniform random number generator. 
 Linear congruential generator, suitable for 32 bit machines;

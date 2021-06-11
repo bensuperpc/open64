@@ -37,7 +37,7 @@
 /* --------------------------------------------------- */
 /* | All Rights Reserved.                            | */
 /* --------------------------------------------------- */
-/* $Header: /isms/cmplrs.src/osprey1.0/libF77/RCS/d_sign.c,v 7.7 2001/03/10 04:33:39 mtibuild Exp $ */
+/* $Header: /cvsroot/open64/open64/osprey1.0/libF77/d_sign.c,v 1.1.1.1 2001/09/10 17:50:03 morrone Exp $ */
 
 double d_sign(double *a, double *b)
 {

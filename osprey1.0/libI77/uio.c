@@ -34,7 +34,7 @@
 */
 
 
-/* $Header: /isms/cmplrs.src/osprey1.0/libI77/RCS/uio.c,v 9.24 2001/03/10 04:54:41 mtibuild Exp $ */
+/* $Header: /cvsroot/open64/open64/osprey1.0/libI77/uio.c,v 1.1.1.1 2001/09/10 17:50:06 morrone Exp $ */
 /*	3.0 SID #	1.2	*/
 #include <cmplrs/fio.h>
 #include <limits.h>

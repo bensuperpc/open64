@@ -37,10 +37,10 @@
  * ====================================================================
  *
  * Module: ipl_tlog.cxx
- * $Revision: 1.6 $
- * $Date: 2001/03/10 04:08:25 $
- * $Author: mtibuild $
- * $Source: /isms/cmplrs.src/osprey1.0/ipa/local/RCS/ipl_tlog.cxx,v $
+ * $Revision: 1.1.1.1 $
+ * $Date: 2001/09/10 17:50:00 $
+ * $Author: morrone $
+ * $Source: /cvsroot/open64/open64/osprey1.0/ipa/local/ipl_tlog.cxx,v $
  *
  * Description: Defines tlog utilities for IPL, originated from OPT
  *

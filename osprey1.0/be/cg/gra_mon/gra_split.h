@@ -63,10 +63,10 @@
 /////////////////////////////////////
 
 
-//  $Revision: 1.4 $
-//  $Date: 2001/03/10 01:51:11 $
-//  $Author: mtibuild $
-//  $Source: /isms/cmplrs.src/osprey1.0/be/cg/gra_mon/RCS/gra_split.h,v $
+//  $Revision: 1.1.1.1 $
+//  $Date: 2001/09/10 17:47:28 $
+//  $Author: morrone $
+//  $Source: /cvsroot/open64/open64/osprey1.0/be/cg/gra_mon/gra_split.h,v $
 
 
 #ifndef GRA_SPLIT_INCLUDED
@@ -75,7 +75,7 @@
 #ifndef GRA_SPLIT_RCS_ID
 #define GRA_SPLIT_RCS_ID
 #ifdef _KEEP_RCS_ID
-static char *gra_split_rcs_id = "$Source: /isms/cmplrs.src/osprey1.0/be/cg/gra_mon/RCS/gra_split.h,v $ $Revision: 1.4 $";
+static char *gra_split_rcs_id = "$Source: /cvsroot/open64/open64/osprey1.0/be/cg/gra_mon/gra_split.h,v $ $Revision: 1.1.1.1 $";
 #endif
 #endif
 

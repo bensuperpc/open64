@@ -35,7 +35,7 @@
 
 
 static char *source_file = __FILE__;
-static char *rcs_id = "$Source: /isms/cmplrs.src/osprey1.0/common/util/RCS/util.c,v $ $Revision: 2.12 $";
+static char *rcs_id = "$Source: /cvsroot/open64/open64/osprey1.0/common/util/util.c,v $ $Revision: 1.1.1.1 $";
 #include <unistd.h>
 #include <errno.h>
 #include "defs.h"

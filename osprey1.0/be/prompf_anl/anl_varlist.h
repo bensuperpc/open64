@@ -41,10 +41,10 @@
 // ==============================================================
 //
 // Module: anl_varlist.h
-// $Revision: 1.7 $
-// $Date: 2001/03/10 02:52:20 $
-// $Author: mtibuild $
-// $Source: /isms/cmplrs.src/osprey1.0/be/prompf_anl/RCS/anl_varlist.h,v $
+// $Revision: 1.1.1.1 $
+// $Date: 2001/09/10 17:48:06 $
+// $Author: morrone $
+// $Source: /cvsroot/open64/open64/osprey1.0/be/prompf_anl/anl_varlist.h,v $
 //
 // Description:
 //

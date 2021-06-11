@@ -34,7 +34,7 @@
 */
 
 
-/* $Header: /isms/cmplrs.src/osprey1.0/libF77/RCS/s_cmp.c,v 8.7 2001/03/10 04:44:53 mtibuild Exp $ */
+/* $Header: /cvsroot/open64/open64/osprey1.0/libF77/s_cmp.c,v 1.1.1.1 2001/09/10 17:50:04 morrone Exp $ */
 
 /* Craig Hansen - 24-September-86 */
 

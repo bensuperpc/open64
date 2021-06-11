@@ -3,10 +3,10 @@
 // ====================================================================
 //
 // Module: opt_etable.h
-// $Revision: 1.196 $
-// $Date: 2001/03/10 02:42:29 $
-// $Author: mtibuild $
-// $Source: /isms/cmplrs.src/osprey1.0/be/opt/RCS/opt_etable.h,v $
+// $Revision: 1.1.1.1 $
+// $Date: 2001/09/10 17:48:00 $
+// $Author: morrone $
+// $Source: /cvsroot/open64/open64/osprey1.0/be/opt/opt_etable.h,v $
 //
 // ====================================================================
 //

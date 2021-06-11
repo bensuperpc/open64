@@ -37,7 +37,7 @@
 #ifndef FIZ_FUSE_RCS_ID
 #define FIZ_FUSE_RCS_ID
 #ifdef _KEEP_RCS_ID
-static char *fiz_fuse_rcs_id = "$Source: /isms/cmplrs.src/osprey1.0/be/lno/RCS/fiz_fuse.h,v $ $Revision: 1.25 $";
+static char *fiz_fuse_rcs_id = "$Source: /cvsroot/open64/open64/osprey1.0/be/lno/fiz_fuse.h,v $ $Revision: 1.1.1.1 $";
 #endif /* _KEEP_RCS_ID */
 #endif
 

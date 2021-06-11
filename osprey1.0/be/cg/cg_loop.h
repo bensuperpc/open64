@@ -37,10 +37,10 @@
  * =======================================================================
  *
  *  Module: cg_loop.h
- *  $Revision: 1.93 $
- *  $Date: 2001/03/10 01:53:49 $
- *  $Author: mtibuild $
- *  $Source: /isms/cmplrs.src/osprey1.0/be/cg/RCS/cg_loop.h,v $
+ *  $Revision: 1.2 $
+ *  $Date: 2002/02/18 20:45:30 $
+ *  $Author: douillet $
+ *  $Source: /cvsroot/open64/open64/osprey1.0/be/cg/cg_loop.h,v $
  *
  *  Revision comments:
  *
@@ -658,9 +658,14 @@ struct OP_VECTOR {
 
 extern CG_LOOP *Current_CG_LOOP;
 
-extern void Perform_Loop_Optimizations();
+//#ifdef IPFEC
+extern void Perform_Loop_Optimizations(void *rgn_loop_update=NULL);
+extern BOOL CG_LOOP_Optimize(LOOP_DESCR *loop, SWP_FIXUP_VECTOR& fixup, void **, void *);
+//#else
+//extern void Perform_Loop_Optimizations();
+//extern BOOL CG_LOOP_Optimize(LOOP_DESCR *loop, SWP_FIXUP_VECTOR& fixup);
+//#endif
 
-extern BOOL CG_LOOP_Optimize(LOOP_DESCR *loop, SWP_FIXUP_VECTOR& fixup);
 
 extern BOOL Perform_SWP(CG_LOOP& cl, SWP_FIXUP_VECTOR& fixup, bool is_doloop);
 

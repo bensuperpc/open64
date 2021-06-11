@@ -27,7 +27,7 @@
 
 */
 
-/* $Header: /isms/cmplrs.src/osprey1.0/libU77/RCS/abort_.c,v 8.4 2001/02/20 23:39:29 mtibuild Exp $ */
+/* $Header: /cvsroot/open64/open64/osprey1.0/libU77/abort_.c,v 1.1.1.1 2001/09/10 17:50:04 morrone Exp $ */
 #include <stdio.h>
 #include <stdlib.h>
 #ifndef FTN90_IO

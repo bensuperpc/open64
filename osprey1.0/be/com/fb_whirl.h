@@ -38,7 +38,7 @@
 // ====================================================================
 //
 // Module: fb_whirl.h
-// $Source: /isms/cmplrs.src/osprey1.0/be/com/RCS/fb_whirl.h,v $
+// $Source: /cvsroot/open64/open64/osprey1.0/be/com/fb_whirl.h,v $
 //
 // Description:
 //

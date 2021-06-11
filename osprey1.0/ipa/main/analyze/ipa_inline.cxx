@@ -38,7 +38,7 @@
 // ====================================================================
 //
 // Module: ipa_inline.cxx
-// $Source: /isms/cmplrs.src/osprey1.0/ipa/main/analyze/RCS/ipa_inline.cxx,v $
+// $Source: /cvsroot/open64/open64/osprey1.0/ipa/main/analyze/ipa_inline.cxx,v $
 //
 // Revision history:
 //  16-Nov-96 - Original Version

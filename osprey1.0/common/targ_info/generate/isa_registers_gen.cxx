@@ -42,10 +42,10 @@
 //
 /////////////////////////////////////
 //
-//  $Revision: 1.16 $
-//  $Date: 2001/03/10 03:24:48 $
-//  $Author: mtibuild $
-//  $Source: /isms/cmplrs.src/osprey1.0/common/targ_info/generate/RCS/isa_registers_gen.cxx,v $
+//  $Revision: 1.2 $
+//  $Date: 2002/02/18 20:45:33 $
+//  $Author: douillet $
+//  $Source: /cvsroot/open64/open64/osprey1.0/common/targ_info/generate/isa_registers_gen.cxx,v $
 
 
 #include <stddef.h>
@@ -359,6 +359,7 @@ void ISA_Registers_End(void)
   int i;
 
   int max_reg = 0;
+  int first_reg = max_reg;
   for (rc_iter = rclasses.begin(); rc_iter != rclasses.end(); ++rc_iter) {
     ISA_REGISTER_CLASS rclass = *rc_iter;
     int class_max = 0;
@@ -396,6 +397,7 @@ void ISA_Registers_End(void)
   Emit_Header (hfile, filename, interface);
   fprintf(hfile,"#include \"targ_isa_subset.h\"\n");
 
+  fprintf(hfile, "\n#define ISA_REGISTER_FIRST (%d)\n", first_reg);  
   fprintf(hfile, "\n#define ISA_REGISTER_MAX (%d)\n", max_reg);
 
   /**************************************************

@@ -57,7 +57,7 @@ extern "C" {
  * ====================================================================
  *
  * Module: stab.h
- * $Source: /isms/cmplrs.src/osprey1.0/linux/mfef90_includes/RCS/stab.h,v $
+ * $Source: /cvsroot/open64/open64/osprey1.0/linux/mfef90_includes/stab.h,v $
  *
  * Revision history:
  *  11-Feb-89 - Original Version

@@ -84,17 +84,17 @@
 
 /* ====================================================================
  *
- * $Revision: 1.10 $
- * $Date: 2001/03/10 02:30:32 $
- * $Author: mtibuild $
- * $Source: /isms/cmplrs.src/osprey1.0/be/lno/RCS/minvariant.h,v $
+ * $Revision: 1.1.1.1 $
+ * $Date: 2001/09/10 17:47:47 $
+ * $Author: morrone $
+ * $Source: /cvsroot/open64/open64/osprey1.0/be/lno/minvariant.h,v $
  * ====================================================================
  */
 
 #ifndef MINVARIANT_RCS_ID
 #define MINVARIANT_RCS_ID
 #ifdef _KEEP_RCS_ID
-static char *minvariant = "$Source: /isms/cmplrs.src/osprey1.0/be/lno/RCS/minvariant.h,v $ $Revision: 1.10 $";
+static char *minvariant = "$Source: /cvsroot/open64/open64/osprey1.0/be/lno/minvariant.h,v $ $Revision: 1.1.1.1 $";
 #endif
 #endif
 

@@ -30,8 +30,8 @@
 /* --------------------------------------------------- */
 /* | All Rights Reserved.                            | */
 /* --------------------------------------------------- */
-/* $Header: /isms/cmplrs.src/osprey1.0/libU77/RCS/symlnk_.c,v 8.4 2001/02/20 23:40:06 mtibuild Exp $ */
-/* $Header: /isms/cmplrs.src/osprey1.0/libU77/RCS/symlnk_.c,v 8.4 2001/02/20 23:40:06 mtibuild Exp $ */
+/* $Header: /cvsroot/open64/open64/osprey1.0/libU77/symlnk_.c,v 1.1.1.1 2001/09/10 17:50:04 morrone Exp $ */
+/* $Header: /cvsroot/open64/open64/osprey1.0/libU77/symlnk_.c,v 1.1.1.1 2001/09/10 17:50:04 morrone Exp $ */
 /*
 char id_symlnk[] = "@(#)symlnk_.c	1.1";
  *

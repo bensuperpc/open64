@@ -40,10 +40,10 @@
  * Module: ip_graph.h
  * Author: Seema Hiranandani
  *
- * $Revision: 1.17 $
- * $Date: 2001/03/10 04:00:01 $
- * $Author: mtibuild $
- * $Source: /isms/cmplrs.src/osprey1.0/ipa/common/RCS/ip_graph.h,v $
+ * $Revision: 1.1.1.1 $
+ * $Date: 2001/09/10 17:49:59 $
+ * $Author: morrone $
+ * $Source: /cvsroot/open64/open64/osprey1.0/ipa/common/ip_graph.h,v $
  *
  * Revision history:
  *  19-Aug-95 - Original Version

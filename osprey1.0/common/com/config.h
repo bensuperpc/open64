@@ -40,10 +40,10 @@
  * ====================================================================
  *
  * Module: config.h
- * $Revision: 2.214 $
- * $Date: 2001/03/10 03:04:51 $
- * $Author: mtibuild $
- * $Source: /isms/cmplrs.src/osprey1.0/common/com/RCS/config.h,v $
+ * $Revision: 1.2 $
+ * $Date: 2002/02/18 20:45:32 $
+ * $Author: douillet $
+ * $Source: /cvsroot/open64/open64/osprey1.0/common/com/config.h,v $
  *
  * Revision history:
  *  09-Apr-90 - Original Version
@@ -252,7 +252,7 @@
 
 
 #ifdef _KEEP_RCS_ID
-static char *config_rcs_id = "$Source: /isms/cmplrs.src/osprey1.0/common/com/RCS/config.h,v $ $Revision: 2.214 $";
+static char *config_rcs_id = "$Source: /cvsroot/open64/open64/osprey1.0/common/com/config.h,v $ $Revision: 1.2 $";
 #endif /* _KEEP_RCS_ID */
 
 #include "config_host.h"	/* in TARGET/com */
@@ -625,6 +625,7 @@ extern BOOL Isolate_Lines;	/* Don't overlap source	lines */
 extern BOOL Fill_Delay_Slots;	/* Attempt to fill branch delay slots */
 extern BOOL Enable_GDSE;	/* Do global dead store elimination */
 extern BOOL Enable_CG_Peephole;	/* Enable peephole optimization in cgprep */
+extern BOOL Enable_EBO_Post_Proc_Rgn; /* Enable ebo after global scheduling */
 extern BOOL Optimize_CVTL_Exp;	/* Optimize expansion of CVTL operators */
 extern BOOL Enable_CVT_Opt;	/* Optimize expansion of CVT operators */
 extern BOOL Indexed_Loads_Allowed; /* enable generation of indexed loads/stores */

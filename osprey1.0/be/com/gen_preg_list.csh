@@ -35,10 +35,10 @@
 ### =======================================================================
 ### =======================================================================
 ###  Module: gen_preg_list.csh
-###  $Revision: 1.4 $
-###  $Date: 2001/03/10 02:11:16 $
-###  $Author: mtibuild $
-###  $Source: /isms/cmplrs.src/osprey1.0/be/com/RCS/gen_preg_list.csh,v $
+###  $Revision: 1.1.1.1 $
+###  $Date: 2001/09/10 17:47:32 $
+###  $Author: morrone $
+###  $Source: /cvsroot/open64/open64/osprey1.0/be/com/gen_preg_list.csh,v $
 ###  Revision comments:
 ###  31-May-1995 - Initial version
 ###  ============

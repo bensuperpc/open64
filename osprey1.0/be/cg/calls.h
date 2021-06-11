@@ -1,6 +1,6 @@
 /*
 
-  Copyright (C) 2000, 2001 Silicon Graphics, Inc.  All Rights Reserved.
+  Copyright (C) 2000 Silicon Graphics, Inc.  All Rights Reserved.
 
   This program is free software; you can redistribute it and/or modify it
   under the terms of version 2 of the GNU General Public License as
@@ -40,10 +40,10 @@
  * ====================================================================
  *
  * Module: calls.h
- * $Revision: 3.38 $
- * $Date: 2001/03/10 01:52:23 $
- * $Author: mtibuild $
- * $Source: /isms/cmplrs.src/osprey1.0/be/cg/RCS/calls.h,v $
+ * $Revision: 1.2 $
+ * $Date: 2002/02/18 20:45:29 $
+ * $Author: douillet $
+ * $Source: /cvsroot/open64/open64/osprey1.0/be/cg/calls.h,v $
  *
  * Revision history:
  *  03-Oct-91 - Original Version
@@ -129,6 +129,9 @@ extern void Adjust_Entry_Exit_Code ( ST* pu );
 extern void Adjust_GP_Setup_Code ( ST* pu, BOOL allocate_registers );
 extern void Adjust_LC_Setup_Code ( void);
 extern BOOL LC_Used_In_PU;	/* flag whether LC_TN was used */
+
+/* Cycle Count Call */
+extern void Cycle_Count_Initialize ( ST *pu, BOOL is_region );  
 
 /* Tail calls: */
 extern void Optimize_Tail_Calls( ST* pu );

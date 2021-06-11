@@ -3,10 +3,10 @@
 // ====================================================================
 //
 // Module: opt_htable_emit.cxx
-// $Revision: 1.41 $
-// $Date: 2001/03/10 02:43:28 $
-// $Author: mtibuild $
-// $Source: /isms/cmplrs.src/osprey1.0/be/opt/RCS/opt_htable_emit.cxx,v $
+// $Revision: 1.1.1.1 $
+// $Date: 2001/09/10 17:48:01 $
+// $Author: morrone $
+// $Source: /cvsroot/open64/open64/osprey1.0/be/opt/opt_htable_emit.cxx,v $
 //
 // Revision history:
 //  03-OCT-96 shin - Original Version
@@ -59,7 +59,7 @@
 
 #ifdef _KEEP_RCS_ID
 #define opt_htable_emit_CXX	"opt_htable_emit.cxx"
-static char *rcs_id = 	opt_htable_emit_CXX"$Revision: 1.41 $";
+static char *rcs_id = 	opt_htable_emit_CXX"$Revision: 1.1.1.1 $";
 #endif /* _KEEP_RCS_ID */
 
 #include "limits.h"

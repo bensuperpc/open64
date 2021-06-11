@@ -37,10 +37,10 @@
  * =======================================================================
  *
  *  Module: note.c
- *  $Revision: 1.13 $
- *  $Date: 2001/03/10 02:03:59 $
- *  $Author: mtibuild $
- *  $Source: /isms/cmplrs.src/osprey1.0/be/cg/RCS/note.cxx,v $
+ *  $Revision: 1.1.1.1 $
+ *  $Date: 2001/09/10 17:47:26 $
+ *  $Author: morrone $
+ *  $Source: /cvsroot/open64/open64/osprey1.0/be/cg/note.cxx,v $
  *
  *  Revision comments:
  *

@@ -41,10 +41,10 @@ extern "C" {
  * ==============================================================
  *
  * Module: prp_driver.h
- * $Revision: 1.4 $
- * $Date: 2001/03/10 02:52:36 $
- * $Author: mtibuild $
- * $Source: /isms/cmplrs.src/osprey1.0/be/purple2/RCS/prp_driver.h,v $
+ * $Revision: 1.1.1.1 $
+ * $Date: 2001/09/10 17:48:06 $
+ * $Author: morrone $
+ * $Source: /cvsroot/open64/open64/osprey1.0/be/purple2/prp_driver.h,v $
  *
  * Description:
  *

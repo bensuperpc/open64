@@ -39,10 +39,10 @@
  * ====================================================================
  *
  * Module: defs.h
- * $Revision: 2.37 $
- * $Date: 2001/03/10 03:08:57 $
- * $Author: mtibuild $
- * $Source: /isms/cmplrs.src/osprey1.0/common/com/RCS/defs.h,v $
+ * $Revision: 1.1.1.1 $
+ * $Date: 2001/09/10 17:48:12 $
+ * $Author: morrone $
+ * $Source: /cvsroot/open64/open64/osprey1.0/common/com/defs.h,v $
  *
  * Revision history:
  *  21-Aug-89 - Original Version
@@ -60,7 +60,7 @@
  */
 
 #ifdef _KEEP_RCS_ID
-static char *defs_rcs_id = "$Source: /isms/cmplrs.src/osprey1.0/common/com/RCS/defs.h,v $ $Revision: 2.37 $";
+static char *defs_rcs_id = "$Source: /cvsroot/open64/open64/osprey1.0/common/com/defs.h,v $ $Revision: 1.1.1.1 $";
 #endif /* _KEEP_RCS_ID */
 
 #define PROTOTYPES 1

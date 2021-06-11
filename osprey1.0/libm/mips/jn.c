@@ -38,10 +38,10 @@
  * ====================================================================
  *
  * Module: jn.c
- * $Revision: 1.20 $
- * $Date: 2001/03/10 08:56:01 $
- * $Author: mtibuild $
- * $Source: /isms/cmplrs.src/osprey1.0/libm/mips/RCS/jn.c,v $
+ * $Revision: 1.1.1.1 $
+ * $Date: 2001/09/10 17:50:21 $
+ * $Author: morrone $
+ * $Source: /cvsroot/open64/open64/osprey1.0/libm/mips/jn.c,v $
  *
  * Revision history:
  *  28-May-93 - Original Version
@@ -53,7 +53,7 @@
  * ====================================================================
  */
 
-/* $Header: /isms/cmplrs.src/osprey1.0/libm/mips/RCS/jn.c,v 1.20 2001/03/10 08:56:01 mtibuild Exp $ */
+/* $Header: /cvsroot/open64/open64/osprey1.0/libm/mips/jn.c,v 1.1.1.1 2001/09/10 17:50:21 morrone Exp $ */
 
 /****************************  IMPORTANT NOTE  ****************************
  *

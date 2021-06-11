@@ -38,10 +38,10 @@
 // ====================================================================
 //
 // Module: wn_verifier.cxx
-// $Revision: 1.36 $
-// $Date: 2001/03/10 02:18:59 $
-// $Author: mtibuild $
-// $Source: /isms/cmplrs.src/osprey1.0/be/com/RCS/wn_verifier.cxx,v $
+// $Revision: 1.1.1.1 $
+// $Date: 2001/09/10 17:47:36 $
+// $Author: morrone $
+// $Source: /cvsroot/open64/open64/osprey1.0/be/com/wn_verifier.cxx,v $
 //
 // Revision history:
 //  8-20-97 naftulin - Original Version

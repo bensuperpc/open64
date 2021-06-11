@@ -35,15 +35,15 @@
 
 // -*-C++-*-
 
-/** $Revision: 1.15 $
-*** $Date: 2001/03/10 02:28:55 $
-*** $Author: mtibuild $
-*** $Source: /isms/cmplrs.src/osprey1.0/be/lno/RCS/lu_mat.cxx,v $
+/** $Revision: 1.1.1.1 $
+*** $Date: 2001/09/10 17:47:46 $
+*** $Author: morrone $
+*** $Source: /cvsroot/open64/open64/osprey1.0/be/lno/lu_mat.cxx,v $
 **/
 
 #ifndef lu_mat_CXX
 #define lu_mat_CXX      "lu_mat.cxx"
-static char *lu_mat_template_rcs_id =  lu_mat_CXX "$Revision: 1.15 $";
+static char *lu_mat_template_rcs_id =  lu_mat_CXX "$Revision: 1.1.1.1 $";
 #endif
 
 #ifndef lu_mat_INCLUDED

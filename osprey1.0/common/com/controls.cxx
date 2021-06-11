@@ -37,10 +37,10 @@
  * ====================================================================
  *
  * Module: controls.c
- * $Revision: 2.27 $
- * $Date: 2001/03/10 03:08:45 $
- * $Author: mtibuild $
- * $Source: /isms/cmplrs.src/osprey1.0/common/com/RCS/controls.cxx,v $
+ * $Revision: 1.1.1.1 $
+ * $Date: 2001/09/10 17:48:12 $
+ * $Author: morrone $
+ * $Source: /cvsroot/open64/open64/osprey1.0/common/com/controls.cxx,v $
  *
  * Revision history:
  *  12-Sep-90 - Original Version

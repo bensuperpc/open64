@@ -35,7 +35,7 @@
 
 
 static const char source_file[] = __FILE__;
-static const char rcs_id[] = "$Source: /isms/cmplrs.src/osprey1.0/common/targ_info/access/RCS/ti_res_count.c,v $ $Revision: 1.18 $";
+static const char rcs_id[] = "$Source: /cvsroot/open64/open64/osprey1.0/common/targ_info/access/ti_res_count.c,v $ $Revision: 1.1.1.1 $";
 
 #include <stdio.h>
 #include <math.h>	/* for ceil */

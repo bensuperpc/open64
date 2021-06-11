@@ -47,10 +47,10 @@ extern "C" {
  * ====================================================================
  *
  * Module: errors.h
- * $Revision: 2.35 $
- * $Date: 2001/03/10 03:27:44 $
- * $Author: mtibuild $
- * $Source: /isms/cmplrs.src/osprey1.0/common/util/RCS/errors.h,v $
+ * $Revision: 1.1.1.1 $
+ * $Date: 2001/09/10 17:48:25 $
+ * $Author: morrone $
+ * $Source: /cvsroot/open64/open64/osprey1.0/common/util/errors.h,v $
  *
  * Revision history:
  *  21-Aug-89 - Original Version

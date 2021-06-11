@@ -3,10 +3,10 @@
 // ====================================================================
 //
 // Module: init.cxx
-// $Revision: 1.6 $
-// $Date: 2001/03/10 02:38:06 $
-// $Author: mtibuild $
-// $Source: /isms/cmplrs.src/osprey1.0/be/opt/RCS/init.cxx,v $
+// $Revision: 1.1.1.1 $
+// $Date: 2001/09/10 17:47:52 $
+// $Author: morrone $
+// $Source: /cvsroot/open64/open64/osprey1.0/be/opt/init.cxx,v $
 //
 // ====================================================================
 //

@@ -37,8 +37,8 @@
 /*
     lebencodes32.c
 
-    $Revision: 1.7 $  
-    $Date: 2001/03/10 05:11:47 $
+    $Revision: 1.1.1.1 $  
+    $Date: 2001/09/10 17:50:11 $
 */
 
 #ifndef _LP64

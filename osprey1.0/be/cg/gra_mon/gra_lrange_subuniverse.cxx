@@ -33,10 +33,10 @@
 */
 
 /*
- *  $Revision: 1.14 $
- *  $Date: 2001/03/10 01:50:10 $
- *  $Author: mtibuild $
- *  $Source: /isms/cmplrs.src/osprey1.0/be/cg/gra_mon/RCS/gra_lrange_subuniverse.cxx,v $
+ *  $Revision: 1.1.1.1 $
+ *  $Date: 2001/09/10 17:47:28 $
+ *  $Author: morrone $
+ *  $Source: /cvsroot/open64/open64/osprey1.0/be/cg/gra_mon/gra_lrange_subuniverse.cxx,v $
  */
 
 #ifdef USE_PCH
@@ -45,7 +45,7 @@
 #pragma hdrstop
 
 #ifdef _KEEP_RCS_ID
-static char *rcs_id = "$Source: /isms/cmplrs.src/osprey1.0/be/cg/gra_mon/RCS/gra_lrange_subuniverse.cxx,v $ $Revision: 1.14 $";
+static char *rcs_id = "$Source: /cvsroot/open64/open64/osprey1.0/be/cg/gra_mon/gra_lrange_subuniverse.cxx,v $ $Revision: 1.1.1.1 $";
 #endif
 
 #include "defs.h"

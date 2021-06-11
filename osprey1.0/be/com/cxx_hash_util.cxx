@@ -38,10 +38,10 @@
 // ====================================================================
 //
 // Module: cxx_hash_util.cxx
-// $Revision: 1.6 $
-// $Date: 2001/03/10 02:09:25 $
-// $Author: mtibuild $
-// $Source: /isms/cmplrs.src/osprey1.0/be/com/RCS/cxx_hash_util.cxx,v $
+// $Revision: 1.1.1.1 $
+// $Date: 2001/09/10 17:47:31 $
+// $Author: morrone $
+// $Source: /cvsroot/open64/open64/osprey1.0/be/com/cxx_hash_util.cxx,v $
 //
 // Revision history:
 //  07-Dec-95 - Merged user-hash version from IPA
@@ -56,7 +56,7 @@
 
 #ifdef _KEEP_RCS_ID
 #define cxx_hash_util_CXX      "cxx_hash_util.cxx"
-static char *rcs_id = cxx_hash_util_CXX" $Revision: 1.6 $";
+static char *rcs_id = cxx_hash_util_CXX" $Revision: 1.1.1.1 $";
 #endif /* _KEEP_RCS_ID */
 
 #include "defs.h"

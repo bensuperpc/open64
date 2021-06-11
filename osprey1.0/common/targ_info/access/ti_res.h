@@ -37,10 +37,10 @@
  * ====================================================================
  *
  *  Module: ti_res.h
- *  $Revision: 1.7 $
- *  $Date: 2001/03/10 03:21:53 $
- *  $Author: mtibuild $
- *  $Source: /isms/cmplrs.src/osprey1.0/common/targ_info/access/RCS/ti_res.h,v $
+ *  $Revision: 1.1.1.1 $
+ *  $Date: 2001/09/10 17:48:23 $
+ *  $Author: morrone $
+ *  $Source: /cvsroot/open64/open64/osprey1.0/common/targ_info/access/ti_res.h,v $
  *
  *  Synopsis:
  *
@@ -80,7 +80,7 @@ extern "C" {
 #endif
 
 #ifdef _KEEP_RCS_ID
-static const char ti_res_rcs_id[] = "$Source: /isms/cmplrs.src/osprey1.0/common/targ_info/access/RCS/ti_res.h,v $ $Revision: 1.7 $";
+static const char ti_res_rcs_id[] = "$Source: /cvsroot/open64/open64/osprey1.0/common/targ_info/access/ti_res.h,v $ $Revision: 1.1.1.1 $";
 #endif /* _KEEP_RCS_ID */
 
 inline INT TI_RES_Cycle_Count(TOP opcode)

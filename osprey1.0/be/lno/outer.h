@@ -37,7 +37,7 @@
 #ifndef OUTER_RCS_ID
 #define OUTER_RCS_ID
 #ifdef _KEEP_RCS_ID
-static char *outer_rcs_id = "$Source: /isms/cmplrs.src/osprey1.0/be/lno/RCS/outer.h,v $ $Revision: 1.5 $";
+static char *outer_rcs_id = "$Source: /cvsroot/open64/open64/osprey1.0/be/lno/outer.h,v $ $Revision: 1.1.1.1 $";
 #endif /* _KEEP_RCS_ID */
 #endif
 

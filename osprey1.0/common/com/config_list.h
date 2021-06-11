@@ -37,10 +37,10 @@
  * ====================================================================
  *
  * Module: config_list.h
- * $Revision: 1.8 $
- * $Date: 2001/03/10 03:07:06 $
- * $Author: mtibuild $
- * $Source: /isms/cmplrs.src/osprey1.0/common/com/RCS/config_list.h,v $
+ * $Revision: 1.1.1.1 $
+ * $Date: 2001/09/10 17:48:11 $
+ * $Author: morrone $
+ * $Source: /cvsroot/open64/open64/osprey1.0/common/com/config_list.h,v $
  *
  * Revision history:
  *  18-Mar-97 - Original Version
@@ -58,7 +58,7 @@
 
 #ifdef _KEEP_RCS_ID
 /*REFERENCED*/
-static char *config_list_h_rcs_id = "$Source: /isms/cmplrs.src/osprey1.0/common/com/RCS/config_list.h,v $ $Revision: 1.8 $";
+static char *config_list_h_rcs_id = "$Source: /cvsroot/open64/open64/osprey1.0/common/com/config_list.h,v $ $Revision: 1.1.1.1 $";
 #endif /* _KEEP_RCS_ID */
 
 

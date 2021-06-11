@@ -37,10 +37,10 @@
  * ====================================================================
  *
  * Module: phase.h
- * $Revision: 1.8 $
- * $Date: 2001/03/10 02:14:59 $
- * $Author: mtibuild $
- * $Source: /isms/cmplrs.src/osprey1.0/be/com/RCS/phase.h,v $
+ * $Revision: 1.1.1.1 $
+ * $Date: 2001/09/10 17:47:33 $
+ * $Author: morrone $
+ * $Source: /cvsroot/open64/open64/osprey1.0/be/com/phase.h,v $
  *
  * Revision history:
  *  17-Feb-95 - Original Version

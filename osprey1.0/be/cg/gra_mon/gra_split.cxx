@@ -1,6 +1,6 @@
 /*
 
-  Copyright (C) 2000, 2001 Silicon Graphics, Inc.  All Rights Reserved.
+  Copyright (C) 2000 Silicon Graphics, Inc.  All Rights Reserved.
 
   This program is free software; you can redistribute it and/or modify it
   under the terms of version 2 of the GNU General Public License as
@@ -81,14 +81,14 @@
 /////////////////////////////////////
 
 
-//  $Revision: 1.69 $
-//  $Date: 2001/03/10 01:51:05 $
-//  $Author: mtibuild $
-//  $Source: /isms/cmplrs.src/osprey1.0/be/cg/gra_mon/RCS/gra_split.cxx,v $
+//  $Revision: 1.2 $
+//  $Date: 2002/02/18 20:45:30 $
+//  $Author: douillet $
+//  $Source: /cvsroot/open64/open64/osprey1.0/be/cg/gra_mon/gra_split.cxx,v $
 
 
 #ifdef _KEEP_RCS_ID
-static char *rcs_id = "$Source: /isms/cmplrs.src/osprey1.0/be/cg/gra_mon/RCS/gra_split.cxx,v $ $Revision: 1.69 $";
+static char *rcs_id = "$Source: /cvsroot/open64/open64/osprey1.0/be/cg/gra_mon/gra_split.cxx,v $ $Revision: 1.2 $";
 #endif
 
 #ifdef USE_PCH
@@ -129,7 +129,7 @@ TYPE_PRQ(GRA_BB,GBBPRQ)
 #ifdef HAS_STACKED_REGISTERS
 extern REGISTER_SET stacked_caller_used;// from register_targ.cxx
 #endif
-
+extern BOOL fat_self_recursive;
 BOOL GRA_split_lranges = TRUE;
 INT GRA_non_split_tn_id = -1;
 
@@ -1763,7 +1763,8 @@ LRANGE_Do_Split( LRANGE* lrange, LRANGE_CLIST_ITER* iter,
 
   if (lrange->Spans_A_Setjmp()) // TODO: do not give up splitting
     return FALSE;
-
+  
+  if (fat_self_recursive) return FALSE;
   GRA_Trace_Color_LRANGE("Splitting",lrange);
 
   gbb_mgr.Begin_Split();

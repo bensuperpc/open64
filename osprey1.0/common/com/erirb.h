@@ -42,10 +42,10 @@ extern "C" {
  * ====================================================================
  *
  * Module: erirb.h
- * $Revision: 2.14 $
- * $Date: 2001/03/10 03:10:53 $
- * $Author: mtibuild $
- * $Source: /isms/cmplrs.src/osprey1.0/common/com/RCS/erirb.h,v $
+ * $Revision: 1.1.1.1 $
+ * $Date: 2001/09/10 17:48:16 $
+ * $Author: morrone $
+ * $Source: /cvsroot/open64/open64/osprey1.0/common/com/erirb.h,v $
  *
  * Revision history:
  *  23-Jun-89 - Original Version
@@ -61,7 +61,7 @@ extern "C" {
 
 
 #ifdef _KEEP_RCS_ID
-static char *erirb_rcs_id = "$Source: /isms/cmplrs.src/osprey1.0/common/com/RCS/erirb.h,v $ $Revision: 2.14 $";
+static char *erirb_rcs_id = "$Source: /cvsroot/open64/open64/osprey1.0/common/com/erirb.h,v $ $Revision: 1.1.1.1 $";
 #endif /* _KEEP_RCS_ID */
 
 /* Include errors.h for the benefit of any users: */

@@ -37,10 +37,10 @@
  * ====================================================================
  *
  * Module: c_a_to_q
- * $Revision: 1.6 $
- * $Date: 2001/03/10 03:26:20 $
- * $Author: mtibuild $
- * $Source: /isms/cmplrs.src/osprey1.0/common/util/RCS/c_a_to_q.c,v $
+ * $Revision: 1.1.1.1 $
+ * $Date: 2001/09/10 17:48:24 $
+ * $Author: morrone $
+ * $Source: /cvsroot/open64/open64/osprey1.0/common/util/c_a_to_q.c,v $
  *
  * Revision history:
  *  28-jun-93 - Original Version
@@ -52,7 +52,7 @@
  */
 
 static char *source_file = __FILE__;
-static char *rcs_id = "$Source: /isms/cmplrs.src/osprey1.0/common/util/RCS/c_a_to_q.c,v $ $Revision: 1.6 $";
+static char *rcs_id = "$Source: /cvsroot/open64/open64/osprey1.0/common/util/c_a_to_q.c,v $ $Revision: 1.1.1.1 $";
 
 /* Macros to pull apart parts of single and  double precision
  * floating point numbers in IEEE format

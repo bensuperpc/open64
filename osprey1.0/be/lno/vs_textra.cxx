@@ -40,10 +40,10 @@
 *** not adequate.  Thus 'textra' => 'template extra'.
 **/
 
-/** $Revision: 1.11 $
-*** $Date: 2001/03/10 02:37:29 $
-*** $Author: mtibuild $
-*** $Source: /isms/cmplrs.src/osprey1.0/be/lno/RCS/vs_textra.cxx,v $
+/** $Revision: 1.1.1.1 $
+*** $Date: 2001/09/10 17:47:52 $
+*** $Author: morrone $
+*** $Source: /cvsroot/open64/open64/osprey1.0/be/lno/vs_textra.cxx,v $
 **/
 
 #ifdef USE_PCH
@@ -52,7 +52,7 @@
 #pragma hdrstop
 
 #define vs_textra_CXX      "vs_textra.cxx"
-static char *rcs_id =   vs_textra_CXX "$Revision: 1.11 $";
+static char *rcs_id =   vs_textra_CXX "$Revision: 1.1.1.1 $";
 
 
 #include <sys/types.h>

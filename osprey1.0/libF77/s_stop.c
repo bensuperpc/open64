@@ -34,7 +34,7 @@
 */
 
 
-/* $Header: /isms/cmplrs.src/osprey1.0/libF77/RCS/s_stop.c,v 8.13 2001/03/10 04:45:32 mtibuild Exp $ */
+/* $Header: /cvsroot/open64/open64/osprey1.0/libF77/s_stop.c,v 1.1.1.1 2001/09/10 17:50:04 morrone Exp $ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

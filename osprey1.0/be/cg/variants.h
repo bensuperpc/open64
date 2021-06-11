@@ -40,10 +40,10 @@
  * ====================================================================
  *
  * Module: variants.h
- * $Revision: 1.34 $
- * $Date: 2001/03/10 02:06:01 $
- * $Author: mtibuild $
- * $Source: /isms/cmplrs.src/osprey1.0/be/cg/RCS/variants.h,v $
+ * $Revision: 1.2 $
+ * $Date: 2002/02/18 20:45:30 $
+ * $Author: douillet $
+ * $Source: /cvsroot/open64/open64/osprey1.0/be/cg/variants.h,v $
  *
  * Revision history:
  *  01-Nov-89 - Original Version (STAPUFT GE/PE)
@@ -60,7 +60,7 @@
  */
 
 #ifdef _KEEP_RCS_ID
-static const char variants_rcs_id[] = "$Source: /isms/cmplrs.src/osprey1.0/be/cg/RCS/variants.h,v $ $Revision: 1.34 $";
+static const char variants_rcs_id[] = "$Source: /cvsroot/open64/open64/osprey1.0/be/cg/variants.h,v $ $Revision: 1.2 $";
 #endif /* _KEEP_RCS_ID */
 
 /* Type used to hold a variant:
@@ -249,7 +249,7 @@ extern const char *BR_Variant_Name(VARIANT variant);
 /* Prefetch flags: The prefetch flags, if any, for a memory OP are
  * stored in the V_PF_FLAGS field.
  */
-#define V_PF_FLAGS		0xffffffff00000000 /* Prefetch flags */
+#define V_PF_FLAGS		0xffffffff00000000ULL /* Prefetch flags */
 
 #define V_pf_flags(v)			((UINT32)(((v) & V_PF_FLAGS) >> 32))
 #define Set_V_pf_flags(v,f)		((v) = ((v) & ~V_PF_FLAGS) | ((VARIANT)(f) << 32))

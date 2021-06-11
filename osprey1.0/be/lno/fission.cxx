@@ -42,7 +42,7 @@
 
 #ifdef _KEEP_RCS_ID
 /*REFERENCED*/
-static char *rcs_id = "$Source: /isms/cmplrs.src/osprey1.0/be/lno/RCS/fission.cxx,v $ $Revision: 1.99 $";
+static char *rcs_id = "$Source: /cvsroot/open64/open64/osprey1.0/be/lno/fission.cxx,v $ $Revision: 1.1.1.1 $";
 #endif /* _KEEP_RCS_ID */
 
 #include <sys/types.h>

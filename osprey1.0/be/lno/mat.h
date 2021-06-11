@@ -247,17 +247,17 @@
 ***	    Return the current default mem pool.
 **/
 
-/** $Revision: 1.17 $
-*** $Date: 2001/03/10 02:30:12 $
-*** $Author: mtibuild $
-*** $Source: /isms/cmplrs.src/osprey1.0/be/lno/RCS/mat.h,v $
+/** $Revision: 1.1.1.1 $
+*** $Date: 2001/09/10 17:47:47 $
+*** $Author: morrone $
+*** $Source: /cvsroot/open64/open64/osprey1.0/be/lno/mat.h,v $
 **/
 
 #ifndef mat_INCLUDED
 #define mat_INCLUDED "mat.h"
 
 #ifdef _KEEP_RCS_ID
-static char *mat_rcs_id = mat_INCLUDED "$Revision: 1.17 $";
+static char *mat_rcs_id = mat_INCLUDED "$Revision: 1.1.1.1 $";
 #endif /* _KEEP_RCS_ID */
 
 // system  headers

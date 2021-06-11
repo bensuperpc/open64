@@ -43,10 +43,10 @@ extern "C" {
  * ====================================================================
  *
  * Module: glob.h
- * $Revision: 2.28 $
- * $Date: 2001/03/10 03:12:24 $
- * $Author: mtibuild $
- * $Source: /isms/cmplrs.src/osprey1.0/common/com/RCS/glob.h,v $
+ * $Revision: 1.2 $
+ * $Date: 2002/02/18 20:45:32 $
+ * $Author: douillet $
+ * $Source: /cvsroot/open64/open64/osprey1.0/common/com/glob.h,v $
  *
  * Revision history:
  *  15-Sep-89 - Original Version
@@ -107,6 +107,14 @@ typedef enum {
 } PU_KIND;
 extern PU_KIND Cur_PU_Kind;
 
+/* the var used to create output.h */
+extern int pu_number;
+extern int bb_number;
+extern char *Output_h_File_Name;      /* Cycle_Counting Output.h file */
+extern FILE *Output_h_File;           /* Cycle counting output.h file */
+extern char * pu_string[1000]; 
+extern char * bb_string[1000]; 
+
 /* Current file names: */
 extern char *Src_File_Name;	/* Source file */
 extern char *Orig_Src_File_Name; /* Original source file passed to driver */
@@ -120,6 +128,7 @@ extern char *IR_File_Name;	/* SGIR intermediate file */
 extern char *Ipa_File_Name;	/* IPA file */
 extern char *Asm_File_Name;	/* Assembly file */
 extern char *Obj_File_Name;	/* Relocatable object file */
+extern char *Instrumentation_File_Name; /* instrumentation file */
 extern char *Feedback_File_Name;/* feedback file produced from prof */
 #ifndef MONGOOSE_BE
 extern char *Lib_File_Name;	/* Program library file */
@@ -155,6 +164,7 @@ extern INT32 Num_Source_Files;
 extern BOOL Assembly;		/* Assembly code */
 extern BOOL Object_Code;	/* Object code */
 extern BOOL Symbol_Table_Out;	/* Symbol table output (list or trace) */
+extern BOOL Create_Cycle_Output; /* added by cbq */ 
 extern BOOL Show_Progress;	/* Report progress to stdout */
 
 /* Clean up files after failure: */

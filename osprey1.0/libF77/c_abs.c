@@ -34,7 +34,7 @@
 */
 
 
-/*  $Header: /isms/cmplrs.src/osprey1.0/libF77/RCS/c_abs.c,v 8.12 2001/03/10 04:29:22 mtibuild Exp $ */
+/*  $Header: /cvsroot/open64/open64/osprey1.0/libF77/c_abs.c,v 1.1.1.1 2001/09/10 17:50:03 morrone Exp $ */
 #include <math.h>
 #include "moremath.h"
 #include "cmplx.h"
