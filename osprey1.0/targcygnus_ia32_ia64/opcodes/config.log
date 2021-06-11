@@ -1,0 +1,99 @@
+This file contains any messages produced by compilers while
+running configure, to aid debugging if configure makes a mistake.
+
+configure:609: checking host system type
+configure:630: checking target system type
+configure:648: checking build system type
+configure:673: checking for gcc
+configure:786: checking whether the C compiler (gcc  -g -O2 -D__MIPS_AND_IA64_ELF_H -I/usr/sgi/include/ -L/usr/sgi/lib64 ) works
+configure:802: gcc -o conftest  -g -O2 -D__MIPS_AND_IA64_ELF_H -I/usr/sgi/include/ -L/usr/sgi/lib64   conftest.c  1>&5
+configure:828: checking whether the C compiler (gcc  -g -O2 -D__MIPS_AND_IA64_ELF_H -I/usr/sgi/include/ -L/usr/sgi/lib64 ) is a cross-compiler
+configure:833: checking whether we are using GNU C
+configure:861: checking whether gcc accepts -g
+configure:893: checking for POSIXized ISC
+configure:931: checking for a BSD compatible install
+configure:984: checking whether build environment is sane
+configure:1041: checking whether make sets ${MAKE}
+configure:1087: checking for working aclocal
+configure:1100: checking for working autoconf
+configure:1113: checking for working automake
+configure:1126: checking for working autoheader
+configure:1139: checking for working makeinfo
+configure:1162: checking for ar
+configure:1194: checking for ranlib
+configure:1332: checking for ranlib
+configure:1371: checking for ld used by GCC
+configure:1433: checking if the linker (/usr/bin/ld) is GNU ld
+configure:1449: checking for BSD-compatible nm
+configure:1485: checking whether ln -s works
+ltconfig:603: checking for object suffix
+ltconfig:604: gcc -c  -g -O2 -D__MIPS_AND_IA64_ELF_H -I/usr/sgi/include/ -L/usr/sgi/lib64  conftest.c 1>&5
+ltconfig:776: checking if gcc PIC flag -fPIC works
+ltconfig:777: gcc -c  -g -O2 -D__MIPS_AND_IA64_ELF_H -I/usr/sgi/include/ -L/usr/sgi/lib64 -fPIC -DPIC  conftest.c 1>&5
+ltconfig:829: checking if gcc supports -c -o file.o
+ltconfig:830: gcc -c  -g -O2 -D__MIPS_AND_IA64_ELF_H -I/usr/sgi/include/ -L/usr/sgi/lib64 -o out/conftest2.o  conftest.c 1>&5
+ltconfig:862: checking if gcc supports -c -o file.lo
+ltconfig:863: gcc -c  -g -O2 -D__MIPS_AND_IA64_ELF_H -I/usr/sgi/include/ -L/usr/sgi/lib64 -c -o conftest.lo  conftest.c 1>&5
+ltconfig:914: checking if gcc supports -fno-rtti -fno-exceptions
+ltconfig:915: gcc -c  -g -O2 -D__MIPS_AND_IA64_ELF_H -I/usr/sgi/include/ -L/usr/sgi/lib64 -fno-rtti -fno-exceptions -c conftest.c  conftest.c 1>&5
+ltconfig:958: checking if gcc static flag -static works
+ltconfig:959: gcc -o conftest  -g -O2 -D__MIPS_AND_IA64_ELF_H -I/usr/sgi/include/ -L/usr/sgi/lib64   -static conftest.c  1>&5
+GNU ld version 2.11.92.0.12.3 20011121 Debian/GNU Linux
+ltconfig:1635: checking if global_symbol_pipe works
+ltconfig:1636: gcc -c  -g -O2 -D__MIPS_AND_IA64_ELF_H -I/usr/sgi/include/ -L/usr/sgi/lib64  conftest.c 1>&5
+ltconfig:1639: eval "/usr/bin/nm -B conftest.o | sed -n -e 's/^.*[ 	]\([ABCDGISTW]\)[ 	][ 	]*\(\)\([_A-Za-z][_A-Za-z0-9]*\)$/\1 \2\3 \3/p' > conftest.nm"
+ltconfig:1691: gcc -o conftest  -g -O2 -D__MIPS_AND_IA64_ELF_H -I/usr/sgi/include/ -L/usr/sgi/lib64 -fno-builtin -fno-rtti -fno-exceptions   conftest.c conftstm.o 1>&5
+configure:1736: checking whether to enable maintainer-specific portions of Makefiles
+configure:1759: checking for Cygwin environment
+configure:1792: checking for mingw32 environment
+configure:1823: checking for executable suffix
+configure:1859: checking for gcc
+configure:1972: checking whether the C compiler (gcc  -g -O2 -D__MIPS_AND_IA64_ELF_H -I/usr/sgi/include/ -L/usr/sgi/lib64 ) works
+configure:1988: gcc -o conftest  -g -O2 -D__MIPS_AND_IA64_ELF_H -I/usr/sgi/include/ -L/usr/sgi/lib64   conftest.c  1>&5
+configure:2014: checking whether the C compiler (gcc  -g -O2 -D__MIPS_AND_IA64_ELF_H -I/usr/sgi/include/ -L/usr/sgi/lib64 ) is a cross-compiler
+configure:2019: checking whether we are using GNU C
+configure:2047: checking whether gcc accepts -g
+configure:2081: checking how to run the C preprocessor
+configure:2161: checking for ANSI C header files
+configure:2265: checking for working const
+configure:2340: checking for inline
+configure:2380: checking for off_t
+configure:2413: checking for size_t
+configure:2448: checking for working alloca.h
+configure:2481: checking for alloca
+configure:2683: checking for unistd.h
+configure:2722: checking for getpagesize
+configure:2775: checking for working mmap
+configure:2951: checking for argz.h
+configure:2951: checking for limits.h
+configure:2951: checking for locale.h
+configure:2951: checking for nl_types.h
+configure:2951: checking for malloc.h
+configure:2951: checking for string.h
+configure:2951: checking for unistd.h
+configure:2951: checking for values.h
+configure:2951: checking for sys/param.h
+configure:2991: checking for getcwd
+configure:2991: checking for munmap
+configure:2991: checking for putenv
+configure:2991: checking for setenv
+configure:2991: checking for setlocale
+configure:2991: checking for strchr
+configure:2991: checking for strcasecmp
+configure:2991: checking for __argz_count
+configure:2991: checking for __argz_stringify
+configure:2991: checking for __argz_next
+configure:3110: checking for LC_MESSAGES
+configure:3143: checking whether NLS is requested
+configure:3163: checking whether included gettext is requested
+configure:3182: checking for libintl.h
+configure:3209: checking for gettext in libc
+configure:3312: checking for msgfmt
+configure:3346: checking for dcgettext
+configure:3401: checking for gmsgfmt
+configure:3437: checking for xgettext
+configure:3477: gcc -o conftest  -g -O2 -D__MIPS_AND_IA64_ELF_H -I/usr/sgi/include/ -L/usr/sgi/lib64   conftest.c  1>&5
+configure:3784: checking for a BSD compatible install
+configure:3841: checking for string.h
+configure:3841: checking for strings.h
+configure:3841: checking for stdlib.h

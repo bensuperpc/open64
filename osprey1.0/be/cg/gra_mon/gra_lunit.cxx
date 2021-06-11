@@ -1,6 +1,6 @@
 /*
 
-  Copyright (C) 2000, 2001 Silicon Graphics, Inc.  All Rights Reserved.
+  Copyright (C) 2000 Silicon Graphics, Inc.  All Rights Reserved.
 
   This program is free software; you can redistribute it and/or modify it
   under the terms of version 2 of the GNU General Public License as
@@ -34,9 +34,9 @@
 
 // LUNIT implemetation
 
-//  $Revision: 1.1.1.1 $
-//  $Date: 2001/09/10 17:47:28 $
-//  $Author: morrone $
+//  $Revision: 1.2 $
+//  $Date: 2002/10/13 21:35:15 $
+//  $Author: douillet $
 //  $Source: /cvsroot/open64/open64/osprey1.0/be/cg/gra_mon/gra_lunit.cxx,v $
 
 #ifdef USE_PCH
@@ -45,7 +45,7 @@
 #pragma hdrstop
 
 #ifdef _KEEP_RCS_ID
-static char *rcs_id = "$Source: /cvsroot/open64/open64/osprey1.0/be/cg/gra_mon/gra_lunit.cxx,v $ $Revision: 1.1.1.1 $";
+static char *rcs_id = "$Source: /cvsroot/open64/open64/osprey1.0/be/cg/gra_mon/gra_lunit.cxx,v $ $Revision: 1.2 $";
 #endif
 
 #include "defs.h"
@@ -77,6 +77,7 @@ LUNIT_Create( LRANGE* lrange, GRA_BB* gbb )
   result->def_count = 0;
   result->last_def = -1;
   result->global_pref = NULL;
+  result->has_use = FALSE;
   gbb->Add_LUNIT(result);
   lrange->Add_LUNIT(result);
   return result;

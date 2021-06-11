@@ -38,8 +38,8 @@
  * =======================================================================
  *
  *  Module: cg_loop.cxx
- *  $Revision: 1.2 $
- *  $Date: 2002/02/18 20:45:30 $
+ *  $Revision: 1.3 $
+ *  $Date: 2002/10/13 21:35:14 $
  *  $Author: douillet $
  *  $Source: /cvsroot/open64/open64/osprey1.0/be/cg/cg_loop.cxx,v $
  *
@@ -4787,6 +4787,29 @@ void CG_LOOP::Determine_SWP_Unroll_Factor()
       if (swp_cycles[i] < (swp_cycles[unroll_times] * (1.0 - (i - unroll_times) * 0.01)))
 	unroll_times = i;
     }
+  }
+
+  TN *trip_count_tn = CG_LOOP_Trip_Count(loop);
+  if (TN_is_constant(trip_count_tn)) {
+  	if (swp_trace) 
+    	fprintf(TFile, "trip_count is constant, so need not change unroll_times to 2^^n\n");
+  }
+  else{
+	  int computed;
+	  computed = unroll_times;
+	  unroll_times=1;
+	  while (unroll_times < computed || unroll_times < min_unr){
+		  unroll_times *= 2;
+	  }
+	  if ((unroll_times-computed > computed-unroll_times/2) || unroll_times>max_unr ){
+		  unroll_times /= 2;
+	  }
+	  if (unroll_times < min_unr){
+		  unroll_times = min_unr;
+	  }
+	  if (swp_trace) {
+		fprintf(TFile, "<swp unroll factor> : old heuristic computed(%d) => changeto(%d)\n", computed, unroll_times);
+	  }
   }
 
   if (swp_trace) 

@@ -3,9 +3,9 @@
 // ====================================================================
 //
 // Module: opt_u64_lower.cxx
-// $Revision: 1.1.1.1 $
-// $Date: 2001/09/10 17:48:04 $
-// $Author: morrone $
+// $Revision: 1.2 $
+// $Date: 2002/10/13 21:35:18 $
+// $Author: douillet $
 // $Source: /cvsroot/open64/open64/osprey1.0/be/opt/opt_u64_lower.cxx,v $
 //
 // ====================================================================
@@ -222,6 +222,10 @@ U64_LOWER_form_node(CODEREP *cr, CODEREP *old_cr) {
         changed = TRUE;
     break;
   case CK_OP:
+    if ((cr->Dtyp() != old_cr->Dtyp()) || (cr->Dsctyp() != old_cr->Dsctyp())) {
+        changed = TRUE;
+	break;
+    }
     for (INT i = 0; i < old_cr->Kid_count(); i++)
       if (cr->Opnd(i) != old_cr->Opnd(i)) {
         changed = TRUE;
@@ -232,11 +236,6 @@ U64_LOWER_form_node(CODEREP *cr, CODEREP *old_cr) {
   if (changed) {
     old_cr->DecUsecnt();
     return htable->Rehash(cr); 
-  }
-  if (old_cr->Kind() == CK_OP) {
-    // update fields other than the kid pointers from cr back to old_cr
-    old_cr->Set_dtyp(cr->Dtyp());
-    old_cr->Set_dsctyp(cr->Dsctyp());
   }
   return old_cr;
 }

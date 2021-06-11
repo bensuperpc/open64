@@ -43,8 +43,8 @@ extern "C" {
  * ====================================================================
  *
  * Module: timing.h
- * $Revision: 1.2 $
- * $Date: 2002/02/18 20:45:31 $
+ * $Revision: 1.3 $
+ * $Date: 2002/10/13 21:35:17 $
  * $Author: douillet $
  * $Source: /cvsroot/open64/open64/osprey1.0/be/com/timing.h,v $
  *
@@ -64,7 +64,7 @@ extern "C" {
 
 
 #ifdef _KEEP_RCS_ID
-static char *timing_rcs_id = "$Source: /cvsroot/open64/open64/osprey1.0/be/com/timing.h,v $ $Revision: 1.2 $";
+static char *timing_rcs_id = "$Source: /cvsroot/open64/open64/osprey1.0/be/com/timing.h,v $ $Revision: 1.3 $";
 #endif /* _KEEP_RCS_ID */
 
 /* Provide identifiers for the various time accumulators supplied: */
@@ -156,7 +156,14 @@ typedef enum {
 	T_Ipfec_LOCS_Comp,
 	T_Ipfec_Speculation_CU,	/* Ipfec Speculation */
 	T_Ipfec_Speculation_Comp,
-	
+	T_Ipfec_Multi_Branch_CU,	/* Ipfec Multiple branch */
+	T_Ipfec_Multi_Branch_Comp,
+
+#ifdef SPECMT_LT
+        T_SPECMT_BG,
+        T_SPECMT_PA,
+#endif
+		
 	T_LAST			/* Last index defined */
 } TIMER_ID;
 

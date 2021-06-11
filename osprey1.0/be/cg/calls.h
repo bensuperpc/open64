@@ -40,8 +40,8 @@
  * ====================================================================
  *
  * Module: calls.h
- * $Revision: 1.2 $
- * $Date: 2002/02/18 20:45:29 $
+ * $Revision: 1.3 $
+ * $Date: 2002/10/13 21:35:14 $
  * $Author: douillet $
  * $Source: /cvsroot/open64/open64/osprey1.0/be/cg/calls.h,v $
  *
@@ -132,6 +132,9 @@ extern BOOL LC_Used_In_PU;	/* flag whether LC_TN was used */
 
 /* Cycle Count Call */
 extern void Cycle_Count_Initialize ( ST *pu, BOOL is_region );  
+
+/* Instrument code to call _mcount */
+extern void Instru_Call_Mcount(void );
 
 /* Tail calls: */
 extern void Optimize_Tail_Calls( ST* pu );

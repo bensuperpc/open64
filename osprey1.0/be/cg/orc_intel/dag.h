@@ -30,7 +30,7 @@
 //*********************************************************************
 //
 // Module: dag.h
-// $Date: 2002/02/18 20:45:31 $
+// $Date: 2002/10/13 21:35:16 $
 // $Author: douillet $
 // $Source: /cvsroot/open64/open64/osprey1.0/be/cg/orc_intel/dag.h,v $
 //
@@ -212,6 +212,9 @@ private:
     void Build_Misc_Arcs    (OP* op);
     void Build_Branch_Arcs  (OP* op, BOOL include_latency);
   
+    /* misc */
+    INT16 Find_Ancestor_BB (BB * bb, BB_VECTOR * bbv) ;
+
 public:
 
     /* Constructors and Destructors.

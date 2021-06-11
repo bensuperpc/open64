@@ -27,7 +27,7 @@
 
 //*********************************************************
 // Module: reg_gen.h 
-// $Date: 2002/02/18 20:45:32 $
+// $Date: 2002/10/13 21:35:19 $
 // $Author: douillet $
 // $Source: /cvsroot/open64/open64/osprey1.0/common/ipfec_targ_info/gen/reg_gen.h,v $
 //

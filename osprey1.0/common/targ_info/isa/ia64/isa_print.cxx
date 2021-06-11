@@ -53,9 +53,9 @@
 // as shown in the ISA manual
 /////////////////////////////////////
 //
-//  $Revision: 1.1.1.1 $
-//  $Date: 2001/09/10 17:48:24 $
-//  $Author: morrone $
+//  $Revision: 1.2 $
+//  $Date: 2002/10/13 21:35:20 $
+//  $Author: douillet $
 //  $Source: /cvsroot/open64/open64/osprey1.0/common/targ_info/isa/ia64/isa_print.cxx,v $
 
 #include <stddef.h>
@@ -103,8 +103,8 @@ main()
 
   Define_Macro("END_GROUP", ";;");		// end-of-group marker
   Define_Macro("PREDICATE", "(%s)");		// predicate operand format
-  Define_Macro("BEGIN_BUNDLE", "{\t      %s");	// bundle introducer
-  Define_Macro("END_BUNDLE", "};");		// bundle terminator
+  Define_Macro("BEGIN_BUNDLE", "{ %s");	// bundle introducer
+  Define_Macro("END_BUNDLE", "}");		// bundle terminator
 
 /* ===== %5s %s ===== */
   ISA_PRINT_TYPE print_0;

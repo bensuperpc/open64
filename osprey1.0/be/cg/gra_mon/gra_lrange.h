@@ -1,6 +1,6 @@
 /*
 
-  Copyright (C) 2000, 2001 Silicon Graphics, Inc.  All Rights Reserved.
+  Copyright (C) 2000 Silicon Graphics, Inc.  All Rights Reserved.
 
   This program is free software; you can redistribute it and/or modify it
   under the terms of version 2 of the GNU General Public License as
@@ -32,9 +32,9 @@
 
 */
 
-//  $Revision: 1.1.1.1 $
-//  $Date: 2001/09/10 17:47:28 $
-//  $Author: morrone $
+//  $Revision: 1.2 $
+//  $Date: 2002/10/13 21:35:15 $
+//  $Author: douillet $
 //  $Source: /cvsroot/open64/open64/osprey1.0/be/cg/gra_mon/gra_lrange.h,v $ 
 // Description: GRA Live Ranges & Coloring Lists
   
@@ -44,7 +44,7 @@
 #ifndef GRA_LRANGE_RCS_ID  
 #define GRA_LRANGE_RCS_ID
 #ifdef _KEEP_RCS_ID
-static char *gra_lrange_rcs_id = "$Source: /cvsroot/open64/open64/osprey1.0/be/cg/gra_mon/gra_lrange.h,v $ $Revision: 1.1.1.1 $";
+static char *gra_lrange_rcs_id = "$Source: /cvsroot/open64/open64/osprey1.0/be/cg/gra_mon/gra_lrange.h,v $ $Revision: 1.2 $";
 #endif
 #endif
 
@@ -328,6 +328,17 @@ public:
   void Recompute_Preference(void);
   char* Format( char* buff );
 };
+
+//Inserted by ORC for Experiments.
+struct BUFFERED_LRANGE {
+    LRANGE *lrange;
+    INT abi_property;
+    ISA_REGISTER_CLASS reg_class;
+    INT lunits_number;
+    float density;
+    BUFFERED_LRANGE *next,*prev;
+};
+//End of Insertion.
 
 // manages the allocation and usage of all LRANGE nodes
 class LRANGE_MGR {

@@ -1,0 +1,5 @@
+#!/bin/sh
+# This file was generated automatically by configure.  Do not edit.
+# This directory was configured as follows:
+../cygnus_20000828/configure --srcdir=../cygnus_20000828 --prefix=/usr/ia64-sgi-linux --host=i586-linux-gnu --target=ia64-sgi-linux --norecursion 
+#  using "mt-frag"

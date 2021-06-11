@@ -1,0 +1,41 @@
+/COPYING/1.1.1.1/Mon Sep 10 17:50:58 2001//
+/ChangeLog/1.1.1.1/Mon Sep 10 17:50:58 2001//
+/ChangeLog.Cygnus/1.1.1.1/Mon Sep 10 17:50:58 2001//
+/ansidecl.h/1.1.1.1/Mon Sep 10 17:50:59 2001//
+/bfdlink.h/1.1.1.1/Mon Sep 10 17:50:59 2001//
+/bin-bugs.h/1.1.1.1/Mon Sep 10 17:50:59 2001//
+/bout.h/1.1.1.1/Mon Sep 10 17:50:59 2001//
+/callback.h/1.1.1.1/Mon Sep 10 17:50:59 2001//
+/demangle.h/1.1.1.1/Mon Sep 10 17:50:59 2001//
+/dis-asm.h/1.1.1.1/Mon Sep 10 17:50:59 2001//
+/dyn-string.h/1.1.1.1/Mon Sep 10 17:50:59 2001//
+/filenames.h/1.1.1.1/Mon Sep 10 17:50:59 2001//
+/floatformat.h/1.1.1.1/Mon Sep 10 17:50:59 2001//
+/fnmatch.h/1.1.1.1/Mon Sep 10 17:50:59 2001//
+/fopen-bin.h/1.1.1.1/Mon Sep 10 17:50:59 2001//
+/fopen-same.h/1.1.1.1/Mon Sep 10 17:50:59 2001//
+/fopen-vms.h/1.1.1.1/Mon Sep 10 17:50:59 2001//
+/gdbm.h/1.1.1.1/Mon Sep 10 17:50:59 2001//
+/getopt.h/1.1.1.1/Mon Sep 10 17:50:59 2001//
+/hashtab.h/1.1.1.1/Mon Sep 10 17:50:59 2001//
+/hp-symtab.h/1.1.1.1/Mon Sep 10 17:51:00 2001//
+/ieee.h/1.1.1.1/Mon Sep 10 17:51:00 2001//
+/libiberty.h/1.1.1.1/Mon Sep 10 17:51:00 2001//
+/oasys.h/1.1.1.1/Mon Sep 10 17:51:00 2001//
+/objalloc.h/1.1.1.1/Mon Sep 10 17:51:00 2001//
+/obstack.h/1.1.1.1/Mon Sep 10 17:51:00 2001//
+/os9k.h/1.1.1.1/Mon Sep 10 17:51:00 2001//
+/partition.h/1.1.1.1/Mon Sep 10 17:51:00 2001//
+/progress.h/1.1.1.1/Mon Sep 10 17:51:00 2001//
+/remote-sim.h/1.1.1.1/Mon Sep 10 17:51:00 2001//
+/sim-d10v.h/1.1.1.1/Mon Sep 10 17:51:00 2001//
+/sort.h/1.1.1.1/Mon Sep 10 17:51:00 2001//
+/splay-tree.h/1.1.1.1/Mon Sep 10 17:51:00 2001//
+/symcat.h/1.1.1.1/Mon Sep 10 17:51:00 2001//
+D/aout////
+D/coff////
+D/elf////
+D/mpw////
+D/nlm////
+D/opcode////
+D/regs////

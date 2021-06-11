@@ -42,9 +42,9 @@
  * ====================================================================
  *
  * Module: doacross.cxx
- * $Revision: 1.1.1.1 $
- * $Date: 2001/09/10 17:47:40 $
- * $Author: morrone $
+ * $Revision: 1.2 $
+ * $Date: 2002/10/13 21:35:17 $
+ * $Author: douillet $
  * $Source: /cvsroot/open64/open64/osprey1.0/be/lno/doacross.cxx,v $
  *
  * Revision history:
@@ -68,6 +68,7 @@ static char *rcs_id = "$Source: /cvsroot/open64/open64/osprey1.0/be/lno/doacross
 
 #include <sys/types.h>
 #include <stdlib.h>
+#include <float.h>
 #include <limits.h>
 #include <math.h>
 #include "pu_info.h"

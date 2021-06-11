@@ -37,9 +37,9 @@
  * ====================================================================
  *
  * Module: config_vho.c
- * $Revision: 1.1.1.1 $
- * $Date: 2001/09/10 17:48:12 $
- * $Author: morrone $
+ * $Revision: 1.2 $
+ * $Date: 2002/10/13 21:35:18 $
+ * $Author: douillet $
  * $Source: /cvsroot/open64/open64/osprey1.0/common/com/config_vho.cxx,v $
  *
  * Revision history:
@@ -73,8 +73,8 @@ INT32   VHO_Switch_If_Else_Limit        = 6;
 INT32   VHO_Switch_Compgoto_Limit       = 3;
 BOOL    VHO_Switch_Opt                  = FALSE;
 BOOL    VHO_Cselect_Opt                 = FALSE;
-BOOL    VHO_Iload_Opt                   = FALSE;
-BOOL    VHO_Istore_Opt                  = FALSE;
+BOOL    VHO_Iload_Opt                   = TRUE;
+BOOL    VHO_Istore_Opt                  = TRUE;
 BOOL    VHO_Call_Opt                    = FALSE;
 BOOL    VHO_Check_Tree                  = FALSE;
 BOOL    VHO_Single_Loop_Test            = FALSE;

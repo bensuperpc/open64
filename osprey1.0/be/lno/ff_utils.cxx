@@ -40,7 +40,7 @@
 
 #ifdef _KEEP_RCS_ID
 /*REFERENCED*/
-static char *rcs_id = "$Source: /cvsroot/open64/open64/osprey1.0/be/lno/ff_utils.cxx,v $ $Revision: 1.2 $";
+static char *rcs_id = "$Source: /cvsroot/open64/open64/osprey1.0/be/lno/ff_utils.cxx,v $ $Revision: 1.3 $";
 #endif /* _KEEP_RCS_ID */
 
 #include <sys/types.h>
@@ -563,6 +563,9 @@ extern BOOL scalar_rename(WN* ref, HASH_TABLE<WN*,INT>* checked) {
     return FALSE;
 
   TYPE_ID desc_type = WN_desc(equivalence_class->Top_nth(0));
+  if (desc_type == MTYPE_M) {
+     can_rename = FALSE;
+  }
 
   // for each reference in the equivalence class, check if it is FUNC_ENTRY
   // and if it has the same name as the variable to be renamed

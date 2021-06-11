@@ -3,9 +3,9 @@
 // ====================================================================
 //
 // Module: opt_defs.h
-// $Revision: 1.1.1.1 $
-// $Date: 2001/09/10 17:47:56 $
-// $Author: morrone $
+// $Revision: 1.2 $
+// $Date: 2002/10/13 21:35:18 $
+// $Author: douillet $
 // $Source: /cvsroot/open64/open64/osprey1.0/be/opt/opt_defs.h,v $
 //
 // Revision history:
@@ -65,7 +65,7 @@
 #ifndef opt_defs_INCLUDED
 #define opt_defs_INCLUDED       "opt_defs.h"
 #ifdef _KEEP_RCS_ID
-static char *opt_defsrcs_id =	opt_defs_INCLUDED"$Revision: 1.1.1.1 $";
+static char *opt_defsrcs_id =	opt_defs_INCLUDED"$Revision: 1.2 $";
 #endif /* _KEEP_RCS_ID */
 
 #ifndef defs_INCLUDED
@@ -190,6 +190,17 @@ Is_fortran(void)
 #define BOOL_SIMP_FLAG          0x4 /* boolean expr simplification */
 #define FB_PRE_FLAG             0x8 /* trace feedback PRE */
 #define CFG_OPT_FLAG           0x10 /* trace CFG optimzation */
+
+#ifdef SPECMT_LT
+   /*For TP_SPECMT (phase number) */
+   #define SPECMT_PASS1_DUMP_FLAG               0x0001    /*define pass 1/2 compilation*/
+   #define SPECMT_LT_DUMP_FLAG                  0x0002    /*loop structure cfg dump flag*/
+   #define SPECMT_LT_LOOP_DUMP_FLAG             0x0004    /*loop structure dump flag*/
+   #define SPECMT_LT_DAG_SIZE_DUMP_FLAG         0x0100    /*dump out Spec Dependency graph*/
+   #define SPECMT_LT_RESULT_DUMP_FLAG           0x0200    /*dump out partition result*/
+   #define SPECMT_LT_PARTITION_TRACE_OUT        0x0400    /*tracing information in partition*/
+   #define SPECMT_LT_PARTITION_DETAIL           0x8000    /*detail trace in partition*/
+#endif
 
 /* Flags associated with value numbering scheme and the 
  * WOPT_Enable_Value_Numbering option.

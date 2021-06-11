@@ -43,9 +43,9 @@ extern "C" {
  * ====================================================================
  *
  * Module: wn_pragmas.h
- * $Revision: 1.1.1.1 $
- * $Date: 2001/09/10 17:48:20 $
- * $Author: morrone $
+ * $Revision: 1.2 $
+ * $Date: 2002/10/13 21:35:19 $
+ * $Author: douillet $
  * $Source: /cvsroot/open64/open64/osprey1.0/common/com/wn_pragmas.h,v $
  *
  * Description:
@@ -115,7 +115,7 @@ extern "C" {
 
 
 #ifdef _KEEP_RCS_ID
-static char *pragmas_rcs_id = "$Source: /cvsroot/open64/open64/osprey1.0/common/com/wn_pragmas.h,v $ $Revision: 1.1.1.1 $";
+static char *pragmas_rcs_id = "$Source: /cvsroot/open64/open64/osprey1.0/common/com/wn_pragmas.h,v $ $Revision: 1.2 $";
 #endif /* _KEEP_RCS_ID */
 
 /* Pragma IDs: */
@@ -359,6 +359,11 @@ typedef enum {
   /* "asm" support */
   WN_PRAGMA_ASM_CONSTRAINT,	/* constraint string for an ASM operand */
   WN_PRAGMA_ASM_CLOBBER,        /* clobber string for an ASM statement */
+
+#ifdef SPECMT_LT
+  /* "specmt" support */
+  WN_PRAGMA_LOOP_MAPPING,
+#endif
 
   MAX_WN_PRAGMA			/* last one in enum			*/
 } WN_PRAGMA_ID;

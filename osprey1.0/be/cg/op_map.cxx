@@ -1,6 +1,6 @@
 /*
 
-  Copyright (C) 2000, 2001 Silicon Graphics, Inc.  All Rights Reserved.
+  Copyright (C) 2000 Silicon Graphics, Inc.  All Rights Reserved.
 
   This program is free software; you can redistribute it and/or modify it
   under the terms of version 2 of the GNU General Public License as
@@ -37,9 +37,9 @@
  * =======================================================================
  *
  *  Module: op_map.c
- *  $Revision: 1.1.1.1 $
- *  $Date: 2001/09/10 17:47:26 $
- *  $Author: morrone $
+ *  $Revision: 1.2 $
+ *  $Date: 2002/10/13 21:35:15 $
+ *  $Author: douillet $
  *  $Source: /cvsroot/open64/open64/osprey1.0/be/cg/op_map.cxx,v $
  *
  *  Revision comments:
@@ -62,7 +62,7 @@
 
 #ifdef _KEEP_RCS_ID
 static const char *source_file = __FILE__;
-static const char *rcs_id = "$Source: /cvsroot/open64/open64/osprey1.0/be/cg/op_map.cxx,v $ $Revision: 1.1.1.1 $";
+static const char *rcs_id = "$Source: /cvsroot/open64/open64/osprey1.0/be/cg/op_map.cxx,v $ $Revision: 1.2 $";
 #endif /* _KEEP_RCS_ID */
 
 #include "defs.h"
@@ -513,7 +513,7 @@ BB_OP_MAP BB_OP_MAP_Create_Kind(BB *bb, MEM_POOL *pool, _OP_MAP_KIND kind)
 {
   INT32 size;
   BB_OP_MAP new_map = TYPE_MEM_POOL_ALLOC(struct bb_op_map, pool);
-  INT32 nelem = BB_next_op_map_idx(bb);
+  INT32 nelem = BB_next_op_map_idx(bb) + 20;
 
   new_map->bb = bb;
   new_map->kind = kind;

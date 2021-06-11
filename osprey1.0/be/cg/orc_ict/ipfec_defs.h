@@ -30,7 +30,7 @@
 //*********************************************************************
 //
 // Module: ipfec_defs.h
-// $Date: 2002/02/18 20:45:31 $
+// $Date: 2002/10/13 21:35:16 $
 // $Author: douillet $
 // $Source: /cvsroot/open64/open64/osprey1.0/be/cg/orc_ict/ipfec_defs.h,v $
 //
@@ -67,6 +67,7 @@
 
 /* dump flags for prdb*/
 #define  TT_PRDB_VERBOSE        0x0001
+#define  TT_PRDB_APP              0x0002 /*for PRDB testing dump */
 
 /* dump flags for profiling*/
 #define  TT_PROF_FEEDBACK_DUMP   0x0001

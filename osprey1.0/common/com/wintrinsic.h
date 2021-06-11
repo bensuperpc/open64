@@ -71,9 +71,9 @@
 ***
 **/
 
-/** $Revision: 1.1.1.1 $
-*** $Date: 2001/09/10 17:48:20 $
-*** $Author: morrone $
+/** $Revision: 1.2 $
+*** $Date: 2002/10/13 21:35:19 $
+*** $Author: douillet $
 *** $Source: /cvsroot/open64/open64/osprey1.0/common/com/wintrinsic.h,v $
 **/
 
@@ -1063,7 +1063,15 @@ typedef enum {
   INTRN_SINCOS    = 761,
   INTRN_SINCOSL   = 762,
 
+#ifdef SPECMT_LT
+  INTRN_I4STBEGINe= 763,
+  INTRN_I4STLFORKe= 764,
+  INTRN_I4LOOPe   = 765,
+
+  INTRINSIC_LAST  = 765
+#else
   INTRINSIC_LAST  = 762
+#endif
 
 } INTRINSIC;
 

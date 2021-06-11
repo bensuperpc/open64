@@ -2,9 +2,9 @@
 // ====================================================================
 //
 // Module: opt_ssu.cxx
-// $Revision: 1.1.1.1 $
-// $Date: 2001/09/10 17:48:03 $
-// $Author: morrone $
+// $Revision: 1.2 $
+// $Date: 2002/10/13 21:35:18 $
+// $Author: douillet $
 // $Source: /cvsroot/open64/open64/osprey1.0/be/opt/opt_ssu.cxx,v $
 //
 // Revision history:
@@ -100,7 +100,8 @@ EXP_WORKLST * SSU::SPRE_candidate(CODEREP *cr)
   if (wk)
     return wk;
   if (aux->No_spre()) return NULL; // this flag added to speed up checking
-  if (!aux->Is_real_var() || 
+  if (!aux->Is_real_var() ||
+      aux->No_register() || // Screen out MSTID
       !aux->Has_store_in_PU() || 
       aux->Is_volatile() ||
       ST_class(aux->St()) == CLASS_PREG ||

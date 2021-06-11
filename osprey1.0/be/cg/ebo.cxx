@@ -37,8 +37,8 @@
  * =======================================================================
  *
  *  Module: ebo.cxx
- *  $Revision: 1.2 $
- *  $Date: 2002/02/18 20:45:30 $
+ *  $Revision: 1.3 $
+ *  $Date: 2002/10/13 21:35:15 $
  *  $Author: douillet $
  *  $Source: /cvsroot/open64/open64/osprey1.0/be/cg/ebo.cxx,v $
  *
@@ -1273,6 +1273,12 @@ find_duplicate_mem_op (BB *bb,
         if (OP_store(op)) opinfo->op_must_not_be_moved = TRUE;
         if (op_is_subset || (hash_value == EBO_DEFAULT_MEM_HASH)) {
           if (OP_store(pred_op)) opinfo->op_must_not_be_removed = TRUE;
+
+	  /*
+	   *  Fix the gap ebo bug. Refer to #550484.
+	   */
+          if (OP_store(op) && OP_load(pred_op))  goto do_next;
+	  
           break;
         }
         if (OP_store(pred_op) || OP_store(op)) {

@@ -30,8 +30,8 @@
 //=============================================================================
 //
 // Module: region.cxx
-// $Revision: 1.1 $
-// $Date: 2002/02/18 20:45:31 $
+// $Revision: 1.2 $
+// $Date: 2002/10/13 21:35:16 $
 // $Author: douillet $ 
 // $Source: /cvsroot/open64/open64/osprey1.0/be/cg/orc_ict/region.cxx,v $
 //
@@ -3237,6 +3237,7 @@ TOPOLOGICAL_REGIONAL_CFG_ITER::operator ++(void){
         _candi_s.pop(); 
         Set_Visited(_cur);       // set _cur is visited 
     }
+    return *this; 
 } 
 
 //=============================================================================
@@ -3311,6 +3312,7 @@ REVERSE_TOPO_REGIONAL_CFG_ITER::operator ++(void){
         _candi_s.pop(); 
         Set_Visited(_cur);        // set _cur is visited 
     }
+    return *this; 
 }
 
 
@@ -3373,6 +3375,7 @@ PREORDER_REGIONAL_CFG_ITER::operator ++(void){
         _cur = _candi_s.front();
         _candi_s.pop(); 
     }
+    return *this; 
 }    
 
 //=============================================================================
@@ -4558,6 +4561,7 @@ INNERMOST_REGION_FIRST_ITER::operator ++(void){
             }
         }
     }   
+    return *this;
 } 
 
 void Print_Node_Vector(NODE_VECTOR nodes) {

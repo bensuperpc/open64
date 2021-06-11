@@ -37,8 +37,8 @@
  * ====================================================================
  *
  * Module: tracing.c
- * $Revision: 1.2 $
- * $Date: 2002/02/18 20:45:33 $
+ * $Revision: 1.3 $
+ * $Date: 2002/10/13 21:35:20 $
  * $Author: douillet $
  * $Source: /cvsroot/open64/open64/osprey1.0/common/util/tracing.c,v $
  *
@@ -56,7 +56,7 @@
  */
 
 static char *source_file = __FILE__;
-static char *rcs_id = "$Source: /cvsroot/open64/open64/osprey1.0/common/util/tracing.c,v $ $Revision: 1.2 $";
+static char *rcs_id = "$Source: /cvsroot/open64/open64/osprey1.0/common/util/tracing.c,v $ $Revision: 1.3 $";
 
 #include "defs.h"
 #include "tracing.h"
@@ -178,6 +178,9 @@ static PDESC Phases[] = {
   { TP_WOPT1,		"OPT",	"Global optimization" },
   { TP_WOPT2,		"OP2",	"More global optimization" },
   { TP_WOPT3,		"OP3",	"Even more global optimization" },
+#ifdef SPECMT_LT
+  { TP_SPECMT,          "SMT",  "Speculative multithreading transformation"},
+#endif
 
   /* Loop nest optimizer: */
   { TP_VECDD,		"VDD",	"Vector data dependency analysis" },
@@ -209,12 +212,15 @@ static PDESC Phases[] = {
 
   /* Ipfec related phases: */
   { TP_IPFEC,		"AUR",	"Ipfec related Phases" },
-  { TP_A_SCHED,         "ASH",  "Ipfec scheduler" },
+  { TP_A_GSCHED,        "AGS",  "Ipfec global scheduler" },
+  { TP_A_LSCHED,        "ALS",  "Ipfec local  scheduler" },
   { TP_A_PROF,          "APF",  "Ipfec profiling" },
   { TP_A_REGION,        "ARN",  "Ipfec region formation" },
   { TP_A_IFCONV,        "AIC",  "Ipfec if conversion" },
   { TP_A_PRDB,           "APR",  "Ipfec predicate relatioin database" },
   { TP_A_RBG,           "ABG",  "Ipfec recovery block generation" },
+  { TP_A_MLBR,          "AMB",  "Ipfec post multi branch" },
+
   /* Cycle Counting related phases  cbq*/
   { TP_CYCLE_COUNT,     "TCC",  "Cycle Counting related Phases" },
   { TP_CYCLE_PU,        "TCP",  "PU Cycle Counting" },   

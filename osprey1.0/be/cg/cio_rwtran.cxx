@@ -38,8 +38,8 @@
 // =======================================================================
 //
 //  Module: cio_rwtran.cxx
-//  $Revision: 1.2 $
-//  $Date: 2002/02/18 20:45:30 $
+//  $Revision: 1.3 $
+//  $Date: 2002/10/13 21:35:15 $
 //  $Author: douillet $
 //  $Source: /cvsroot/open64/open64/osprey1.0/be/cg/cio_rwtran.cxx,v $
 //

@@ -40,8 +40,8 @@
  * ====================================================================
  *
  * Module: variants.h
- * $Revision: 1.2 $
- * $Date: 2002/02/18 20:45:30 $
+ * $Revision: 1.3 $
+ * $Date: 2002/10/13 21:35:15 $
  * $Author: douillet $
  * $Source: /cvsroot/open64/open64/osprey1.0/be/cg/variants.h,v $
  *
@@ -60,7 +60,7 @@
  */
 
 #ifdef _KEEP_RCS_ID
-static const char variants_rcs_id[] = "$Source: /cvsroot/open64/open64/osprey1.0/be/cg/variants.h,v $ $Revision: 1.2 $";
+static const char variants_rcs_id[] = "$Source: /cvsroot/open64/open64/osprey1.0/be/cg/variants.h,v $ $Revision: 1.3 $";
 #endif /* _KEEP_RCS_ID */
 
 /* Type used to hold a variant:

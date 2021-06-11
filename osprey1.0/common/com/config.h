@@ -40,8 +40,8 @@
  * ====================================================================
  *
  * Module: config.h
- * $Revision: 1.2 $
- * $Date: 2002/02/18 20:45:32 $
+ * $Revision: 1.3 $
+ * $Date: 2002/10/13 21:35:18 $
  * $Author: douillet $
  * $Source: /cvsroot/open64/open64/osprey1.0/common/com/config.h,v $
  *
@@ -252,7 +252,7 @@
 
 
 #ifdef _KEEP_RCS_ID
-static char *config_rcs_id = "$Source: /cvsroot/open64/open64/osprey1.0/common/com/config.h,v $ $Revision: 1.2 $";
+static char *config_rcs_id = "$Source: /cvsroot/open64/open64/osprey1.0/common/com/config.h,v $ $Revision: 1.3 $";
 #endif /* _KEEP_RCS_ID */
 
 #include "config_host.h"	/* in TARGET/com */
@@ -321,6 +321,10 @@ extern LANGUAGE Language;
  * FALSE prior to any IRB conversions if the VMS model is desired.
  */
 extern	BOOL Use_C_Like_Logicals;
+
+#ifdef SPECMT_LT
+   extern UINT32 SPECMT_PASS_NUM;
+#endif
 
 /***** LANGuage group options *****/
 extern BOOL CXX_Bool_On;
@@ -412,6 +416,10 @@ extern BOOL Global_Pragmas_In_Dummy_PU_On;
 extern BOOL Malloc_Free_On;
 extern BOOL Alloca_Dealloca_On;
 extern BOOL Barrier_Lvalues_On;
+
+extern BOOL Use_Call_Shared_Link; /*For redundant save/restore gp opt */
+extern BOOL Gp_Save_Restore_Opt;
+extern BOOL Gp_Rel_Aggresive_Opt;
 
 /***** The following is TRUE for C++  unless -no_exceptions is specified *****/
 extern BOOL Allow_Exceptions;
@@ -727,6 +735,9 @@ extern SKIPLIST *Region_Skip_List;	     /* regions to skip, processed */
 
 /***** Perform configuration functions prior to flag processing *****/
 extern void Preconfigure (void);
+
+/***** Perform configuration specifically in FE if Olegacy is set *****/
+extern void Configure_Olegacy(BOOL in_FE);
 
 /***** Perform configuration functions after flag processing *****/
 extern void Configure (void);

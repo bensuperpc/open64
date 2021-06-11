@@ -3,9 +3,9 @@
 // ====================================================================
 //
 // Module: opt_emit.cxx
-// $Revision: 1.1.1.1 $
-// $Date: 2001/09/10 17:47:58 $
-// $Author: morrone $
+// $Revision: 1.2 $
+// $Date: 2002/10/13 21:35:18 $
+// $Author: douillet $
 // $Source: /cvsroot/open64/open64/osprey1.0/be/opt/opt_emit.cxx,v $
 //
 // Revision history:
@@ -60,7 +60,7 @@
 
 #ifdef _KEEP_RCS_ID
 #define opt_emit_CXX	"opt_emit.cxx"
-static char *rcs_id = 	opt_emit_CXX"$Revision: 1.1.1.1 $";
+static char *rcs_id = 	opt_emit_CXX"$Revision: 1.2 $";
 #endif /* _KEEP_RCS_ID */
 
 // The following for pu_info.h, which includes elftypes.h, which uses
@@ -1520,7 +1520,7 @@ EMITTER::Emit(COMP_UNIT *cu, DU_MANAGER *du_mgr,
   // tell everyone that the generated WHIRL has feedback info if it
   // does
   if (Cur_PU_Feedback) {
-    Set_PU_Info_state(Current_PU_Info, WT_FREQ, Subsect_InMem);
+    Set_PU_Info_state(Current_PU_Info, WT_FEEDBACK, Subsect_InMem);
   }
 
   Is_True(Get_Preg_Num(PREG_Table_Size(CURRENT_SYMTAB)) ==

@@ -1,0 +1,51 @@
+/.census/1.1.1.1/Mon Sep 10 17:47:11 2001//
+/.workarea/1.1.1.1/Mon Sep 10 17:47:11 2001//
+/AUTHORS/1.1.1.1/Mon Sep 10 17:47:11 2001//
+/Makefile/1.1.1.1/Mon Sep 10 17:47:11 2001//
+/Makefile.gsetup/1.2/Sun Oct 13 21:35:14 2002//
+/README/1.1.1.1/Mon Sep 10 17:47:11 2001//
+/census/1.1.1.1/Mon Sep 10 17:47:11 2001//
+/census,v/1.1.1.1/Mon Sep 10 17:47:11 2001//
+D/arith////
+D/be////
+D/clibinc////
+D/clibroot////
+D/common////
+D/crayf90////
+D/cygnus_20000828////
+D/doc////
+D/driver////
+D/fake_ld////
+D/g++fe////
+D/gccfe////
+D/gnu_common////
+D/gnu_common_19990929////
+D/include////
+D/init////
+D/instrumentation////
+D/ipa////
+D/ir_tools////
+D/libF77////
+D/libI77////
+D/libU77////
+D/libcif////
+D/libcmplrs////
+D/libcsup////
+D/libdwarf////
+D/libelfutil////
+D/libf////
+D/libf90////
+D/libfi////
+D/libfortran////
+D/libkapi////
+D/libm////
+D/libu////
+D/libunwind////
+D/linux////
+D/man////
+D/orc_include////
+D/targcygnus_ia32_ia64////
+D/targcygnus_ia64_ia64////
+D/targia32_ia64_nodebug////
+D/targia64////
+D/targia64_ia64_nodebug////

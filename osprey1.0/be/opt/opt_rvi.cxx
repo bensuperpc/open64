@@ -3,9 +3,9 @@
 // ====================================================================
 //
 // Module: opt_rvi.cxx
-// $Revision: 1.1.1.1 $
-// $Date: 2001/09/10 17:48:03 $
-// $Author: morrone $
+// $Revision: 1.2 $
+// $Date: 2002/10/13 21:35:18 $
+// $Author: douillet $
 // $Source: /cvsroot/open64/open64/osprey1.0/be/opt/opt_rvi.cxx,v $
 //
 // ====================================================================
@@ -58,7 +58,7 @@
 
 #ifdef _KEEP_RCS_ID
 #define opt_rvi_CXX	"opt_rvi.cxx"
-static char *rcs_id = 	opt_rvi_CXX"$Revision: 1.1.1.1 $";
+static char *rcs_id = 	opt_rvi_CXX"$Revision: 1.2 $";
 #endif /* _KEEP_RCS_ID */
 
 #include "defs.h"
@@ -846,14 +846,22 @@ RVI::Perform_RVI( WN *entry_wn, ALIAS_MANAGER *alias_mgr )
 		    entry_wn;
   Is_True(phase1_wn && REGION_consistency_check(phase1_wn),
 	    ("RVI::Perform_RVI, inconsistent region from RVI phase 1"));
-  Verify_alias(alias_mgr,phase1_wn);
+  Is_True(Verify_alias(alias_mgr,phase1_wn),
+  	      ("RVI::Perform RVI, alias verification failed from RVI phase 1"));
 
-  WN *lda_wn = WN_Lower( phase1_wn, 
+  LOWER_ACTIONS actions = 
     LOWER_SPLIT_CONST_OFFSETS |
     LOWER_SPLIT_SYM_ADDRS |
     LOWER_PICCALL |
-    LOWER_ALL_MAPS,
+    LOWER_MLDID_MSTID |
+    LOWER_ALL_MAPS;      
+
+  WN *lda_wn = WN_Lower( phase1_wn, 
+    actions,
     alias_mgr, "RVI" );
+
+  Is_True(Verify_alias(alias_mgr, lda_wn), 
+        ("RVI::Perform_RVI, alias verification failed from lda_wn"));
 
   REGION_new_wn(lda_wn, phase1_wn);
 
@@ -868,7 +876,8 @@ RVI::Perform_RVI( WN *entry_wn, ALIAS_MANAGER *alias_mgr )
 		    lda_wn;
   Is_True(REGION_consistency_check(phase2_wn),
 	    ("RVI::Perform_RVI, inconsistent region from RVI phase 2"));
-  Verify_alias(alias_mgr,phase2_wn);
+  Is_True(Verify_alias(alias_mgr,phase2_wn),
+  	      ("RVI::Perform RVI, alias verification failed from RVI phase 2"));
 
   return phase2_wn;
 }

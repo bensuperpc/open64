@@ -37,9 +37,9 @@
  * ====================================================================
  *
  * Module: mtypes.c
- * $Revision: 1.1.1.1 $
- * $Date: 2001/09/10 17:48:17 $
- * $Author: morrone $
+ * $Revision: 1.2 $
+ * $Date: 2002/10/13 21:35:19 $
+ * $Author: douillet $
  * $Source: /cvsroot/open64/open64/osprey1.0/common/com/mtypes.cxx,v $
  *
  * Revision history:
@@ -308,6 +308,10 @@ TYPE_ID  Mtype_comparison(TYPE_ID type)
   case MTYPE_U1:
   case MTYPE_U2:
     return MTYPE_U4;
+  case MTYPE_BS:
+    return MTYPE_I4;
+  case MTYPE_B:
+    return MTYPE_U4;                                                                                
   default:
     return type;
   }

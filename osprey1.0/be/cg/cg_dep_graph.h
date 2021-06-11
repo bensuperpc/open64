@@ -37,8 +37,8 @@
  * =======================================================================
  *
  *  Module: cg_dep_graph.h
- *  $Revision: 1.2 $
- *  $Date: 2002/02/18 20:45:30 $
+ *  $Revision: 1.3 $
+ *  $Date: 2002/10/13 21:35:14 $
  *  $Author: douillet $
  *  $Source: /cvsroot/open64/open64/osprey1.0/be/cg/cg_dep_graph.h,v $
  *
@@ -387,7 +387,7 @@
 #define CG_DEP_GRAPH_INCLUDED
 
 #ifdef _KEEP_RCS_ID
-static char *cg_dep_graph_rcs_id = "$Source: /cvsroot/open64/open64/osprey1.0/be/cg/cg_dep_graph.h,v $ $Revision: 1.2 $";
+static char *cg_dep_graph_rcs_id = "$Source: /cvsroot/open64/open64/osprey1.0/be/cg/cg_dep_graph.h,v $ $Revision: 1.3 $";
 #endif /* _KEEP_RCS_ID */
 
 #include <list.h>

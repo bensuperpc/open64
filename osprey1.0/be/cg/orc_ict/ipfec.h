@@ -30,7 +30,7 @@
 //*********************************************************************
 //
 // Module: ipfec.h
-// $Date: 2002/02/18 20:45:31 $
+// $Date: 2002/10/13 21:35:16 $
 // $Author: douillet $
 // $Source: /cvsroot/open64/open64/osprey1.0/be/cg/orc_ict/ipfec.h,v $
 //
@@ -62,5 +62,8 @@ extern void Global_Insn_Merge_Splitted_BBs () ;
 // Driver of recovery code generation.
 extern int Generate_Recovery_Code();
 
+// Multi-Branch Post process 
+extern void Post_Multi_Branch();
+extern void Check_Cross_Boundary();
 #endif
 

@@ -3,9 +3,9 @@
 // ====================================================================
 //
 // Module: opt_wn.cxx
-// $Revision: 1.1.1.1 $
-// $Date: 2001/09/10 17:48:05 $
-// $Author: morrone $
+// $Revision: 1.2 $
+// $Date: 2002/10/13 21:35:18 $
+// $Author: douillet $
 // $Source: /cvsroot/open64/open64/osprey1.0/be/opt/opt_wn.cxx,v $
 //
 // Revision history:
@@ -59,7 +59,7 @@
 
 #ifdef _KEEP_RCS_ID
 #define opt_wn_CXX	"opt_wn.cxx"
-static char *rcs_id = 	opt_wn_CXX"$Revision: 1.1.1.1 $";
+static char *rcs_id = 	opt_wn_CXX"$Revision: 1.2 $";
 #endif /* _KEEP_RCS_ID */
 
 #include <sys/types.h>
@@ -1093,7 +1093,12 @@ Identity_assignment_type( AUX_STAB_ENTRY *sym )
   // determine if we can substitute a predefined type if it has
   // same characteristics (alignment,signedness,etc.)
   if ( ! Is_Simple_Type( ty ) ) {
-    MTYPE mtype = Mtype_from_mtype_class_and_size(sym->Mclass(),
+    MTYPE mtype;
+   
+    if (sym->Mtype()==MTYPE_M)
+    	mtype = sym->Mtype();
+    else
+        mtype = Mtype_from_mtype_class_and_size(sym->Mclass(),
 						  sym->Byte_size());
 
     if ( mtype == MTYPE_UNKNOWN )
@@ -1118,10 +1123,16 @@ WN *
 Create_identity_assignment(AUX_STAB_ENTRY *sym, AUX_ID aux_id, TY_IDX ty)
 {
   ST          *st  = sym->St();
-  const OPCODE ldidop = Ldid_from_mtype_class_and_size(sym->Mclass(),
-                                                       sym->Byte_size());
-  const OPCODE stidop = Stid_from_mtype_class_and_size(sym->Mclass(),
-                                                       sym->Byte_size());
+  OPCODE ldidop;
+  OPCODE stidop;
+
+  if (sym->Mtype() == MTYPE_M) {
+     ldidop = OPCODE_make_op(OPR_LDID, sym->Mtype(), sym->Mtype());
+     stidop = OPCODE_make_op(OPR_STID, MTYPE_V, sym->Mtype());
+  } else {
+     ldidop = Ldid_from_mtype_class_and_size(sym->Mclass(), sym->Byte_size());
+     stidop = Stid_from_mtype_class_and_size(sym->Mclass(), sym->Byte_size());
+  }
 
   WN *rhs = WN_CreateLdid( ldidop, sym->St_ofst(), st, ty );
   WN *copy = WN_CreateStid( stidop, sym->St_ofst(), st, ty, rhs);

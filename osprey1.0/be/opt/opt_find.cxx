@@ -3,8 +3,8 @@
 // ====================================================================
 //
 // Module: opt_find.cxx
-// $Revision: 1.2 $
-// $Date: 2002/02/18 20:45:32 $
+// $Revision: 1.3 $
+// $Date: 2002/10/13 21:35:18 $
 // $Author: douillet $
 // $Source: /cvsroot/open64/open64/osprey1.0/be/opt/opt_find.cxx,v $
 //
@@ -64,7 +64,7 @@
 
 #ifdef _KEEP_RCS_ID
 #define opt_find_CXX	"opt_find.cxx"
-static char *rcs_id = 	opt_find_CXX"$Revision: 1.2 $";
+static char *rcs_id = 	opt_find_CXX"$Revision: 1.3 $";
 #endif /* _KEEP_RCS_ID */
 
 #include "defs.h"

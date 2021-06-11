@@ -30,8 +30,8 @@
 /* --------------------------------------------------- */
 /* | All Rights Reserved.                            | */
 /* --------------------------------------------------- */
-/* $Header: /cvsroot/open64/open64/osprey1.0/libU77/itime_.c,v 1.1.1.1 2001/09/10 17:50:04 morrone Exp $ */
-/* $Header: /cvsroot/open64/open64/osprey1.0/libU77/itime_.c,v 1.1.1.1 2001/09/10 17:50:04 morrone Exp $ */
+/* $Header: /cvsroot/open64/open64/osprey1.0/libU77/itime_.c,v 1.2 2002/10/13 21:35:23 douillet Exp $ */
+/* $Header: /cvsroot/open64/open64/osprey1.0/libU77/itime_.c,v 1.2 2002/10/13 21:35:23 douillet Exp $ */
 /*
  *
  * return the current time in numerical form
@@ -44,6 +44,7 @@
  */
 
 #include <sys/types.h>
+#include <time.h>
 #if defined(_SYSV) || defined(_SYSTYPE_SVR4)
 #include <time.h>
 #else

@@ -50,8 +50,8 @@
 //
 /////////////////////////////////////
 
-//  $Revision: 1.2 $
-//  $Date: 2002/02/18 20:45:30 $
+//  $Revision: 1.3 $
+//  $Date: 2002/10/13 21:35:15 $
 //  $Author: douillet $
 //  $Source: /cvsroot/open64/open64/osprey1.0/be/cg/gra_mon/gra_create.cxx,v $
 //  $Source: /cvsroot/open64/open64/osprey1.0/be/cg/gra_mon/gra_create.cxx,v $
@@ -62,7 +62,7 @@
 #pragma hdrstop
 
 #ifdef _KEEP_RCS_ID
-static char *rcs_id = "$Source: /cvsroot/open64/open64/osprey1.0/be/cg/gra_mon/gra_create.cxx,v $ $Revision: 1.2 $";
+static char *rcs_id = "$Source: /cvsroot/open64/open64/osprey1.0/be/cg/gra_mon/gra_create.cxx,v $ $Revision: 1.3 $";
 #endif
 #include <list.h>
 
@@ -1135,6 +1135,7 @@ Scan_Complement_BB_For_Referenced_TNs( GRA_BB* gbb )
 	hTN_MAP_Set(live_data, op_tn, gpl);
       }
       if (Complement_TN_Reference(xop, op_tn, gbb, &lunit, wired_locals)) {
+        lunit->Has_Use_Set();
         if (!lunit->Has_Def()) {
 	  lunit->Has_Exposed_Use_Set();
 	  gpl->Exposed_Use_Set(TRUE);
@@ -1159,6 +1160,7 @@ Scan_Complement_BB_For_Referenced_TNs( GRA_BB* gbb )
 
       if (OP_cond_def(xop)) { // there is a hidden use
         if (Complement_TN_Reference(xop, res_tn, gbb, &lunit, wired_locals)) {
+          lunit->Has_Use_Set();
           if (!lunit->Has_Def()) {
 	    lunit->Has_Exposed_Use_Set();
 	    gpl->Exposed_Use_Set(TRUE);
@@ -1829,11 +1831,15 @@ Compute_GRA_Fat_Point(void) {
       }	
    }
    INT32 fatest_point = 0; 
+   INT32 fat_bb_id   = 0;
    for (INT32 i = 0;i < PU_BB_Count;i++) {
-       if (fats[i] > fatest_point) fatest_point = fats[i];
+       if (fats[i] > fatest_point) {
+           fatest_point = fats[i];
+           fat_bb_id = i;
+       }
    }    
    
-   if ((fatest_point > 120)&&(gra_self_recursive)) {
+   if ((gra_self_recursive)&&(fatest_point > 115)) {
        fat_self_recursive = TRUE;
        DevWarn("The fatest point %d is greater than 80 and also self recursive!\n",fatest_point);
    }    

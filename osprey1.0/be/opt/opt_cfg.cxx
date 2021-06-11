@@ -3,9 +3,9 @@
 // ====================================================================
 //
 // Module: opt_cfg.cxx
-// $Revision: 1.1.1.1 $
-// $Date: 2001/09/10 17:47:54 $
-// $Author: morrone $
+// $Revision: 1.2 $
+// $Date: 2002/10/13 21:35:18 $
+// $Author: douillet $
 // $Source: /cvsroot/open64/open64/osprey1.0/be/opt/opt_cfg.cxx,v $
 //
 // ====================================================================
@@ -52,7 +52,7 @@
 
 #ifdef _KEEP_RCS_ID
 #define opt_cfg_CXX	"opt_cfg.cxx"
-static char *rcs_id = 	opt_cfg_CXX"$Revision: 1.1.1.1 $";
+static char *rcs_id = 	opt_cfg_CXX"$Revision: 1.2 $";
 #endif /* _KEEP_RCS_ID */
 
 #include "defs.h"
@@ -1108,6 +1108,11 @@ CFG::Lower_if_stmt( WN *wn, END_BLOCK *ends_bb )
 
     // Get the desc type
     MTYPE dsctyp = WN_desc(stmt);
+    if (dsctyp == MTYPE_M) {
+      // don't generate select for MTYPE_M because there is no register for
+      // MTYPE_M
+      goto end_label;
+    }
 
     WN *load = NULL;
     WN *store = WN_CopyNode(stmt);
@@ -1164,6 +1169,8 @@ CFG::Lower_if_stmt( WN *wn, END_BLOCK *ends_bb )
       return;
     }
   }
+
+end_label:
 
   // we need a merge block, but don't connect it yet
   BB_NODE *merge_bb = Create_labelled_bb();

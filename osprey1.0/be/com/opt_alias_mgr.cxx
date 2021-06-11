@@ -38,9 +38,9 @@
 * ====================================================================
 *
 * Module: opt_alias_mgr.cxx
-* $Revision: 1.1.1.1 $
-* $Date: 2001/09/10 17:47:33 $
-* $Author: morrone $
+* $Revision: 1.2 $
+* $Date: 2002/10/13 21:35:17 $
+* $Author: douillet $
 * $Source: /cvsroot/open64/open64/osprey1.0/be/com/opt_alias_mgr.cxx,v $
 *
 * Revision history:
@@ -58,7 +58,7 @@
 #pragma hdrstop
 #ifdef _KEEP_RCS_ID
 #define opt_alias_mgr_CXX	"opt_alias_mgr.cxx"
-static char *rcs_id = 	opt_alias_mgr_CXX"$Revision: 1.1.1.1 $";
+static char *rcs_id = 	opt_alias_mgr_CXX"$Revision: 1.2 $";
 #endif /* _KEEP_RCS_ID */
 
 #include "string.h"
@@ -584,7 +584,6 @@ ALIAS_MANAGER::Gen_alias_id(WN *wn, POINTS_TO *pt)
     if (_trace) {
       fprintf(TFile, "gen_alias_id<%d(map %d)>\n", id, WN_map_id(wn));
       pt->Print(TFile);
-      fdump_tree(TFile, wn);
       fprintf(TFile,"aliased_with<%d,{",id);
       for (INT32 oldid = Preg_id() + 1; oldid <= id; oldid++) {
 	if (Rule()->Aliased_Memop(Pt(oldid), Pt(id), Pt(oldid)->Ty(), Pt(id)->Ty()))
@@ -914,7 +913,7 @@ ALIAS_RESULT Aliased(const ALIAS_MANAGER *am, WN *wn1, WN *wn2)
 {
   IDTYPE id1 = am->Id(wn1);
   IDTYPE id2 = am->Id(wn2);
-  
+
   // Assign Preg_id to LDID/STID of pregs
   if (id1 == 0 && Is_PREG_ldst(wn1)) 
     am->Set_id(wn1, id1 = am->Preg_id());
@@ -963,7 +962,8 @@ ALIAS_RESULT Aliased(const ALIAS_MANAGER *am, WN *wn1, WN *wn2)
     }
   }
 
-  if (OPERATOR_is_store(WN_operator(wn1)) && OPERATOR_is_load(WN_operator(wn2))) {
+  if ((OPERATOR_is_store(WN_operator(wn1)) && OPERATOR_is_load(WN_operator(wn2))) ||
+      (OPERATOR_is_store(WN_operator(wn2)) && OPERATOR_is_load(WN_operator(wn1)))) {
     if (am->Rule()->Aliased_Memop(pt1, pt2, WN_object_ty(wn1), WN_object_ty(wn2))) 
       return POSSIBLY_ALIASED;
   } else {

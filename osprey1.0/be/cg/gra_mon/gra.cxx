@@ -43,8 +43,8 @@
 /////////////////////////////////////
 
 
-//  $Revision: 1.2 $
-//  $Date: 2002/02/18 20:45:30 $
+//  $Revision: 1.3 $
+//  $Date: 2002/10/13 21:35:15 $
 //  $Author: douillet $
 //  $Source: /cvsroot/open64/open64/osprey1.0/be/cg/gra_mon/gra.cxx,v $
 
@@ -54,7 +54,7 @@
 #pragma hdrstop
 
 #ifdef _KEEP_RCS_ID
-static char *rcs_id = "$Source: /cvsroot/open64/open64/osprey1.0/be/cg/gra_mon/gra.cxx,v $ $Revision: 1.2 $";
+static char *rcs_id = "$Source: /cvsroot/open64/open64/osprey1.0/be/cg/gra_mon/gra.cxx,v $ $Revision: 1.3 $";
 #endif
 
 #include "defs.h"
@@ -305,6 +305,8 @@ GRA_Allocate_Global_Registers( BOOL is_region )
   GRA_Join_Entry_And_Exit_BBs();
 
   Gen_UNAT_Spills_Entry_And_Exit_BB();
+
+  GRA_Optimize_Restore();
 
   Clear_Spill_BB_Flags();
 

@@ -38,8 +38,8 @@
  * ====================================================================
  *
  * Module: inline_summarize.h
- * $Date: 2001/09/10 17:49:59 $
- * $Author: morrone $
+ * $Date: 2002/10/13 21:35:22 $
+ * $Author: douillet $
  * $Source: /cvsroot/open64/open64/osprey1.0/ipa/inline/inline_summarize.h,v $
  *
  * Description:
@@ -160,7 +160,7 @@ SUMMARIZE<INLINER>::Process_procedure (WN *w)
 	    ((PU_src_lang(pu) == PU_CXX_LANG))) {
 	    if (PU_is_inline_function (pu)) {
 		// for 7.2 don't inline functions marked weak inline
-		if (ST_is_weak_symbol(st)) {
+		if (ST_is_weak_symbol(st) && ST_export(st) != EXPORT_PROTECTED) {
 		    DevWarn("Inliner encountered a function marked weak inline; NOT inlining it");
 		    proc->Set_no_inline();
 		} else

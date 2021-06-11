@@ -1,0 +1,1641 @@
+Terminals which are not used:
+
+   ENDMARKER
+   tokUSE
+   tokLCBRACK
+   tokRCBRACK
+   tokDOT
+   tokVERTBAR
+   tokCOMMENT
+
+
+Grammar
+
+  Number, Line, Rule
+    1 140 file -> /* empty */
+    2 142 file -> stmtlist
+    3 145 stmtlist -> stmt
+    4 147 stmtlist -> stmtlist stmt
+    5 150 stmt -> stmt0 tokSEMICOLON
+    6 152 stmt -> stmt0 stmt0
+    7 157 stmt0 -> typestmt
+    8 159 stmt0 -> expectstmt
+    9 160 stmt0 -> appendstmt
+   10 161 stmt0 -> implicitstmt
+   11 162 stmt0 -> assignstmt
+   12 163 stmt0 -> arithmeticassignstmt
+   13 164 stmt0 -> vardeclstmt
+   14 165 stmt0 -> attrstmt
+   15 166 stmt0 -> error
+   16 174 attrstmt -> tokIDENT tokPLUSEQUALS tokSTRINGCONST
+   17 195 attrstmt -> tokIDENT tokSTRINGCONST
+   18 200 typestmt -> tokTYPE tokIDENT tokEQUALS tokENUM tokLPAREN idlist tokRPAREN nlimittypelist
+   19 212 expectstmt -> tokEXPECT typeexpect idlist
+   20 218 appendstmt -> tokAPPEND tokIDENT tokEQUALS tokENUM tokLPAREN idlist tokRPAREN
+   21 228 implicitstmt -> tokIMPLICIT tokNONE
+   22 234 typeexpect -> tokTYPE
+   23 236 typeexpect -> tokVARIABLE
+   24 237 typeexpect -> tokENUM
+   25 238 typeexpect -> tokATTRIBUTE
+   26 241 assignstmt -> tokIDENT lhsindexexp tokCOLONEQUALS rhs nlimitassignlist
+   27 264 arithmeticassignstmt -> tokIDENT lhsindexexp tokCOLONEQUALS arithmeticrhs
+   28 287 lhsindexexp -> tokLSBRACK lhsindex tokRSBRACK
+   29 291 lhsindexexp -> /* empty */
+   30 296 lhsindex -> tokIDENT
+   31 300 lhsindex -> tokSTAR
+   32 303 lhsindex -> tokSTRINGCONST
+   33 312 vardeclstmt -> tokIDENT typespecclause
+   34 327 typespecclause -> tokCOLON fulltypespec
+   35 331 typespecclause -> /* empty */
+   36 336 fulltypespec -> simpletypespec
+   37 340 fulltypespec -> tokARRAY tokLSBRACK tokIDENT tokRSBRACK tokOF simpletypespec
+   38 346 fulltypespec -> tokARRAY tokLSBRACK tokSTRING tokRSBRACK tokOF simpletypespec
+   39 351 simpletypespec -> tokSTRING
+   40 355 simpletypespec -> tokINT
+   41 358 simpletypespec -> tokREAL
+   42 361 simpletypespec -> tokIDENT
+   43 367 simpletypespec -> tokBITMASK tokLPAREN tokIDENT tokRPAREN
+   44 384 nstringlist -> /* empty */
+   45 388 nstringlist -> stringlist
+   46 393 stringlist -> revstringlist
+   47 399 revstringlist -> tokSTRINGCONST
+   48 403 revstringlist -> revstringlist tokCOMMA tokSTRINGCONST
+   49 412 reallist -> revreallist
+   50 419 revreallist -> tokREALCONST
+   51 423 revreallist -> revreallist tokCOMMA tokREALCONST
+   52 432 nidlist -> revidlist
+   53 436 nidlist -> /* empty */
+   54 440 idlist -> revidlist
+   55 447 revidlist -> tokIDENT
+   56 451 revidlist -> revidlist tokCOMMA tokIDENT
+   57 460 intlist -> revintlist
+   58 466 revintlist -> tokINTCONST
+   59 470 revintlist -> revintlist tokCOMMA tokINTCONST
+   60 480 rhs -> tokSTRINGCONST
+   61 492 rhs -> tokINTCONST
+   62 503 rhs -> tokREALCONST
+   63 514 rhs -> bitmaskexpr
+   64 517 rhs -> tokIDENT lhsindexexp
+   65 547 arithmeticrhs -> arithmeticrhsrest arithmeticop intrhs
+   66 566 arithmeticrhsrest -> intrhs
+   67 570 arithmeticrhsrest -> arithmeticrhsrest arithmeticop intrhs
+   68 584 intrhs -> tokINTCONST
+   69 592 intrhs -> tokIDENT lhsindexexp
+   70 631 arithmeticop -> tokPLUS
+   71 638 arithmeticop -> tokDIV
+   72 646 bitmaskexpr -> tokBITMASK tokLPAREN nidlist tokRPAREN
+   73 656 nlimitassignlist -> limitassignlist
+   74 660 nlimitassignlist -> /* empty */
+   75 665 nlimittypelist -> limittypelist
+   76 669 nlimittypelist -> /* empty */
+   77 675 limitassignlist -> limitassign
+   78 680 limitassignlist -> limitassignlist limitassign
+   79 689 limittypelist -> limittype
+   80 694 limittypelist -> limittypelist limittype
+   81 704 limitassign -> tokLIMIT tokLABRACK nstringlist tokRABRACK limitassignval
+   82 710 limittype -> tokLIMIT tokLABRACK nstringlist tokRABRACK tokNOREDEFINE
+   83 717 limitassignval -> tokNOREDEFINE
+   84 721 limitassignval -> tokLPAREN valuelist tokRPAREN
+   85 724 limitassignval -> tokLPAREN valuerange tokRPAREN
+   86 729 valuelist -> idlist
+   87 731 valuelist -> intlist
+   88 732 valuelist -> reallist
+   89 733 valuelist -> stringlist
+   90 736 valuerange -> tokIDENT tokDDOT tokIDENT
+   91 751 valuerange -> tokINTCONST tokDDOT tokINTCONST
+
+
+Terminals, with rules where they appear
+
+$ (-1)
+ENDMARKER (0)
+error (256) 15
+tokARRAY (257) 37 38
+tokBITMASK (258) 43 72
+tokEXPECT (259) 19
+tokENUM (260) 18 20 24
+tokLIMIT (261) 81 82
+tokUSE (262)
+tokTYPE (263) 18 22
+tokVARIABLE (264) 23
+tokATTRIBUTE (265) 25
+tokNOREDEFINE (266) 82 83
+tokOF (267) 37 38
+tokIMPLICIT (268) 21
+tokNONE (269) 21
+tokLCBRACK (270)
+tokRCBRACK (271)
+tokLABRACK (272) 81 82
+tokRABRACK (273) 81 82
+tokLSBRACK (274) 28 37 38
+tokRSBRACK (275) 28 37 38
+tokLPAREN (276) 18 20 43 72 84 85
+tokRPAREN (277) 18 20 43 72 84 85
+tokINT (278) 40
+tokREAL (279) 41
+tokSTRING (280) 38 39
+tokREALCONST (281) 50 51 62
+tokINTCONST (282) 58 59 61 68 91
+tokSTRINGCONST (283) 16 17 32 47 48 60
+tokEQUALS (284) 18 20
+tokCOMMA (285) 48 51 56 59
+tokCOLON (286) 34
+tokSEMICOLON (287) 5
+tokCOLONEQUALS (288) 26 27
+tokPLUSEQUALS (289) 16
+tokSTAR (290) 31
+tokDOT (291)
+tokDDOT (292) 90 91
+tokVERTBAR (293)
+tokCOMMENT (294)
+tokIDENT (295) 16 17 18 20 26 27 30 33 37 42 43 55 56 64 69 90
+tokPLUS (296) 70
+tokDIV (297) 71
+tokAPPEND (298) 20
+
+
+Nonterminals, with rules where they appear
+
+file (46)
+    on left: 1 2
+stmtlist (47)
+    on left: 3 4, on right: 2 4
+stmt (48)
+    on left: 5 6, on right: 3 4
+stmt0 (49)
+    on left: 7 8 9 10 11 12 13 14 15, on right: 5 6
+attrstmt (50)
+    on left: 16 17, on right: 14
+typestmt (51)
+    on left: 18, on right: 7
+expectstmt (52)
+    on left: 19, on right: 8
+appendstmt (53)
+    on left: 20, on right: 9
+implicitstmt (54)
+    on left: 21, on right: 10
+typeexpect (55)
+    on left: 22 23 24 25, on right: 19
+assignstmt (56)
+    on left: 26, on right: 11
+arithmeticassignstmt (57)
+    on left: 27, on right: 12
+lhsindexexp (58)
+    on left: 28 29, on right: 26 27 64 69
+lhsindex (59)
+    on left: 30 31 32, on right: 28
+vardeclstmt (60)
+    on left: 33, on right: 13
+typespecclause (61)
+    on left: 34 35, on right: 33
+fulltypespec (62)
+    on left: 36 37 38, on right: 34
+simpletypespec (63)
+    on left: 39 40 41 42 43, on right: 36 37 38
+nstringlist (64)
+    on left: 44 45, on right: 81 82
+stringlist (65)
+    on left: 46, on right: 45 89
+revstringlist (66)
+    on left: 47 48, on right: 46 48
+reallist (67)
+    on left: 49, on right: 88
+revreallist (68)
+    on left: 50 51, on right: 49 51
+nidlist (69)
+    on left: 52 53, on right: 72
+idlist (70)
+    on left: 54, on right: 18 19 20 86
+revidlist (71)
+    on left: 55 56, on right: 52 54 56
+intlist (72)
+    on left: 57, on right: 87
+revintlist (73)
+    on left: 58 59, on right: 57 59
+rhs (74)
+    on left: 60 61 62 63 64, on right: 26
+arithmeticrhs (75)
+    on left: 65, on right: 27
+arithmeticrhsrest (76)
+    on left: 66 67, on right: 65 67
+intrhs (77)
+    on left: 68 69, on right: 65 66 67
+arithmeticop (78)
+    on left: 70 71, on right: 65 67
+bitmaskexpr (79)
+    on left: 72, on right: 63
+nlimitassignlist (80)
+    on left: 73 74, on right: 26
+nlimittypelist (81)
+    on left: 75 76, on right: 18
+limitassignlist (82)
+    on left: 77 78, on right: 73 78
+limittypelist (83)
+    on left: 79 80, on right: 75 80
+limitassign (84)
+    on left: 81, on right: 77 78
+limittype (85)
+    on left: 82, on right: 79 80
+limitassignval (86)
+    on left: 83 84 85, on right: 81
+valuelist (87)
+    on left: 86 87 88 89, on right: 84
+valuerange (88)
+    on left: 90 91, on right: 85
+
+
+state 0
+
+    error	shift, and go to state 1
+    tokEXPECT	shift, and go to state 2
+    tokTYPE	shift, and go to state 3
+    tokIMPLICIT	shift, and go to state 4
+    tokIDENT	shift, and go to state 5
+    tokAPPEND	shift, and go to state 6
+
+    $   	reduce using rule 1 (file)
+    file	go to state 145
+    stmtlist	go to state 7
+    stmt	go to state 8
+    stmt0	go to state 9
+    attrstmt	go to state 10
+    typestmt	go to state 11
+    expectstmt	go to state 12
+    appendstmt	go to state 13
+    implicitstmt	go to state 14
+    assignstmt	go to state 15
+    arithmeticassignstmt	go to state 16
+    vardeclstmt	go to state 17
+
+
+
+state 1
+
+    stmt0  ->  error .   (rule 15)
+
+    $default	reduce using rule 15 (stmt0)
+
+
+
+state 2
+
+    expectstmt  ->  tokEXPECT . typeexpect idlist   (rule 19)
+
+    tokENUM	shift, and go to state 18
+    tokTYPE	shift, and go to state 19
+    tokVARIABLE	shift, and go to state 20
+    tokATTRIBUTE	shift, and go to state 21
+
+    typeexpect	go to state 22
+
+
+
+state 3
+
+    typestmt  ->  tokTYPE . tokIDENT tokEQUALS tokENUM tokLPAREN idlist tokRPAREN nlimittypelist   (rule 18)
+
+    tokIDENT	shift, and go to state 23
+
+
+
+state 4
+
+    implicitstmt  ->  tokIMPLICIT . tokNONE   (rule 21)
+
+    tokNONE	shift, and go to state 24
+
+
+
+state 5
+
+    attrstmt  ->  tokIDENT . tokPLUSEQUALS tokSTRINGCONST   (rule 16)
+    attrstmt  ->  tokIDENT . tokSTRINGCONST   (rule 17)
+    assignstmt  ->  tokIDENT . lhsindexexp tokCOLONEQUALS rhs nlimitassignlist   (rule 26)
+    arithmeticassignstmt  ->  tokIDENT . lhsindexexp tokCOLONEQUALS arithmeticrhs   (rule 27)
+    vardeclstmt  ->  tokIDENT . typespecclause   (rule 33)
+
+    tokLSBRACK	shift, and go to state 25
+    tokSTRINGCONST	shift, and go to state 26
+    tokCOLON	shift, and go to state 27
+    tokPLUSEQUALS	shift, and go to state 28
+
+    tokCOLONEQUALS	reduce using rule 29 (lhsindexexp)
+    $default	reduce using rule 35 (typespecclause)
+    lhsindexexp	go to state 29
+    typespecclause	go to state 30
+
+
+
+state 6
+
+    appendstmt  ->  tokAPPEND . tokIDENT tokEQUALS tokENUM tokLPAREN idlist tokRPAREN   (rule 20)
+
+    tokIDENT	shift, and go to state 31
+
+
+
+state 7
+
+    file  ->  stmtlist .   (rule 2)
+    stmtlist  ->  stmtlist . stmt   (rule 4)
+
+    error	shift, and go to state 1
+    tokEXPECT	shift, and go to state 2
+    tokTYPE	shift, and go to state 3
+    tokIMPLICIT	shift, and go to state 4
+    tokIDENT	shift, and go to state 5
+    tokAPPEND	shift, and go to state 6
+
+    $   	reduce using rule 2 (file)
+    stmt	go to state 32
+    stmt0	go to state 9
+    attrstmt	go to state 10
+    typestmt	go to state 11
+    expectstmt	go to state 12
+    appendstmt	go to state 13
+    implicitstmt	go to state 14
+    assignstmt	go to state 15
+    arithmeticassignstmt	go to state 16
+    vardeclstmt	go to state 17
+
+
+
+state 8
+
+    stmtlist  ->  stmt .   (rule 3)
+
+    $default	reduce using rule 3 (stmtlist)
+
+
+
+state 9
+
+    stmt  ->  stmt0 . tokSEMICOLON   (rule 5)
+    stmt  ->  stmt0 . stmt0   (rule 6)
+
+    error	shift, and go to state 1
+    tokEXPECT	shift, and go to state 2
+    tokTYPE	shift, and go to state 3
+    tokIMPLICIT	shift, and go to state 4
+    tokSEMICOLON	shift, and go to state 33
+    tokIDENT	shift, and go to state 5
+    tokAPPEND	shift, and go to state 6
+
+    stmt0	go to state 34
+    attrstmt	go to state 10
+    typestmt	go to state 11
+    expectstmt	go to state 12
+    appendstmt	go to state 13
+    implicitstmt	go to state 14
+    assignstmt	go to state 15
+    arithmeticassignstmt	go to state 16
+    vardeclstmt	go to state 17
+
+
+
+state 10
+
+    stmt0  ->  attrstmt .   (rule 14)
+
+    $default	reduce using rule 14 (stmt0)
+
+
+
+state 11
+
+    stmt0  ->  typestmt .   (rule 7)
+
+    $default	reduce using rule 7 (stmt0)
+
+
+
+state 12
+
+    stmt0  ->  expectstmt .   (rule 8)
+
+    $default	reduce using rule 8 (stmt0)
+
+
+
+state 13
+
+    stmt0  ->  appendstmt .   (rule 9)
+
+    $default	reduce using rule 9 (stmt0)
+
+
+
+state 14
+
+    stmt0  ->  implicitstmt .   (rule 10)
+
+    $default	reduce using rule 10 (stmt0)
+
+
+
+state 15
+
+    stmt0  ->  assignstmt .   (rule 11)
+
+    $default	reduce using rule 11 (stmt0)
+
+
+
+state 16
+
+    stmt0  ->  arithmeticassignstmt .   (rule 12)
+
+    $default	reduce using rule 12 (stmt0)
+
+
+
+state 17
+
+    stmt0  ->  vardeclstmt .   (rule 13)
+
+    $default	reduce using rule 13 (stmt0)
+
+
+
+state 18
+
+    typeexpect  ->  tokENUM .   (rule 24)
+
+    $default	reduce using rule 24 (typeexpect)
+
+
+
+state 19
+
+    typeexpect  ->  tokTYPE .   (rule 22)
+
+    $default	reduce using rule 22 (typeexpect)
+
+
+
+state 20
+
+    typeexpect  ->  tokVARIABLE .   (rule 23)
+
+    $default	reduce using rule 23 (typeexpect)
+
+
+
+state 21
+
+    typeexpect  ->  tokATTRIBUTE .   (rule 25)
+
+    $default	reduce using rule 25 (typeexpect)
+
+
+
+state 22
+
+    expectstmt  ->  tokEXPECT typeexpect . idlist   (rule 19)
+
+    tokIDENT	shift, and go to state 35
+
+    idlist	go to state 36
+    revidlist	go to state 37
+
+
+
+state 23
+
+    typestmt  ->  tokTYPE tokIDENT . tokEQUALS tokENUM tokLPAREN idlist tokRPAREN nlimittypelist   (rule 18)
+
+    tokEQUALS	shift, and go to state 38
+
+
+
+state 24
+
+    implicitstmt  ->  tokIMPLICIT tokNONE .   (rule 21)
+
+    $default	reduce using rule 21 (implicitstmt)
+
+
+
+state 25
+
+    lhsindexexp  ->  tokLSBRACK . lhsindex tokRSBRACK   (rule 28)
+
+    tokSTRINGCONST	shift, and go to state 39
+    tokSTAR	shift, and go to state 40
+    tokIDENT	shift, and go to state 41
+
+    lhsindex	go to state 42
+
+
+
+state 26
+
+    attrstmt  ->  tokIDENT tokSTRINGCONST .   (rule 17)
+
+    $default	reduce using rule 17 (attrstmt)
+
+
+
+state 27
+
+    typespecclause  ->  tokCOLON . fulltypespec   (rule 34)
+
+    tokARRAY	shift, and go to state 43
+    tokBITMASK	shift, and go to state 44
+    tokINT	shift, and go to state 45
+    tokREAL	shift, and go to state 46
+    tokSTRING	shift, and go to state 47
+    tokIDENT	shift, and go to state 48
+
+    fulltypespec	go to state 49
+    simpletypespec	go to state 50
+
+
+
+state 28
+
+    attrstmt  ->  tokIDENT tokPLUSEQUALS . tokSTRINGCONST   (rule 16)
+
+    tokSTRINGCONST	shift, and go to state 51
+
+
+
+state 29
+
+    assignstmt  ->  tokIDENT lhsindexexp . tokCOLONEQUALS rhs nlimitassignlist   (rule 26)
+    arithmeticassignstmt  ->  tokIDENT lhsindexexp . tokCOLONEQUALS arithmeticrhs   (rule 27)
+
+    tokCOLONEQUALS	shift, and go to state 52
+
+
+
+state 30
+
+    vardeclstmt  ->  tokIDENT typespecclause .   (rule 33)
+
+    $default	reduce using rule 33 (vardeclstmt)
+
+
+
+state 31
+
+    appendstmt  ->  tokAPPEND tokIDENT . tokEQUALS tokENUM tokLPAREN idlist tokRPAREN   (rule 20)
+
+    tokEQUALS	shift, and go to state 53
+
+
+
+state 32
+
+    stmtlist  ->  stmtlist stmt .   (rule 4)
+
+    $default	reduce using rule 4 (stmtlist)
+
+
+
+state 33
+
+    stmt  ->  stmt0 tokSEMICOLON .   (rule 5)
+
+    $default	reduce using rule 5 (stmt)
+
+
+
+state 34
+
+    stmt  ->  stmt0 stmt0 .   (rule 6)
+
+    $default	reduce using rule 6 (stmt)
+
+
+
+state 35
+
+    revidlist  ->  tokIDENT .   (rule 55)
+
+    $default	reduce using rule 55 (revidlist)
+
+
+
+state 36
+
+    expectstmt  ->  tokEXPECT typeexpect idlist .   (rule 19)
+
+    $default	reduce using rule 19 (expectstmt)
+
+
+
+state 37
+
+    idlist  ->  revidlist .   (rule 54)
+    revidlist  ->  revidlist . tokCOMMA tokIDENT   (rule 56)
+
+    tokCOMMA	shift, and go to state 54
+
+    $default	reduce using rule 54 (idlist)
+
+
+
+state 38
+
+    typestmt  ->  tokTYPE tokIDENT tokEQUALS . tokENUM tokLPAREN idlist tokRPAREN nlimittypelist   (rule 18)
+
+    tokENUM	shift, and go to state 55
+
+
+
+state 39
+
+    lhsindex  ->  tokSTRINGCONST .   (rule 32)
+
+    $default	reduce using rule 32 (lhsindex)
+
+
+
+state 40
+
+    lhsindex  ->  tokSTAR .   (rule 31)
+
+    $default	reduce using rule 31 (lhsindex)
+
+
+
+state 41
+
+    lhsindex  ->  tokIDENT .   (rule 30)
+
+    $default	reduce using rule 30 (lhsindex)
+
+
+
+state 42
+
+    lhsindexexp  ->  tokLSBRACK lhsindex . tokRSBRACK   (rule 28)
+
+    tokRSBRACK	shift, and go to state 56
+
+
+
+state 43
+
+    fulltypespec  ->  tokARRAY . tokLSBRACK tokIDENT tokRSBRACK tokOF simpletypespec   (rule 37)
+    fulltypespec  ->  tokARRAY . tokLSBRACK tokSTRING tokRSBRACK tokOF simpletypespec   (rule 38)
+
+    tokLSBRACK	shift, and go to state 57
+
+
+
+state 44
+
+    simpletypespec  ->  tokBITMASK . tokLPAREN tokIDENT tokRPAREN   (rule 43)
+
+    tokLPAREN	shift, and go to state 58
+
+
+
+state 45
+
+    simpletypespec  ->  tokINT .   (rule 40)
+
+    $default	reduce using rule 40 (simpletypespec)
+
+
+
+state 46
+
+    simpletypespec  ->  tokREAL .   (rule 41)
+
+    $default	reduce using rule 41 (simpletypespec)
+
+
+
+state 47
+
+    simpletypespec  ->  tokSTRING .   (rule 39)
+
+    $default	reduce using rule 39 (simpletypespec)
+
+
+
+state 48
+
+    simpletypespec  ->  tokIDENT .   (rule 42)
+
+    $default	reduce using rule 42 (simpletypespec)
+
+
+
+state 49
+
+    typespecclause  ->  tokCOLON fulltypespec .   (rule 34)
+
+    $default	reduce using rule 34 (typespecclause)
+
+
+
+state 50
+
+    fulltypespec  ->  simpletypespec .   (rule 36)
+
+    $default	reduce using rule 36 (fulltypespec)
+
+
+
+state 51
+
+    attrstmt  ->  tokIDENT tokPLUSEQUALS tokSTRINGCONST .   (rule 16)
+
+    $default	reduce using rule 16 (attrstmt)
+
+
+
+state 52
+
+    assignstmt  ->  tokIDENT lhsindexexp tokCOLONEQUALS . rhs nlimitassignlist   (rule 26)
+    arithmeticassignstmt  ->  tokIDENT lhsindexexp tokCOLONEQUALS . arithmeticrhs   (rule 27)
+
+    tokBITMASK	shift, and go to state 59
+    tokREALCONST	shift, and go to state 60
+    tokINTCONST	shift, and go to state 61
+    tokSTRINGCONST	shift, and go to state 62
+    tokIDENT	shift, and go to state 63
+
+    rhs 	go to state 64
+    arithmeticrhs	go to state 65
+    arithmeticrhsrest	go to state 66
+    intrhs	go to state 67
+    bitmaskexpr	go to state 68
+
+
+
+state 53
+
+    appendstmt  ->  tokAPPEND tokIDENT tokEQUALS . tokENUM tokLPAREN idlist tokRPAREN   (rule 20)
+
+    tokENUM	shift, and go to state 69
+
+
+
+state 54
+
+    revidlist  ->  revidlist tokCOMMA . tokIDENT   (rule 56)
+
+    tokIDENT	shift, and go to state 70
+
+
+
+state 55
+
+    typestmt  ->  tokTYPE tokIDENT tokEQUALS tokENUM . tokLPAREN idlist tokRPAREN nlimittypelist   (rule 18)
+
+    tokLPAREN	shift, and go to state 71
+
+
+
+state 56
+
+    lhsindexexp  ->  tokLSBRACK lhsindex tokRSBRACK .   (rule 28)
+
+    $default	reduce using rule 28 (lhsindexexp)
+
+
+
+state 57
+
+    fulltypespec  ->  tokARRAY tokLSBRACK . tokIDENT tokRSBRACK tokOF simpletypespec   (rule 37)
+    fulltypespec  ->  tokARRAY tokLSBRACK . tokSTRING tokRSBRACK tokOF simpletypespec   (rule 38)
+
+    tokSTRING	shift, and go to state 72
+    tokIDENT	shift, and go to state 73
+
+
+
+state 58
+
+    simpletypespec  ->  tokBITMASK tokLPAREN . tokIDENT tokRPAREN   (rule 43)
+
+    tokIDENT	shift, and go to state 74
+
+
+
+state 59
+
+    bitmaskexpr  ->  tokBITMASK . tokLPAREN nidlist tokRPAREN   (rule 72)
+
+    tokLPAREN	shift, and go to state 75
+
+
+
+state 60
+
+    rhs  ->  tokREALCONST .   (rule 62)
+
+    $default	reduce using rule 62 (rhs)
+
+
+
+state 61
+
+    rhs  ->  tokINTCONST .   (rule 61)
+    intrhs  ->  tokINTCONST .   (rule 68)
+
+    tokPLUS	reduce using rule 68 (intrhs)
+    tokDIV	reduce using rule 68 (intrhs)
+    $default	reduce using rule 61 (rhs)
+
+
+state 62
+
+    rhs  ->  tokSTRINGCONST .   (rule 60)
+
+    $default	reduce using rule 60 (rhs)
+
+
+
+state 63
+
+    rhs  ->  tokIDENT . lhsindexexp   (rule 64)
+    intrhs  ->  tokIDENT . lhsindexexp   (rule 69)
+
+    tokLSBRACK	shift, and go to state 25
+
+    $default	reduce using rule 29 (lhsindexexp)
+
+    lhsindexexp	go to state 76
+
+
+
+state 64
+
+    assignstmt  ->  tokIDENT lhsindexexp tokCOLONEQUALS rhs . nlimitassignlist   (rule 26)
+
+    tokLIMIT	shift, and go to state 77
+
+    $default	reduce using rule 74 (nlimitassignlist)
+
+    nlimitassignlist	go to state 78
+    limitassignlist	go to state 79
+    limitassign	go to state 80
+
+
+
+state 65
+
+    arithmeticassignstmt  ->  tokIDENT lhsindexexp tokCOLONEQUALS arithmeticrhs .   (rule 27)
+
+    $default	reduce using rule 27 (arithmeticassignstmt)
+
+
+
+state 66
+
+    arithmeticrhs  ->  arithmeticrhsrest . arithmeticop intrhs   (rule 65)
+    arithmeticrhsrest  ->  arithmeticrhsrest . arithmeticop intrhs   (rule 67)
+
+    tokPLUS	shift, and go to state 81
+    tokDIV	shift, and go to state 82
+
+    arithmeticop	go to state 83
+
+
+
+state 67
+
+    arithmeticrhsrest  ->  intrhs .   (rule 66)
+
+    $default	reduce using rule 66 (arithmeticrhsrest)
+
+
+
+state 68
+
+    rhs  ->  bitmaskexpr .   (rule 63)
+
+    $default	reduce using rule 63 (rhs)
+
+
+
+state 69
+
+    appendstmt  ->  tokAPPEND tokIDENT tokEQUALS tokENUM . tokLPAREN idlist tokRPAREN   (rule 20)
+
+    tokLPAREN	shift, and go to state 84
+
+
+
+state 70
+
+    revidlist  ->  revidlist tokCOMMA tokIDENT .   (rule 56)
+
+    $default	reduce using rule 56 (revidlist)
+
+
+
+state 71
+
+    typestmt  ->  tokTYPE tokIDENT tokEQUALS tokENUM tokLPAREN . idlist tokRPAREN nlimittypelist   (rule 18)
+
+    tokIDENT	shift, and go to state 35
+
+    idlist	go to state 85
+    revidlist	go to state 37
+
+
+
+state 72
+
+    fulltypespec  ->  tokARRAY tokLSBRACK tokSTRING . tokRSBRACK tokOF simpletypespec   (rule 38)
+
+    tokRSBRACK	shift, and go to state 86
+
+
+
+state 73
+
+    fulltypespec  ->  tokARRAY tokLSBRACK tokIDENT . tokRSBRACK tokOF simpletypespec   (rule 37)
+
+    tokRSBRACK	shift, and go to state 87
+
+
+
+state 74
+
+    simpletypespec  ->  tokBITMASK tokLPAREN tokIDENT . tokRPAREN   (rule 43)
+
+    tokRPAREN	shift, and go to state 88
+
+
+
+state 75
+
+    bitmaskexpr  ->  tokBITMASK tokLPAREN . nidlist tokRPAREN   (rule 72)
+
+    tokIDENT	shift, and go to state 35
+
+    $default	reduce using rule 53 (nidlist)
+
+    nidlist	go to state 89
+    revidlist	go to state 90
+
+
+
+state 76
+
+    rhs  ->  tokIDENT lhsindexexp .   (rule 64)
+    intrhs  ->  tokIDENT lhsindexexp .   (rule 69)
+
+    tokPLUS	reduce using rule 69 (intrhs)
+    tokDIV	reduce using rule 69 (intrhs)
+    $default	reduce using rule 64 (rhs)
+
+
+state 77
+
+    limitassign  ->  tokLIMIT . tokLABRACK nstringlist tokRABRACK limitassignval   (rule 81)
+
+    tokLABRACK	shift, and go to state 91
+
+
+
+state 78
+
+    assignstmt  ->  tokIDENT lhsindexexp tokCOLONEQUALS rhs nlimitassignlist .   (rule 26)
+
+    $default	reduce using rule 26 (assignstmt)
+
+
+
+state 79
+
+    nlimitassignlist  ->  limitassignlist .   (rule 73)
+    limitassignlist  ->  limitassignlist . limitassign   (rule 78)
+
+    tokLIMIT	shift, and go to state 77
+
+    $default	reduce using rule 73 (nlimitassignlist)
+
+    limitassign	go to state 92
+
+
+
+state 80
+
+    limitassignlist  ->  limitassign .   (rule 77)
+
+    $default	reduce using rule 77 (limitassignlist)
+
+
+
+state 81
+
+    arithmeticop  ->  tokPLUS .   (rule 70)
+
+    $default	reduce using rule 70 (arithmeticop)
+
+
+
+state 82
+
+    arithmeticop  ->  tokDIV .   (rule 71)
+
+    $default	reduce using rule 71 (arithmeticop)
+
+
+
+state 83
+
+    arithmeticrhs  ->  arithmeticrhsrest arithmeticop . intrhs   (rule 65)
+    arithmeticrhsrest  ->  arithmeticrhsrest arithmeticop . intrhs   (rule 67)
+
+    tokINTCONST	shift, and go to state 93
+    tokIDENT	shift, and go to state 94
+
+    intrhs	go to state 95
+
+
+
+state 84
+
+    appendstmt  ->  tokAPPEND tokIDENT tokEQUALS tokENUM tokLPAREN . idlist tokRPAREN   (rule 20)
+
+    tokIDENT	shift, and go to state 35
+
+    idlist	go to state 96
+    revidlist	go to state 37
+
+
+
+state 85
+
+    typestmt  ->  tokTYPE tokIDENT tokEQUALS tokENUM tokLPAREN idlist . tokRPAREN nlimittypelist   (rule 18)
+
+    tokRPAREN	shift, and go to state 97
+
+
+
+state 86
+
+    fulltypespec  ->  tokARRAY tokLSBRACK tokSTRING tokRSBRACK . tokOF simpletypespec   (rule 38)
+
+    tokOF	shift, and go to state 98
+
+
+
+state 87
+
+    fulltypespec  ->  tokARRAY tokLSBRACK tokIDENT tokRSBRACK . tokOF simpletypespec   (rule 37)
+
+    tokOF	shift, and go to state 99
+
+
+
+state 88
+
+    simpletypespec  ->  tokBITMASK tokLPAREN tokIDENT tokRPAREN .   (rule 43)
+
+    $default	reduce using rule 43 (simpletypespec)
+
+
+
+state 89
+
+    bitmaskexpr  ->  tokBITMASK tokLPAREN nidlist . tokRPAREN   (rule 72)
+
+    tokRPAREN	shift, and go to state 100
+
+
+
+state 90
+
+    nidlist  ->  revidlist .   (rule 52)
+    revidlist  ->  revidlist . tokCOMMA tokIDENT   (rule 56)
+
+    tokCOMMA	shift, and go to state 54
+
+    $default	reduce using rule 52 (nidlist)
+
+
+
+state 91
+
+    limitassign  ->  tokLIMIT tokLABRACK . nstringlist tokRABRACK limitassignval   (rule 81)
+
+    tokSTRINGCONST	shift, and go to state 101
+
+    $default	reduce using rule 44 (nstringlist)
+
+    nstringlist	go to state 102
+    stringlist	go to state 103
+    revstringlist	go to state 104
+
+
+
+state 92
+
+    limitassignlist  ->  limitassignlist limitassign .   (rule 78)
+
+    $default	reduce using rule 78 (limitassignlist)
+
+
+
+state 93
+
+    intrhs  ->  tokINTCONST .   (rule 68)
+
+    $default	reduce using rule 68 (intrhs)
+
+
+
+state 94
+
+    intrhs  ->  tokIDENT . lhsindexexp   (rule 69)
+
+    tokLSBRACK	shift, and go to state 25
+
+    $default	reduce using rule 29 (lhsindexexp)
+
+    lhsindexexp	go to state 105
+
+
+
+state 95
+
+    arithmeticrhs  ->  arithmeticrhsrest arithmeticop intrhs .   (rule 65)
+    arithmeticrhsrest  ->  arithmeticrhsrest arithmeticop intrhs .   (rule 67)
+
+    tokPLUS	reduce using rule 67 (arithmeticrhsrest)
+    tokDIV	reduce using rule 67 (arithmeticrhsrest)
+    $default	reduce using rule 65 (arithmeticrhs)
+
+
+state 96
+
+    appendstmt  ->  tokAPPEND tokIDENT tokEQUALS tokENUM tokLPAREN idlist . tokRPAREN   (rule 20)
+
+    tokRPAREN	shift, and go to state 106
+
+
+
+state 97
+
+    typestmt  ->  tokTYPE tokIDENT tokEQUALS tokENUM tokLPAREN idlist tokRPAREN . nlimittypelist   (rule 18)
+
+    tokLIMIT	shift, and go to state 107
+
+    $default	reduce using rule 76 (nlimittypelist)
+
+    nlimittypelist	go to state 108
+    limittypelist	go to state 109
+    limittype	go to state 110
+
+
+
+state 98
+
+    fulltypespec  ->  tokARRAY tokLSBRACK tokSTRING tokRSBRACK tokOF . simpletypespec   (rule 38)
+
+    tokBITMASK	shift, and go to state 44
+    tokINT	shift, and go to state 45
+    tokREAL	shift, and go to state 46
+    tokSTRING	shift, and go to state 47
+    tokIDENT	shift, and go to state 48
+
+    simpletypespec	go to state 111
+
+
+
+state 99
+
+    fulltypespec  ->  tokARRAY tokLSBRACK tokIDENT tokRSBRACK tokOF . simpletypespec   (rule 37)
+
+    tokBITMASK	shift, and go to state 44
+    tokINT	shift, and go to state 45
+    tokREAL	shift, and go to state 46
+    tokSTRING	shift, and go to state 47
+    tokIDENT	shift, and go to state 48
+
+    simpletypespec	go to state 112
+
+
+
+state 100
+
+    bitmaskexpr  ->  tokBITMASK tokLPAREN nidlist tokRPAREN .   (rule 72)
+
+    $default	reduce using rule 72 (bitmaskexpr)
+
+
+
+state 101
+
+    revstringlist  ->  tokSTRINGCONST .   (rule 47)
+
+    $default	reduce using rule 47 (revstringlist)
+
+
+
+state 102
+
+    limitassign  ->  tokLIMIT tokLABRACK nstringlist . tokRABRACK limitassignval   (rule 81)
+
+    tokRABRACK	shift, and go to state 113
+
+
+
+state 103
+
+    nstringlist  ->  stringlist .   (rule 45)
+
+    $default	reduce using rule 45 (nstringlist)
+
+
+
+state 104
+
+    stringlist  ->  revstringlist .   (rule 46)
+    revstringlist  ->  revstringlist . tokCOMMA tokSTRINGCONST   (rule 48)
+
+    tokCOMMA	shift, and go to state 114
+
+    $default	reduce using rule 46 (stringlist)
+
+
+
+state 105
+
+    intrhs  ->  tokIDENT lhsindexexp .   (rule 69)
+
+    $default	reduce using rule 69 (intrhs)
+
+
+
+state 106
+
+    appendstmt  ->  tokAPPEND tokIDENT tokEQUALS tokENUM tokLPAREN idlist tokRPAREN .   (rule 20)
+
+    $default	reduce using rule 20 (appendstmt)
+
+
+
+state 107
+
+    limittype  ->  tokLIMIT . tokLABRACK nstringlist tokRABRACK tokNOREDEFINE   (rule 82)
+
+    tokLABRACK	shift, and go to state 115
+
+
+
+state 108
+
+    typestmt  ->  tokTYPE tokIDENT tokEQUALS tokENUM tokLPAREN idlist tokRPAREN nlimittypelist .   (rule 18)
+
+    $default	reduce using rule 18 (typestmt)
+
+
+
+state 109
+
+    nlimittypelist  ->  limittypelist .   (rule 75)
+    limittypelist  ->  limittypelist . limittype   (rule 80)
+
+    tokLIMIT	shift, and go to state 107
+
+    $default	reduce using rule 75 (nlimittypelist)
+
+    limittype	go to state 116
+
+
+
+state 110
+
+    limittypelist  ->  limittype .   (rule 79)
+
+    $default	reduce using rule 79 (limittypelist)
+
+
+
+state 111
+
+    fulltypespec  ->  tokARRAY tokLSBRACK tokSTRING tokRSBRACK tokOF simpletypespec .   (rule 38)
+
+    $default	reduce using rule 38 (fulltypespec)
+
+
+
+state 112
+
+    fulltypespec  ->  tokARRAY tokLSBRACK tokIDENT tokRSBRACK tokOF simpletypespec .   (rule 37)
+
+    $default	reduce using rule 37 (fulltypespec)
+
+
+
+state 113
+
+    limitassign  ->  tokLIMIT tokLABRACK nstringlist tokRABRACK . limitassignval   (rule 81)
+
+    tokNOREDEFINE	shift, and go to state 117
+    tokLPAREN	shift, and go to state 118
+
+    limitassignval	go to state 119
+
+
+
+state 114
+
+    revstringlist  ->  revstringlist tokCOMMA . tokSTRINGCONST   (rule 48)
+
+    tokSTRINGCONST	shift, and go to state 120
+
+
+
+state 115
+
+    limittype  ->  tokLIMIT tokLABRACK . nstringlist tokRABRACK tokNOREDEFINE   (rule 82)
+
+    tokSTRINGCONST	shift, and go to state 101
+
+    $default	reduce using rule 44 (nstringlist)
+
+    nstringlist	go to state 121
+    stringlist	go to state 103
+    revstringlist	go to state 104
+
+
+
+state 116
+
+    limittypelist  ->  limittypelist limittype .   (rule 80)
+
+    $default	reduce using rule 80 (limittypelist)
+
+
+
+state 117
+
+    limitassignval  ->  tokNOREDEFINE .   (rule 83)
+
+    $default	reduce using rule 83 (limitassignval)
+
+
+
+state 118
+
+    limitassignval  ->  tokLPAREN . valuelist tokRPAREN   (rule 84)
+    limitassignval  ->  tokLPAREN . valuerange tokRPAREN   (rule 85)
+
+    tokREALCONST	shift, and go to state 122
+    tokINTCONST	shift, and go to state 123
+    tokSTRINGCONST	shift, and go to state 101
+    tokIDENT	shift, and go to state 124
+
+    stringlist	go to state 125
+    revstringlist	go to state 104
+    reallist	go to state 126
+    revreallist	go to state 127
+    idlist	go to state 128
+    revidlist	go to state 37
+    intlist	go to state 129
+    revintlist	go to state 130
+    valuelist	go to state 131
+    valuerange	go to state 132
+
+
+
+state 119
+
+    limitassign  ->  tokLIMIT tokLABRACK nstringlist tokRABRACK limitassignval .   (rule 81)
+
+    $default	reduce using rule 81 (limitassign)
+
+
+
+state 120
+
+    revstringlist  ->  revstringlist tokCOMMA tokSTRINGCONST .   (rule 48)
+
+    $default	reduce using rule 48 (revstringlist)
+
+
+
+state 121
+
+    limittype  ->  tokLIMIT tokLABRACK nstringlist . tokRABRACK tokNOREDEFINE   (rule 82)
+
+    tokRABRACK	shift, and go to state 133
+
+
+
+state 122
+
+    revreallist  ->  tokREALCONST .   (rule 50)
+
+    $default	reduce using rule 50 (revreallist)
+
+
+
+state 123
+
+    revintlist  ->  tokINTCONST .   (rule 58)
+    valuerange  ->  tokINTCONST . tokDDOT tokINTCONST   (rule 91)
+
+    tokDDOT	shift, and go to state 134
+
+    $default	reduce using rule 58 (revintlist)
+
+
+
+state 124
+
+    revidlist  ->  tokIDENT .   (rule 55)
+    valuerange  ->  tokIDENT . tokDDOT tokIDENT   (rule 90)
+
+    tokDDOT	shift, and go to state 135
+
+    $default	reduce using rule 55 (revidlist)
+
+
+
+state 125
+
+    valuelist  ->  stringlist .   (rule 89)
+
+    $default	reduce using rule 89 (valuelist)
+
+
+
+state 126
+
+    valuelist  ->  reallist .   (rule 88)
+
+    $default	reduce using rule 88 (valuelist)
+
+
+
+state 127
+
+    reallist  ->  revreallist .   (rule 49)
+    revreallist  ->  revreallist . tokCOMMA tokREALCONST   (rule 51)
+
+    tokCOMMA	shift, and go to state 136
+
+    $default	reduce using rule 49 (reallist)
+
+
+
+state 128
+
+    valuelist  ->  idlist .   (rule 86)
+
+    $default	reduce using rule 86 (valuelist)
+
+
+
+state 129
+
+    valuelist  ->  intlist .   (rule 87)
+
+    $default	reduce using rule 87 (valuelist)
+
+
+
+state 130
+
+    intlist  ->  revintlist .   (rule 57)
+    revintlist  ->  revintlist . tokCOMMA tokINTCONST   (rule 59)
+
+    tokCOMMA	shift, and go to state 137
+
+    $default	reduce using rule 57 (intlist)
+
+
+
+state 131
+
+    limitassignval  ->  tokLPAREN valuelist . tokRPAREN   (rule 84)
+
+    tokRPAREN	shift, and go to state 138
+
+
+
+state 132
+
+    limitassignval  ->  tokLPAREN valuerange . tokRPAREN   (rule 85)
+
+    tokRPAREN	shift, and go to state 139
+
+
+
+state 133
+
+    limittype  ->  tokLIMIT tokLABRACK nstringlist tokRABRACK . tokNOREDEFINE   (rule 82)
+
+    tokNOREDEFINE	shift, and go to state 140
+
+
+
+state 134
+
+    valuerange  ->  tokINTCONST tokDDOT . tokINTCONST   (rule 91)
+
+    tokINTCONST	shift, and go to state 141
+
+
+
+state 135
+
+    valuerange  ->  tokIDENT tokDDOT . tokIDENT   (rule 90)
+
+    tokIDENT	shift, and go to state 142
+
+
+
+state 136
+
+    revreallist  ->  revreallist tokCOMMA . tokREALCONST   (rule 51)
+
+    tokREALCONST	shift, and go to state 143
+
+
+
+state 137
+
+    revintlist  ->  revintlist tokCOMMA . tokINTCONST   (rule 59)
+
+    tokINTCONST	shift, and go to state 144
+
+
+
+state 138
+
+    limitassignval  ->  tokLPAREN valuelist tokRPAREN .   (rule 84)
+
+    $default	reduce using rule 84 (limitassignval)
+
+
+
+state 139
+
+    limitassignval  ->  tokLPAREN valuerange tokRPAREN .   (rule 85)
+
+    $default	reduce using rule 85 (limitassignval)
+
+
+
+state 140
+
+    limittype  ->  tokLIMIT tokLABRACK nstringlist tokRABRACK tokNOREDEFINE .   (rule 82)
+
+    $default	reduce using rule 82 (limittype)
+
+
+
+state 141
+
+    valuerange  ->  tokINTCONST tokDDOT tokINTCONST .   (rule 91)
+
+    $default	reduce using rule 91 (valuerange)
+
+
+
+state 142
+
+    valuerange  ->  tokIDENT tokDDOT tokIDENT .   (rule 90)
+
+    $default	reduce using rule 90 (valuerange)
+
+
+
+state 143
+
+    revreallist  ->  revreallist tokCOMMA tokREALCONST .   (rule 51)
+
+    $default	reduce using rule 51 (revreallist)
+
+
+
+state 144
+
+    revintlist  ->  revintlist tokCOMMA tokINTCONST .   (rule 59)
+
+    $default	reduce using rule 59 (revintlist)
+
+
+
+state 145
+
+    $   	go to state 146
+
+
+
+state 146
+
+    $   	go to state 147
+
+
+
+state 147
+
+    $default	accept
+
+

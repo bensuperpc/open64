@@ -37,8 +37,8 @@
  * =======================================================================
  *
  *  Module: ebo_special.cxx
- *  $Revision: 1.2 $
- *  $Date: 2002/02/18 20:45:30 $
+ *  $Revision: 1.3 $
+ *  $Date: 2002/10/13 21:35:15 $
  *  $Author: douillet $
  *  $Source: /cvsroot/open64/open64/osprey1.0/be/cg/ia64/ebo_special.cxx,v $
  *
@@ -1633,7 +1633,6 @@ delete_memory_op (OP *op,
   size_pred = CGTARG_Mem_Ref_Bytes(opinfo->in_op);
   size_succ = CGTARG_Mem_Ref_Bytes(op);
 
-  if (OP_load(op) && OP_load(opinfo->in_op)) {
    /* Replace the result tn of the second OP for:
           Load - Load,
     */
@@ -1646,6 +1645,7 @@ delete_memory_op (OP *op,
       BB_recovery(OP_bb(op))   ||
       BB_recovery(OP_bb(opinfo->in_op)))    return FALSE;
       
+  if (OP_load(op) && OP_load(opinfo->in_op)) {
     if (TOP_Find_Operand_Use(OP_code(op), OU_postincr) >= 0) {
      /* The increment must be preserved. */
       if (EBO_Trace_Data_Flow) {
@@ -5465,7 +5465,7 @@ sxt_sequence (OP *op,
       input_start = 0;
       input_length = 64;
       sxt_idx = 2;
-    } else if ((p_start <= result_start) &&
+    } else if ((p_start == result_start) &&
                ((result_start + result_length) <= (p_start + input_length))) {
      /* The result is contained within the input. */
       result_start = 0;

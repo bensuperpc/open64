@@ -1,0 +1,18 @@
+/solaris_fortran.makeinclude/1.1.1.1/Mon Sep 10 17:50:16 2001//
+/solaris_fortran.mh/1.1.1.1/Mon Sep 10 17:50:16 2001//
+D/array////
+D/char////
+D/coarray////
+D/dotprod////
+D/element////
+D/include////
+D/mathlb////
+D/matrix////
+D/modsdir////
+D/mpp_pre////
+D/mpp_reduce////
+D/mpp_scan////
+D/mpp_shift////
+D/mpp_util////
+D/prodsum////
+D/subrtn////

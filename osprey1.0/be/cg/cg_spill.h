@@ -1,6 +1,6 @@
 /*
 
-  Copyright (C) 2000, 2001 Silicon Graphics, Inc.  All Rights Reserved.
+  Copyright (C) 2000 Silicon Graphics, Inc.  All Rights Reserved.
 
   This program is free software; you can redistribute it and/or modify it
   under the terms of version 2 of the GNU General Public License as
@@ -37,9 +37,9 @@
  * =======================================================================
  *
  *  Module: cg_spill.h
- *  $Revision: 1.1.1.1 $
- *  $Date: 2001/09/10 17:47:19 $
- *  $Author: morrone $
+ *  $Revision: 1.2 $
+ *  $Date: 2002/10/13 21:35:14 $
+ *  $Author: douillet $
  *  $Source: /cvsroot/open64/open64/osprey1.0/be/cg/cg_spill.h,v $
  *
  *  Description:
@@ -266,4 +266,6 @@ extern void CGSPILL_Attach_Intconst_Remat(TN *tn, INT64 val);
 extern void CGSPILL_Attach_Floatconst_Remat(TN *tn, TYPE_ID typ, double val);
 extern void CGSPILL_Attach_Const_Remat(TN *tn, TYPE_ID typ, ST *st);
 
+extern void st_2_st_spill(OPS *ops, BOOL force);
+extern void ld_2_ld_fill(OPS *ops, BOOL force);
 #endif /* cgspill_INCLUDED */

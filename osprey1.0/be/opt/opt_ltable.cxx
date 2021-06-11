@@ -3,9 +3,9 @@
 // ====================================================================
 //
 // Module: opt_lpre.cxx
-// $Revision: 1.1.1.1 $
-// $Date: 2001/09/10 17:48:02 $
-// $Author: morrone $
+// $Revision: 1.2 $
+// $Date: 2002/10/13 21:35:18 $
+// $Author: douillet $
 // $Source: /cvsroot/open64/open64/osprey1.0/be/opt/opt_ltable.cxx,v $
 //
 // ====================================================================
@@ -151,6 +151,8 @@ ETABLE::LPRE_bottom_up_cr(STMTREP *stmt, INT stmt_kid_num, CODEREP *cr,
 
     if ( LPRE_do_loads() && 
 	 !cr->Is_var_volatile() && 
+         // screen out MLDID
+         !Opt_stab()->Aux_stab_entry(cr->Aux_id())->No_register() &&
 	 ST_class( Opt_stab()->St(cr->Aux_id()) ) != CLASS_PREG )
       Insert_real_occurrence(cr, stmt, stmt_kid_num, depth, is_store, TRUE);
     break;

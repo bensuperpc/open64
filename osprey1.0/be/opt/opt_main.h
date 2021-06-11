@@ -3,9 +3,9 @@
 // ====================================================================
 //
 // Module: opt_main.h
-// $Revision: 1.1.1.1 $
-// $Date: 2001/09/10 17:48:02 $
-// $Author: morrone $
+// $Revision: 1.2 $
+// $Date: 2002/10/13 21:35:18 $
+// $Author: douillet $
 // $Source: /cvsroot/open64/open64/osprey1.0/be/opt/opt_main.h,v $
 //
 // Revision history:
@@ -54,7 +54,7 @@
 #ifndef opt_main_INCLUDED
 #define opt_main_INCLUDED     "opt_main.h"
 #ifdef _KEEP_RCS_ID
-static char *opt_mainrcs_id = opt_main_INCLUDED"$Revision: 1.1.1.1 $";
+static char *opt_mainrcs_id = opt_main_INCLUDED"$Revision: 1.2 $";
 #endif /* _KEEP_RCS_ID */
 
 // forward declaration
@@ -182,6 +182,10 @@ public:
   PRE_RVI_HOOKS *Pre_rvi_hooks(void)    { return _pre_rvi_hooks; }
   void           Set_pre_rvi_hooks(PRE_RVI_HOOKS *pre_rvi_hooks)
     { _pre_rvi_hooks = pre_rvi_hooks; }
+#ifdef SPECMT_LT
+  void Specmt_First_Part_in_Preopt(void);
+  void Specmt_Second_Part_in_Mainopt(void);
+#endif
 };
 
 

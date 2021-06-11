@@ -47,9 +47,9 @@ extern "C" {
  * ====================================================================
  *
  * Module: errors.h
- * $Revision: 1.1.1.1 $
- * $Date: 2001/09/10 17:48:25 $
- * $Author: morrone $
+ * $Revision: 1.2 $
+ * $Date: 2002/10/13 21:35:20 $
+ * $Author: douillet $
  * $Source: /cvsroot/open64/open64/osprey1.0/common/util/errors.h,v $
  *
  * Revision history:
@@ -559,8 +559,9 @@ extern BOOL Count_Limit_DevWarn( const char *const src_fname,
 #include "err_host.h"
 
 /* The following contains Unix error code after system call errors: */
-extern INT errno;
-
+#ifndef _ERRNO_H       // for conflict with errno.h 
+ extern INT errno;    // native build 
+#endif
 /* Control reporting by severity level: */
 extern INT Min_Error_Severity;
 extern INT Conformance_Level;

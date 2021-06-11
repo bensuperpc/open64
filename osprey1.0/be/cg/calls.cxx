@@ -37,8 +37,8 @@
  * ====================================================================
  *
  * Module: calls.cxx
- * $Revision: 1.2 $
- * $Date: 2002/02/18 20:45:29 $
+ * $Revision: 1.3 $
+ * $Date: 2002/10/13 21:35:14 $
  * $Author: douillet $
  * $Source: /cvsroot/open64/open64/osprey1.0/be/cg/calls.cxx,v $
  *
@@ -2099,6 +2099,22 @@ Adjust_Alloca_Code (void)
   }
 }
 
+
+/*
+ * ====================================================================
+	Instrument code at the pu head to call mcount so that the target binary can
+	generate data for gprof.
+ * ====================================================================
+ */
+void
+Instru_Call_Mcount(void)
+{
+  BB_LIST *elist;
+
+  for (elist = Entry_BB_Head; elist; elist = BB_LIST_rest(elist)) {
+    EETARG_Call_Mcount(BB_LIST_first(elist));
+  }
+}
 
 /* ====================================================================
  *

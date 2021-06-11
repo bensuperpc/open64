@@ -1,0 +1,26 @@
+/Makefile.gbase/1.1.1.1/Mon Sep 10 17:50:06 2001//
+/cif.h/1.1.1.1/Mon Sep 10 17:50:06 2001//
+/cif_conv.c/1.1.1.1/Mon Sep 10 17:50:06 2001//
+/cif_int.h/1.1.1.1/Mon Sep 10 17:50:06 2001//
+/cif_lines.c/1.1.1.1/Mon Sep 10 17:50:06 2001//
+/cifbinread.c/1.1.1.1/Mon Sep 10 17:50:06 2001//
+/cifclose.c/1.1.1.1/Mon Sep 10 17:50:06 2001//
+/cifdata.c/1.1.1.1/Mon Sep 10 17:50:06 2001//
+/cifdup.c/1.1.1.1/Mon Sep 10 17:50:06 2001//
+/ciferrstr.c/1.1.1.1/Mon Sep 10 17:50:06 2001//
+/ciffiledir.c/1.1.1.1/Mon Sep 10 17:50:06 2001//
+/ciffree.c/1.1.1.1/Mon Sep 10 17:50:06 2001//
+/cifgetpos.c/1.1.1.1/Mon Sep 10 17:50:06 2001//
+/cifgetrec.c/1.1.1.1/Mon Sep 10 17:50:07 2001//
+/cifmode.c/1.1.1.1/Mon Sep 10 17:50:07 2001//
+/cifmsg.c/1.1.1.1/Mon Sep 10 17:50:07 2001//
+/cifopen.c/1.1.1.1/Mon Sep 10 17:50:07 2001//
+/cifprint.c/1.1.1.1/Mon Sep 10 17:50:07 2001//
+/cifputrec.c/1.1.1.1/Mon Sep 10 17:50:07 2001//
+/cifrecgroup.c/1.1.1.1/Mon Sep 10 17:50:07 2001//
+/cifrel.c/1.1.1.1/Mon Sep 10 17:50:07 2001//
+/cifsetpos.c/1.1.1.1/Mon Sep 10 17:50:07 2001//
+/cifspace.c/1.1.1.1/Mon Sep 10 17:50:07 2001//
+/cifunitdir.c/1.1.1.1/Mon Sep 10 17:50:07 2001//
+/unitrecord.h/1.1.1.1/Mon Sep 10 17:50:07 2001//
+D

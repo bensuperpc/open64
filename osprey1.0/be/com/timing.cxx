@@ -37,8 +37,8 @@
  * ====================================================================
  *
  * Module: timing.c
- * $Revision: 1.2 $
- * $Date: 2002/02/18 20:45:31 $
+ * $Revision: 1.3 $
+ * $Date: 2002/10/13 21:35:17 $
  * $Author: douillet $
  * $Source: /cvsroot/open64/open64/osprey1.0/be/com/timing.cxx,v $
  *
@@ -261,6 +261,17 @@ Initialize_Timing ( BOOL enable )
 	    Resource_Alloc ( "  Ipfec Speculation", NULL );
     Timer ( T_Ipfec_Speculation_CU ) =
 	    Resource_Alloc ( "  Ipfec Speculation", Timer(T_Ipfec_Speculation_Comp));
+    Timer ( T_Ipfec_Multi_Branch_Comp ) =
+	    Resource_Alloc ( "  Ipfec Multiple branch", NULL );
+    Timer ( T_Ipfec_Multi_Branch_CU ) =
+	    Resource_Alloc ( "  Ipfec Multiple branch", Timer(T_Ipfec_Multi_Branch_Comp));
+
+#ifdef SPECMT_LT
+    Timer (T_SPECMT_BG) =
+        Resource_Alloc ( " SPECMT build dep-graph", NULL);
+    Timer (T_SPECMT_PA) =
+        Resource_Alloc ( " SPECMT Partition", NULL);
+#endif
 
   }
 }

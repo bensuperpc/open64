@@ -38,9 +38,9 @@
 // ====================================================================
 //
 // Module: fb_cfg.h
-// $Revision: 1.1.1.1 $
-// $Date: 2001/09/10 17:47:32 $
-// $Author: morrone $
+// $Revision: 1.2 $
+// $Date: 2002/10/13 21:35:17 $
+// $Author: douillet $
 // $Source: /cvsroot/open64/open64/osprey1.0/be/com/fb_cfg.h,v $
 //
 // Description:
@@ -226,6 +226,7 @@ private:
   void Add_label( LABEL_IDX labelx, FB_NODEX nx ) { _lblx_to_nx[labelx] = nx; }
 
   void Add_edge(FB_NODEX nx_src, FB_NODEX nx_dst, bool delayed = false );
+  void Adjust_edge( FB_NODEX nodex);
   void Add_delayed_edge( FB_NODEX nx_src, WN *wn );
   void Complete_delayed_edges();
 

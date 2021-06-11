@@ -37,8 +37,8 @@
  * ====================================================================
  *
  * Module: config_opt.h
- * $Revision: 1.2 $
- * $Date: 2002/02/18 20:45:32 $
+ * $Revision: 1.3 $
+ * $Date: 2002/10/13 21:35:18 $
  * $Author: douillet $
  * $Source: /cvsroot/open64/open64/osprey1.0/common/com/config_opt.h,v $
  *
@@ -144,6 +144,7 @@ extern BOOL OPT_shared_memory;	// assume use of shared memory
 /***** Instrumentation related options *****/
 extern INT32 Instrumentation_Phase_Num;
 extern BOOL Instrumentation_Enabled;
+extern BOOL Instrumentation_Enabled_Before;
 extern UINT32 Instrumentation_Actions;
 extern BOOL Instrumentation_Unique_Output;
 extern INT32 Feedback_Phase_Num;
@@ -154,3 +155,4 @@ extern UINT32 Profile_Type;
 }
 #endif
 #endif /* config_opt_INCLUDED */
+
